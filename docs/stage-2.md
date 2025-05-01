@@ -6,6 +6,8 @@ We already proofed an opportunity by manual labor, now machines must start their
 
 The main problem right now is having to manually arbitrage, so our new goal is to build a script (or bot) for automatic opportunity processing
 
+Secondary goal for me is first approximation of arbitrage process formalization. It will not be perfect, but it can be beneficial in future
+
 ## Chains
 
 For origin chain we will use Fuse chain and we will try to pair it with:
@@ -18,11 +20,13 @@ For origin chain we will use Fuse chain and we will try to pair it with:
 
 ## Arbitrage Process
 
-Lexicon:
+**Lexicon:**
 
 -   Base Asset (BA) - asset which we hold and count profits with
 -   Opportunity Asset (OA) - asset which we arbitrage to gain profit
 -   Opportunity - situation on market, which can be exploited for profit
+
+All Steps to Arbitrage 💪
 
 1. Pools Discovery
 2. Pools Price Monitoring
