@@ -5,12 +5,19 @@
 	"license": "MIT",
 	"main": "src/main.ts",
 	"scripts": {
+		"test": "jest",
+		"test:logs": "ENABLE_LOGS=true jest",
 		"start": "npx tsx src/main.ts",
 		"chains": "npx tsx src/chains.ts",
 		"stablecoins": "npx tsx src/stablecoins.ts",
 		"tokens": "npx tsx src/tokens.ts",
 		"tokensByChains": "npx tsx src/tokensByChains.ts",
 		"getPoolStats": "npx tsx src/getPoolStats.ts"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.5.14",
+		"jest": "^29.7.0",
+		"ts-jest": "^29.2.5"
 	},
 	"dependencies": {
 		"@types/node": "^22.15.3",
@@ -19,6 +26,5 @@
 		"tsx": "^4.10.3",
 		"typescript": "^5.8.3",
 		"viem": "^2.28.1"
-	},
-	"type": "module"
+	}
 }
