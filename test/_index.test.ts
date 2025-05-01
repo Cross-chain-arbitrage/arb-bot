@@ -1,8 +1,4 @@
 import { makeSuite } from './utils/makeSuite'
+import { exampleTest } from './example.test'
 
-makeSuite('test', () => {
-	it('should test', () => {
-		console.log('log log log')
-		expect(true).toBe(true)
-	})
-})
+makeSuite('example test', exampleTest)
