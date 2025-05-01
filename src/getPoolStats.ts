@@ -1,0 +1,327 @@
+import { Address, http, PublicClient } from "viem"
+import { createPublicClient } from "viem"
+import { apeChain, fuse, hemi, lightlinkPhoenix } from "viem/chains"
+import { getTokenPricesFromUniV3Pool } from "./getters/uniV3Pool"
+import { getPoolTokens } from "./utils/pool"
+import { getTokenPricesFromAlgebraPool } from "./getters/algebraPool"
+import { Token } from "./utils/token"
+import { getTokenData } from "./geckoterminal/price"
+
+interface PoolPriceData {
+	token0: Token
+	token1: Token
+	price0To1: number
+	price1To0: number
+}
+
+interface Pool {
+	type: PoolType
+	address: Address
+	chainName?: string
+	priceData?: PoolPriceData
+}
+
+enum PoolType {
+	UNIV3 = "uniV3",
+	ALGEBRA = "algebra",
+}
+
+interface TokenPrices {
+	BTC: number
+	ETH: number
+	USD: number
+	FUSE: number
+}
+
+interface ArbitrageOpportunity {
+	pool: Pool
+	token0Symbol: string
+	token1Symbol: string
+	expectedPrice: number
+	actualPrice: number
+	priceDiffPercent: number
+}
+
+/* ======== Main Function ======== */
+
+async function main() {
+	const clients = [
+		// createPublicClient({
+		// 	chain: hemi,
+		// 	transport: http(),
+		// }),
+		// createPublicClient({
+		// 	chain: lightlinkPhoenix,
+		// 	transport: http(),
+		// }),
+		createPublicClient({
+			chain: fuse,
+			transport: http(),
+		}),
+		// createPublicClient({
+		// 	chain: {
+		// 		id: apeChain.id,
+		// 		rpcUrls: {
+		// 			default: http(
+		// 				"https://apechain-mainnet.g.alchemy.com/v2/REDACTED_API_KEY",
+		// 			),
+		// 		},
+		// 		name: "apeChain",
+		// 		nativeCurrency: {
+		// 			name: "ETH",
+		// 			symbol: "ETH",
+		// 			decimals: 18,
+		// 		},
+		// 	},
+		// 	transport: http(),
+		// }),
+	]
+
+	const poolByChain: Record<number, Pool[]> = {
+		[apeChain.id]: [
+			// {
+			// 	type: PoolType.ALGEBRA,
+			// 	address: "0xbd04919285728923e298f898294319a84a0dbd1e",
+			// },
+			{
+				type: PoolType.ALGEBRA,
+				address: "0xc82b890744d7df5f4fe28dd4205edcc36ceeea50",
+			},
+			// {
+			// 	type: PoolType.ALGEBRA,
+			// 	address: "0x674843C06FF83502ddb4D37c2E09C01cdA38cbc8",
+			// },
+			// {
+			// 	type: PoolType.ALGEBRA,
+			// 	address: "0xf4D9235269a96aaDaFc9aDAe454a0618eBE37949",
+			// },
+		],
+		[hemi.id]: [
+			{
+				type: PoolType.UNIV3,
+				address: "0xdA44564DF732dECfd93Ba8539803C5a8dF241954",
+			},
+			{
+				type: PoolType.UNIV3,
+				address: "0x3EcabBa99bEF583B58b8f0af6dD853CD9ED75ce3",
+			},
+			{
+				type: PoolType.UNIV3,
+				address: "0x9580D4519C9F27642e21085E763E761a74eF3735",
+			},
+			{
+				type: PoolType.UNIV3,
+				address: "0x3e014A9EF5F45454d9BdDb15741ce8A04e7d96F5",
+			},
+			{
+				type: PoolType.UNIV3,
+				address: "0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0",
+			},
+			{
+				type: PoolType.UNIV3,
+				address: "0xc36a310BD93E2927452de563fAAA89A86822a21f",
+			},
+			{
+				type: PoolType.UNIV3,
+				address: "0xf7A9F3523bCEC8311a14e1baf252d545bc3C8818",
+			},
+		],
+		[lightlinkPhoenix.id]: [
+			{
+				type: PoolType.UNIV3,
+				address: "0x2288627C696010049f6D98a84fC10F9C5F7b3Ce2",
+			},
+			{
+				type: PoolType.UNIV3,
+				address: "0x1125452469E9B9A36FE69249309fCe8925C3eEDa",
+			},
+		],
+		[fuse.id]: [
+			{
+				type: PoolType.ALGEBRA,
+				address: "0x677409B2393E2ca19b454fB904F5E634E21D3D89",
+			},
+			{
+				type: PoolType.ALGEBRA,
+				address: "0x23518Ca19447E7ABB8C6f6eb215A1D663c53Ea21",
+			},
+			{
+				type: PoolType.ALGEBRA,
+				address: "0x5E174874C5bc45Ba96bD859A6edA4D34EE9f4424",
+			},
+			{
+				type: PoolType.ALGEBRA,
+				address: "0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6",
+			},
+			{
+				type: PoolType.ALGEBRA,
+				address: "0x51cC986Df4C54877E0Cd9122532db389cc60016B",
+			},
+			{
+				type: PoolType.ALGEBRA,
+				address: "0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992",
+			},
+		],
+	}
+
+	for (const client of clients) {
+		await updatePoolsPriceData(poolByChain[client.chain.id], client)
+	}
+
+	// const priceUSDT = 1
+	// const priceUSDC = 1
+	const priceBTC = Number(
+		(await getTokenData("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"))
+			.attributes.price_usd,
+	)
+	const priceETH = Number(
+		(await getTokenData("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"))
+			.attributes.price_usd,
+	)
+	const priceFUSE = Number(
+		(await getTokenData("0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d"))
+			.attributes.price_usd,
+	)
+
+	console.log("\npriceBTC", priceBTC)
+	console.log("priceETH", priceETH)
+	console.log("priceFUSE", priceFUSE, "\n")
+	let opportunities: ArbitrageOpportunity[] = []
+
+	for (const client of clients) {
+		const pools = poolByChain[client.chain.id]
+
+		const opportunitiesOnChain = findArbitrageOpportunities(
+			pools,
+			priceBTC,
+			priceETH,
+			priceFUSE,
+		)
+		opportunities.push(...opportunitiesOnChain)
+	}
+
+	logArbitrageOpportunities(opportunities)
+}
+
+async function updatePoolsPriceData(pools: Pool[], client: PublicClient) {
+	for (const pool of pools) {
+		const [token0, token1] = await getPoolTokens(
+			pool.address as Address,
+			client,
+		)
+
+		pool.chainName = client.chain?.name
+
+		const getPrice =
+			pool.type === PoolType.UNIV3
+				? getTokenPricesFromUniV3Pool
+				: getTokenPricesFromAlgebraPool
+
+		const price = await getPrice(pool.address as Address, client)
+
+		if (price !== null) {
+			pool.priceData = {
+				token0,
+				token1,
+				price0To1: price,
+				price1To0: 1 / price,
+			}
+		}
+	}
+}
+
+function calculatePriceDiff(
+	actualPrice: number,
+	expectedPrice: number,
+): number {
+	return (actualPrice / expectedPrice) * 100 - 100
+}
+
+function getTokenCategory(symbol: string): keyof TokenPrices | null {
+	if (symbol.includes("BTC")) return "BTC"
+	if (symbol.includes("ETH")) return "ETH"
+	if (symbol.includes("USD") || symbol.includes("DAI")) return "USD"
+	if (symbol.includes("FUSE")) return "FUSE"
+	return null
+}
+
+function calculateExpectedPrice(
+	token0Category: keyof TokenPrices,
+	token1Category: keyof TokenPrices,
+	prices: TokenPrices,
+): number {
+	return prices[token0Category] / prices[token1Category]
+}
+
+function findArbitrageOpportunities(
+	pools: Pool[],
+	priceBTC: number,
+	priceETH: number,
+	priceFUSE: number,
+): ArbitrageOpportunity[] {
+	const prices: TokenPrices = {
+		BTC: priceBTC,
+		ETH: priceETH,
+		USD: 1,
+		FUSE: priceFUSE,
+	}
+
+	const opportunities: ArbitrageOpportunity[] = []
+
+	for (const pool of pools) {
+		if (!pool.priceData) {
+			console.warn(`Pool ${pool.address} has no price data`)
+			continue
+		}
+
+		const { token0, token1, price0To1 } = pool.priceData
+		const token0Cat = getTokenCategory(token0.symbol)
+		const token1Cat = getTokenCategory(token1.symbol)
+
+		if (!token0Cat || !token1Cat) {
+			console.warn(
+				`Pool ${pool.address} has unsupported tokens: ${token0.symbol}/${token1.symbol}\n`,
+			)
+			continue
+		}
+
+		const expectedPrice = calculateExpectedPrice(
+			token0Cat,
+			token1Cat,
+			prices,
+		)
+		const priceDiff = calculatePriceDiff(price0To1, expectedPrice)
+
+		opportunities.push({
+			pool,
+			token0Symbol: token0.symbol,
+			token1Symbol: token1.symbol,
+			expectedPrice,
+			actualPrice: price0To1,
+			priceDiffPercent: priceDiff,
+		})
+	}
+
+	return opportunities
+}
+
+function logArbitrageOpportunities(
+	opportunities: ArbitrageOpportunity[],
+): void {
+	// Sort by absolute difference from 100%
+	opportunities.sort(
+		(a, b) => Math.abs(a.priceDiffPercent) - Math.abs(b.priceDiffPercent),
+	)
+	opportunities.forEach((opp) => {
+		console.log(
+			`${opp.token0Symbol}/${opp.token1Symbol} in pool ${opp.pool.address}:`,
+			`\n  Expected: ${opp.expectedPrice}`,
+			`\n  Actual: ${opp.actualPrice}`,
+			`\n  Difference: ${opp.priceDiffPercent.toFixed(2)}%`,
+			`\n  Chain: ${opp.pool.chainName}`,
+			"\n--------------------------------",
+		)
+	})
+}
+
+main()
