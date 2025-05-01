@@ -8,7 +8,13 @@ Bot(s) MUST be deployed to many chains in parallel to capture all opportunities 
 
 Current list of supported Hydra chains (30.04.2025) includes 26 networks (full list in [chains.json](./data/chains.json))
 
-## A Plan To Make Some Money (PMSM)
+## How it's going (will be going)
 
-[1st Stage](./docs/stage-1.md)
-[2nd Stage](./docs/stage-2.md)
+[1st Stage](./docs/stage-1.md) - PoC
+[2nd Stage](./docs/stage-2.md) - PoC automated (current)
+3nd Stage - First Version (TBP)
+
+## Devs
+
+-   0xCompose
+-   semidol

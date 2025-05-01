@@ -4,12 +4,7 @@ From the first stage Fuse chain showed up as the most promising for cross-chain 
 
 We already proofed an opportunity by manual labor, now machines must start their part 🤖
 
-We're planning to implement following functional modules:
-
--   Swap on Algebra Pool
--   Swap on Uniswap Pool
--   Bridge via Canonical Bridge or Stargate (canonical tokens has more liquidity on Fuse chain, but can have limitations on bridging to other chains)
--   Pools Price Monitoring
+The main problem right now is having to manually arbitrage, so our new goal is to build a script (or bot) for automatic opportunity processing
 
 ## Chains
 
@@ -21,16 +16,111 @@ For origin chain we will use Fuse chain and we will try to pair it with:
 -   BSC
 -   Ethereum?
 
-## Pool Discovery
+## Arbitrage Process
+
+Lexicon:
+
+-   Base Asset (BA) - asset which we hold and count profits with
+-   Opportunity Asset (OA) - asset which we arbitrage to gain profit
+-   Opportunity - situation on market, which can be exploited for profit
+
+1. Pools Discovery
+2. Pools Price Monitoring
+3. Price Difference Fixation
+4. Swapping/Bridging BA to OA
+5. Buying OA low
+6. Bridging OA
+7. Selling OA high
+8. Buying back BA
+
+Only pool discovery can be pre-made without needing further actions, so, we will discover all pools beforehand, validate them and then will monitor it's prices
+
+## Our Approach
+
+We will be having BA only on one chain. That chain can even not participate in arbitrage.
+Pros of this approach are:
+
+-   Accounting Simplicity - easy to track profits in $
+-   No Rebalancing - we don't need to manage multiple account on multiple chains
+
+Cons of this approach are:
+
+-   Unnecessary swapping and (or) bridging expenses
+-   Increased Latency - swapping/bridging means more time to start opportunity processing
+
+This approach is definitely not ideal, but it's simple and it works, exactly what we need.
+
+## Arbitrage Examples
+
+```mermaid
+---
+title: Fuse Arbitrage Opportunity Example
+---
+flowchart LR
+    BA["USDT (Arb)"]
+
+    %% Not a base, not entrance assets 🤔 %%
+    BBA["stg.USDT (Fuse)"]
+
+    ENA["Bridged USDT (Fuse)"]
+
+    OA["Fuse (Fuse)"]
+
+    %% Can't be opportunity asset, since it's different token 💀
+    BOA["Fuse (BSC)"]
+
+    EXA["BNB (BSC)"]
+
+    BA --> |bridge| BBA --> |enter| ENA --> |buy| OA --> |bridge| BOA --> |sell| EXA --> |exit| BA
+```
+
+```mermaid
+---
+title: WBTC Arbitrage Opportunity Example
+---
+flowchart LR
+    EA["ETH (Arb)"]
+    OA["WBTC (Fuse)"]
+    BO["WBTC (Optimism)"]
+    BA["USDT (Arb)"]
+    EF["WETH (Fuse)"]
+    UO["USDT (Optimism)"]
+
+    BA --> |enter?| EA
+    EA --> |bridge?| EF --> |buy| OA --> |bridge| BO --> |sell| UO
+    UO --> |exit?| BA
+```
+
+?\* - question mark on some actions means that they may be omitted due to BA being entrance or exit asset
+
+**More Lexicon**
+
+-   Entrance Asset - token to be bought with Base Asset to start opportunity execution
+-   Exit Asset - token to be sold to finish arbitrage opportunity and return back to Base Asset
+
+Both can be Base Asset due to opportunity specifics
+
+## 1. Pool Discovery
 
 We will be exploring pools on chains listed above using:
 
 -   CoinMarketCap
 -   GeckoTerminal
 
-## Price discovery
+## 2. Price Monitoring
 
 Price discovery will be implemented via direct calls to pool contracts
+
+## 3. Price Difference Fixation
+
+To fixate price difference we will have some assumptions:
+
+-   Stablecoins cost $1 - it's not true, but it simplifies a lot of stuff
+-   Everything that contains "BTC" or "ETH" in it's name/symbol, probably, it's price equals to price of BTC or ETH. It's very useful assumption for discovering new opportunities that are not trivial in it's mechanism
+
+We will be using GeckoTerminal Public API to discover prices of intermediary assets that can be involved in arbitrage process
+
+## 4. Swapping/Bridging BA to target chain
 
 ## Fuse Chain Specs:
 
