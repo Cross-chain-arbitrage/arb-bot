@@ -31,11 +31,11 @@ Lexicon:
 5. Buying OA low
 6. Bridging OA
 7. Selling OA high
-8. Buying back BA
+8. Exit to BA
 
 Only pool discovery can be pre-made without needing further actions, so, we will discover all pools beforehand, validate them and then will monitor it's prices
 
-## Our Approach
+## Liquidity Management
 
 We will be having BA only on one chain. That chain can even not participate in arbitrage.
 Pros of this approach are:
@@ -50,7 +50,11 @@ Cons of this approach are:
 
 This approach is definitely not ideal, but it's simple and it works, exactly what we need.
 
-## Arbitrage Examples
+## Arbitrage Process
+
+### Arbitrage Examples
+
+Real arbitrage examples, that were battle tested manually and we will automate
 
 ```mermaid
 ---
@@ -86,32 +90,33 @@ flowchart LR
     EF["WETH (Fuse)"]
     UO["USDT (Optimism)"]
 
-    BA --> |enter?| EA
-    EA --> |bridge?| EF --> |buy| OA --> |bridge| BO --> |sell| UO
-    UO --> |exit?| BA
+    BA --> |enter| EA
+    EA --> |bridge| EF --> |buy| OA --> |bridge| BO --> |sell| UO
+    UO --> |exit| BA
 ```
 
-?\* - question mark on some actions means that they may be omitted due to BA being entrance or exit asset
+Some actions during arbitrage may be omitted due to BA being entrance or exit asset
 
 **More Lexicon**
 
 -   Entrance Asset - token to be bought with Base Asset to start opportunity execution
 -   Exit Asset - token to be sold to finish arbitrage opportunity and return back to Base Asset
+-   Intermediary Asset - token involved in process of entry or exit
 
 Both can be Base Asset due to opportunity specifics
 
-## 1. Pool Discovery
+### 1. Pools Discovery
 
 We will be exploring pools on chains listed above using:
 
--   CoinMarketCap
--   GeckoTerminal
+-   CoinMarketCap (API? 👀)
+-   GeckoTerminal Web & Public API
 
-## 2. Price Monitoring
+### 2. Price Monitoring
 
 Price discovery will be implemented via direct calls to pool contracts
 
-## 3. Price Difference Fixation
+### 3. Price Difference Fixation
 
 To fixate price difference we will have some assumptions:
 
@@ -120,9 +125,43 @@ To fixate price difference we will have some assumptions:
 
 We will be using GeckoTerminal Public API to discover prices of intermediary assets that can be involved in arbitrage process
 
-## 4. Swapping/Bridging BA to target chain
+### 4. Swapping/Bridging BA to target chain
 
-## Fuse Chain Specs:
+### 5. Buying Low
+
+Buying OA from pool of any type
+
+### 6. Bridging OA
+
+Bridge using Stargate, Hydra or OFT mechanism
+
+### 7. Selling OA High
+
+Selling OA on pool with highest price on market
+
+### 8. Exit To BA
+
+If exit asset is not BA, we may need to swap/bridge assets to get back to BA
+
+## Arbitrage Expenses
+
+1. Entry process swap/bridge fees/price impact
+2. Buying Low swap fee
+3. Bridging fee
+4. Selling High swap fee
+5. Exit process swap/bridge fees/price impact
+6. Tx Costs
+
+If we are considering case of WBTC/ETH arbitrage across Fuse/Arbitrum/Optimism we will be having expenses of around:
+
+-   [Bridge](https://arbiscan.io/tx/0xb809539547b4c0122858dd6f622979e8f270ea49884c08c714c34ea59795b0a3) ($0.06)
+-   [Buying Low](https://explorer.fuse.io/tx/0xa24e7862915410521ef9ae33273407310ae058ef7616cea45b62dfc4c15be2a2) swap fee and price impact / tx cost (<$0.01)
+-   [Bridge](https://explorer.fuse.io/tx/0xd5382f406f09881f975261f0cfe768cc129e71146b1dcbe27ccec00dfa845d7a) ($0.06)
+-   [Selling High](https://arbiscan.io/tx/0xa3f3545a7903de0e587055d7b36941a2d43c57b8293287d9911d5eff26971489) swap price impact (~0) & tx cost ($0.005)
+
+With example of Fuse arbitrage we will be having much more expenses in terms of tx costs, but less price impact thanks for better liquidity for that token
+
+## Fuse Chain Details
 
 -   Homepage: https://www.fuse.io/
 -   DEXes:
