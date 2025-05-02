@@ -1,4 +1,4 @@
-import { Address, PublicClient } from "viem"
+import { Address, erc20Abi, PublicClient } from "viem"
 import { ERC20_ABI } from "../abi/erc20"
 
 export class Token {
@@ -62,5 +62,29 @@ export class Token {
 			functionName: "symbol",
 		})
 		return symbol
+	}
+
+	async balanceOf(address: Address, client: PublicClient): Promise<bigint> {
+		const balance = await client.readContract({
+			address: this.address,
+			abi: erc20Abi,
+			functionName: "balanceOf",
+			args: [address],
+		})
+		return balance
+	}
+
+	async allowance(
+		address: Address,
+		spender: Address,
+		client: PublicClient,
+	): Promise<bigint> {
+		const allowance = await client.readContract({
+			address: this.address,
+			abi: erc20Abi,
+			functionName: "allowance",
+			args: [address, spender],
+		})
+		return allowance
 	}
 }

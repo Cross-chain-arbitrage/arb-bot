@@ -5,7 +5,7 @@ import { getTokenPricesFromUniV3Pool } from "./getters/uniV3Pool"
 import { getPoolTokens } from "./utils/pool"
 import { getTokenPricesFromAlgebraPool } from "./getters/algebraPool"
 import { Token } from "./utils/token"
-import { getTokenData } from "./geckoterminal/price"
+import { getTokenPrice } from "./geckoterminal/api"
 
 interface PoolPriceData {
 	token0: Token
@@ -46,14 +46,14 @@ interface ArbitrageOpportunity {
 
 async function main() {
 	const clients = [
-		// createPublicClient({
-		// 	chain: hemi,
-		// 	transport: http(),
-		// }),
-		// createPublicClient({
-		// 	chain: lightlinkPhoenix,
-		// 	transport: http(),
-		// }),
+		createPublicClient({
+			chain: hemi,
+			transport: http(),
+		}),
+		createPublicClient({
+			chain: lightlinkPhoenix,
+			transport: http(),
+		}),
 		createPublicClient({
 			chain: fuse,
 			transport: http(),
@@ -170,17 +170,14 @@ async function main() {
 
 	// const priceUSDT = 1
 	// const priceUSDC = 1
-	const priceBTC = Number(
-		(await getTokenData("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"))
-			.attributes.price_usd,
+	const priceBTC = await getTokenPrice(
+		"0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
 	)
-	const priceETH = Number(
-		(await getTokenData("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"))
-			.attributes.price_usd,
+	const priceETH = await getTokenPrice(
+		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 	)
-	const priceFUSE = Number(
-		(await getTokenData("0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d"))
-			.attributes.price_usd,
+	const priceFUSE = await getTokenPrice(
+		"0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d",
 	)
 
 	console.log("\npriceBTC", priceBTC)

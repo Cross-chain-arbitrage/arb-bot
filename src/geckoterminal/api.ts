@@ -1,3 +1,5 @@
+import { Address } from "viem"
+
 const BASE_URL = "https://api.geckoterminal.com/api/v2"
 
 const TOKEN_DATA = "/networks/eth/tokens/"
@@ -23,8 +25,17 @@ interface TokenData {
 	}
 }
 
-export async function getTokenData(address: string): Promise<TokenData> {
-	const response = await fetch(`${BASE_URL}${TOKEN_DATA}${address}`)
+export async function getTokenData(
+	address: Address,
+	network: string = "eth",
+): Promise<TokenData> {
+	const tokenDataUrl = `${BASE_URL}/networks/${network}/tokens/${address}`
+	const response = await fetch(tokenDataUrl)
 	const data = await response.json()
 	return data.data
+}
+
+export async function getTokenPrice(address: Address): Promise<number> {
+	const tokenData = await getTokenData(address)
+	return Number(tokenData.attributes.price_usd)
 }
