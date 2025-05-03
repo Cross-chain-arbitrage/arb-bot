@@ -194,6 +194,8 @@ With example of Fuse arbitrage we will be having much more expenses in terms of 
             -   https://explorer.fuse.io/address/0xFa70dFFeA090fED2d6E9301fB10b0d4C81072E4c
             -   https://explorer.fuse.io/address/0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992
             -   https://explorer.fuse.io/address/0x51cC986Df4C54877E0Cd9122532db389cc60016B
+-   Additional Information:
+    -   Fuse Bridge: https://github.com/fuseio/bridge-v2-contracts
 
 **Identified Arbitragers:**
 
