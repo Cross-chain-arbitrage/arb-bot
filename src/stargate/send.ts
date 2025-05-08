@@ -1,33 +1,48 @@
 import {
 	Address,
+	Client,
 	createPublicClient,
-	erc20Abi,
+	createWalletClient,
 	formatEther,
 	formatUnits,
 	Hex,
 	http,
-	parseEther,
 	parseUnits,
+	publicActions,
 	PublicClient,
+	WalletClient,
 } from "viem"
-import { arbitrum, bsc, fuse } from "viem/chains"
+import { arbitrum, fuse } from "viem/chains"
 import { getStargateType } from "./stargateType"
-import { quoteSend } from "./quoteSend"
 import { getPathCredits } from "./paths"
 import { getAbiByStargateType } from "./getAbiByStargateType"
 import { getChainEIdByNativeChainId } from "../layerzero/utils"
 import { padAddressToBytes32 } from "../utils/types"
 import { Token } from "../utils/token"
 import { quote } from "./quote"
+import { getStargateTokenMetadata } from "./getStargateTokenMetadata"
+import { getChainKey } from "./getChainKey"
+import { privateKeyToAccount } from "viem/accounts"
+import { getPrivateKey } from "../utils/getPrivateKey"
+import { arbUrl, getAlchemyApiKey } from "../utils/alchemy"
 
-async function sendOft(
-	poolOrOFT: Address,
+// zero address is considered native token by Stargate
+async function send(
+	token: Token,
 	amount: bigint,
 	recipient: Address,
 	toChainId: number,
 	client: PublicClient,
+	wallet: WalletClient,
 ) {
-	if (client.chain?.id === toChainId) {
+	const metadata = await getStargateTokenMetadata(
+		token,
+		getChainKey(token.chainId),
+	)
+	const poolOrOFT = metadata.address as Address
+	const stargateType = metadata.stargateType
+
+	if (wallet.chain?.id === toChainId) {
 		throw new Error("Cannot sendOft() to the same chain")
 	}
 
@@ -35,21 +50,9 @@ async function sendOft(
 
 	if (pathCredits === 0n) {
 		throw new Error(
-			`No credits for bridging ${poolOrOFT} from ${client.chain?.id} to ${toChainId}`,
+			`No credits for bridging ${poolOrOFT} from ${wallet.chain?.id} to ${toChainId}`,
 		)
 	}
-
-	const stargateType = await getStargateType(poolOrOFT, client)
-	const abi = getAbiByStargateType(stargateType)
-
-	// Check token balance
-	const tokenAddress = await client.readContract({
-		address: poolOrOFT,
-		abi,
-		functionName: "token",
-	})
-
-	const token = await Token.fromAddress(tokenAddress, client)
 
 	const tokenBalance = await token.balanceOf(recipient, client)
 	const allowance = await token.allowance(recipient, poolOrOFT, client)
@@ -112,9 +115,9 @@ async function sendOft(
 		oftCmd: "0x" as Hex,
 	}
 
-	const simulateResult = await client.simulateContract({
+	const { request } = await client.simulateContract({
+		account: wallet.account,
 		address: poolOrOFT,
-		account: recipient,
 		abi: getAbiByStargateType(stargateType),
 		functionName: "send",
 		value: messagingFee.nativeFee,
@@ -125,28 +128,38 @@ async function sendOft(
 		],
 	})
 
+	const txHash = await wallet.writeContract(request)
+
 	console.log("\nSuccessful Tx!")
-	console.log("Hash:", simulateResult.result[0].guid)
-	console.log("Nonce:", simulateResult.result[0].nonce)
+	console.log("Hash:", txHash)
 }
 
 async function main() {
+	const sourceChain = arbitrum
+	const destinationChainId = fuse.id
+	const tokenInAddress = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+	const recipient = "0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB"
+
+	const wallet = createWalletClient({
+		account: privateKeyToAccount(getPrivateKey() as `0x${string}`),
+		chain: sourceChain,
+		transport: http(arbUrl + getAlchemyApiKey()),
+	}).extend(publicActions)
+
 	const client = createPublicClient({
-		chain: fuse,
+		chain: sourceChain,
 		transport: http(),
 	})
 
-	const FUSE_USDT_OFT = "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6"
-	const USDT_POOL_BSC = "0x138EB30f73BC423c6455C53df6D89CB01d9eBc63"
-	const USDT_POOL_ARBITRUM = "0xcE8CcA271Ebc0533920C83d39F417ED6A0abB7D0"
-	const recipient = "0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB"
+	const tokenIn = await Token.fromAddress(tokenInAddress, client)
 
-	await sendOft(
-		FUSE_USDT_OFT,
-		parseUnits("1", 6),
+	await send(
+		tokenIn,
+		parseUnits("90", 6),
 		recipient,
-		arbitrum.id,
+		destinationChainId,
 		client,
+		wallet,
 	)
 }
 
