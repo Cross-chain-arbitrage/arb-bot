@@ -12,7 +12,8 @@
 		"stablecoins": "npx tsx src/stablecoins.ts",
 		"tokens": "npx tsx src/tokens.ts",
 		"tokensByChains": "npx tsx src/tokensByChains.ts",
-		"getPoolStats": "npx tsx src/getPoolStats.ts"
+		"getPoolStats": "npx tsx src/getPoolStats.ts",
+		"send": "npx tsx src/stargate/send.ts"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.5.14",
