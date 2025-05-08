@@ -1,13 +1,15 @@
 import { Address, erc20Abi, PublicClient } from "viem"
 import { ERC20_ABI } from "../abi/erc20"
 
+export const NATIVE_ADDRESS = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+
 export class Token {
 	constructor(
 		public address: Address,
 		public decimals: number,
-		public name: string,
 		public symbol: string,
-		public chainId?: number,
+		public chainId: number,
+		public name?: string,
 	) {
 		this.address = address
 		this.decimals = decimals
@@ -25,7 +27,11 @@ export class Token {
 		const symbol = await this.getTokenSymbol(address, client)
 		const chainId = client.chain?.id
 
-		return new Token(address, decimals, name, symbol, chainId)
+		if (!chainId) {
+			throw new Error("Chain id not found in client")
+		}
+
+		return new Token(address, decimals, symbol, chainId, name)
 	}
 
 	static async getTokenDecimals(
