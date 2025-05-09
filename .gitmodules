@@ -1,3 +1,0 @@
-[submodule "dependencies/stargate-v2"]
-	path = dependencies/stargate-v2
-	url = https://github.com/stargate-protocol/stargate-v2
