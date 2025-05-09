@@ -1,7 +1,7 @@
 import { Address, PublicClient, zeroAddress } from "viem"
 import { Token } from "../utils/token"
-import { ALGEBRA_POOL_ABI } from "../abi/algebraPool"
-import { ALGEBRA_FACTORY_ABI } from "../abi/algebraFactory"
+import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
+import { ALGEBRA_FACTORY_ABI } from "../abi/algebra/algebraFactory"
 import { PoolInfo, sqrtPriceX96ToPrice } from "../utils/pool"
 
 export async function getPoolAddressOfAlgebraPool(
