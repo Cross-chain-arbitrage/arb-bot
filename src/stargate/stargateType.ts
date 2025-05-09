@@ -1,5 +1,5 @@
 import { Address, PublicClient } from "viem"
-import { STARGATE_POOL_ABI } from "../abi/stgPool"
+import { STARGATE_POOL_ABI } from "../abi/stargate/stgPool"
 
 export async function getStargateType(
 	poolAddress: Address,

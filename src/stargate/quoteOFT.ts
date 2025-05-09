@@ -3,8 +3,7 @@ import { Address } from "viem"
 import { PublicClient } from "viem"
 import { getChainEIdByNativeChainId } from "../layerzero/utils"
 import { padAddressToBytes32 } from "../utils/types"
-import { getAbiByStargateType } from "./getAbiByStargateType"
-import { getStargateType } from "./stargateType"
+import { OFT_ABI } from "../abi/stargate/oft"
 
 export async function quoteOFT(
 	token: Address,
@@ -16,12 +15,9 @@ export async function quoteOFT(
 	const toChainEId = getChainEIdByNativeChainId(toChainId)
 	const recipientBytes32 = padAddressToBytes32(recipient)
 
-	const stargateType = await getStargateType(token, client)
-	const abi = getAbiByStargateType(stargateType)
-
 	const result = await client.readContract({
-		address: token,
-		abi,
+		address: token as Address,
+		abi: OFT_ABI,
 		functionName: "quoteOFT",
 		args: [
 			{

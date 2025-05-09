@@ -1,6 +1,6 @@
 import { Address, PublicClient } from "viem"
 import { getChainEIdByNativeChainId } from "../layerzero/utils"
-import { STARGATE_POOL_ABI } from "../abi/stgPool"
+import { STARGATE_POOL_ABI } from "../abi/stargate/stgPool"
 
 export async function getPathCredits(
 	pool: Address,

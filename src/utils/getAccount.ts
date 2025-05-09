@@ -1,4 +1,5 @@
 import dotenv from "dotenv"
+import { privateKeyToAccount } from "viem/accounts"
 
 dotenv.config()
 
@@ -10,4 +11,11 @@ export function getPrivateKey() {
 	}
 
 	return privateKey
+}
+
+export function getAccountAddress() {
+	const pk = getPrivateKey()
+	const account = privateKeyToAccount(pk as `0x${string}`)
+
+	return account.address
 }

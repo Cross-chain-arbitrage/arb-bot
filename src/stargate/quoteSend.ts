@@ -8,8 +8,8 @@ import {
 import { PublicClient } from "viem"
 import { getChainEIdByNativeChainId } from "../layerzero/utils"
 import { padAddressToBytes32 } from "../utils/types"
-import { getStargateType } from "./stargateType"
-import { getAbiByStargateType } from "./getAbiByStargateType"
+
+import { STARGATE_BASE_ABI } from "../abi/stargate/stargateBase"
 
 export async function quoteSend(
 	token: Address,
@@ -18,9 +18,6 @@ export async function quoteSend(
 	toChainId: number,
 	client: PublicClient,
 ): Promise<MessagingFee> {
-	const stargateType = await getStargateType(token, client)
-	const abi = getAbiByStargateType(stargateType)
-
 	const toChainEId = getChainEIdByNativeChainId(toChainId)
 	const recipientBytes32 = padAddressToBytes32(recipient)
 
@@ -37,8 +34,8 @@ export async function quoteSend(
 	}
 
 	const messagingFee = await client.readContract({
-		address: token,
-		abi,
+		address: token as Address,
+		abi: STARGATE_BASE_ABI,
 		functionName: "quoteSend",
 		args: [sendParams, payInLZ],
 	})

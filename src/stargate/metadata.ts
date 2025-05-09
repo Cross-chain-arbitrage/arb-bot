@@ -1,7 +1,13 @@
-export type StargateType = "POOL" | "OFT" | "NATIVE"
+export type StargateTypes = "POOL" | "OFT" | "NATIVE"
+
+export enum StargateType {
+	POOL = 0,
+	OFT = 1,
+	NATIVE = 2,
+}
 
 export interface StargateTokenMetadata {
-	stargateType: StargateType
+	stargateType: StargateTypes
 	address: string
 	token: {
 		address: string
