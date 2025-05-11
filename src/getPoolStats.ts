@@ -176,10 +176,7 @@ async function main() {
 
 async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 	for (const pool of pools) {
-		const [token0, token1] = await getPoolTokens(
-			pool.address,
-			chainId,
-		)
+		const [token0, token1] = await getPoolTokens(pool.address, chainId)
 
 		pool.chainName = ClientManager.findChainById(chainId)?.name
 
@@ -295,4 +292,4 @@ function logArbitrageOpportunities(
 	})
 }
 
-main()
+main().catch(console.error)
