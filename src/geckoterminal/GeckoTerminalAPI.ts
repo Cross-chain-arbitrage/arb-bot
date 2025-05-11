@@ -22,23 +22,20 @@ interface TokenData {
 }
 
 export class GeckoTerminalAPI {
-	private readonly baseUrl: string
+	private static readonly baseUrl: string =
+		"https://api.geckoterminal.com/api/v2"
 
-	constructor(baseUrl: string = "https://api.geckoterminal.com/api/v2") {
-		this.baseUrl = baseUrl
-	}
-
-	async getTokenData(
+	static async getTokenData(
 		address: Address,
 		network: string = "eth",
 	): Promise<TokenData> {
-		const tokenDataUrl = `${this.baseUrl}/networks/${network}/tokens/${address}`
+		const tokenDataUrl = `${GeckoTerminalAPI.baseUrl}/networks/${network}/tokens/${address}`
 		const response = await fetch(tokenDataUrl)
 		const data = (await response.json()) as { data: TokenData }
 		return data.data
 	}
 
-	async getTokenPrice(address: Address): Promise<number> {
+	static async getTokenPrice(address: Address): Promise<number> {
 		const tokenData = await this.getTokenData(address)
 		return Number(tokenData.attributes.price_usd)
 	}

@@ -142,14 +142,14 @@ async function main() {
 
 	// const priceUSDT = 1
 	// const priceUSDC = 1
-	const geckoTerminal = new GeckoTerminalAPI()
-	const priceBTC = await geckoTerminal.getTokenPrice(
+
+	const priceBTC = await GeckoTerminalAPI.getTokenPrice(
 		"0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
 	)
-	const priceETH = await geckoTerminal.getTokenPrice(
+	const priceETH = await GeckoTerminalAPI.getTokenPrice(
 		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 	)
-	const priceFUSE = await geckoTerminal.getTokenPrice(
+	const priceFUSE = await GeckoTerminalAPI.getTokenPrice(
 		"0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d",
 	)
 
