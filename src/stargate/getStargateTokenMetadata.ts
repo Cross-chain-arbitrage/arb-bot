@@ -1,4 +1,3 @@
-import { Address } from "viem"
 
 import axios from "axios"
 import { getApiUrl } from "../utils/apiUrl"

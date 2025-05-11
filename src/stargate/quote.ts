@@ -1,5 +1,4 @@
-import { Address, PublicClient } from "viem"
-import { getStargateType } from "./stargateType"
+import { Address } from "viem"
 import { quoteSend } from "./quoteSend"
 import { quoteOFT } from "./quoteOFT"
 import { StargateTokenMetadata } from "./metadata"
@@ -19,14 +18,14 @@ export async function quote(
 	amount: bigint,
 	recipient: Address,
 	toChainId: number,
-	client: PublicClient,
+	fromChainId: number,
 ): Promise<QuoteResult> {
 	const messagingFee = await quoteSend(
 		metadata.address as Address,
 		amount,
 		recipient,
 		toChainId,
-		client,
+		fromChainId,
 	)
 
 	switch (metadata.stargateType) {
@@ -41,7 +40,7 @@ export async function quote(
 				amount,
 				recipient,
 				toChainId,
-				client,
+				fromChainId,
 			)
 
 			return {

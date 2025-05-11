@@ -1,13 +1,16 @@
-import { Address, PublicClient } from "viem"
+import { Address } from "viem"
 import { getChainEIdByNativeChainId } from "../layerzero/utils"
 import { STARGATE_POOL_ABI } from "../abi/stargate/stgPool"
+import { ClientManager } from "../utils/ClientManager"
 
 export async function getPathCredits(
 	pool: Address,
 	toChainId: number,
-	client: PublicClient,
+	chainId: number,
 ): Promise<bigint> {
-	if (client.chain?.id === toChainId) {
+	const client = ClientManager.getClient(chainId)
+
+	if (chainId === toChainId) {
 		throw new Error("Cannot getPath() to the same chain")
 	}
 

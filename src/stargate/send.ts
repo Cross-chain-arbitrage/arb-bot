@@ -1,15 +1,4 @@
-import {
-	Address,
-	createPublicClient,
-	createWalletClient,
-	formatEther,
-	formatUnits,
-	Hex,
-	http,
-	publicActions,
-	PublicClient,
-	WalletClient,
-} from "viem"
+import { Address, formatEther, formatUnits, Hex, WalletClient } from "viem"
 import { arbitrum, fuse } from "viem/chains"
 import { getPathCredits } from "./paths"
 import { getChainEIdByNativeChainId } from "../layerzero/utils"
@@ -18,9 +7,9 @@ import { Token } from "../utils/token"
 import { quote } from "./quote"
 import { getStargateTokenMetadata } from "./getStargateTokenMetadata"
 import { getChainKey } from "./getChainKey"
-import { privateKeyToAccount } from "viem/accounts"
-import { getAccountAddress, getPrivateKey } from "../utils/getAccount"
+import { getAccountAddress } from "../utils/getAccount"
 import { STARGATE_BASE_ABI } from "../abi/stargate/stargateBase"
+import { ClientManager } from "../utils/ClientManager"
 
 // zero address is considered native token by Stargate
 async function send(
@@ -28,7 +17,6 @@ async function send(
 	amount: bigint,
 	recipient: Address,
 	toChainId: number,
-	client: PublicClient,
 	wallet: WalletClient,
 ) {
 	const tokenMetadata = await getStargateTokenMetadata(
@@ -37,11 +25,15 @@ async function send(
 	)
 	const poolOrOFT = tokenMetadata.address as Address
 
-	if (wallet.chain?.id === toChainId) {
+	if (token.chainId === toChainId) {
 		throw new Error("Cannot sendOft() to the same chain")
 	}
 
-	const pathCredits = await getPathCredits(poolOrOFT, toChainId, client)
+	const pathCredits = await getPathCredits(
+		poolOrOFT,
+		toChainId,
+		token.chainId,
+	)
 
 	if (pathCredits === 0n) {
 		throw new Error(
@@ -49,8 +41,8 @@ async function send(
 		)
 	}
 
-	const tokenBalance = await token.balanceOf(recipient, client)
-	const allowance = await token.allowance(recipient, poolOrOFT, client)
+	const tokenBalance = await token.balanceOf(recipient)
+	const allowance = await token.allowance(recipient, poolOrOFT)
 
 	if (tokenBalance < amount) {
 		throw new Error(
@@ -65,7 +57,7 @@ async function send(
 	}
 
 	console.log("Sending", amount, "of", poolOrOFT, "to", recipient)
-	console.log(`From: ${client.chain?.id}`)
+	console.log(`From: ${wallet.chain?.id}`)
 	console.log(`To: ${toChainId}`)
 
 	const toChainEId = getChainEIdByNativeChainId(toChainId)
@@ -79,7 +71,7 @@ async function send(
 		amount,
 		recipient,
 		toChainId,
-		client,
+		token.chainId,
 	)
 
 	console.log("--------------------------------")
@@ -110,6 +102,8 @@ async function send(
 		oftCmd: "0x" as Hex,
 	}
 
+	const client = ClientManager.getClient(token.chainId)
+
 	const { request } = await client.simulateContract({
 		account: wallet.account,
 		address: poolOrOFT,
@@ -133,30 +127,23 @@ async function main() {
 	const sourceChain = fuse
 	const destinationChainId = arbitrum.id
 
+	 
 	const USDT_ARB = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
 	const USDT_FUSE = "0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7"
+	 
 	const WETH_FUSE = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590"
 
 	const tokenInAddress = USDT_FUSE
 	const recipient = getAccountAddress()
 
-	const wallet = createWalletClient({
-		account: privateKeyToAccount(getPrivateKey() as `0x${string}`),
-		chain: sourceChain,
-		transport: http(),
-	}).extend(publicActions)
+	const wallet = ClientManager.getWalletClient(sourceChain.id)
 
-	const client = createPublicClient({
-		chain: sourceChain,
-		transport: http(),
-	})
+	const tokenIn = await Token.fromAddress(tokenInAddress, sourceChain.id)
 
-	const tokenIn = await Token.fromAddress(tokenInAddress, client)
-
-	const balance = await tokenIn.balanceOf(recipient, client)
+	const balance = await tokenIn.balanceOf(recipient)
 	console.log("Balance:", formatEther(balance))
 
-	await send(tokenIn, balance, recipient, destinationChainId, client, wallet)
+	await send(tokenIn, balance, recipient, destinationChainId, wallet)
 }
 
 main().catch(console.error)
