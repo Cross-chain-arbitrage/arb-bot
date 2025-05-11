@@ -21,7 +21,7 @@ export async function quote(
 	fromChainId: number,
 ): Promise<QuoteResult> {
 	const messagingFee = await quoteSend(
-		metadata.address as Address,
+		metadata.address,
 		amount,
 		recipient,
 		toChainId,
@@ -34,9 +34,9 @@ export async function quote(
 				isOFT: false,
 				messagingFee,
 			}
-		case "OFT":
+		case "OFT": {
 			const [oftLimit, oftFeeDetails, oftReceipt] = await quoteOFT(
-				metadata.address as Address,
+				metadata.address,
 				amount,
 				recipient,
 				toChainId,
@@ -52,6 +52,7 @@ export async function quote(
 					oftReceipt,
 				},
 			}
+		}
 		case "NATIVE":
 			return {
 				isOFT: false,

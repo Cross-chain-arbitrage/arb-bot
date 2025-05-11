@@ -23,7 +23,7 @@ async function send(
 		token,
 		getChainKey(token.chainId),
 	)
-	const poolOrOFT = tokenMetadata.address as Address
+	const poolOrOFT = tokenMetadata.address
 
 	if (token.chainId === toChainId) {
 		throw new Error("Cannot sendOft() to the same chain")

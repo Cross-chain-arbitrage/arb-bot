@@ -10,16 +10,16 @@ makeSuite.skip = function (name: string, test: () => void) {
 	describe.skip(name, () => beforeAndTest(test))
 }
 
-
 function beforeAndTest(test: () => void) {
-	beforeAll(async () => {
+	beforeAll(() => {
 		//remove too verbose logs
-		global.console = require('console')
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports
+		global.console = require("console")
 
-		const isLogs = process.env.ENABLE_LOGS === 'true'
+		const isLogs = process.env.ENABLE_LOGS === "true"
 
 		if (!isLogs) {
-			jest.spyOn(console, 'log').mockImplementation(() => {})
+			jest.spyOn(console, "log").mockImplementation(() => {})
 		}
 	})
 	test()

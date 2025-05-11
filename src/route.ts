@@ -1,5 +1,5 @@
-import axios from 'axios'
-import { getApiUrl } from './utils/apiUrl'
+import axios from "axios"
+import { getApiUrl } from "./utils/apiUrl"
 
 export interface StargateRouteParams {
 	srcToken: string
@@ -14,7 +14,7 @@ export interface StargateRouteParams {
 
 export interface Route {
 	name: string
-	mode: 'taxi' | 'bus'
+	mode: "taxi" | "bus"
 	srcAddress: string
 	dstAddress: string
 	srcChainKey: string
@@ -31,12 +31,12 @@ export interface Route {
 	dstNativeAmount: string
 	dstNativeAmountMax?: string
 	messageFee: string
-	steps: any[] // You might want to define a more specific type for steps if needed
+	steps: unknown[] // You might want to define a more specific type for steps if needed
 }
 
 export async function getStargateRoutes(
 	params: StargateRouteParams,
-	mode: 'taxi' | 'bus',
+	mode: "taxi" | "bus",
 	retry: boolean = false,
 ): Promise<Route[]> {
 	const apiUrl = getApiUrl()
@@ -48,18 +48,18 @@ export async function getStargateRoutes(
 		)
 
 		return response.data.routes
-			.map((route: any) => ({
-				...route,
-				mode: route.mode as 'taxi' | 'bus',
+			.map((route: unknown) => ({
+				...(route as Route),
+				mode: (route as Route).mode,
 			}))
 			.filter((route: Route) => route.mode === mode)
 	} catch (error) {
 		if (!retry) {
-			console.log('Retrying...')
+			console.log("Retrying...")
 			return await getStargateRoutes(params, mode, true)
 		}
 
-		console.error('Error fetching Stargate routes:', error)
+		console.error("Error fetching Stargate routes:", error)
 		throw error
 	}
 }

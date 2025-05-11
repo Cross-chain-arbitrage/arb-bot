@@ -31,7 +31,7 @@ export async function getTokenData(
 ): Promise<TokenData> {
 	const tokenDataUrl = `${BASE_URL}/networks/${network}/tokens/${address}`
 	const response = await fetch(tokenDataUrl)
-	const data = await response.json()
+	const data = (await response.json()) as { data: TokenData }
 	return data.data
 }
 

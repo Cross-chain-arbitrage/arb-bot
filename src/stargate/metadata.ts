@@ -1,3 +1,5 @@
+import { Address } from "viem"
+
 export type StargateTypes = "POOL" | "OFT" | "NATIVE"
 
 export enum StargateType {
@@ -8,22 +10,22 @@ export enum StargateType {
 
 export interface StargateTokenMetadata {
 	stargateType: StargateTypes
-	address: string
+	address: Address
 	token: {
-		address: string
+		address: Address
 		decimals: number
 		symbol: string
 	}
 	lpToken?: {
-		address: string
+		address: Address
 		decimals: number
 		symbol: string
 	}
 	farm?: {
 		stargateStaking?: {
-			address: string
+			address: Address
 			rewardTokens: {
-				address: string
+				address: Address
 				decimals: number
 				symbol: string
 			}[]
@@ -33,7 +35,7 @@ export interface StargateTokenMetadata {
 	assetId: string
 	chainKey: string
 	chainName: string
-	tokenMessaging: string
+	tokenMessaging: Address
 	sharedDecimals: number
 }
 

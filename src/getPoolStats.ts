@@ -1,11 +1,11 @@
-import { Address, http, PublicClient } from "viem"
-import { createPublicClient } from "viem"
+import { Address } from "viem"
 import { apeChain, fuse, hemi, lightlinkPhoenix } from "viem/chains"
 import { getTokenPricesFromUniV3Pool } from "./getters/uniV3Pool"
 import { getPoolTokens } from "./utils/pool"
 import { getTokenPricesFromAlgebraPool } from "./getters/algebraPool"
 import { Token } from "./utils/token"
 import { getTokenPrice } from "./geckoterminal/api"
+import { ClientManager } from "./utils/ClientManager"
 
 interface PoolPriceData {
 	token0: Token
@@ -45,37 +45,9 @@ interface ArbitrageOpportunity {
 /* ======== Main Function ======== */
 
 async function main() {
-	const clients = [
-		createPublicClient({
-			chain: hemi,
-			transport: http(),
-		}),
-		createPublicClient({
-			chain: lightlinkPhoenix,
-			transport: http(),
-		}),
-		createPublicClient({
-			chain: fuse,
-			transport: http(),
-		}),
-		// createPublicClient({
-		// 	chain: {
-		// 		id: apeChain.id,
-		// 		rpcUrls: {
-		// 			default: http(
-		// 				"https://apechain-mainnet.g.alchemy.com/v2/REDACTED_API_KEY",
-		// 			),
-		// 		},
-		// 		name: "apeChain",
-		// 		nativeCurrency: {
-		// 			name: "ETH",
-		// 			symbol: "ETH",
-		// 			decimals: 18,
-		// 		},
-		// 	},
-		// 	transport: http(),
-		// }),
-	]
+	console.time("getPoolStats")
+
+	const chainIds = [hemi.id, lightlinkPhoenix.id, fuse.id]
 
 	const poolByChain: Record<number, Pool[]> = {
 		[apeChain.id]: [
@@ -164,8 +136,8 @@ async function main() {
 		],
 	}
 
-	for (const client of clients) {
-		await updatePoolsPriceData(poolByChain[client.chain.id], client)
+	for (const chainId of chainIds) {
+		await updatePoolsPriceData(poolByChain[chainId], chainId)
 	}
 
 	// const priceUSDT = 1
@@ -183,10 +155,10 @@ async function main() {
 	console.log("\npriceBTC", priceBTC)
 	console.log("priceETH", priceETH)
 	console.log("priceFUSE", priceFUSE, "\n")
-	let opportunities: ArbitrageOpportunity[] = []
+	const opportunities: ArbitrageOpportunity[] = []
 
-	for (const client of clients) {
-		const pools = poolByChain[client.chain.id]
+	for (const chainId of chainIds) {
+		const pools = poolByChain[chainId]
 
 		const opportunitiesOnChain = findArbitrageOpportunities(
 			pools,
@@ -198,23 +170,25 @@ async function main() {
 	}
 
 	logArbitrageOpportunities(opportunities)
+
+	console.timeEnd("getPoolStats")
 }
 
-async function updatePoolsPriceData(pools: Pool[], client: PublicClient) {
+async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 	for (const pool of pools) {
 		const [token0, token1] = await getPoolTokens(
-			pool.address as Address,
-			client,
+			pool.address,
+			chainId,
 		)
 
-		pool.chainName = client.chain?.name
+		pool.chainName = ClientManager.findChainById(chainId)?.name
 
 		const getPrice =
 			pool.type === PoolType.UNIV3
 				? getTokenPricesFromUniV3Pool
 				: getTokenPricesFromAlgebraPool
 
-		const price = await getPrice(pool.address as Address, client)
+		const price = await getPrice(pool.address, chainId)
 
 		if (price !== null) {
 			pool.priceData = {

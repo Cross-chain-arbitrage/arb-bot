@@ -1,39 +1,39 @@
-import dotenv from 'dotenv'
-import { getStargateRoutes, StargateRouteParams } from './route'
+import dotenv from "dotenv"
+import { getStargateRoutes, StargateRouteParams } from "./route"
 
 // Load environment variables
 dotenv.config()
 
 enum Chains {
-	ethereum = 'ethereum',
-	bsc = 'bsc',
-	avalanche = 'avalanche',
-	polygon = 'polygon',
-	arbitrum = 'arbitrum',
-	optimism = 'optimism',
-	metis = 'metis',
-	linea = 'linea',
-	mantle = 'mantle',
-	base = 'base',
-	kava = 'kava',
-	scroll = 'scroll',
-	aurora = 'aurora',
-	sei = 'sei',
-	zksync = 'zksync',
-	klaytn = 'klaytn',
-	solana = 'solana',
-	iota = 'iota',
+	ethereum = "ethereum",
+	bsc = "bsc",
+	avalanche = "avalanche",
+	polygon = "polygon",
+	arbitrum = "arbitrum",
+	optimism = "optimism",
+	metis = "metis",
+	linea = "linea",
+	mantle = "mantle",
+	base = "base",
+	kava = "kava",
+	scroll = "scroll",
+	aurora = "aurora",
+	sei = "sei",
+	zksync = "zksync",
+	klaytn = "klaytn",
+	solana = "solana",
+	iota = "iota",
 }
 
-const NATIVE = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+const NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
 
 // Example usage
 async function main() {
 	const routeParams: StargateRouteParams = {
 		srcToken: NATIVE,
 		dstToken: NATIVE,
-		srcAddress: '0x0000000000000000000000000000000000000001',
-		dstAddress: '0x0000000000000000000000000000000000000001',
+		srcAddress: "0x0000000000000000000000000000000000000001",
+		dstAddress: "0x0000000000000000000000000000000000000001",
 		srcChainKey: Chains.arbitrum,
 		dstChainKey: Chains.optimism,
 		srcAmount: 1000000,
@@ -41,8 +41,8 @@ async function main() {
 	}
 
 	try {
-		const routes = await getStargateRoutes(routeParams, 'taxi')
-		console.log('Stargate routes:')
+		const routes = await getStargateRoutes(routeParams, "taxi")
+		console.log("Stargate routes:")
 		routes.forEach((route, index) => {
 			console.log(`Route ${index + 1}:`)
 			console.log(`  Name: ${route.name}`)
@@ -64,12 +64,12 @@ async function main() {
 					`  Destination Native Amount Max: ${route.dstNativeAmountMax}`,
 				)
 			}
-			console.log(`  Error: ${route.error || 'None'}`)
-			console.log('---')
+			console.log(`  Error: ${route.error || "None"}`)
+			console.log("---")
 		})
 	} catch (error) {
-		console.error('Failed to fetch Stargate routes:', error)
+		console.error("Failed to fetch Stargate routes:", error)
 	}
 }
 
-// main()
+main().catch(console.error)
