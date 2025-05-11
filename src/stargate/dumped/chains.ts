@@ -1,18 +1,3 @@
-export interface StargateChain {
-	chainKey: string
-	chainType: "evm" | "solana" | "tron" | "ton" | "aptos" | "hypercore"
-	chainId: number
-	shortName: string
-	name: string
-	nativeCurrency: {
-		chainKey: string
-		name: string
-		symbol: string
-		decimals: number
-		address: string
-	}
-}
-
 export const CHAIN_KEYS: StargateChain[] = [
 	{
 		chainKey: "ethereum",
