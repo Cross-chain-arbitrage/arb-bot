@@ -10,6 +10,46 @@ interface Response {
 	data: { v1: undefined; v2: StargateTokenMetadata[] }
 }
 
+interface NativeCurrency {
+	name: string
+	symbol: string
+	decimals: number
+	address?: string // Optional, as it's only present for Aptos
+}
+
+interface StargateToken {
+	isBridgeable: boolean
+	chainKey: string
+	address: string
+	decimals: number
+	symbol: string
+	name?: string
+	price: {
+		usd: number
+	}
+}
+
+interface Stablecoin {
+	symbol: string
+	address: Address
+	chains: {
+		name?: string
+		chainKey: string
+		address: string
+		price: number
+		decimals: number
+	}[]
+}
+
+interface Chain {
+	chainKey: string
+	chainType: "evm" | "aptos" | "solana"
+	chainId: number
+	shortName: string
+	name: string
+	nativeCurrency: NativeCurrency
+}
+
 interface StargateTokenMetadata {
 	stargateType: StargateTypes
 	address: Address
