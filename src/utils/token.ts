@@ -1,5 +1,6 @@
-import { Address, erc20Abi, PublicClient } from "viem"
+import { Address, erc20Abi, formatUnits, parseUnits } from "viem"
 import { ERC20_ABI } from "../abi/erc20"
+import { ClientManager } from "./ClientManager"
 
 export const NATIVE_ADDRESS = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 
@@ -20,24 +21,23 @@ export class Token {
 
 	static async fromAddress(
 		address: Address,
-		client: PublicClient,
+		chainId: number,
 	): Promise<Token> {
-		const decimals = await this.getTokenDecimals(address, client)
-		const name = await this.getTokenName(address, client)
-		const symbol = await this.getTokenSymbol(address, client)
-		const chainId = client.chain?.id
-
-		if (!chainId) {
-			throw new Error("Chain id not found in client")
-		}
+		const [decimals, name, symbol] = await Promise.all([
+			this.getTokenDecimals(address, chainId),
+			this.getTokenName(address, chainId),
+			this.getTokenSymbol(address, chainId),
+		])
 
 		return new Token(address, decimals, symbol, chainId, name)
 	}
 
 	static async getTokenDecimals(
 		tokenAddress: Address,
-		client: PublicClient,
+		chainId: number,
 	): Promise<number> {
+		const client = ClientManager.getClient(chainId)
+
 		const decimals = await client.readContract({
 			address: tokenAddress,
 			abi: ERC20_ABI,
@@ -48,8 +48,10 @@ export class Token {
 
 	static async getTokenName(
 		tokenAddress: Address,
-		client: PublicClient,
+		chainId: number,
 	): Promise<string> {
+		const client = ClientManager.getClient(chainId)
+
 		const name = await client.readContract({
 			address: tokenAddress,
 			abi: ERC20_ABI,
@@ -60,8 +62,10 @@ export class Token {
 
 	static async getTokenSymbol(
 		tokenAddress: Address,
-		client: PublicClient,
+		chainId: number,
 	): Promise<string> {
+		const client = ClientManager.getClient(chainId)
+
 		const symbol = await client.readContract({
 			address: tokenAddress,
 			abi: ERC20_ABI,
@@ -70,7 +74,9 @@ export class Token {
 		return symbol
 	}
 
-	async balanceOf(address: Address, client: PublicClient): Promise<bigint> {
+	async balanceOf(address: Address): Promise<bigint> {
+		const client = ClientManager.getClient(this.chainId)
+
 		const balance = await client.readContract({
 			address: this.address,
 			abi: erc20Abi,
@@ -80,11 +86,9 @@ export class Token {
 		return balance
 	}
 
-	async allowance(
-		address: Address,
-		spender: Address,
-		client: PublicClient,
-	): Promise<bigint> {
+	async allowance(address: Address, spender: Address): Promise<bigint> {
+		const client = ClientManager.getClient(this.chainId)
+
 		const allowance = await client.readContract({
 			address: this.address,
 			abi: erc20Abi,
@@ -92,5 +96,13 @@ export class Token {
 			args: [address, spender],
 		})
 		return allowance
+	}
+
+	formatUnits(amount: bigint): string {
+		return formatUnits(amount, this.decimals)
+	}
+
+	parseUnits(amount: string | bigint): bigint {
+		return parseUnits(amount.toString(), this.decimals)
 	}
 }
