@@ -5,10 +5,6 @@ import { isValidUrl } from "../utils/validation"
 
 dotenv.config()
 
-interface Response {
-	data: { v1: undefined; v2: StargateTokenMetadata[] }
-}
-
 export class StargateAPI {
 	private static getApiUrl(): string {
 		const apiUrl = process.env.STARGATE_API_URL

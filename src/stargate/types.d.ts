@@ -11,6 +11,16 @@ interface SendParams {
 	oftCmd: Hex // The OFT command to be executed, unused in default OFT implementations.
 }
 
+interface QuoteResult {
+	isOFT: boolean
+	messagingFee: MessagingFee
+	oftFees?: {
+		oftLimit: OFTLimit
+		oftFeeDetails: OFTFeeDetail[]
+		oftReceipt: OFTReceipt
+	}
+}
+
 interface MessagingFee {
 	nativeFee: bigint
 	lzTokenFee: bigint

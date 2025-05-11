@@ -9,16 +9,6 @@ import { STARGATE_POOL_ABI } from "../abi/stargate/stgPool"
 import { StargateAPI } from "./StargateAPI"
 import { CHAIN_KEYS } from "./dumped/chains"
 
-interface QuoteResult {
-	isOFT: boolean
-	messagingFee: MessagingFee
-	oftFees?: {
-		oftLimit: OFTLimit
-		oftFeeDetails: OFTFeeDetail[]
-		oftReceipt: OFTReceipt
-	}
-}
-
 export class Stargate {
 	// zero address is considered native token by Stargate
 	async send(

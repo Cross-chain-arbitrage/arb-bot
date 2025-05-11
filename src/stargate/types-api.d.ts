@@ -6,6 +6,10 @@ enum StargateType {
 	NATIVE = 2,
 }
 
+interface Response {
+	data: { v1: undefined; v2: StargateTokenMetadata[] }
+}
+
 interface StargateTokenMetadata {
 	stargateType: StargateTypes
 	address: Address
