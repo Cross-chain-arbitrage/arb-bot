@@ -1,6 +1,7 @@
-import { Address, PublicClient } from "viem"
+import { Address } from "viem"
 import { POOL_ABI } from "../abi/univ3Pool"
 import { Token } from "./token"
+import { ClientManager } from "./ClientManager"
 
 export interface PoolInfo {
 	token0: Address
@@ -13,8 +14,10 @@ export interface PoolInfo {
 
 export async function getPoolTokens(
 	poolAddress: Address,
-	client: PublicClient,
+	chainId: number,
 ): Promise<[Token, Token]> {
+	const client = ClientManager.getClient(chainId)
+
 	const [token0Address, token1Address] = await Promise.all([
 		client.readContract({
 			address: poolAddress,
@@ -28,8 +31,8 @@ export async function getPoolTokens(
 		}),
 	])
 
-	const token0 = await Token.fromAddress(token0Address, client)
-	const token1 = await Token.fromAddress(token1Address, client)
+	const token0 = await Token.fromAddress(token0Address, chainId)
+	const token1 = await Token.fromAddress(token1Address, chainId)
 
 	return [token0, token1]
 }

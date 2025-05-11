@@ -1,4 +1,4 @@
-import { Client, PublicClient, WalletClient } from "viem"
+import { PublicClient, WalletClient } from "viem"
 import { Token } from "../../utils/token"
 import { pegswapAbi } from "../../abi/pegswap"
 
