@@ -4,7 +4,7 @@ import { getTokenPricesFromUniV3Pool } from "./getters/uniV3Pool"
 import { getPoolTokens } from "./utils/pool"
 import { getTokenPricesFromAlgebraPool } from "./getters/algebraPool"
 import { Token } from "./utils/token"
-import { getTokenPrice } from "./geckoterminal/api"
+import { GeckoTerminalAPI } from "./geckoterminal/GeckoTerminalAPI"
 import { ClientManager } from "./utils/ClientManager"
 
 interface PoolPriceData {
@@ -142,13 +142,14 @@ async function main() {
 
 	// const priceUSDT = 1
 	// const priceUSDC = 1
-	const priceBTC = await getTokenPrice(
+	const geckoTerminal = new GeckoTerminalAPI()
+	const priceBTC = await geckoTerminal.getTokenPrice(
 		"0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
 	)
-	const priceETH = await getTokenPrice(
+	const priceETH = await geckoTerminal.getTokenPrice(
 		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 	)
-	const priceFUSE = await getTokenPrice(
+	const priceFUSE = await geckoTerminal.getTokenPrice(
 		"0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d",
 	)
 
