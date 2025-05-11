@@ -3,6 +3,7 @@ import { Token } from "../utils/token"
 import { FACTORY_ABI } from "../abi/factory"
 import { POOL_ABI } from "../abi/univ3Pool"
 import { PoolInfo, sqrtPriceX96ToPrice } from "../utils/pool"
+import { ClientManager } from "../utils/ClientManager"
 
 /* ======== MAIN FUNCTIONS ======== */
 
@@ -66,39 +67,44 @@ export async function getPoolAddressOfUniV3Pool(
 
 async function getPoolInfo(
 	poolAddress: Address,
-	client: PublicClient,
+	chainId: number,
 ): Promise<PoolInfo | null> {
+	const client = ClientManager.getClient(chainId)
+
 	try {
 		if (poolAddress === zeroAddress) {
 			throw new Error("Zero pool address")
 		}
 
+		const abi = POOL_ABI
+		const address = poolAddress
+
 		// Get pool data
 		const [slot0Data, liquidityData, token0, token1, fee] =
 			await Promise.all([
 				client.readContract({
-					address: poolAddress,
-					abi: POOL_ABI,
+					address,
+					abi,
 					functionName: "slot0",
 				}),
 				client.readContract({
-					address: poolAddress,
-					abi: POOL_ABI,
+					address,
+					abi,
 					functionName: "liquidity",
 				}),
 				client.readContract({
-					address: poolAddress,
-					abi: POOL_ABI,
+					address,
+					abi,
 					functionName: "token0",
 				}),
 				client.readContract({
-					address: poolAddress,
-					abi: POOL_ABI,
+					address,
+					abi,
 					functionName: "token1",
 				}),
 				client.readContract({
-					address: poolAddress,
-					abi: POOL_ABI,
+					address,
+					abi,
 					functionName: "fee",
 				}),
 			])
@@ -119,17 +125,19 @@ async function getPoolInfo(
 
 export async function getTokenPricesFromUniV3Pool(
 	poolAddress: Address,
-	client: PublicClient,
+	chainId: number,
 ): Promise<number | null> {
 	try {
-		const poolInfo = await getPoolInfo(poolAddress, client)
+		const poolInfo = await getPoolInfo(poolAddress, chainId)
 
 		if (!poolInfo) {
 			throw new Error("No pool info found")
 		}
 
-		const token0 = await Token.fromAddress(poolInfo.token0, client)
-		const token1 = await Token.fromAddress(poolInfo.token1, client)
+		const [token0, token1] = await Promise.all([
+			Token.fromAddress(poolInfo.token0, chainId),
+			Token.fromAddress(poolInfo.token1, chainId),
+		])
 
 		// Calculate price
 		const price = sqrtPriceX96ToPrice(

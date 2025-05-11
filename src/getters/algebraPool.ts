@@ -3,6 +3,7 @@ import { Token } from "../utils/token"
 import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
 import { ALGEBRA_FACTORY_ABI } from "../abi/algebra/algebraFactory"
 import { PoolInfo, sqrtPriceX96ToPrice } from "../utils/pool"
+import { ClientManager } from "../utils/ClientManager"
 
 export async function getPoolAddressOfAlgebraPool(
 	factoryAddress: Address,
@@ -32,8 +33,10 @@ export async function getPoolAddressOfAlgebraPool(
 
 async function getPoolInfo(
 	poolAddress: Address,
-	client: PublicClient,
+	chainId: number,
 ): Promise<PoolInfo | null> {
+	const client = ClientManager.getClient(chainId)
+
 	try {
 		if (poolAddress === zeroAddress) {
 			throw new Error("Zero pool address")
@@ -85,17 +88,19 @@ async function getPoolInfo(
 
 export async function getTokenPricesFromAlgebraPool(
 	poolAddress: Address,
-	client: PublicClient,
+	chainId: number,
 ): Promise<number | null> {
 	try {
-		const poolInfo = await getPoolInfo(poolAddress, client)
+		const client = ClientManager.getClient(chainId)
+
+		const poolInfo = await getPoolInfo(poolAddress, chainId)
 
 		if (!poolInfo) {
 			throw new Error("No pool info found")
 		}
 
-		const token0 = await Token.fromAddress(poolInfo.token0, client)
-		const token1 = await Token.fromAddress(poolInfo.token1, client)
+		const token0 = await Token.fromAddress(poolInfo.token0, chainId)
+		const token1 = await Token.fromAddress(poolInfo.token1, chainId)
 
 		// Calculate price
 		const price = sqrtPriceX96ToPrice(
