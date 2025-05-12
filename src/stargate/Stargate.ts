@@ -8,6 +8,7 @@ import { OFT_ABI } from "../abi/stargate/oft"
 import { STARGATE_POOL_ABI } from "../abi/stargate/stgPool"
 import { StargateAPI } from "./StargateAPI"
 import { STARGATE_CHAINS } from "./dumped/chains"
+import { NativeCurrency } from "../utils/tokens/NativeCurrency"
 
 export class StargateError extends Error {
 	constructor(message: string) {
@@ -19,7 +20,7 @@ export class StargateError extends Error {
 
 export class Stargate {
 	static async send(
-		token: Token,
+		token: Token | NativeCurrency,
 		amount: bigint,
 		recipient: Address,
 		toChainId: number,
@@ -100,7 +101,7 @@ export class Stargate {
 		amount: bigint,
 		recipient: Address,
 		poolOrOFT: Address,
-		token: Token,
+		token: Token | NativeCurrency,
 	): Promise<void> {
 		const [tokenBalance, allowance] = await Promise.all([
 			token.balanceOf(recipient),

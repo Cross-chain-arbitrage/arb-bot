@@ -1,5 +1,5 @@
 import { Address, formatUnits, parseUnits } from "viem"
-import { BaseContract } from "../BaseContract"
+import { BaseContract } from "../contracts/BaseContract"
 
 export abstract class TokenBase extends BaseContract {
 	constructor(

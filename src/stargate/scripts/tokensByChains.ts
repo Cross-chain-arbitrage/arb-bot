@@ -1,10 +1,9 @@
 import assert from "assert"
-import { getStargateChains } from "./getters/chains"
-import { getStargateTokens } from "./getters/tokens"
+import { StargateAPI } from "../StargateAPI"
 
 async function main() {
-	const allChains = await getStargateChains()
-	const tokens = await getStargateTokens()
+	const allChains = await StargateAPI.getChains()
+	const tokens = await StargateAPI.getTokens()
 
 	const chainsToMap = ["hemi", "fuse", "ape", "lightlink", "degen"]
 

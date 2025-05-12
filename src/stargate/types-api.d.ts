@@ -10,7 +10,7 @@ interface Response {
 	data: { v1: undefined; v2: StargateTokenMetadata[] }
 }
 
-interface NativeCurrency {
+interface StargateNativeCurrency {
 	name: string
 	symbol: string
 	decimals: number
@@ -47,7 +47,7 @@ interface Chain {
 	chainId: number
 	shortName: string
 	name: string
-	nativeCurrency: NativeCurrency
+	nativeCurrency: StargateNativeCurrency
 }
 
 interface StargateTokenMetadata {

@@ -1,5 +1,9 @@
 import { Address } from "viem"
-import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from "./NativeCurrency"
+import {
+	NATIVE_ADDRESS,
+	NativeCurrency,
+	STARGATE_NATIVE_ADDRESS,
+} from "./NativeCurrency"
 import { Token } from "./Token"
 import { ClientManager } from "../ClientManager"
 import { ERC20_ABI } from "../../abi/erc20"
@@ -13,12 +17,16 @@ export class TokenUtils {
 		return !this.isNative(address)
 	}
 
-	static async fromAddress(
+	static async fromAddress<T extends Token | NativeCurrency>(
 		address: Address,
 		chainId: number,
-	): Promise<Token | NativeCurrency> {
+	): Promise<T> {
 		const client = ClientManager.getClient(chainId)
 		const abi = ERC20_ABI
+
+		if (this.isNative(address)) {
+			return new NativeCurrency("Native", "Native", chainId) as T
+		}
 
 		const [decimals, name, symbol] = await Promise.all([
 			client.readContract({
@@ -38,6 +46,6 @@ export class TokenUtils {
 			}),
 		])
 
-		return new Token(address, chainId, symbol, decimals, name)
+		return new Token(address, chainId, symbol, decimals, name) as T
 	}
 }

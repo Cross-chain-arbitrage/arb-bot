@@ -12,11 +12,11 @@ export class Token extends TokenBase {
 		name?: string,
 	) {
 		super(address, chainId, symbol, decimals, name)
-		this.validateAddress(address)
+		this.validateTokenAddress(address)
 		this.validateDecimals(decimals)
 	}
 
-	private validateAddress(address: Address): void {
+	private validateTokenAddress(address: Address): void {
 		if (!isAddress(address)) {
 			throw new TokenError(`Invalid address for token ${this.symbol}`)
 		}

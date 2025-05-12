@@ -1,10 +1,8 @@
 import { Address } from "viem"
 import { apeChain, fuse, hemi, lightlinkPhoenix } from "viem/chains"
-import { getTokenPricesFromUniV3Pool } from "./getters/uniV3Pool"
-import { getPoolTokens } from "./utils/pool"
-import { getTokenPricesFromAlgebraPool } from "./getters/algebraPool"
 import { Token } from "./utils/tokens/Token"
 import { GeckoTerminalAPI } from "./geckoterminal/GeckoTerminalAPI"
+import { PoolType, PoolUtils } from "./utils/pools/PoolUtils"
 import { ClientManager } from "./utils/ClientManager"
 
 interface PoolPriceData {
@@ -19,11 +17,6 @@ interface Pool {
 	address: Address
 	chainName?: string
 	priceData?: PoolPriceData
-}
-
-enum PoolType {
-	UNIV3 = "uniV3",
-	ALGEBRA = "algebra",
 }
 
 interface TokenPrices {
@@ -177,24 +170,29 @@ async function main() {
 
 async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 	for (const pool of pools) {
-		const [token0, token1] = await getPoolTokens(pool.address, chainId)
+		try {
+			pool.chainName = ClientManager.findChainById(chainId)?.name
 
-		pool.chainName = ClientManager.findChainById(chainId)?.name
+			const Pool = await PoolUtils.createPool(
+				chainId,
+				pool.address,
+				pool.type,
+			)
+			const price = await Pool.getPrices()
 
-		const getPrice =
-			pool.type === PoolType.UNIV3
-				? getTokenPricesFromUniV3Pool
-				: getTokenPricesFromAlgebraPool
-
-		const price = await getPrice(pool.address, chainId)
-
-		if (price !== null) {
-			pool.priceData = {
-				token0,
-				token1,
-				price0To1: price,
-				price1To0: 1 / price,
+			if (price !== null) {
+				pool.priceData = {
+					token0: Pool.token0,
+					token1: Pool.token1,
+					price0To1: price,
+					price1To0: 1 / price,
+				}
 			}
+		} catch (error) {
+			console.error(
+				`Error getting pool prices for pool ${pool.address}:`,
+				error,
+			)
 		}
 	}
 }
@@ -239,7 +237,9 @@ function findArbitrageOpportunities(
 
 	for (const pool of pools) {
 		if (!pool.priceData) {
-			console.warn(`Pool ${pool.address} has no price data`)
+			console.warn(
+				`Pool ${pool.address}:${pool.chainName} has no price data`,
+			)
 			continue
 		}
 

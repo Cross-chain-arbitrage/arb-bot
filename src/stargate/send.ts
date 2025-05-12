@@ -17,10 +17,10 @@ async function main() {
 	const recipient = getAccountAddress()
 
 	const wallet = ClientManager.getWalletClient(sourceChain.id)
-	const tokenIn = (await TokenUtils.fromAddress(
+	const tokenIn = await TokenUtils.fromAddress<Token>(
 		tokenInAddress,
 		sourceChain.id,
-	)) as Token
+	)
 
 	const balance = await tokenIn.balanceOf(recipient)
 	console.log("Balance:", balance)

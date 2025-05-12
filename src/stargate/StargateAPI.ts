@@ -54,7 +54,7 @@ export class StargateAPI {
 	}
 
 	static async getTokenMetadata(
-		token: Token,
+		token: Token | NativeCurrency,
 		chainKey: string,
 	): Promise<StargateTokenMetadata> {
 		this.validateChainKey(chainKey)

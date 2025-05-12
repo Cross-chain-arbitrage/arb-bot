@@ -29,7 +29,7 @@ export class ClientManager {
 
 		this._walletClients.set(chainId, client)
 
-		return client
+		return client as WalletClient
 	}
 
 	static getClient(chainId: number): PublicClient {

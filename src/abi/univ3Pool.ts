@@ -1,4 +1,4 @@
-export const POOL_ABI = [
+export const UNIV3_POOL_ABI = [
 	{
 		inputs: [],
 		name: "slot0",

@@ -1,5 +1,6 @@
 import { Address } from "viem"
 import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
+import { BasePool } from "../utils/pools/BasePool"
 import { Token } from "../utils/tokens/Token"
 import { BaseContract } from "../utils/BaseContract"
 import { ClientManager } from "../utils/ClientManager"
@@ -27,18 +28,7 @@ interface PoolTokens {
 
 /* ======== CONSTANTS ======== */
 
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 const BASIS_POINTS = 10000n
-const NO_PRICE_LIMIT = 0n
-
-/* ======== ERRORS ======== */
-
-class TokenOrderMismatchError extends Error {
-	constructor() {
-		super("Token order mismatch")
-		this.name = "TokenOrderMismatchError"
-	}
-}
 
 /* ======== MAIN CLASS ======== */
 
@@ -99,15 +89,8 @@ export class AlgebraPool extends BaseContract {
 		)
 	}
 
-	private calculatePriceImpact(
-		amountIn: bigint,
-		amountOut: bigint,
-		tokenIn: Token,
-		tokenOut: Token,
-	): number {
-		// TODO: Implement proper price impact calculation
-		return 0
-	}
+	async getPrices(): Promise<number> {
+		const address = this.address
 
 	private validateTokenOrder(
 		tokenIn: Token,
@@ -138,50 +121,19 @@ export class AlgebraPool extends BaseContract {
 		const { result } = await this.client.simulateContract({
 			address: this.contractAddress,
 			abi: ALGEBRA_POOL_ABI,
-			functionName: "swap",
-			args: [ZERO_ADDRESS, zeroToOne, amountIn, NO_PRICE_LIMIT, "0x"],
+			functionName: "globalState",
 		})
 
-		const [amount0, amount1] = result
-		const amountOut = zeroToOne ? -amount1 : -amount0
+		const token0Decimals = this.token0.decimals
+		const token1Decimals = this.token1.decimals
 
-		return {
-			amountIn,
-			amountOut,
-			priceImpact: this.calculatePriceImpact(
-				amountIn,
-				amountOut,
-				tokenIn,
-				tokenOut,
-			),
-		}
-	}
+		// Calculate price
+		const price = this.sqrtPriceX96ToPrice(
+			sqrtPriceX96,
+			token0Decimals,
+			token1Decimals,
+		)
 
-	async swap(params: SwapParams): Promise<SwapResult> {
-		const { amountIn, zeroToOne } = params
-
-		// Simulate first
-		const simulation = await this.simulateSwap(params)
-
-		// Execute swap
-		const hash = await this.wallet.writeContract({
-			address: this.contractAddress,
-			abi: ALGEBRA_POOL_ABI,
-			account: this.account,
-			chain: this.wallet.chain,
-			functionName: "swap",
-			args: [
-				this.account.address || ZERO_ADDRESS,
-				zeroToOne,
-				amountIn,
-				NO_PRICE_LIMIT,
-				"0x",
-			],
-		})
-
-		// Wait for transaction
-		await this.client.waitForTransactionReceipt({ hash })
-
-		return simulation
+		return price
 	}
 }
