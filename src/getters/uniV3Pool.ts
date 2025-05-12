@@ -1,9 +1,9 @@
 import { Address, PublicClient, zeroAddress } from "viem"
-import { Token } from "../utils/token"
 import { FACTORY_ABI } from "../abi/factory"
 import { POOL_ABI } from "../abi/univ3Pool"
 import { PoolInfo, sqrtPriceX96ToPrice } from "../utils/pool"
 import { ClientManager } from "../utils/ClientManager"
+import { TokenUtils } from "../utils/tokens/TokenUtils"
 
 /* ======== MAIN FUNCTIONS ======== */
 
@@ -135,9 +135,11 @@ export async function getTokenPricesFromUniV3Pool(
 		}
 
 		const [token0, token1] = await Promise.all([
-			Token.fromAddress(poolInfo.token0, chainId),
-			Token.fromAddress(poolInfo.token1, chainId),
+			TokenUtils.fromAddress(poolInfo.token0, chainId),
+			TokenUtils.fromAddress(poolInfo.token1, chainId),
 		])
+
+		console.log(token0, token1)
 
 		// Calculate price
 		const price = sqrtPriceX96ToPrice(

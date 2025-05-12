@@ -1,17 +1,18 @@
 import { Address, formatEther, Hex, WalletClient } from "viem"
 import { getChainEIdByNativeChainId } from "../layerzero/utils"
 import { padAddressToBytes32 } from "../utils/types"
-import { Token } from "../utils/token"
+import { Token } from "../utils/tokens/Token"
 import { STARGATE_BASE_ABI } from "../abi/stargate/stargateBase"
 import { ClientManager } from "../utils/ClientManager"
 import { OFT_ABI } from "../abi/stargate/oft"
 import { STARGATE_POOL_ABI } from "../abi/stargate/stgPool"
 import { StargateAPI } from "./StargateAPI"
-import { CHAIN_KEYS } from "./dumped/chains"
+import { STARGATE_CHAINS } from "./dumped/chains"
 
 export class StargateError extends Error {
 	constructor(message: string) {
 		super(message)
+		Object.setPrototypeOf(this, StargateError.prototype)
 		this.name = "StargateError"
 	}
 }
@@ -332,7 +333,7 @@ export class Stargate {
 	}
 
 	static getChainKey(chainId: number): string {
-		const chain = CHAIN_KEYS.find((chain) => chain.chainId === chainId)
+		const chain = STARGATE_CHAINS.find((chain) => chain.chainId === chainId)
 
 		if (!chain) {
 			throw new StargateError(

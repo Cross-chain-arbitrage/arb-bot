@@ -3,7 +3,7 @@ import { apeChain, fuse, hemi, lightlinkPhoenix } from "viem/chains"
 import { getTokenPricesFromUniV3Pool } from "./getters/uniV3Pool"
 import { getPoolTokens } from "./utils/pool"
 import { getTokenPricesFromAlgebraPool } from "./getters/algebraPool"
-import { Token } from "./utils/token"
+import { Token } from "./utils/tokens/Token"
 import { GeckoTerminalAPI } from "./geckoterminal/GeckoTerminalAPI"
 import { ClientManager } from "./utils/ClientManager"
 

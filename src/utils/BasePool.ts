@@ -1,5 +1,5 @@
 import { Address } from "viem"
-import { Token } from "./token"
+import { Token } from "./tokens/Token"
 import { BaseContract } from "./BaseContract"
 
 /* ======== TYPES ======== */

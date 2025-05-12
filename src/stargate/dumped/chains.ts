@@ -1,4 +1,4 @@
-export const CHAIN_KEYS: StargateChain[] = [
+export const STARGATE_CHAINS: StargateChain[] = [
 	{
 		chainKey: "ethereum",
 		chainType: "evm",

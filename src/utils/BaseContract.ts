@@ -2,13 +2,10 @@ import { Account, Address, PublicClient, WalletClient } from "viem"
 import { ClientManager } from "./ClientManager"
 
 export abstract class BaseContract {
-	protected readonly chainId: number
-	protected readonly contractAddress: Address
-
-	constructor(chainId: number, contractAddress: Address) {
-		this.chainId = chainId
-		this.contractAddress = contractAddress
-	}
+	constructor(
+		public readonly chainId: number,
+		public readonly address: Address,
+	) {}
 
 	protected get client(): PublicClient {
 		return ClientManager.getClient(this.chainId)

@@ -1,8 +1,8 @@
 import { Address } from "viem"
 import { POOL_ABI } from "../abi/univ3Pool"
-import { Token } from "./token"
+import { Token } from "./tokens/Token"
 import { ClientManager } from "./ClientManager"
-
+import { TokenUtils } from "./tokens/TokenUtils"
 export interface PoolInfo {
 	token0: Address
 	token1: Address
@@ -31,8 +31,14 @@ export async function getPoolTokens(
 		}),
 	])
 
-	const token0 = await Token.fromAddress(token0Address, chainId)
-	const token1 = await Token.fromAddress(token1Address, chainId)
+	const token0 = (await TokenUtils.fromAddress(
+		token0Address,
+		chainId,
+	)) as Token
+	const token1 = (await TokenUtils.fromAddress(
+		token1Address,
+		chainId,
+	)) as Token
 
 	return [token0, token1]
 }

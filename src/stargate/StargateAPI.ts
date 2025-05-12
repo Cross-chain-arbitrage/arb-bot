@@ -1,16 +1,25 @@
 import axios from "axios"
-import { Token } from "../utils/token"
+import { Token } from "../utils/tokens/Token"
 import dotenv from "dotenv"
 import { isValidUrl } from "../utils/validation"
+import { STARGATE_CHAINS } from "./dumped/chains"
 
 dotenv.config()
+
+export class StargateAPIError extends Error {
+	constructor(message: string) {
+		super(message)
+		Object.setPrototypeOf(this, StargateAPIError.prototype)
+		this.name = "StargateAPIError"
+	}
+}
 
 export class StargateAPI {
 	private static getApiUrl(): string {
 		const apiUrl = process.env.STARGATE_API_URL
 
 		if (!apiUrl || !isValidUrl(apiUrl)) {
-			throw new Error("STARGATE_API_URL is not a valid URL")
+			throw new StargateAPIError("STARGATE_API_URL is not a valid URL")
 		}
 
 		return apiUrl
@@ -20,6 +29,8 @@ export class StargateAPI {
 	static async getTokensMetadata(
 		chainKey: string = "",
 	): Promise<StargateTokenMetadata[]> {
+		this.validateChainKey(chainKey)
+
 		try {
 			const apiUrl = this.getApiUrl()
 
@@ -46,6 +57,8 @@ export class StargateAPI {
 		token: Token,
 		chainKey: string,
 	): Promise<StargateTokenMetadata> {
+		this.validateChainKey(chainKey)
+
 		const metadata = await this.getTokensMetadata(chainKey)
 
 		const tokenMetadata = metadata.find(
@@ -197,5 +210,14 @@ export class StargateAPI {
 		}
 
 		return token.symbol
+	}
+
+	private static validateChainKey(chainKey: string) {
+		if (
+			chainKey &&
+			!STARGATE_CHAINS.some((chain) => chain.chainKey === chainKey)
+		) {
+			throw new StargateAPIError(`Invalid Stargate chainKey: ${chainKey}`)
+		}
 	}
 }

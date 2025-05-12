@@ -1,6 +1,6 @@
 import { Address } from "viem"
 import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
-import { Token } from "../utils/token"
+import { Token } from "../utils/tokens/Token"
 import { BaseContract } from "../utils/BaseContract"
 import { ClientManager } from "../utils/ClientManager"
 

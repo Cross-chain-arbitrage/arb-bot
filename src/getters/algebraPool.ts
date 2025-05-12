@@ -1,9 +1,9 @@
 import { Address, PublicClient, zeroAddress } from "viem"
-import { Token } from "../utils/token"
 import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
 import { ALGEBRA_FACTORY_ABI } from "../abi/algebra/algebraFactory"
 import { PoolInfo, sqrtPriceX96ToPrice } from "../utils/pool"
 import { ClientManager } from "../utils/ClientManager"
+import { TokenUtils } from "../utils/tokens/TokenUtils"
 
 export async function getPoolAddressOfAlgebraPool(
 	factoryAddress: Address,
@@ -91,16 +91,14 @@ export async function getTokenPricesFromAlgebraPool(
 	chainId: number,
 ): Promise<number | null> {
 	try {
-		const client = ClientManager.getClient(chainId)
-
 		const poolInfo = await getPoolInfo(poolAddress, chainId)
 
 		if (!poolInfo) {
 			throw new Error("No pool info found")
 		}
 
-		const token0 = await Token.fromAddress(poolInfo.token0, chainId)
-		const token1 = await Token.fromAddress(poolInfo.token1, chainId)
+		const token0 = await TokenUtils.fromAddress(poolInfo.token0, chainId)
+		const token1 = await TokenUtils.fromAddress(poolInfo.token1, chainId)
 
 		// Calculate price
 		const price = sqrtPriceX96ToPrice(
