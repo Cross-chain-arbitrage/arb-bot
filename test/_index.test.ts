@@ -1,4 +1,4 @@
 import { makeSuite } from './utils/makeSuite'
-import { exampleTest } from './example.test'
+import { algebraPoolTest } from './algebraPool.test'
 
-makeSuite('example test', exampleTest)
+makeSuite('algebra pool test', algebraPoolTest)

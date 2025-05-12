@@ -57,10 +57,11 @@ export class ClientManager {
 			transport: http(),
 		})
 
+		//TODO: check why use type assertion
 		// Store client
 		this.clients.set(chainId, client as PublicClient)
 
-		return client
+		return client as PublicClient
 	}
 
 	static findChainById(chainId: number) {

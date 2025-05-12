@@ -2,7 +2,7 @@ import { Address } from "viem"
 import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
 import { Token } from "../utils/token"
 import { BaseContract } from "../utils/BaseContract"
-import { fuse } from "viem/chains"
+import { ClientManager } from "../utils/ClientManager"
 
 /* ======== TYPES ======== */
 
@@ -43,23 +43,48 @@ class TokenOrderMismatchError extends Error {
 /* ======== MAIN CLASS ======== */
 
 export class AlgebraPool extends BaseContract {
-	constructor(chainId: number, poolAddress: Address) {
+	token0: Token
+	token1: Token
+
+	constructor(
+		poolAddress: Address,
+		chainId: number,
+		token0: Token,
+		token1: Token,
+	) {
 		super(chainId, poolAddress)
+		this.token0 = token0
+		this.token1 = token1
 	}
 
-	private async getPoolTokens(): Promise<PoolTokens> {
-		const abi = ALGEBRA_POOL_ABI
-		const address = this.contractAddress
+	static async fromAddress(
+		poolAddress: Address,
+		chainId: number,
+	): Promise<AlgebraPool> {
+		const { token0: token0Address, token1: token1Address } =
+			await this.getPoolTokens(poolAddress, chainId)
+
+		const token0 = await Token.fromAddress(token0Address, chainId)
+		const token1 = await Token.fromAddress(token1Address, chainId)
+
+		return new AlgebraPool(poolAddress, chainId, token0, token1)
+	}
+
+	static async getPoolTokens(
+		poolAddress: Address,
+		chainId: number,
+	): Promise<PoolTokens> {
+		const client = ClientManager.getClient(chainId)
 
 		const [token0, token1] = await Promise.all([
-			this.client.readContract({
-				address,
-				abi,
+			client.readContract({
+				address: poolAddress,
+				abi: ALGEBRA_POOL_ABI,
 				functionName: "token0",
 			}),
-			this.client.readContract({
-				address,
-				abi,
+			client.readContract({
+				address: poolAddress,
+				abi: ALGEBRA_POOL_ABI,
 				functionName: "token1",
 			}),
 		])
@@ -102,8 +127,12 @@ export class AlgebraPool extends BaseContract {
 		const { tokenIn, tokenOut, amountIn, zeroToOne } = params
 
 		// Get pool tokens and validate order
-		const { token0, token1 } = await this.getPoolTokens()
-		this.validateTokenOrder(tokenIn, token0, token1, zeroToOne)
+		this.validateTokenOrder(
+			tokenIn,
+			this.token0.address,
+			this.token1.address,
+			zeroToOne,
+		)
 
 		// Simulate swap
 		const { result } = await this.client.simulateContract({
@@ -156,39 +185,3 @@ export class AlgebraPool extends BaseContract {
 		return simulation
 	}
 }
-
-async function main() {
-	const chainId = fuse.id
-	const poolAddress = "0x0000000000000000000000000000000000000000"
-	const algebraPool = new AlgebraPool(chainId, poolAddress)
-
-	const tokenIn = await Token.fromAddress(
-		"0x0000000000000000000000000000000000000000",
-		chainId,
-	)
-	const tokenOut = await Token.fromAddress(
-		"0x0000000000000000000000000000000000000000",
-		chainId,
-	)
-
-	const amountIn = tokenIn.parseUnits("1")
-	const slippage = 50 // BPS
-
-	const params = {
-		tokenIn,
-		tokenOut,
-		amountIn,
-		zeroToOne: true,
-		slippage,
-	}
-
-	// Simulate
-	const simulation = await algebraPool.simulateSwap(params)
-	console.log("Simulation:", simulation)
-
-	// Execute
-	const result = await algebraPool.swap(params)
-	console.log("Execution:", result)
-}
-
-main().catch(console.error)
