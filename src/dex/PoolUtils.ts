@@ -1,13 +1,13 @@
 import { Address, zeroAddress } from "viem"
-import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
-import { ClientManager } from "../ClientManager"
-import { UNIV3_POOL_ABI } from "../../abi/univ3Pool"
-import { TokenUtils } from "../tokens/TokenUtils"
-import { BasePool } from "./BasePool"
-import { AlgebraPool } from "../../algebra/Pool"
-import { Token } from "../tokens/Token"
-import { ALGEBRA_FACTORY_ABI } from "../../abi/algebra/algebraFactory"
-import { UniV3Pool } from "../../uniswapV3/Pool"
+import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
+import { ClientManager } from "../utils/ClientManager"
+import { UNIV3_POOL_ABI } from "../abi/univ3Pool"
+import { TokenUtils } from "../utils/tokens/TokenUtils"
+import { TickPool } from "./TickPool"
+import { AlgebraPool } from "./algebra/Pool"
+import { Token } from "../utils/tokens/Token"
+import { ALGEBRA_FACTORY_ABI } from "../abi/algebra/algebraFactory"
+import { UniV3Pool } from "./uniswapV3/Pool"
 
 export enum PoolType {
 	UNIV3 = "uniV3",
@@ -19,7 +19,7 @@ export class PoolUtils {
 		chainId: number,
 		poolAddress: Address,
 		poolType: PoolType,
-	): Promise<BasePool> {
+	): Promise<TickPool> {
 		let immutables: PoolImmutables
 
 		if (poolType === PoolType.ALGEBRA) {

@@ -1,8 +1,8 @@
 import { Address } from "viem"
-import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
-import { BasePool } from "../utils/pools/BasePool"
-import { Token } from "../utils/tokens/Token"
-import { ClientManager } from "../utils/ClientManager"
+import { Token } from "../../utils/tokens/Token"
+import { ClientManager } from "../../utils/ClientManager"
+import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
+import { TickPool } from "../TickPool"
 
 /* ======== CONSTANTS ======== */
 
@@ -10,8 +10,7 @@ const BASIS_POINTS = 10000n
 
 /* ======== MAIN CLASS ======== */
 
-export class AlgebraPool extends BasePool {
-
+export class AlgebraPool extends TickPool {
 	constructor(
 		poolAddress: Address,
 		chainId: number,

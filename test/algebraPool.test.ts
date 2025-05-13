@@ -1,7 +1,7 @@
 import { exec } from "child_process"
 import { exec as execPromise } from "./utils/helpers"
 import { fuse } from "viem/chains"
-import { AlgebraPool } from "../src/algebra/Pool"
+import { AlgebraPool } from "../src/dex/algebra/Pool"
 
 export function algebraPoolTest() {
 	beforeAll(async () => {

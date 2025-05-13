@@ -1,9 +1,9 @@
 import { Address } from "viem"
-import { BasePool } from "../utils/pools/BasePool"
-import { Token } from "../utils/tokens/Token"
-import { UNIV3_POOL_ABI } from "../abi/univ3Pool"
+import { TickPool } from "../TickPool"
+import { Token } from "../../utils/tokens/Token"
+import { UNIV3_POOL_ABI } from "../../abi/univ3Pool"
 
-export class UniV3Pool extends BasePool {
+export class UniV3Pool extends TickPool {
 	constructor(
 		poolAddress: Address,
 		chainId: number,

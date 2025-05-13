@@ -1,19 +1,19 @@
+import { Token } from "../utils/tokens/Token"
+import { BaseContract } from "../utils/contracts/BaseContract"
 import { Address } from "viem"
-import { UNIV3_POOL_ABI } from "../../abi/univ3Pool"
-import { Token } from "../tokens/Token"
-import { ClientManager } from "../ClientManager"
-import { TokenUtils } from "../tokens/TokenUtils"
-import { BaseContract } from "../contracts/BaseContract"
+import { ClientManager } from "../utils/ClientManager"
+import { TokenUtils } from "../utils/tokens/TokenUtils"
+import { UNIV3_POOL_ABI } from "../abi/univ3Pool"
 
-export class BasePoolError extends Error {
+export class TickPoolError extends Error {
 	constructor(message: string) {
 		super(message)
-		Object.setPrototypeOf(this, BasePoolError.prototype)
-		this.name = "BasePoolError"
+		Object.setPrototypeOf(this, TickPoolError.prototype)
+		this.name = "TickPoolError"
 	}
 }
 
-export abstract class BasePool extends BaseContract implements PoolImmutables {
+export class TickPool extends BaseContract implements PoolImmutables {
 	constructor(
 		poolAddress: Address,
 		chainId: number,
@@ -24,8 +24,6 @@ export abstract class BasePool extends BaseContract implements PoolImmutables {
 	) {
 		super(poolAddress, chainId)
 	}
-
-	abstract getPrices(): Promise<number>
 
 	static async getTokens(
 		poolAddress: Address,
