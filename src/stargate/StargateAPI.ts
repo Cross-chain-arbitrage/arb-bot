@@ -1,12 +1,9 @@
 import axios from "axios"
 import { Token } from "../utils/tokens/Token"
-import dotenv from "dotenv"
 import { isValidUrl } from "../utils/validation"
 import { STARGATE_CHAINS } from "./dumped/chains"
 import { NativeCurrency } from "../utils/tokens/NativeCurrency"
 import { zeroAddress } from "viem"
-
-dotenv.config()
 
 export class StargateAPIError extends Error {
 	constructor(message: string) {
@@ -16,9 +13,11 @@ export class StargateAPIError extends Error {
 	}
 }
 
+const STARGATE_API_URL = "https://mainnet.stargate-api.com/v1"
+
 export class StargateAPI {
 	private static getApiUrl(): string {
-		const apiUrl = process.env.STARGATE_API_URL
+		const apiUrl = STARGATE_API_URL
 
 		if (!apiUrl || !isValidUrl(apiUrl)) {
 			throw new StargateAPIError("STARGATE_API_URL is not a valid URL")
