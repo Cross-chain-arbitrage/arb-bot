@@ -10,8 +10,17 @@ export class LayerZeroScanError extends Error {
 }
 
 export class LayerZeroScanAPI {
+	private static readonly indexingTimeout: number = 5 * 60_000
 	private static readonly timeout: number = 10 * 60_000
 	private static readonly pollingInterval: number = 2500
+
+	private static waitForTransactionToBeIndexed() {
+		const timeout = setTimeout(() => {
+			throw new LayerZeroScanError(
+				`Timeout for message received on chain ${srcChainId} for tx ${srcTxHash}`,
+			)
+		}, this.indexingTimeout)
+	}
 
 	static async waitForMessageReceived(srcChainId: number, srcTxHash: Hash) {
 		const timeout = setTimeout(() => {

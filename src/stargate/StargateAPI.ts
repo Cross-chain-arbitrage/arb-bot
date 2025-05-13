@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import { isValidUrl } from "../utils/validation"
 import { STARGATE_CHAINS } from "./dumped/chains"
 import { NativeCurrency } from "../utils/tokens/NativeCurrency"
+import { zeroAddress } from "viem"
 
 dotenv.config()
 
@@ -169,7 +170,7 @@ export class StargateAPI {
 					stablecoinMap[stableName] = {
 						symbol: stableName,
 						chains: [],
-						address: "",
+						address: zeroAddress,
 					}
 				}
 
