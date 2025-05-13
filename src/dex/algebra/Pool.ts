@@ -3,12 +3,8 @@ import { Token } from "../../utils/tokens/Token"
 import { ClientManager } from "../../utils/ClientManager"
 import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
 import { TickPool } from "../TickPool"
-
-/* ======== CONSTANTS ======== */
-
-const BASIS_POINTS = 10000n
-
-/* ======== MAIN CLASS ======== */
+import { getContract } from "viem"
+import { TokenUtils } from "../../utils/tokens/TokenUtils"
 
 export class AlgebraPool extends TickPool {
 	constructor(
@@ -22,32 +18,16 @@ export class AlgebraPool extends TickPool {
 		super(poolAddress, chainId, token0, token1, fee, tickSpacing)
 	}
 
-	static async getPoolTokens(
-		poolAddress: Address,
-		chainId: number,
-	): Promise<PoolTokens> {
-		const client = ClientManager.getClient(chainId)
+	static async create(poolAddress: Address, chainId: number) {
+		const immutables = await this.getPoolImmutables(poolAddress, chainId)
 
-		const [token0, token1] = await Promise.all([
-			client.readContract({
-				address: poolAddress,
-				abi: ALGEBRA_POOL_ABI,
-				functionName: "token0",
-			}),
-			client.readContract({
-				address: poolAddress,
-				abi: ALGEBRA_POOL_ABI,
-				functionName: "token1",
-			}),
-		])
-
-		return { token0, token1 }
-	}
-
-	private calculateMinAmountOut(amount: bigint, slippage: number): bigint {
-		return (
-			(amount * BigInt(Math.floor((10000 - slippage) * 100))) /
-			BASIS_POINTS
+		return new AlgebraPool(
+			poolAddress,
+			chainId,
+			await TokenUtils.fromAddress(immutables.token0, chainId),
+			await TokenUtils.fromAddress(immutables.token1, chainId),
+			immutables.fee,
+			immutables.tickSpacing,
 		)
 	}
 
@@ -71,5 +51,29 @@ export class AlgebraPool extends TickPool {
 		)
 
 		return price
+	}
+
+	static async getPoolImmutables(poolAddress: Address, chainId: number) {
+		const client = ClientManager.getClient(chainId)
+
+		const contract = getContract({
+			address: poolAddress,
+			abi: ALGEBRA_POOL_ABI,
+			client,
+		})
+
+		const [slot0Data, fee, token0, token1] = await Promise.all([
+			contract.read.globalState(),
+			contract.read.fee(),
+			contract.read.token0(),
+			contract.read.token1(),
+		])
+
+		return {
+			token0,
+			token1,
+			fee,
+			tickSpacing: slot0Data[1],
+		}
 	}
 }

@@ -13,6 +13,8 @@ export class TickPoolError extends Error {
 	}
 }
 
+const BASIS_POINTS = 10000n
+
 export class TickPool extends BaseContract implements PoolImmutables {
 	constructor(
 		poolAddress: Address,
@@ -63,5 +65,12 @@ export class TickPool extends BaseContract implements PoolImmutables {
 	): number {
 		const price = Number(sqrtPriceX96) ** 2 / 2 ** 192
 		return price * 10 ** (decimals0 - decimals1)
+	}
+
+	calculateMinAmountOut(amount: bigint, slippage: number): bigint {
+		return (
+			(amount * BigInt(Math.floor((10000 - slippage) * 100))) /
+			BASIS_POINTS
+		)
 	}
 }

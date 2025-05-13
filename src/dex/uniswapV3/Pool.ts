@@ -1,7 +1,9 @@
-import { Address } from "viem"
+import { Address, getContract } from "viem"
 import { TickPool } from "../TickPool"
 import { Token } from "../../utils/tokens/Token"
 import { UNIV3_POOL_ABI } from "../../abi/univ3Pool"
+import { ClientManager } from "../../utils/ClientManager"
+import { TokenUtils } from "../../utils/tokens/TokenUtils"
 
 export class UniV3Pool extends TickPool {
 	constructor(
@@ -13,6 +15,19 @@ export class UniV3Pool extends TickPool {
 		tickSpacing: number,
 	) {
 		super(poolAddress, chainId, token0, token1, fee, tickSpacing)
+	}
+
+	static async create(poolAddress: Address, chainId: number) {
+		const immutables = await this.getPoolImmutables(poolAddress, chainId)
+
+		return new UniV3Pool(
+			poolAddress,
+			chainId,
+			await TokenUtils.fromAddress(immutables.token0, chainId),
+			await TokenUtils.fromAddress(immutables.token1, chainId),
+			immutables.fee,
+			immutables.tickSpacing,
+		)
 	}
 
 	async getPrices(): Promise<number> {
@@ -35,5 +50,33 @@ export class UniV3Pool extends TickPool {
 		)
 
 		return price
+	}
+
+	static async getPoolImmutables(
+		address: Address,
+		chainId: number,
+	): Promise<PoolImmutables> {
+		const client = ClientManager.getClient(chainId)
+
+		const contract = getContract({
+			address,
+			abi: UNIV3_POOL_ABI,
+			client,
+		})
+
+		// Get pool data
+		const [slot0Data, token0, token1, fee] = await Promise.all([
+			contract.read.slot0(),
+			contract.read.token0(),
+			contract.read.token1(),
+			contract.read.fee(),
+		])
+
+		return {
+			token0,
+			token1,
+			fee,
+			tickSpacing: slot0Data[1],
+		}
 	}
 }

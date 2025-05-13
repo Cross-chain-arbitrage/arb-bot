@@ -1,13 +1,9 @@
 import { Address, zeroAddress } from "viem"
-import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
 import { ClientManager } from "../utils/ClientManager"
-import { UNIV3_POOL_ABI } from "../abi/univ3Pool"
-import { TokenUtils } from "../utils/tokens/TokenUtils"
-import { TickPool } from "./TickPool"
-import { AlgebraPool } from "./algebra/Pool"
-import { Token } from "../utils/tokens/Token"
 import { ALGEBRA_FACTORY_ABI } from "../abi/algebra/algebraFactory"
 import { UniV3Pool } from "./uniswapV3/Pool"
+import { AlgebraPool } from "./algebra/Pool"
+import { TickPool } from "./TickPool"
 
 export enum PoolType {
 	UNIV3 = "uniV3",
@@ -20,125 +16,11 @@ export class PoolUtils {
 		poolAddress: Address,
 		poolType: PoolType,
 	): Promise<TickPool> {
-		let immutables: PoolImmutables
-
-		if (poolType === PoolType.ALGEBRA) {
-			immutables = await this.getAlgebraPoolImmutable(
-				chainId,
-				poolAddress,
-			)
-		} else {
-			immutables = await this.getUniV3PoolInfo(poolAddress, chainId)
-		}
-
-		const token0 = await TokenUtils.fromAddress<Token>(
-			immutables.token0 as Address,
-			chainId,
-		)
-		const token1 = await TokenUtils.fromAddress<Token>(
-			immutables.token1 as Address,
-			chainId,
-		)
-
 		switch (poolType) {
 			case PoolType.ALGEBRA:
-				return new AlgebraPool(
-					poolAddress,
-					chainId,
-					token0,
-					token1,
-					immutables.fee,
-					immutables.tickSpacing,
-				)
+				return AlgebraPool.create(poolAddress, chainId)
 			case PoolType.UNIV3:
-				return new UniV3Pool(
-					poolAddress,
-					chainId,
-					token0,
-					token1,
-					immutables.fee,
-					immutables.tickSpacing,
-				)
-		}
-	}
-
-	static async getAlgebraPoolImmutable(
-		chainId: number,
-		poolAddress: Address,
-	): Promise<PoolImmutables> {
-		const client = ClientManager.getClient(chainId)
-		const address = poolAddress
-
-		// Get pool data
-		const [slot0Data, fee, token0, token1] = await Promise.all([
-			client.readContract({
-				address,
-				abi: ALGEBRA_POOL_ABI,
-				functionName: "globalState",
-			}),
-			client.readContract({
-				address,
-				abi: ALGEBRA_POOL_ABI,
-				functionName: "fee",
-			}),
-			client.readContract({
-				address,
-				abi: ALGEBRA_POOL_ABI,
-				functionName: "token0",
-			}),
-			client.readContract({
-				address,
-				abi: ALGEBRA_POOL_ABI,
-				functionName: "token1",
-			}),
-		])
-
-		return {
-			token0,
-			token1,
-			fee,
-			tickSpacing: slot0Data[1],
-		}
-	}
-
-	static async getUniV3PoolInfo(
-		address: Address,
-		chainId: number,
-	): Promise<PoolImmutables> {
-		const client = ClientManager.getClient(chainId)
-
-		const abi = UNIV3_POOL_ABI
-
-		// Get pool data
-		const [slot0Data, token0, token1, fee] = await Promise.all([
-			client.readContract({
-				address,
-				abi,
-				functionName: "slot0",
-			}),
-
-			client.readContract({
-				address,
-				abi,
-				functionName: "token0",
-			}),
-			client.readContract({
-				address,
-				abi,
-				functionName: "token1",
-			}),
-			client.readContract({
-				address,
-				abi,
-				functionName: "fee",
-			}),
-		])
-
-		return {
-			token0,
-			token1,
-			fee,
-			tickSpacing: slot0Data[1],
+				return UniV3Pool.create(poolAddress, chainId)
 		}
 	}
 
