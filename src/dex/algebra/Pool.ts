@@ -1,10 +1,12 @@
-import { Address } from "viem"
+import { Address, zeroAddress } from "viem"
 import { Token } from "../../utils/tokens/Token"
 import { ClientManager } from "../../utils/ClientManager"
 import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
 import { TickPool } from "../TickPool"
 import { getContract } from "viem"
 import { TokenUtils } from "../../utils/tokens/TokenUtils"
+
+const NO_PRICE_LIMIT = 0n
 
 export class AlgebraPool extends TickPool {
 	constructor(
@@ -75,5 +77,55 @@ export class AlgebraPool extends TickPool {
 			fee,
 			tickSpacing: slot0Data[1],
 		}
+	}
+
+	async simulateSwap(params: SwapParams) {
+		const { tokenIn, amountIn } = params
+
+		const zeroToOne = this.zeroToOne(tokenIn)
+
+		// Simulate swap
+		const { result } = await this.client.simulateContract({
+			address: this.address,
+			abi: ALGEBRA_POOL_ABI,
+			functionName: "swap",
+			args: [zeroAddress, zeroToOne, amountIn, NO_PRICE_LIMIT, "0x"],
+		})
+
+		const [amount0, amount1] = result
+
+		const amountOut = zeroToOne ? -amount1 : -amount0
+
+		return amountOut
+	}
+
+	async swap(params: SwapParams) {
+		const { amountIn, tokenIn } = params
+
+		const amountOut = await this.simulateSwap(params)
+
+		const hash = await this.wallet.writeContract({
+			address: this.address,
+			abi: ALGEBRA_POOL_ABI,
+			account: this.account,
+			chain: this.wallet.chain,
+			functionName: "swap",
+			args: [
+				this.account.address || zeroAddress,
+				this.zeroToOne(tokenIn),
+				amountIn,
+				this.calculateMinAmountOut(amountOut, params.slippage),
+				"0x",
+			],
+		})
+
+		// TODO: maybe return hash and don't wait for receipt
+		const receipt = await this.client.waitForTransactionReceipt({ hash })
+
+		return receipt
+	}
+
+	private zeroToOne(tokenIn: Token) {
+		return tokenIn.address === this.token0.address
 	}
 }
