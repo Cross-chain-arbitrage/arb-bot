@@ -16,8 +16,8 @@ export enum PoolType {
 
 export class PoolUtils {
 	static async createPool(
-		chainId: number,
 		poolAddress: Address,
+		chainId: number,
 		poolType: PoolType,
 	): Promise<BasePool> {
 		let immutables: PoolImmutables

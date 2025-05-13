@@ -8,7 +8,7 @@ export const STARGATE_NATIVE_ADDRESS =
 
 export class NativeCurrency extends TokenBase {
 	constructor(chainId: number, symbol: string, name: string) {
-		super(NATIVE_ADDRESS, chainId, symbol, 18, name)
+		super(STARGATE_NATIVE_ADDRESS, chainId, symbol, 18, name)
 	}
 
 	validateNativeAddress(address: Address) {
