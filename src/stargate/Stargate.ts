@@ -1,4 +1,4 @@
-import { Address, formatEther, Hex, WalletClient } from "viem"
+import { Address, formatEther, Hex, zeroHash } from "viem"
 import { getChainEIdByNativeChainId } from "../layerzero/utils"
 import { padAddressToBytes32 } from "../utils/types"
 import { Token } from "../utils/tokens/Token"
@@ -24,13 +24,16 @@ export class Stargate {
 		amount: bigint,
 		recipient: Address,
 		toChainId: number,
-		wallet: WalletClient,
-	): Promise<Hex> {
+		simulateOnly: boolean = false,
+	) {
 		if (amount <= 0n)
 			throw new StargateError("Amount must be greater than 0")
 		if (!recipient) throw new StargateError("Recipient address is required")
-		if (!toChainId)
+		if (!toChainId && toChainId >= 1)
 			throw new StargateError("Destination chain ID is required")
+		if (token.chainId === toChainId) {
+			throw new StargateError("Cannot send to the same chain")
+		}
 
 		const tokenMetadata = await StargateAPI.getTokenMetadata(
 			token,
@@ -39,17 +42,18 @@ export class Stargate {
 
 		const poolOrOFT = tokenMetadata.address as Address
 
-		if (token.chainId === toChainId) {
-			throw new StargateError("Cannot send to the same chain")
-		}
+		await Stargate.validatePathCredits(
+			poolOrOFT,
+			toChainId,
+			token.chainId,
+			amount,
+		)
 
-		await Stargate.validatePathCredits(poolOrOFT, toChainId, token.chainId)
+		const balance = await token.balanceOf(recipient)
 
-		const isEnoughBalance = await token.hasEnoughBalance(recipient, amount)
-
-		if (!isEnoughBalance) {
+		if (balance < amount) {
 			throw new StargateError(
-				`Insufficient balance, needed ${amount}, has ${isEnoughBalance}`,
+				`Insufficient balance, needed ${amount}, has ${balance}`,
 			)
 		}
 
@@ -65,6 +69,41 @@ export class Stargate {
 			token.chainId,
 		)
 
+		const toChainEId = getChainEIdByNativeChainId(toChainId)
+		const recipientBytes32 = padAddressToBytes32(recipient)
+		const minAmountLD = quote.isOFT
+			? (quote.oftFees?.oftLimit.minAmountLD ?? amount)
+			: amount
+
+		const sendParams = {
+			dstEid: toChainEId,
+			to: recipientBytes32,
+			amountLD: amount,
+			minAmountLD,
+			extraOptions: "0x" as Hex,
+			composeMsg: "0x" as Hex,
+			oftCmd: "0x" as Hex,
+		}
+
+		const client = ClientManager.getClient(token.chainId)
+		const wallet = ClientManager.getWalletClient(token.chainId)
+
+		const isNative = token instanceof NativeCurrency
+		const value = quote.messagingFee.nativeFee + (isNative ? amount : 0n)
+
+		const { request } = await client.simulateContract({
+			account: wallet.account,
+			address: poolOrOFT,
+			abi: STARGATE_BASE_ABI,
+			functionName: "send",
+			value,
+			args: [
+				sendParams,
+				quote.messagingFee as { nativeFee: bigint; lzTokenFee: bigint },
+				recipient,
+			],
+		})
+
 		Stargate.logTransactionDetails(
 			token,
 			amount,
@@ -74,21 +113,18 @@ export class Stargate {
 			quote,
 		)
 
-		return Stargate.executeTransaction(
-			poolOrOFT,
-			amount,
-			recipient,
-			toChainId,
-			token.chainId,
-			wallet,
-			quote,
-		)
+		if (simulateOnly) {
+			return zeroHash
+		}
+
+		return await wallet.writeContract(request)
 	}
 
 	private static async validatePathCredits(
 		poolOrOFT: Address,
 		toChainId: number,
 		chainId: number,
+		amount: bigint,
 	): Promise<void> {
 		const pathCredits = await Stargate.getPathCredits(
 			poolOrOFT,
@@ -98,7 +134,13 @@ export class Stargate {
 
 		if (pathCredits === 0n) {
 			throw new StargateError(
-				`No credits for bridging ${poolOrOFT} from ${chainId} to ${toChainId}`,
+				`Bridge path doesn't exist for ${poolOrOFT} from ${chainId} to ${toChainId}`,
+			)
+		}
+
+		if (pathCredits < amount) {
+			throw new StargateError(
+				`Not enough credits for bridging ${poolOrOFT} from ${chainId} to ${toChainId}, needed ${amount}, has ${pathCredits}`,
 			)
 		}
 	}
@@ -142,53 +184,6 @@ export class Stargate {
 			console.log("OFT receipt:", quote.oftFees?.oftReceipt)
 		}
 		console.log("--------------------------------")
-	}
-
-	private static async executeTransaction(
-		poolOrOFT: Address,
-		amount: bigint,
-		recipient: Address,
-		toChainId: number,
-		chainId: number,
-		wallet: WalletClient,
-		quote: QuoteResult,
-	): Promise<Hex> {
-		const toChainEId = getChainEIdByNativeChainId(toChainId)
-		const recipientBytes32 = padAddressToBytes32(recipient)
-		const minAmountLD = quote.isOFT
-			? (quote.oftFees?.oftLimit.minAmountLD ?? amount)
-			: amount
-
-		const sendParams = {
-			dstEid: toChainEId,
-			to: recipientBytes32,
-			amountLD: amount,
-			minAmountLD,
-			extraOptions: "0x" as Hex,
-			composeMsg: "0x" as Hex,
-			oftCmd: "0x" as Hex,
-		}
-
-		const client = ClientManager.getClient(chainId)
-
-		const { request } = await client.simulateContract({
-			account: wallet.account,
-			address: poolOrOFT,
-			abi: STARGATE_BASE_ABI,
-			functionName: "send",
-			value: quote.messagingFee.nativeFee,
-			args: [
-				sendParams,
-				quote.messagingFee as { nativeFee: bigint; lzTokenFee: bigint },
-				recipient,
-			],
-		})
-
-		const txHash = await wallet.writeContract(request)
-		console.log("\nSuccessful Tx!")
-		console.log("Hash:", txHash)
-
-		return txHash
 	}
 
 	static async quote(
