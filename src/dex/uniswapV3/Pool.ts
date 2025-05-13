@@ -52,10 +52,7 @@ export class UniV3Pool extends TickPool {
 		return price
 	}
 
-	static async getPoolImmutables(
-		address: Address,
-		chainId: number,
-	): Promise<PoolImmutables> {
+	static async getPoolImmutables(address: Address, chainId: number) {
 		const client = ClientManager.getClient(chainId)
 
 		const contract = getContract({

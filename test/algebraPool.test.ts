@@ -1,7 +1,7 @@
 import { exec } from "child_process"
 import { exec as execPromise } from "./utils/helpers"
 import { fuse } from "viem/chains"
-import { AlgebraPool } from "../src/dex/algebra/Pool"
+import { PoolType, PoolUtils } from "../src/dex/PoolUtils"
 
 export function algebraPoolTest() {
 	beforeAll(async () => {
@@ -16,8 +16,8 @@ export function algebraPoolTest() {
 		const wethUsdtPoolAddress = "0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6"
 
 		const pool = await PoolUtils.createPool(
-			wethUsdtPoolAddress,
 			fuse.id,
+			wethUsdtPoolAddress,
 			PoolType.ALGEBRA,
 		)
 

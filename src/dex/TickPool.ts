@@ -15,7 +15,7 @@ export class TickPoolError extends Error {
 
 const BASIS_POINTS = 10000n
 
-export class TickPool extends BaseContract implements PoolImmutables {
+export class TickPool extends BaseContract {
 	constructor(
 		poolAddress: Address,
 		chainId: number,

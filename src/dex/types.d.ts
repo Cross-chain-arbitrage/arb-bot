@@ -25,10 +25,3 @@ interface PoolTokens {
 	token0: Address
 	token1: Address
 }
-
-interface PoolImmutables {
-	token0: Address
-	token1: Address
-	fee: number
-	tickSpacing: number
-}
