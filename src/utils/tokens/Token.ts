@@ -16,6 +16,14 @@ export class Token extends TokenBase {
 		this.validateDecimals(decimals)
 	}
 
+	isNative(): this is Token {
+		return false
+	}
+
+	isToken(): this is Token {
+		return true
+	}
+
 	private validateTokenAddress(address: Address): void {
 		if (!isAddress(address)) {
 			throw new TokenError(`Invalid address for token ${this.symbol}`)
@@ -34,6 +42,16 @@ export class Token extends TokenBase {
 				`Invalid token decimals (${decimals}), must be between 0 and 18`,
 			)
 		}
+	}
+
+	async hasEnoughAllowance(
+		address: Address,
+		spender: Address,
+		amount: bigint,
+	): Promise<boolean> {
+		const allowance = await this.allowance(address, spender)
+
+		return allowance >= amount
 	}
 
 	async balanceOf(address: Address): Promise<bigint> {

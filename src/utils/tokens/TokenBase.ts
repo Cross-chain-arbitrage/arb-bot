@@ -1,6 +1,14 @@
 import { Address, formatUnits, parseUnits } from "viem"
 import { BaseContract } from "../contracts/BaseContract"
 
+export class TokenBaseError extends Error {
+	constructor(message: string) {
+		super(message)
+		Object.setPrototypeOf(this, TokenBaseError.prototype)
+		this.name = "TokenBaseError"
+	}
+}
+
 export abstract class TokenBase extends BaseContract {
 	constructor(
 		address: Address,
@@ -12,6 +20,10 @@ export abstract class TokenBase extends BaseContract {
 		super(address, chainId)
 	}
 
+	abstract isNative(): boolean
+
+	abstract isToken(): boolean
+
 	abstract balanceOf(address: Address): Promise<bigint>
 
 	formatUnits(amount: bigint): string {
@@ -20,5 +32,11 @@ export abstract class TokenBase extends BaseContract {
 
 	parseUnits(amount: string | bigint): bigint {
 		return parseUnits(amount.toString(), this.decimals)
+	}
+
+	async hasEnoughBalance(address: Address, amount: bigint): Promise<boolean> {
+		const balance = await this.balanceOf(address)
+
+		return balance >= amount
 	}
 }

@@ -44,12 +44,18 @@ export class Stargate {
 		}
 
 		await Stargate.validatePathCredits(poolOrOFT, toChainId, token.chainId)
-		await Stargate.validateBalanceAndAllowance(
-			amount,
-			recipient,
-			poolOrOFT,
-			token,
-		)
+
+		const isEnoughBalance = await token.hasEnoughBalance(recipient, amount)
+
+		if (!isEnoughBalance) {
+			throw new StargateError(
+				`Insufficient balance, needed ${amount}, has ${isEnoughBalance}`,
+			)
+		}
+
+		if (token instanceof Token) {
+			await this.validateAllowance(recipient, poolOrOFT, amount, token)
+		}
 
 		const quote = await Stargate.quote(
 			tokenMetadata,
@@ -97,32 +103,23 @@ export class Stargate {
 		}
 	}
 
-	private static async validateBalanceAndAllowance(
-		amount: bigint,
+	private static async validateAllowance(
 		recipient: Address,
 		poolOrOFT: Address,
-		token: Token | NativeCurrency,
+		amount: bigint,
+		token: Token,
 	): Promise<void> {
-		const [tokenBalance, allowance] = await Promise.all([
-			token.balanceOf(recipient),
-			token.allowance(recipient, poolOrOFT),
-		])
+		const allowance = await token.allowance(recipient, poolOrOFT)
 
-		if (tokenBalance < amount) {
-			throw new StargateError(
-				`Insufficient balance, needed ${amount}, has ${tokenBalance}`,
-			)
-		}
+		if (allowance >= amount) return
 
-		if (allowance < amount) {
-			throw new StargateError(
-				`Insufficient allowance, needed ${amount}, has ${allowance}`,
-			)
-		}
+		throw new StargateError(
+			`Insufficient allowance, needed ${amount}, has ${allowance}`,
+		)
 	}
 
 	private static logTransactionDetails(
-		token: Token,
+		token: Token | NativeCurrency,
 		amount: bigint,
 		poolOrOFT: Address,
 		recipient: Address,
@@ -159,7 +156,7 @@ export class Stargate {
 		const toChainEId = getChainEIdByNativeChainId(toChainId)
 		const recipientBytes32 = padAddressToBytes32(recipient)
 		const minAmountLD = quote.isOFT
-			? quote.oftFees?.oftLimit.minAmountLD ?? amount
+			? (quote.oftFees?.oftLimit.minAmountLD ?? amount)
 			: amount
 
 		const sendParams = {
