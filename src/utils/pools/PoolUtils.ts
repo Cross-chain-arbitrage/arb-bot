@@ -43,8 +43,8 @@ export class PoolUtils {
 		switch (poolType) {
 			case PoolType.ALGEBRA:
 				return new AlgebraPool(
-					chainId,
 					poolAddress,
+					chainId,
 					token0,
 					token1,
 					immutables.fee,
@@ -52,8 +52,8 @@ export class PoolUtils {
 				)
 			case PoolType.UNIV3:
 				return new UniV3Pool(
-					chainId,
 					poolAddress,
+					chainId,
 					token0,
 					token1,
 					immutables.fee,

@@ -5,14 +5,14 @@ import { UNIV3_POOL_ABI } from "../abi/univ3Pool"
 
 export class UniV3Pool extends BasePool {
 	constructor(
-		chainId: number,
 		poolAddress: Address,
+		chainId: number,
 		token0: Token,
 		token1: Token,
 		fee: number,
 		tickSpacing: number,
 	) {
-		super(chainId, poolAddress, token0, token1, fee, tickSpacing)
+		super(poolAddress, chainId, token0, token1, fee, tickSpacing)
 	}
 
 	async getPrices(): Promise<number> {

@@ -25,7 +25,7 @@ export class TokenUtils {
 		const abi = ERC20_ABI
 
 		if (this.isNative(address)) {
-			return new NativeCurrency("Native", "Native", chainId) as T
+			return new NativeCurrency(chainId, "ETH", "ETH") as T
 		}
 
 		const [decimals, name, symbol] = await Promise.all([

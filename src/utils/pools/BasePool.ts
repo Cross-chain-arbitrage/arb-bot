@@ -15,14 +15,14 @@ export class BasePoolError extends Error {
 
 export abstract class BasePool extends BaseContract implements PoolImmutables {
 	constructor(
-		chainId: number,
 		poolAddress: Address,
+		chainId: number,
 		public readonly token0: Token,
 		public readonly token1: Token,
 		public readonly fee: number,
 		public readonly tickSpacing: number,
 	) {
-		super(chainId, poolAddress)
+		super(poolAddress, chainId)
 	}
 
 	abstract getPrices(): Promise<number>

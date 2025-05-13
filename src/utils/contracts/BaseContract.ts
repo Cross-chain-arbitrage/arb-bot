@@ -11,8 +11,8 @@ export class BaseContractError extends Error {
 
 export abstract class BaseContract {
 	constructor(
-		public readonly chainId: number,
 		public readonly address: Address,
+		public readonly chainId: number,
 	) {
 		this.validateAddress(address)
 	}

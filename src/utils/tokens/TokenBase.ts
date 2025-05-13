@@ -9,7 +9,7 @@ export abstract class TokenBase extends BaseContract {
 		public readonly decimals: number,
 		public readonly name?: string,
 	) {
-		super(chainId, address)
+		super(address, chainId)
 	}
 
 	abstract balanceOf(address: Address): Promise<bigint>

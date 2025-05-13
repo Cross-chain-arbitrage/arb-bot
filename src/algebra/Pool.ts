@@ -2,29 +2,7 @@ import { Address } from "viem"
 import { ALGEBRA_POOL_ABI } from "../abi/algebra/algebraPool"
 import { BasePool } from "../utils/pools/BasePool"
 import { Token } from "../utils/tokens/Token"
-import { BaseContract } from "../utils/BaseContract"
 import { ClientManager } from "../utils/ClientManager"
-
-/* ======== TYPES ======== */
-
-interface SwapParams {
-	tokenIn: Token
-	tokenOut: Token
-	amountIn: bigint
-	zeroToOne: boolean
-	slippage: number // in basis points (e.g., 50 = 0.5%)
-}
-
-interface SwapResult {
-	amountIn: bigint
-	amountOut: bigint
-	priceImpact: number
-}
-
-interface PoolTokens {
-	token0: Address
-	token1: Address
-}
 
 /* ======== CONSTANTS ======== */
 
@@ -32,32 +10,17 @@ const BASIS_POINTS = 10000n
 
 /* ======== MAIN CLASS ======== */
 
-export class AlgebraPool extends BaseContract {
-	token0: Token
-	token1: Token
+export class AlgebraPool extends BasePool {
 
 	constructor(
 		poolAddress: Address,
 		chainId: number,
 		token0: Token,
 		token1: Token,
+		fee: number,
+		tickSpacing: number,
 	) {
-		super(chainId, poolAddress)
-		this.token0 = token0
-		this.token1 = token1
-	}
-
-	static async fromAddress(
-		poolAddress: Address,
-		chainId: number,
-	): Promise<AlgebraPool> {
-		const { token0: token0Address, token1: token1Address } =
-			await this.getPoolTokens(poolAddress, chainId)
-
-		const token0 = await Token.fromAddress(token0Address, chainId)
-		const token1 = await Token.fromAddress(token1Address, chainId)
-
-		return new AlgebraPool(poolAddress, chainId, token0, token1)
+		super(poolAddress, chainId, token0, token1, fee, tickSpacing)
 	}
 
 	static async getPoolTokens(
@@ -92,34 +55,8 @@ export class AlgebraPool extends BaseContract {
 	async getPrices(): Promise<number> {
 		const address = this.address
 
-	private validateTokenOrder(
-		tokenIn: Token,
-		token0: Address,
-		token1: Address,
-		zeroToOne: boolean,
-	): void {
-		if (zeroToOne && tokenIn.address !== token0) {
-			throw new TokenOrderMismatchError()
-		}
-		if (!zeroToOne && tokenIn.address !== token1) {
-			throw new TokenOrderMismatchError()
-		}
-	}
-
-	async simulateSwap(params: SwapParams): Promise<SwapResult> {
-		const { tokenIn, tokenOut, amountIn, zeroToOne } = params
-
-		// Get pool tokens and validate order
-		this.validateTokenOrder(
-			tokenIn,
-			this.token0.address,
-			this.token1.address,
-			zeroToOne,
-		)
-
-		// Simulate swap
-		const { result } = await this.client.simulateContract({
-			address: this.contractAddress,
+		const [sqrtPriceX96] = await this.client.readContract({
+			address,
 			abi: ALGEBRA_POOL_ABI,
 			functionName: "globalState",
 		})

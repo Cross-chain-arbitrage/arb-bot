@@ -7,7 +7,7 @@ export const STARGATE_NATIVE_ADDRESS =
 	"0x0000000000000000000000000000000000000000"
 
 export class NativeCurrency extends TokenBase {
-	constructor(symbol: string, name: string, chainId: number) {
+	constructor(chainId: number, symbol: string, name: string) {
 		super(NATIVE_ADDRESS, chainId, symbol, 18, name)
 	}
 
