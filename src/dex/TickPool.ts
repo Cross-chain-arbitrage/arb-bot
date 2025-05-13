@@ -15,7 +15,7 @@ export class TickPoolError extends Error {
 
 const BASIS_POINTS = 10000n
 
-export class TickPool extends BaseContract {
+export abstract class TickPool extends BaseContract {
 	constructor(
 		poolAddress: Address,
 		chainId: number,
@@ -73,4 +73,6 @@ export class TickPool extends BaseContract {
 			BASIS_POINTS
 		)
 	}
+
+	abstract getPrices(): Promise<number>
 }

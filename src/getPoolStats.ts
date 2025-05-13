@@ -2,7 +2,7 @@ import { Address } from "viem"
 import { apeChain, fuse, hemi, lightlinkPhoenix } from "viem/chains"
 import { Token } from "./utils/tokens/Token"
 import { GeckoTerminalAPI } from "./geckoterminal/GeckoTerminalAPI"
-import { PoolType, PoolUtils } from "./utils/pools/PoolUtils"
+import { PoolType, PoolUtils } from "./dex/PoolUtils"
 import { ClientManager } from "./utils/ClientManager"
 
 interface PoolPriceData {
