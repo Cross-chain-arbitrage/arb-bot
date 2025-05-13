@@ -16,8 +16,8 @@ export function algebraPoolTest() {
 		const wethUsdtPoolAddress = "0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6"
 
 		const pool = await PoolUtils.createPool(
-			fuse.id,
 			wethUsdtPoolAddress,
+			fuse.id,
 			PoolType.ALGEBRA,
 		)
 
