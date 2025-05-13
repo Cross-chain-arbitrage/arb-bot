@@ -116,8 +116,6 @@ export class StargateAPI {
 				)
 			}
 
-			console.log("Total tokens:", tokens.length)
-
 			return tokens
 		} catch (error) {
 			console.error("Error fetching tokens:", error)
