@@ -48,8 +48,8 @@ export class TokenUtils {
 		const abi = ERC20_ABI
 
 		if (this.isNative(address)) {
-			const token = new NativeCurrency(chainId, "ETH", "ETH")
-			this.tokenCache.set(cacheKey, token)
+			const token = this.createNative(chainId)
+
 			return token as T
 		}
 
@@ -74,5 +74,11 @@ export class TokenUtils {
 		const token = new Token(address, chainId, symbol, decimals, name)
 		this.tokenCache.set(cacheKey, token)
 		return token as T
+	}
+
+	static createNative(chainId: number): NativeCurrency {
+		const token = new NativeCurrency(chainId, "ETH", "ETH")
+		this.tokenCache.set(this.getCacheKey(NATIVE_ADDRESS, chainId), token)
+		return token
 	}
 }
