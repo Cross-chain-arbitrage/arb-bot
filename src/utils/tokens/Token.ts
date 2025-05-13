@@ -16,14 +16,6 @@ export class Token extends TokenBase {
 		this.validateDecimals(decimals)
 	}
 
-	isNative(): this is Token {
-		return false
-	}
-
-	isToken(): this is Token {
-		return true
-	}
-
 	private validateTokenAddress(address: Address): void {
 		if (!isAddress(address)) {
 			throw new TokenError(`Invalid address for token ${this.symbol}`)

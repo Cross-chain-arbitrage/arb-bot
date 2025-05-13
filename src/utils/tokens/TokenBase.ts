@@ -20,10 +20,6 @@ export abstract class TokenBase extends BaseContract {
 		super(address, chainId)
 	}
 
-	abstract isNative(): boolean
-
-	abstract isToken(): boolean
-
 	abstract balanceOf(address: Address): Promise<bigint>
 
 	formatUnits(amount: bigint): string {
