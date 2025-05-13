@@ -36,6 +36,16 @@ export class Token extends TokenBase {
 		}
 	}
 
+	async hasEnoughAllowance(
+		address: Address,
+		spender: Address,
+		amount: bigint,
+	): Promise<boolean> {
+		const allowance = await this.allowance(address, spender)
+
+		return allowance >= amount
+	}
+
 	async balanceOf(address: Address): Promise<bigint> {
 		const balance = await this.client.readContract({
 			address: this.address,

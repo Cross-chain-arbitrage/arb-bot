@@ -14,7 +14,12 @@ export function algebraPoolTest() {
 
 	it("should create algebra pool with correct tokens", async () => {
 		const wethUsdtPoolAddress = "0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6"
-		const pool = await AlgebraPool.fromAddress(wethUsdtPoolAddress, fuse.id)
+
+		const pool = await PoolUtils.createPool(
+			wethUsdtPoolAddress,
+			fuse.id,
+			PoolType.ALGEBRA,
+		)
 
 		expect(pool.token0.symbol).toBe("WETH")
 		expect(pool.token1.symbol).toBe("USDT")

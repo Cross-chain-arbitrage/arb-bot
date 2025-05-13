@@ -174,8 +174,8 @@ async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 			pool.chainName = ClientManager.findChainById(chainId)?.name
 
 			const Pool = await PoolUtils.createPool(
-				chainId,
 				pool.address,
+				chainId,
 				pool.type,
 			)
 			const price = await Pool.getPrices()
