@@ -14,7 +14,8 @@ export class UniV3Pool extends TickPool {
 		fee: number,
 		tickSpacing: number,
 	) {
-		super(poolAddress, chainId, token0, token1, fee, tickSpacing)
+		// TODO: Add router address
+		super(poolAddress, chainId, token0, token1, fee, tickSpacing, "0x")
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
@@ -30,7 +31,7 @@ export class UniV3Pool extends TickPool {
 		)
 	}
 
-	async getPrices(): Promise<number> {
+	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {
 		const address = this.address
 
 		const [sqrtPriceX96] = await this.client.readContract({
@@ -39,17 +40,10 @@ export class UniV3Pool extends TickPool {
 			functionName: "slot0",
 		})
 
-		const token0Decimals = this.token0.decimals
-		const token1Decimals = this.token1.decimals
-
 		// Calculate price
-		const price = this.sqrtPriceX96ToPrice(
-			sqrtPriceX96,
-			token0Decimals,
-			token1Decimals,
-		)
+		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
 
-		return price
+		return { price, sqrtPriceX96 }
 	}
 
 	static async getPoolImmutables(address: Address, chainId: number) {
@@ -79,11 +73,11 @@ export class UniV3Pool extends TickPool {
 
 	async simulateSwap(params: SwapParams) {
 		// TODO: Implement
-		return 0n
+		return { amountOut: 0n, args: {} as SwapArgs }
 	}
 
 	async swap(params: SwapParams) {
 		// TODO: Implement
-		return {} as TransactionReceipt
+		return { receipt: {} as TransactionReceipt }
 	}
 }

@@ -184,8 +184,8 @@ async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 				pool.priceData = {
 					token0: Pool.token0,
 					token1: Pool.token1,
-					price0To1: price,
-					price1To0: 1 / price,
+					price0To1: price.price,
+					price1To0: 1 / price.price,
 				}
 			}
 		} catch (error) {

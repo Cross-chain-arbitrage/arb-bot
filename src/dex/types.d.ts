@@ -18,3 +18,15 @@ interface PoolTokens {
 	token0: Address
 	token1: Address
 }
+
+//TODO: extract from abi
+type SwapArgs = {
+	tokenIn: Address
+	tokenOut: Address
+	deployer: Address
+	recipient: Address
+	deadline: bigint
+	amountIn: bigint
+	amountOutMinimum: bigint
+	limitSqrtPrice: bigint
+}
