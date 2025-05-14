@@ -1,8 +1,8 @@
 import { arbitrum, fuse } from "viem/chains"
-import { getAccountAddress } from "../utils/getAccount"
+import { getAccountAddress } from "../../utils/getAccount"
 
-import { Stargate } from "./Stargate"
-import { TokenUtils } from "../utils/tokens/TokenUtils"
+import { Stargate } from "../Stargate"
+import { TokenUtils } from "../../utils/tokens/TokenUtils"
 import { zeroAddress } from "viem"
 
 async function main() {
@@ -19,16 +19,21 @@ async function main() {
 
 	const tokenIn = await TokenUtils.fromAddress(tokenInAddress, sourceChain.id)
 
-	const balance = tokenIn.parseUnits("0.000001")
+	const balance = tokenIn.parseUnits("0.115")
 	console.log("Sending:", tokenIn.formatUnits(balance), tokenIn.symbol)
 
-	const txHash = await Stargate.send(
+	const bridgeTx = await Stargate.send(
 		tokenIn,
 		balance,
 		recipient,
 		destinationChainId,
 	)
-	console.log("TxHash:", txHash)
+
+	console.log("TxHash:", bridgeTx.hash)
+
+	await bridgeTx.waitForBridgeToFinish()
+
+	console.log("\nDstTxHash:", bridgeTx.dstTxHash)
 }
 
 main().catch(console.error)

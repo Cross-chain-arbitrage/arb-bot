@@ -13,7 +13,7 @@
 		"tokens": "npx tsx src/tokens.ts",
 		"tokensByChains": "npx tsx src/tokensByChains.ts",
 		"getPoolStats": "npx tsx src/getPoolStats.ts",
-		"send": "npx tsx src/stargate/send.ts",
+		"stg:send": "npx tsx src/stargate/scripts/send.ts",
 		"lint": "npx eslint src",
 		"lint:fix": "npx eslint src --fix"
 	},
