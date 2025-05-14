@@ -1,6 +1,6 @@
 import { Token } from "../utils/tokens/Token"
 import { BaseContract } from "../utils/contracts/BaseContract"
-import { Address } from "viem"
+import { Address, TransactionReceipt } from "viem"
 import { ClientManager } from "../utils/ClientManager"
 import { TokenUtils } from "../utils/tokens/TokenUtils"
 import { UNIV3_POOL_ABI } from "../abi/univ3Pool"
@@ -75,4 +75,6 @@ export abstract class TickPool extends BaseContract {
 	}
 
 	abstract getPrices(): Promise<number>
+	abstract simulateSwap(params: SwapParams): Promise<bigint>
+	abstract swap(params: SwapParams): Promise<TransactionReceipt>
 }

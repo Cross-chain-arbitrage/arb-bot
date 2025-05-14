@@ -1,4 +1,4 @@
-import { Address, getContract } from "viem"
+import { Address, getContract, TransactionReceipt } from "viem"
 import { TickPool } from "../TickPool"
 import { Token } from "../../utils/tokens/Token"
 import { UNIV3_POOL_ABI } from "../../abi/univ3Pool"
@@ -75,5 +75,15 @@ export class UniV3Pool extends TickPool {
 			fee,
 			tickSpacing: slot0Data[1],
 		}
+	}
+
+	async simulateSwap(params: SwapParams) {
+		// TODO: Implement
+		return 0n
+	}
+
+	async swap(params: SwapParams) {
+		// TODO: Implement
+		return {} as TransactionReceipt
 	}
 }

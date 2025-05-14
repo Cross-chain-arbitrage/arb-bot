@@ -5,10 +5,14 @@ import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
 import { TickPool } from "../TickPool"
 import { getContract } from "viem"
 import { TokenUtils } from "../../utils/tokens/TokenUtils"
+import { ALGEBRA_ROUTER_ABI } from "../../abi/algebra/algebraRouter"
 
-const NO_PRICE_LIMIT = 0n
+const MIN_SQRT_RATIO = 4295128739n
+const MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342n
 
 export class AlgebraPool extends TickPool {
+	router: Address = "0x6E055FfA786Dfe9DBB214b649a9b2A169e6B820b"
+
 	constructor(
 		poolAddress: Address,
 		chainId: number,
@@ -80,21 +84,37 @@ export class AlgebraPool extends TickPool {
 	}
 
 	async simulateSwap(params: SwapParams) {
-		const { tokenIn, amountIn } = params
+		const { tokenIn, tokenOut, amountIn, slippage } = params
 
 		const zeroToOne = this.zeroToOne(tokenIn)
 
+		const sqrtMaxLimit = zeroToOne
+			? MIN_SQRT_RATIO + 1n
+			: MAX_SQRT_RATIO - 1n
+
+		const amountOutMinimum = 0n
+
 		// Simulate swap
-		const { result } = await this.client.simulateContract({
-			address: this.address,
-			abi: ALGEBRA_POOL_ABI,
-			functionName: "swap",
-			args: [zeroAddress, zeroToOne, amountIn, NO_PRICE_LIMIT, "0x"],
+		const { result: amountOut } = await this.client.simulateContract({
+			address: this.router,
+			abi: ALGEBRA_ROUTER_ABI,
+			functionName: "exactInputSingle",
+			account: this.account.address,
+			args: [
+				{
+					tokenIn: tokenIn.address,
+					tokenOut: tokenOut.address,
+					deployer: zeroAddress, // deployer?
+					recipient: this.account.address,
+					deadline: BigInt(
+						Math.floor(Date.now() / 1000) + 1000 * 60 * 5,
+					), // 5 minutes
+					amountIn,
+					amountOutMinimum,
+					limitSqrtPrice: sqrtMaxLimit,
+				},
+			],
 		})
-
-		const [amount0, amount1] = result
-
-		const amountOut = zeroToOne ? -amount1 : -amount0
 
 		return amountOut
 	}
@@ -103,6 +123,12 @@ export class AlgebraPool extends TickPool {
 		const { amountIn, tokenIn } = params
 
 		const amountOut = await this.simulateSwap(params)
+
+		const zeroToOne = this.zeroToOne(tokenIn)
+
+		const sqrtMaxLimit = zeroToOne
+			? MIN_SQRT_RATIO + 1n
+			: MAX_SQRT_RATIO - 1n
 
 		const hash = await this.wallet.writeContract({
 			address: this.address,
@@ -126,6 +152,8 @@ export class AlgebraPool extends TickPool {
 	}
 
 	private zeroToOne(tokenIn: Token) {
-		return tokenIn.address === this.token0.address
+		return (
+			tokenIn.address.toLowerCase() === this.token0.address.toLowerCase()
+		)
 	}
 }
