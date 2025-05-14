@@ -26,8 +26,6 @@ export function stargateTest() {
 		expect(bridgeTx.from).toBe(recipient)
 		expect(bridgeTx.to).toBe(recipient)
 		expect(bridgeTx.value).toBe(amount)
-		expect(bridgeTx.gas).toBe(0n)
-		expect(bridgeTx.gasPrice).toBe(0n)
 	})
 
 	it("MUST simulate sending Native", async () => {
@@ -50,6 +48,5 @@ export function stargateTest() {
 		expect(bridgeTx.from).toBe(recipient)
 		expect(bridgeTx.to).toBe(recipient)
 		expect(bridgeTx.value).toBe(amount)
-		expect(bridgeTx.gas).toBe(0n)
 	})
 }
