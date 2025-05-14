@@ -1,4 +1,4 @@
-import { Address, zeroAddress } from "viem"
+import { Address, decodeEventLog, zeroAddress } from "viem"
 import { Token } from "../../utils/tokens/Token"
 import { ClientManager } from "../../utils/ClientManager"
 import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
@@ -141,8 +141,29 @@ export class AlgebraPool extends TickPool {
 
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
-		//TODO: extract amountOut from event and return it
-		return { receipt }
+		const swapEvent = receipt.logs
+			.map((log) => {
+				if (log.address.toLowerCase() !== this.address.toLowerCase())
+					return null
+
+				const event = decodeEventLog({
+					abi: ALGEBRA_POOL_ABI,
+					data: log.data,
+					topics: log.topics,
+				})
+
+				return event
+			})
+			.find((event) => event?.eventName === "Swap")
+
+		if (!swapEvent) throw new Error("Swap event not found")
+
+		const amountOut =
+			swapEvent.args.amount0 < 0n
+				? -swapEvent.args.amount0
+				: -swapEvent.args.amount1
+
+		return { receipt, amountOut }
 	}
 
 	private zeroToOne(tokenIn: Token) {

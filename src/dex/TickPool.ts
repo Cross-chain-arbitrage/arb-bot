@@ -87,5 +87,8 @@ export abstract class TickPool extends BaseContract {
 	abstract simulateSwap(
 		params: SwapParams,
 	): Promise<{ amountOut: bigint; args: SwapArgs }>
-	abstract swap(params: SwapParams): Promise<{ receipt: TransactionReceipt }>
+	abstract swap(params: SwapParams): Promise<{
+		receipt: TransactionReceipt
+		amountOut: bigint
+	}>
 }

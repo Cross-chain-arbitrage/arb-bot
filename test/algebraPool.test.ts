@@ -118,7 +118,7 @@ export function algebraPoolTest() {
 		expect(sqrtPriceX96).toBe(sqrtPriceX962)
 	})
 
-	it.only("should simulate and swap token0 to token1", async () => {
+	it("should simulate and swap token0 to token1", async () => {
 		const pool = await PoolUtils.createPool(
 			wethUsdtPoolAddress,
 			fuse.id,
@@ -148,14 +148,14 @@ export function algebraPoolTest() {
 			walletClient.account!.address,
 		])
 
-		const { amountOut } = await pool.simulateSwap({
+		const { amountOut: simulatedAmountOut } = await pool.simulateSwap({
 			tokenIn: pool.token0,
 			tokenOut: pool.token1,
 			amountIn,
 			slippage: 50,
 		})
 
-		await pool.swap({
+		const { amountOut } = await pool.swap({
 			tokenIn: pool.token0,
 			tokenOut: pool.token1,
 			amountIn,
@@ -166,10 +166,11 @@ export function algebraPoolTest() {
 			walletClient.account!.address,
 		])
 
-		expect(usdtBalanceAfter).toBe(usdtBalanceBefore + amountOut)
+		expect(usdtBalanceAfter).toBe(usdtBalanceBefore + simulatedAmountOut)
+		expect(amountOut).toBe(usdtBalanceAfter - usdtBalanceBefore)
 	})
 
-	it.only("should simulate and swap token1 to token0", async () => {
+	it("should simulate and swap token1 to token0", async () => {
 		const pool = await PoolUtils.createPool(
 			wethUsdtPoolAddress,
 			fuse.id,
@@ -199,14 +200,14 @@ export function algebraPoolTest() {
 			walletClient.account!.address,
 		])
 
-		const { amountOut } = await pool.simulateSwap({
+		const { amountOut: simulatedAmountOut } = await pool.simulateSwap({
 			tokenIn: pool.token1,
 			tokenOut: pool.token0,
 			amountIn,
 			slippage: 50,
 		})
 
-		await pool.swap({
+		const { amountOut } = await pool.swap({
 			tokenIn: pool.token1,
 			tokenOut: pool.token0,
 			amountIn,
@@ -217,7 +218,8 @@ export function algebraPoolTest() {
 			walletClient.account!.address,
 		])
 
-		expect(wethBalanceAfter).toBe(wethBalanceBefore + amountOut)
+		expect(wethBalanceAfter).toBe(wethBalanceBefore + simulatedAmountOut)
+		expect(wethBalanceAfter - wethBalanceBefore).toBe(amountOut)
 	})
 }
 

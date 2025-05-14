@@ -78,6 +78,6 @@ export class UniV3Pool extends TickPool {
 
 	async swap(params: SwapParams) {
 		// TODO: Implement
-		return { receipt: {} as TransactionReceipt }
+		return { receipt: {} as TransactionReceipt, amountOut: 0n }
 	}
 }
