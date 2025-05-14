@@ -1,4 +1,4 @@
-import { Address } from "viem";
+import { Address } from "viem"
 
 export class Tx {
 	constructor(
@@ -7,8 +7,5 @@ export class Tx {
 		public readonly from: Address,
 		public readonly to: Address,
 		public readonly value: bigint,
-		public readonly gas: bigint,
-		public readonly gasPrice: bigint,
-		public readonly nonce: bigint,
 	) {}
 }

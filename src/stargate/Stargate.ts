@@ -121,9 +121,6 @@ export class Stargate {
 				recipient,
 				recipient,
 				amount,
-				0n,
-				0n,
-				0n,
 			)
 		}
 
@@ -135,9 +132,6 @@ export class Stargate {
 			recipient,
 			recipient,
 			amount,
-			0n,
-			0n,
-			0n,
 		)
 	}
 	private static async validatePathCredits(

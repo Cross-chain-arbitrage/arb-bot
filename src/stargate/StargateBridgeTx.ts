@@ -11,11 +11,8 @@ export class StargateBridgeTx extends Tx {
 		from: Address,
 		to: Address,
 		value: bigint,
-		gas: bigint,
-		gasPrice: bigint,
-		nonce: bigint,
 	) {
-		super(hash, chainId, from, to, value, gas, gasPrice, nonce)
+		super(hash, chainId, from, to, value)
 	}
 
 	async waitForBridgeToFinish() {
