@@ -1,4 +1,4 @@
-import { Address, erc20Abi, isAddress } from "viem"
+import { Address, erc20Abi, isAddress, TransactionReceipt } from "viem"
 import { TokenError } from "../errors/TokenErrors"
 import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from "./NativeCurrency"
 import { TokenBase } from "./TokenBase"
@@ -64,5 +64,23 @@ export class Token extends TokenBase {
 			args: [address, spender],
 		})
 		return allowance
+	}
+
+	async approve(
+		spender: Address,
+		amount: bigint,
+	): Promise<TransactionReceipt> {
+		const hash = await this.wallet.writeContract({
+			address: this.address,
+			abi: erc20Abi,
+			functionName: "approve",
+			args: [spender, amount],
+			account: this.account,
+			chain: this.wallet.chain,
+		})
+
+		const receipt = await this.client.waitForTransactionReceipt({ hash })
+
+		return receipt
 	}
 }
