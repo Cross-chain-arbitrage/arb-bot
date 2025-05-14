@@ -2,7 +2,9 @@ import { makeSuite } from "./utils/makeSuite"
 import { algebraPoolTest } from "./algebraPool.test"
 import { stargateApiTest } from "./stargate/StargateAPI.test"
 import { stargateTest } from "./stargate/Stargate.test"
+import { layerZeroScanApiTest } from "./layerzero/LayerZeroScanAPI.test"
 
 makeSuite("algebra pool test", algebraPoolTest)
 makeSuite("StargateAPI test", stargateApiTest)
 makeSuite("Stargate test", stargateTest)
+makeSuite("LayerZeroScanAPI test", layerZeroScanApiTest)
