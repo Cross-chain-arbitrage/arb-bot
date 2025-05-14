@@ -77,7 +77,7 @@ export class AlgebraPool extends TickPool {
 
 	// TODO: refactor
 	private getSwapArguments(params: SwapParams, price: number) {
-		const { tokenIn, tokenOut, amountIn, slippage } = params
+		const { tokenIn, tokenOut, amountIn, slippage = 50 } = params
 
 		const zeroToOne = this.zeroToOne(tokenIn)
 

@@ -11,7 +11,7 @@ interface SwapParams {
 	tokenIn: Token
 	tokenOut: Token
 	amountIn: bigint
-	slippage: number // in basis points (e.g., 50 = 0.5%)
+	slippage?: number // in basis points (e.g., 50 = 0.5%)
 }
 
 interface PoolTokens {
