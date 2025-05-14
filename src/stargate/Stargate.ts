@@ -9,6 +9,7 @@ import { STARGATE_POOL_ABI } from "../abi/stargate/stgPool"
 import { StargateAPI } from "./StargateAPI"
 import { STARGATE_CHAINS } from "./dumped/chains"
 import { NativeCurrency } from "../utils/tokens/NativeCurrency"
+import { StargateBridgeTx } from "./StargateBridgeTx"
 
 export class StargateError extends Error {
 	constructor(message: string) {
@@ -40,7 +41,7 @@ export class Stargate {
 			Stargate.getChainKey(token.chainId),
 		)
 
-		const poolOrOFT = tokenMetadata.address as Address
+		const poolOrOFT = tokenMetadata.address
 
 		await Stargate.validatePathCredits(
 			poolOrOFT,
@@ -114,12 +115,31 @@ export class Stargate {
 		)
 
 		if (simulateOnly) {
-			return zeroHash
+			return new StargateBridgeTx(
+				zeroHash,
+				token.chainId,
+				recipient,
+				recipient,
+				amount,
+				0n,
+				0n,
+				0n,
+			)
 		}
 
-		return await wallet.writeContract(request)
-	}
+		const txHash = await wallet.writeContract(request)
 
+		return new StargateBridgeTx(
+			txHash,
+			token.chainId,
+			recipient,
+			recipient,
+			amount,
+			0n,
+			0n,
+			0n,
+		)
+	}
 	private static async validatePathCredits(
 		poolOrOFT: Address,
 		toChainId: number,
@@ -194,7 +214,7 @@ export class Stargate {
 		fromChainId: number,
 	): Promise<QuoteResult> {
 		const messagingFee = await Stargate.quoteSend(
-			metadata.address as Address,
+			metadata.address,
 			amount,
 			recipient,
 			toChainId,
@@ -210,7 +230,7 @@ export class Stargate {
 			case "OFT": {
 				const [oftLimit, oftFeeDetails, oftReceipt] =
 					await Stargate.quoteOFT(
-						metadata.address as Address,
+						metadata.address,
 						amount,
 						recipient,
 						toChainId,

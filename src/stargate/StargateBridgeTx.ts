@@ -2,11 +2,12 @@ import { Address, Hash } from "viem"
 import { Tx } from "../utils/transactions/Tx"
 import { LayerZeroScanAPI } from "../layerzero/LayerZeroScanAPI"
 
-export class BridgeTx extends Tx {
+export class StargateBridgeTx extends Tx {
+	dstTxHash?: Hash
+
 	constructor(
 		hash: string,
 		chainId: number,
-		public readonly bridgeId: string,
 		from: Address,
 		to: Address,
 		value: bigint,
@@ -18,11 +19,16 @@ export class BridgeTx extends Tx {
 	}
 
 	async waitForBridgeToFinish() {
-		const message = await LayerZeroScanAPI.waitForMessageReceived(
-			this.chainId,
+		const message = await LayerZeroScanAPI.waitForDeliveryStatus(
 			this.hash as Hash,
 		)
 
+		this.dstTxHash = message.dstTxHash! as Hash
+
 		return message
+	}
+
+	get srcTxHash() {
+		return this.hash
 	}
 }

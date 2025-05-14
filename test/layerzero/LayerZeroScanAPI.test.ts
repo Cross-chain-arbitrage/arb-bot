@@ -1,5 +1,6 @@
+import { Message, MessageStatus } from "@layerzerolabs/scan-client"
 import { LayerZeroScanAPI } from "../../src/layerzero/LayerZeroScanAPI"
-import { zeroHash } from "viem"
+import { Hash, isHash, zeroHash } from "viem"
 
 export function layerZeroScanApiTest() {
 	it("retrieves messages for a given srcTxHash", async () => {
@@ -28,15 +29,47 @@ export function layerZeroScanApiTest() {
 		).rejects.toThrow()
 	})
 
-	// it("MUST wait for message to be received", async () => {
-	// 	const srcTxHash =
-	// 		"0x2351c2e4875885ecab97b8dbcb34a5fe6f9dc8614c2c36de05f0898352b0709d"
+	it("MUST wait for message to be delivered", async () => {
+		const srcTxHash =
+			"0x2351c2e4875885ecab97b8dbcb34a5fe6f9dc8614c2c36de05f0898352b0709d"
 
-	// 	const message = await LayerZeroScanAPI.waitForMessageReceived(
-	// 		arbitrum.id,
-	// 		srcTxHash,
-	// 	)
+		const message = await LayerZeroScanAPI.waitForDeliveryStatus(srcTxHash)
 
-	// 	expect(message.srcTxHash).toBe(srcTxHash)
-	// })
+		expect(message.status).toBe(MessageStatus.DELIVERED)
+		expect(message.dstTxHash).toBeDefined()
+		expect(message.srcTxHash).toBe(srcTxHash)
+	})
+
+	it.skip("MUST poll until message is delivered", async () => {
+		interface RecentMessages {
+			count: number
+			messages: Message[]
+		}
+
+		const recentMessagesURL =
+			"https://layerzeroscan.com/api/trpc/messages.list?input=%7B%22filters%22%3A%7B%22stage%22%3A%22mainnet%22%2C%22created%22%3A%7B%7D%7D%7D"
+
+		const recentMessages = await fetch(recentMessagesURL)
+		const recentMessagesData: { result: { data: RecentMessages } } =
+			await recentMessages.json()
+
+		const srcTxHash = recentMessagesData.result.data.messages[0].srcTxHash
+		console.log(srcTxHash)
+
+		if (!isHash(srcTxHash as Hash)) {
+			throw new Error(
+				"srcTxHash got from LayerZeroScanAPI is not a valid hash",
+			)
+		}
+
+		jest.setTimeout(5 * 60_000)
+
+		const message = await LayerZeroScanAPI.waitForDeliveryStatus(
+			srcTxHash as Hash,
+		)
+
+		expect(message.status).toBe(MessageStatus.DELIVERED)
+		expect(message.dstTxHash).toBeDefined()
+		expect(message.srcTxHash).toBe(srcTxHash)
+	})
 }

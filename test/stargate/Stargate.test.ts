@@ -1,7 +1,6 @@
 import { arbitrum, fuse } from "viem/chains"
 import { Stargate } from "../../src/stargate/Stargate"
 import { TokenUtils } from "../../src/utils/tokens/TokenUtils"
-import { zeroHash } from "viem"
 
 export function stargateTest() {
 	it("MUST simulate sending Token", async () => {
@@ -13,7 +12,7 @@ export function stargateTest() {
 		const amount = token.parseUnits("1")
 		const recipient = "0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB"
 
-		const result = await Stargate.send(
+		const bridgeTx = await Stargate.send(
 			token,
 			amount,
 			recipient,
@@ -21,7 +20,14 @@ export function stargateTest() {
 			true,
 		)
 
-		expect(result).toBe(zeroHash)
+		expect(bridgeTx).toBeDefined()
+		expect(bridgeTx.hash).toBeDefined()
+		expect(bridgeTx.chainId).toBe(arbitrum.id)
+		expect(bridgeTx.from).toBe(recipient)
+		expect(bridgeTx.to).toBe(recipient)
+		expect(bridgeTx.value).toBe(amount)
+		expect(bridgeTx.gas).toBe(0n)
+		expect(bridgeTx.gasPrice).toBe(0n)
 	})
 
 	it("MUST simulate sending Native", async () => {
@@ -30,7 +36,7 @@ export function stargateTest() {
 		const amount = native.parseUnits("0.000001")
 		const recipient = "0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB"
 
-		const result = await Stargate.send(
+		const bridgeTx = await Stargate.send(
 			native,
 			amount,
 			recipient,
@@ -38,6 +44,12 @@ export function stargateTest() {
 			true,
 		)
 
-		expect(result).toBe(zeroHash)
+		expect(bridgeTx).toBeDefined()
+		expect(bridgeTx.hash).toBeDefined()
+		expect(bridgeTx.chainId).toBe(arbitrum.id)
+		expect(bridgeTx.from).toBe(recipient)
+		expect(bridgeTx.to).toBe(recipient)
+		expect(bridgeTx.value).toBe(amount)
+		expect(bridgeTx.gas).toBe(0n)
 	})
 }

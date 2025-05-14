@@ -1,9 +1,10 @@
 import {
 	createClient,
 	Message,
-	waitForMessageReceived,
+	MessageStatus,
 } from "@layerzerolabs/scan-client"
-import { Hash, zeroHash } from "viem"
+import { Hash, isHash, zeroHash } from "viem"
+import { poll } from "../utils/polling"
 
 export class LayerZeroScanError extends Error {
 	constructor(message: string) {
@@ -13,36 +14,31 @@ export class LayerZeroScanError extends Error {
 	}
 }
 
+// @layerzerolabs/scan-client wrapper functions doesn't work
+// only manual client creation works
 export class LayerZeroScanAPI {
 	private static readonly timeout: number = 10 * 60_000
 	private static readonly pollingInterval: number = 2500
 
-	static async waitForMessageReceived(srcChainId: number, srcTxHash: Hash) {
-		const timeout = setTimeout(() => {
-			throw new LayerZeroScanError(
-				`Timeout for message received on chain ${srcChainId} for tx ${srcTxHash}`,
-			)
-		}, this.timeout)
+	// Assumes only one message is sent per tx
+	static async waitForDeliveryStatus(srcTxHash: Hash) {
+		if (!isHash(srcTxHash)) {
+			throw new LayerZeroScanError("srcTxHash is not a valid hash")
+		}
 
-		const message = await waitForMessageReceived(
-			srcChainId,
-			srcTxHash,
+		const condition = (messages: Message[]) =>
+			messages.length >= 1 &&
+			messages[0].status === MessageStatus.DELIVERED
+
+		const messages = await poll<Message[]>(
+			() => this.getMessagesBySrcTxHash(srcTxHash),
+			condition,
 			this.pollingInterval,
+			this.timeout,
 		)
 
-		clearTimeout(timeout)
-
-		return message
+		return messages[0]
 	}
-
-	// NOTE: doesn't work for some reason
-	// static async getMessagesBySrcChainIdAndTxHash(
-	// 	srcChainId: number,
-	// 	srcTxHash: Hash,
-	// ): Promise<Message[]> {
-	// 	const response = await getMessagesBySrcTxHash(srcChainId, srcTxHash)
-	// 	return response.messages
-	// }
 
 	static async getMessagesBySrcTxHash(srcTxHash: Hash): Promise<Message[]> {
 		if (srcTxHash === zeroHash) {
