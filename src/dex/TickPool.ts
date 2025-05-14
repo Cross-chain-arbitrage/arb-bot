@@ -1,6 +1,6 @@
 import { Token } from "../utils/tokens/Token"
 import { BaseContract } from "../utils/contracts/BaseContract"
-import { Address } from "viem"
+import { Address, TransactionReceipt } from "viem"
 import { ClientManager } from "../utils/ClientManager"
 import { TokenUtils } from "../utils/tokens/TokenUtils"
 import { UNIV3_POOL_ABI } from "../abi/univ3Pool"
@@ -23,6 +23,7 @@ export abstract class TickPool extends BaseContract {
 		public readonly token1: Token,
 		public readonly fee: number,
 		public readonly tickSpacing: number,
+		public readonly routerAddress: Address,
 	) {
 		super(poolAddress, chainId)
 	}
@@ -58,13 +59,21 @@ export abstract class TickPool extends BaseContract {
 		return [token0, token1]
 	}
 
-	sqrtPriceX96ToPrice(
-		sqrtPriceX96: bigint,
-		decimals0: number,
-		decimals1: number,
-	): number {
-		const price = Number(sqrtPriceX96) ** 2 / 2 ** 192
-		return price * 10 ** (decimals0 - decimals1)
+	sqrtPriceX96ToPrice(sqrtPriceX96: bigint): number {
+		const sqrtPrice = Number(sqrtPriceX96) / 2 ** 96
+
+		const price = sqrtPrice ** 2
+
+		return price * 10 ** (this.token0.decimals - this.token1.decimals)
+	}
+
+	priceToSqrtPriceX96(price: number): bigint {
+		const adjustedPrice =
+			price / 10 ** (this.token0.decimals - this.token1.decimals)
+
+		const sqrtPrice = Math.sqrt(adjustedPrice)
+
+		return BigInt(Math.floor(sqrtPrice * 2 ** 96))
 	}
 
 	calculateMinAmountOut(amount: bigint, slippage: number): bigint {
@@ -74,5 +83,9 @@ export abstract class TickPool extends BaseContract {
 		)
 	}
 
-	abstract getPrices(): Promise<number>
+	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
+	abstract simulateSwap(
+		params: SwapParams,
+	): Promise<{ amountOut: bigint; args: SwapArgs }>
+	abstract swap(params: SwapParams): Promise<{ receipt: TransactionReceipt }>
 }

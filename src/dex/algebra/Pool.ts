@@ -5,8 +5,8 @@ import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
 import { TickPool } from "../TickPool"
 import { getContract } from "viem"
 import { TokenUtils } from "../../utils/tokens/TokenUtils"
-
-const NO_PRICE_LIMIT = 0n
+import { ALGEBRA_ROUTER_ABI } from "../../abi/algebra/algebraRouter"
+import { routers } from "./data"
 
 export class AlgebraPool extends TickPool {
 	constructor(
@@ -17,7 +17,11 @@ export class AlgebraPool extends TickPool {
 		fee: number,
 		tickSpacing: number,
 	) {
-		super(poolAddress, chainId, token0, token1, fee, tickSpacing)
+		const router = routers[chainId]
+
+		if (!router) throw new Error(`No router found for chain ${chainId}`)
+
+		super(poolAddress, chainId, token0, token1, fee, tickSpacing, router)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
@@ -33,7 +37,7 @@ export class AlgebraPool extends TickPool {
 		)
 	}
 
-	async getPrices(): Promise<number> {
+	async getPrices() {
 		const address = this.address
 
 		const [sqrtPriceX96] = await this.client.readContract({
@@ -42,17 +46,9 @@ export class AlgebraPool extends TickPool {
 			functionName: "globalState",
 		})
 
-		const token0Decimals = this.token0.decimals
-		const token1Decimals = this.token1.decimals
+		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
 
-		// Calculate price
-		const price = this.sqrtPriceX96ToPrice(
-			sqrtPriceX96,
-			token0Decimals,
-			token1Decimals,
-		)
-
-		return price
+		return { price, sqrtPriceX96 }
 	}
 
 	static async getPoolImmutables(poolAddress: Address, chainId: number) {
@@ -79,53 +75,79 @@ export class AlgebraPool extends TickPool {
 		}
 	}
 
-	async simulateSwap(params: SwapParams) {
-		const { tokenIn, amountIn } = params
+	// TODO: refactor
+	private getSwapArguments(params: SwapParams, price: number) {
+		const { tokenIn, tokenOut, amountIn, slippage } = params
 
 		const zeroToOne = this.zeroToOne(tokenIn)
 
-		// Simulate swap
-		const { result } = await this.client.simulateContract({
-			address: this.address,
-			abi: ALGEBRA_POOL_ABI,
-			functionName: "swap",
-			args: [zeroAddress, zeroToOne, amountIn, NO_PRICE_LIMIT, "0x"],
+		const formattedAmountIn = Number(amountIn) / 10 ** tokenIn.decimals
+
+		const formattedAmountOutByPrice = zeroToOne
+			? formattedAmountIn * price
+			: formattedAmountIn / price
+
+		const amountOutByPrice = BigInt(Math.floor(formattedAmountOutByPrice))
+
+		const amountOutMinimum = this.calculateMinAmountOut(
+			amountOutByPrice,
+			slippage,
+		)
+
+		const sqrtMaxLimit = zeroToOne
+			? this.priceToSqrtPriceX96(price * (1 - slippage / 10000))
+			: this.priceToSqrtPriceX96(price * (1 + slippage / 10000))
+
+		return {
+			tokenIn: tokenIn.address as Address,
+			tokenOut: tokenOut.address as Address,
+			deployer: zeroAddress as Address,
+			recipient: this.account.address,
+			deadline: BigInt(Math.floor(Date.now() / 1000) + 1000 * 60 * 5),
+			amountIn,
+			amountOutMinimum,
+			limitSqrtPrice: sqrtMaxLimit,
+		}
+	}
+
+	async simulateSwap(params: SwapParams) {
+		const { price } = await this.getPrices()
+
+		const args = this.getSwapArguments(params, price)
+
+		const { result: amountOut } = await this.client.simulateContract({
+			address: this.routerAddress,
+			abi: ALGEBRA_ROUTER_ABI,
+			functionName: "exactInputSingle",
+			account: this.account.address,
+			args: [args],
 		})
 
-		const [amount0, amount1] = result
-
-		const amountOut = zeroToOne ? -amount1 : -amount0
-
-		return amountOut
+		// TODO: add swap args to returned object
+		return { amountOut, args }
 	}
 
 	async swap(params: SwapParams) {
-		const { amountIn, tokenIn } = params
-
-		const amountOut = await this.simulateSwap(params)
+		const { args } = await this.simulateSwap(params)
 
 		const hash = await this.wallet.writeContract({
-			address: this.address,
-			abi: ALGEBRA_POOL_ABI,
+			address: this.routerAddress,
+			abi: ALGEBRA_ROUTER_ABI,
 			account: this.account,
 			chain: this.wallet.chain,
-			functionName: "swap",
-			args: [
-				this.account.address || zeroAddress,
-				this.zeroToOne(tokenIn),
-				amountIn,
-				this.calculateMinAmountOut(amountOut, params.slippage),
-				"0x",
-			],
+			functionName: "exactInputSingle",
+			args: [args],
 		})
 
-		// TODO: maybe return hash and don't wait for receipt
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
-		return receipt
+		//TODO: extract amountOut from event and return it
+		return { receipt }
 	}
 
 	private zeroToOne(tokenIn: Token) {
-		return tokenIn.address === this.token0.address
+		return (
+			tokenIn.address.toLowerCase() === this.token0.address.toLowerCase()
+		)
 	}
 }
