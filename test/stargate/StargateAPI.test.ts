@@ -2,21 +2,23 @@ import { arbitrum, base, fuse } from "viem/chains"
 import { StargateAPI } from "../../src/stargate/StargateAPI"
 import { NativeCurrency } from "../../src/utils/tokens/NativeCurrency"
 import { TokenUtils } from "../../src/utils/tokens/TokenUtils"
+import { zeroAddress } from "viem"
 
 export function stargateApiTest() {
 	it("should get tokens metadata", async () => {
 		const tokens = await StargateAPI.getTokensMetadata("fuse")
-		console.log(tokens)
 
 		expect(tokens.length).toBeGreaterThan(0)
 	})
 
 	it("should get token metadata", async () => {
-		const token = await StargateAPI.getTokenMetadata(
+		const tokenMetadata = await StargateAPI.getTokenMetadata(
 			new NativeCurrency(arbitrum.id, "ETH", "Ethereum"),
 			"arbitrum",
 		)
-		console.log(token)
+
+		expect(tokenMetadata.token.symbol).toBe("ETH")
+		expect(tokenMetadata.token.address).toBe(zeroAddress)
 	})
 
 	it("MUST throw on unknown native currency", async () => {
