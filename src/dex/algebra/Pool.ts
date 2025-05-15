@@ -1,13 +1,12 @@
 import { Address, decodeEventLog, zeroAddress } from "viem"
 import { Token } from "../../utils/tokens/Token"
-import { ClientManager } from "../../utils/ClientManager"
 import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
 import { TickPool } from "../TickPool"
-import { getContract } from "viem"
 import { TokenUtils } from "../../utils/tokens/TokenUtils"
 import { ALGEBRA_ROUTER_ABI } from "../../abi/algebra/algebraRouter"
 import { routers } from "./data"
 import { isSameAddress } from "../../utils/common"
+import { getPoolImmutables } from "./helpers"
 
 export class AlgebraPool extends TickPool {
 	constructor(
@@ -18,21 +17,30 @@ export class AlgebraPool extends TickPool {
 		fee: number,
 		tickSpacing: number,
 	) {
-		const router = routers[chainId]
+		const routerAddress = routers[chainId]
 
-		if (!router) throw new Error(`No router found for chain ${chainId}`)
+		if (!routerAddress)
+			throw new Error(`No router found for chain ${chainId}`)
 
-		super(poolAddress, chainId, token0, token1, fee, tickSpacing, router)
+		super(
+			poolAddress,
+			chainId,
+			token0,
+			token1,
+			fee,
+			tickSpacing,
+			routerAddress,
+		)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		const immutables = await this.getPoolImmutables(poolAddress, chainId)
+		const immutables = await getPoolImmutables(poolAddress, chainId)
 
 		return new AlgebraPool(
 			poolAddress,
 			chainId,
-			await TokenUtils.fromAddress(immutables.token0, chainId),
-			await TokenUtils.fromAddress(immutables.token1, chainId),
+			await TokenUtils.fromAddress(immutables.token0Address, chainId),
+			await TokenUtils.fromAddress(immutables.token1Address, chainId),
 			immutables.fee,
 			immutables.tickSpacing,
 		)
@@ -52,32 +60,7 @@ export class AlgebraPool extends TickPool {
 		return { price, sqrtPriceX96 }
 	}
 
-	static async getPoolImmutables(poolAddress: Address, chainId: number) {
-		const client = ClientManager.getClient(chainId)
-
-		const contract = getContract({
-			address: poolAddress,
-			abi: ALGEBRA_POOL_ABI,
-			client,
-		})
-
-		const [slot0Data, fee, token0, token1] = await Promise.all([
-			contract.read.globalState(),
-			contract.read.fee(),
-			contract.read.token0(),
-			contract.read.token1(),
-		])
-
-		return {
-			token0,
-			token1,
-			fee,
-			tickSpacing: slot0Data[1],
-		}
-	}
-
-	// TODO: refactor
-	private getSwapArguments(params: SwapParams, price: number) {
+	getSwapArguments(params: SwapParams, price: number) {
 		const { tokenIn, tokenOut, amountIn, slippage = 50 } = params
 
 		const zeroToOne = this.zeroToOne(tokenIn)
