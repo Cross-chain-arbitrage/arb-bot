@@ -14,6 +14,7 @@
 		"tokensByChains": "npx tsx src/tokensByChains.ts",
 		"getPoolStats": "npx tsx src/getPoolStats.ts",
 		"stg:send": "npx tsx src/stargate/scripts/send.ts",
+		"fuse:bridge": "npx tsx src/fuse/bridge/scripts/bridge.ts",
 		"lint": "npx eslint src",
 		"lint:fix": "npx eslint src --fix"
 	},
@@ -29,6 +30,7 @@
 	"dependencies": {
 		"@highlight-run/node": "^3.12.1",
 		"@highlight-run/pino": "^0.1.6",
+		"@layerzerolabs/lz-v2-utilities": "^3.0.94",
 		"@layerzerolabs/scan-client": "^0.0.8",
 		"@types/node": "^22.15.3",
 		"axios": "^1.7.7",
