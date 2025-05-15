@@ -1,4 +1,4 @@
-import { wait } from './wait'
+import { wait } from './common'
 
 export async function poll<T>(
 	fn: () => Promise<T>,

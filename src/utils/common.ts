@@ -1,8 +1,7 @@
 import { isAddress } from 'viem'
 
-export async function waitTime(time: number) {
-	return new Promise((resolve) => setTimeout(resolve, time))
-}
+export const wait = (ms: number): Promise<void> =>
+	new Promise((resolve) => setTimeout(resolve, ms))
 
 export function isSameAddress(address1: Address, address2: Address): boolean {
 	if (!isAddress(address1)) {
