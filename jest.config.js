@@ -8,5 +8,7 @@ module.exports = {
 
 	testMatch: ['<rootDir>/test/**/*.test.ts'],
 
+	maxWorkers: 1,
+
 	testTimeout: 180_000,
 }

@@ -59,6 +59,8 @@ export class AlgebraPool extends TickPool {
 	}
 
 	async simulateSwap(params: SwapParams) {
+		await this.validateSwapParams(params)
+
 		const args = await this.getSwapArguments(params)
 
 		const { result: amountOut } = await this.client.simulateContract({

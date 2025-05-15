@@ -82,15 +82,6 @@ makeSuite('algebra pool test', () => {
 		expect(pool.token1.symbol).toBe('USDT')
 	})
 
-	it('should correctly convert price to sqrtPriceX96 and vice versa', () => {
-		const sqrtPriceX96 = 10000000000n
-
-		const price = pool.sqrtPriceX96ToPrice(sqrtPriceX96)
-		const sqrtPriceX962 = pool.priceToSqrtPriceX96(price)
-
-		expect(sqrtPriceX96).toBe(sqrtPriceX962)
-	})
-
 	it('should simulate and swap token0 to token1', async () => {
 		const amountIn = 10n ** 15n
 

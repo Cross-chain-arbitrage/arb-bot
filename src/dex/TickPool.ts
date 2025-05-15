@@ -38,6 +38,58 @@ export abstract class TickPool extends BaseContract {
 		this.tickSpacing = immutables.tickSpacing
 	}
 
+	async validateSwapParams(params: SwapParams) {
+		if (isSameAddress(params.tokenIn.address, params.tokenOut.address)) {
+			throw new Error('tokenIn and tokenOut cannot be the same')
+		}
+
+		if (
+			!isSameAddress(params.tokenIn.address, this.token0.address) &&
+			!isSameAddress(params.tokenIn.address, this.token1.address)
+		) {
+			throw new Error('tokenIn must be token0 or token1')
+		}
+
+		if (
+			!isSameAddress(params.tokenOut.address, this.token0.address) &&
+			!isSameAddress(params.tokenOut.address, this.token1.address)
+		) {
+			throw new Error('tokenOut must be token0 or token1')
+		}
+
+		await Promise.all([
+			this.validateBalance(params),
+			this.validateAllowance(params),
+		])
+	}
+
+	async validateBalance(swapParams: SwapParams) {
+		const { tokenIn, amountIn } = swapParams
+
+		const balance = await tokenIn.balanceOf(this.account.address)
+
+		if (balance < amountIn) {
+			throw new Error(
+				`Insufficient balance, needed ${amountIn}, has ${balance}`,
+			)
+		}
+	}
+
+	async validateAllowance(swapParams: SwapParams) {
+		const { tokenIn, amountIn } = swapParams
+
+		const allowance = await tokenIn.allowance(
+			this.account.address,
+			this.routerAddress,
+		)
+
+		if (allowance < amountIn) {
+			throw new Error(
+				`Insufficient allowance, needed ${amountIn}, has ${allowance}`,
+			)
+		}
+	}
+
 	static async getTokens(
 		poolAddress: Address,
 		chainId: number,
