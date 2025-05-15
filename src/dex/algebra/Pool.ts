@@ -7,6 +7,7 @@ import { getContract } from "viem"
 import { TokenUtils } from "../../utils/tokens/TokenUtils"
 import { ALGEBRA_ROUTER_ABI } from "../../abi/algebra/algebraRouter"
 import { routers } from "./data"
+import { isSameAddress } from "../../utils/common"
 
 export class AlgebraPool extends TickPool {
 	constructor(
@@ -143,8 +144,7 @@ export class AlgebraPool extends TickPool {
 
 		const swapEvent = receipt.logs
 			.map((log) => {
-				if (log.address.toLowerCase() !== this.address.toLowerCase())
-					return null
+				if (!isSameAddress(log.address, this.address)) return null
 
 				const event = decodeEventLog({
 					abi: ALGEBRA_POOL_ABI,
@@ -167,8 +167,6 @@ export class AlgebraPool extends TickPool {
 	}
 
 	private zeroToOne(tokenIn: Token) {
-		return (
-			tokenIn.address.toLowerCase() === this.token0.address.toLowerCase()
-		)
+		return isSameAddress(tokenIn.address, this.token0.address)
 	}
 }
