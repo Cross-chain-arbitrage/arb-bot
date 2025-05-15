@@ -141,8 +141,6 @@ export class Stargate {
 			chainId,
 		)
 
-		logger.info(`Path Credits ${pathCredits}`)
-
 		if (pathCredits === 0n) {
 			throw new StargateError(
 				`Bridge path doesn't exist for ${poolOrOFT} from ${chainId} to ${toChainId}`,
@@ -186,12 +184,10 @@ export class Stargate {
 			logger.info(
 				`OFT limits: ${token.formatUnits(quote.oftFees?.oftLimit.minAmountLD ?? 0n)} - ${token.formatUnits(quote.oftFees?.oftLimit.maxAmountLD ?? 0n)}`,
 			)
-			logger.info(
-				`OFT fee details: ${JSON.stringify(quote.oftFees?.oftFeeDetails)}`,
-			)
-			logger.info(
-				`OFT receipt: ${JSON.stringify(quote.oftFees?.oftReceipt)}`,
-			)
+			// logger.info(`OFT fee details: ${quote.oftFees?.oftFeeDetails}`)
+			// logger.info(
+			// 	`OFT receipt: ${JSON.stringify(quote.oftFees?.oftReceipt)}`,
+			// )
 		}
 		logger.info('--------------------------------')
 	}
@@ -338,15 +334,12 @@ export class Stargate {
 
 		const remoteEId = getChainEIdByNativeChainId(toChainId)
 
-		logger.info(`Pool Address ${pool}`)
 		const credits = await client.readContract({
 			address: pool,
 			abi: STARGATE_POOL_ABI,
 			functionName: 'paths',
 			args: [remoteEId],
 		})
-
-		logger.info(`Credits ${credits}`)
 
 		return credits
 	}

@@ -4,6 +4,7 @@ import { getAccountAddress } from '../../../utils/getAccount'
 import { FuseBridge } from '../FuseBridge'
 import { TokenUtils } from '../../../utils/tokens/TokenUtils'
 import { Token } from '../../../utils/tokens/Token'
+import logger from '../../../utils/logger'
 
 async function main() {
 	const sourceChain = fuse
@@ -21,7 +22,7 @@ async function main() {
 	)
 
 	const balance = (await tokenIn.balanceOf(recipient)) - 10n
-	console.log('Sending:', tokenIn.formatUnits(balance), tokenIn.symbol)
+	logger.info(`Sending: ${tokenIn.formatUnits(balance)} ${tokenIn.symbol}`)
 
 	const bridgeTx = await FuseBridge.bridge(
 		tokenIn,
@@ -30,11 +31,11 @@ async function main() {
 		balance,
 	)
 
-	console.log('TxHash:', bridgeTx.hash)
+	logger.info(`TxHash: ${bridgeTx.hash}`)
 
 	await bridgeTx.waitForBridgeToFinish()
 
-	console.log('\nDstTxHash:', bridgeTx.dstTxHash)
+	logger.info(`DstTxHash: ${bridgeTx.dstTxHash}`)
 }
 
 main().catch(console.error)
