@@ -15,6 +15,7 @@
 		"getPoolStats": "npx tsx src/getPoolStats.ts",
 		"stg:send": "npx tsx src/stargate/scripts/send.ts",
 		"fuse:bridge": "npx tsx src/fuse/bridge/scripts/bridge.ts",
+		"algebra:swap": "npx tsx src/dex/algebra/scripts/swap.ts",
 		"lint": "npx eslint src",
 		"lint:fix": "npx eslint src --fix"
 	},
