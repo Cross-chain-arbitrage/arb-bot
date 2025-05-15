@@ -1,6 +1,7 @@
 import { poll } from '../../src/utils/polling'
+import { makeSuite } from './makeSuite'
 
-export function pollingTest() {
+makeSuite('polling', () => {
 	// Mock function that returns incrementing numbers
 	const createMockFn = (
 		finalValue: number,
@@ -68,4 +69,4 @@ export function pollingTest() {
 
 		await expect(promise).rejects.toThrow('Polling Timeout')
 	})
-}
+})

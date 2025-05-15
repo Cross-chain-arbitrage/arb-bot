@@ -1,8 +1,9 @@
 import { arbitrum, fuse } from 'viem/chains'
 import { Stargate } from '../../src/stargate/Stargate'
 import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
+import { makeSuite } from '../utils/makeSuite'
 
-export function stargateTest() {
+makeSuite('Stargate', () => {
 	it('MUST simulate sending Token', async () => {
 		const token = await TokenUtils.fromAddress(
 			'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
@@ -49,4 +50,4 @@ export function stargateTest() {
 		expect(bridgeTx.to).toBe(recipient)
 		expect(bridgeTx.value).toBe(amount)
 	})
-}
+})

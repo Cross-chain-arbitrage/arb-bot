@@ -1,8 +1,9 @@
 import { Message, MessageStatus } from '@layerzerolabs/scan-client'
 import { LayerZeroScanAPI } from '../../src/layerzero/LayerZeroScanAPI'
 import { Hash, isHash, zeroHash } from 'viem'
+import { makeSuite } from '../utils/makeSuite'
 
-export function layerZeroScanApiTest() {
+makeSuite('LayerZeroScanAPI', () => {
 	it('retrieves messages for a given srcTxHash', async () => {
 		const srcTxHash =
 			'0x2351c2e4875885ecab97b8dbcb34a5fe6f9dc8614c2c36de05f0898352b0709d'
@@ -72,4 +73,4 @@ export function layerZeroScanApiTest() {
 		expect(message.dstTxHash).toBeDefined()
 		expect(message.srcTxHash).toBe(srcTxHash)
 	})
-}
+})

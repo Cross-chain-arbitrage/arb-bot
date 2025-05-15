@@ -5,8 +5,8 @@ import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
 import { getAccountAddress } from '../../src/utils/getAccount'
 import { Token } from '../../src/utils/tokens/Token'
 import { zeroHash } from 'viem'
-
-export function testFuseBridge() {
+import { makeSuite } from '../utils/makeSuite'
+makeSuite('FuseBridge', () => {
 	const WBTC_ARB_ADDRESS = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
 	const WBTC_FUSE_ADDRESS = '0x34009565bfEeFded0F7e774629a745636Bf35E82'
 
@@ -87,4 +87,4 @@ export function testFuseBridge() {
 		expect(() => FuseBridge.validateChain(bsc.id)).not.toThrow()
 		expect(() => FuseBridge.validateChain(fuse.id)).not.toThrow()
 	})
-}
+})

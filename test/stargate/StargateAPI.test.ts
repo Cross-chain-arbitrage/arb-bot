@@ -3,8 +3,9 @@ import { StargateAPI } from '../../src/stargate/StargateAPI'
 import { NativeCurrency } from '../../src/utils/tokens/NativeCurrency'
 import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
 import { zeroAddress } from 'viem'
+import { makeSuite } from '../utils/makeSuite'
 
-export function stargateApiTest() {
+makeSuite('StargateAPI', () => {
 	it('should get tokens metadata', async () => {
 		const tokens = await StargateAPI.getTokensMetadata('fuse')
 
@@ -41,4 +42,4 @@ export function stargateApiTest() {
 			),
 		).rejects.toThrow()
 	})
-}
+})
