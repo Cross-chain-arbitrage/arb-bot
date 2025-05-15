@@ -1,6 +1,6 @@
 import { fuse } from 'viem/chains'
-import { PoolType, PoolUtils } from '../src/dex/PoolUtils'
-import { ClientManager } from '../src/utils/ClientManager'
+import { PoolType, PoolUtils } from '../../../src/dex/PoolUtils'
+import { ClientManager } from '../../../src/utils/ClientManager'
 import {
 	Client,
 	erc20Abi,
@@ -8,25 +8,16 @@ import {
 	GetContractReturnType,
 	WalletClient,
 } from 'viem'
-import { AlgebraPool } from '../src/dex/algebra/Pool'
-import {
-	killAnvil,
-	setNativeBalance,
-	setTokenBalance,
-	startAnvil,
-} from './utils/anvil'
-import { makeSuite } from './utils/makeSuite'
+import { AlgebraPool } from '../../../src/dex/algebra/Pool'
+import { setNativeBalance, setTokenBalance } from '../../utils/anvil'
+import { useAnvil } from '../../utils/anvil'
+import { makeSuite } from '../../utils/makeSuite'
 
 /* ======== Constants ======== */
 
 const wethUsdtPoolAddress = '0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6'
 const wethAddress = '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590'
 const usdtAddress = '0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7'
-const testPk =
-	'0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-
-const realFuseRpcUrl = fuse.rpcUrls.default.http[0]
-const realPk = process.env.PRIVATE_KEY
 
 /* ======== Variables ======== */
 
@@ -40,19 +31,9 @@ let pool: AlgebraPool
 /* ======== Tests ======== */
 
 makeSuite('algebra pool test', () => {
-	beforeAll(() => console.log('beforeAll1'))
-	afterAll(() => console.log('afterAll1'))
-	beforeAll(() => console.log('beforeAll2'))
-	afterAll(() => console.log('afterAll2'))
+	useAnvil(fuse.id)
 
 	beforeAll(async () => {
-		ClientManager.clearClients()
-		// @ts-expect-error override readonly property
-		fuse.rpcUrls.default.http[0] = 'http://localhost:8545'
-		process.env.PRIVATE_KEY = testPk
-
-		await startAnvil(realFuseRpcUrl)
-
 		client = ClientManager.getClient(fuse.id)
 		walletClient = ClientManager.getWalletClient(fuse.id)
 		botAddress = walletClient.account!.address
@@ -94,15 +75,6 @@ makeSuite('algebra pool test', () => {
 			10n ** 18n,
 			client,
 		)
-	})
-
-	afterAll(async () => {
-		ClientManager.clearClients()
-		// @ts-expect-error override readonly property
-		fuse.rpcUrls.default.http[0] = realFuseRpcUrl
-		process.env.PRIVATE_KEY = realPk
-
-		await killAnvil()
 	})
 
 	it('should create algebra pool with correct tokens', () => {

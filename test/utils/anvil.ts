@@ -4,10 +4,56 @@ import { encodeAbiParameters } from 'viem'
 import { keccak256 } from 'viem'
 import { Client } from 'viem'
 import { exec as execPromise } from './helpers'
+import { ClientManager } from '../../src/utils/ClientManager'
+import { Chain } from 'viem'
 
-export async function startAnvil(forkRpcUrl: string) {
+/* ======== useAnvil ======== */
+
+const testPk =
+	'0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+
+/**
+ * Starts anvil in describe and replace viem rpc url and private key
+ * @param chainId - anvil run as fork of this chain
+ * @param blockNumber - fork is from this block number, default is latest
+ */
+export function useAnvil(chainId: number, blockNumber?: number) {
+	const chain = ClientManager.findChainById(chainId)
+	const realRpcUrl = chain.rpcUrls.default.http[0]
+	const realPk = process.env.PRIVATE_KEY
+
+	beforeAll(async () => {
+		await startAnvilAndSetTestEnv(chain, realRpcUrl, blockNumber)
+	})
+
+	afterAll(async () => {
+		await killAnvilAndRestoreEnv(chain, realRpcUrl, realPk)
+	})
+}
+
+async function startAnvilAndSetTestEnv(
+	chain: Chain,
+	realRpcUrl: string,
+	blockNumber?: number,
+) {
+	ClientManager.clearClients()
+
+	process.env.PRIVATE_KEY = testPk
+	// @ts-expect-error override readonly property
+	chain.rpcUrls.default.http[0] = 'http://localhost:8545'
+
+	await startAnvil(realRpcUrl, blockNumber)
+}
+
+async function startAnvil(forkRpcUrl: string, blockNumber?: number) {
 	const success = new Promise<void>((resolve) => {
-		const anvil = exec(`anvil --fork-url ${forkRpcUrl}`)
+		let command = `anvil --fork-url ${forkRpcUrl}`
+
+		if (typeof blockNumber === 'number') {
+			command += ` --fork-block-number ${blockNumber}`
+		}
+
+		const anvil = exec(command)
 
 		anvil.stdout?.on('data', (data) => {
 			if ((data as string).includes('Listening on 127.0.0.1:8545')) {
@@ -28,9 +74,23 @@ export async function startAnvil(forkRpcUrl: string) {
 	await Promise.race([success, timeout])
 }
 
-export async function killAnvil() {
+async function killAnvilAndRestoreEnv(
+	chain: Chain,
+	realRpcUrl: string,
+	realPk: string | undefined,
+) {
+	await killAnvil()
+	ClientManager.clearClients()
+	// @ts-expect-error override readonly property
+	chain.rpcUrls.default.http[0] = realRpcUrl
+	process.env.PRIVATE_KEY = realPk
+}
+
+async function killAnvil() {
 	await execPromise('pkill anvil')
 }
+
+/* ======== storage helpers ======== */
 
 /**
  * @param balanceSlotIndex 0 for standard ERC20, 1 for OFT
