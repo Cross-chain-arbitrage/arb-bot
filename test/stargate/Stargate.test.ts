@@ -1,16 +1,16 @@
-import { arbitrum, fuse } from "viem/chains"
-import { Stargate } from "../../src/stargate/Stargate"
-import { TokenUtils } from "../../src/utils/tokens/TokenUtils"
+import { arbitrum, fuse } from 'viem/chains'
+import { Stargate } from '../../src/stargate/Stargate'
+import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
 
 export function stargateTest() {
-	it("MUST simulate sending Token", async () => {
+	it('MUST simulate sending Token', async () => {
 		const token = await TokenUtils.fromAddress(
-			"0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+			'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
 			arbitrum.id,
 		)
 
-		const amount = token.parseUnits("1")
-		const recipient = "0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB"
+		const amount = token.parseUnits('1')
+		const recipient = '0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB'
 
 		const bridgeTx = await Stargate.send(
 			token,
@@ -28,11 +28,11 @@ export function stargateTest() {
 		expect(bridgeTx.value).toBe(amount)
 	})
 
-	it("MUST simulate sending Native", async () => {
+	it('MUST simulate sending Native', async () => {
 		const native = TokenUtils.createNative(arbitrum.id)
 
-		const amount = native.parseUnits("0.000001")
-		const recipient = "0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB"
+		const amount = native.parseUnits('0.000001')
+		const recipient = '0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB'
 
 		const bridgeTx = await Stargate.send(
 			native,

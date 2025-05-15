@@ -1,4 +1,4 @@
-type StargateTypes = "POOL" | "OFT" | "NATIVE"
+type StargateTypes = 'POOL' | 'OFT' | 'NATIVE'
 
 enum StargateType {
 	POOL = 0,
@@ -43,7 +43,7 @@ interface Stablecoin {
 
 interface Chain {
 	chainKey: string
-	chainType: "evm" | "aptos" | "solana"
+	chainType: 'evm' | 'aptos' | 'solana'
 	chainId: number
 	shortName: string
 	name: string
@@ -83,7 +83,7 @@ interface StargateTokenMetadata {
 
 interface StargateChain {
 	chainKey: string
-	chainType: "evm" | "solana" | "tron" | "ton" | "aptos" | "hypercore"
+	chainType: 'evm' | 'solana' | 'tron' | 'ton' | 'aptos' | 'hypercore'
 	chainId: number
 	shortName: string
 	name: string

@@ -1,9 +1,9 @@
-import { Address, getContract, TransactionReceipt } from "viem"
-import { TickPool } from "../TickPool"
-import { Token } from "../../utils/tokens/Token"
-import { UNIV3_POOL_ABI } from "../../abi/univ3Pool"
-import { ClientManager } from "../../utils/ClientManager"
-import { TokenUtils } from "../../utils/tokens/TokenUtils"
+import { Address, getContract, TransactionReceipt } from 'viem'
+import { TickPool } from '../TickPool'
+import { Token } from '../../utils/tokens/Token'
+import { UNIV3_POOL_ABI } from '../../abi/univ3Pool'
+import { ClientManager } from '../../utils/ClientManager'
+import { TokenUtils } from '../../utils/tokens/TokenUtils'
 
 export class UniV3Pool extends TickPool {
 	constructor(
@@ -12,7 +12,7 @@ export class UniV3Pool extends TickPool {
 		immutables: PoolImmutables,
 	) {
 		// TODO: Add router address
-		super(poolAddress, chainId, immutables, "0x")
+		super(poolAddress, chainId, immutables, '0x')
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
@@ -27,7 +27,7 @@ export class UniV3Pool extends TickPool {
 		const [sqrtPriceX96] = await this.client.readContract({
 			address,
 			abi: UNIV3_POOL_ABI,
-			functionName: "slot0",
+			functionName: 'slot0',
 		})
 
 		// Calculate price

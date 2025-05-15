@@ -1,11 +1,11 @@
-import { Account, Address, isAddress, PublicClient, WalletClient } from "viem"
-import { ClientManager } from "../ClientManager"
+import { Account, Address, isAddress, PublicClient, WalletClient } from 'viem'
+import { ClientManager } from '../ClientManager'
 
 export class BaseContractError extends Error {
 	constructor(message: string) {
 		super(message)
 		Object.setPrototypeOf(this, BaseContractError.prototype)
-		this.name = "BaseContractError"
+		this.name = 'BaseContractError'
 	}
 }
 

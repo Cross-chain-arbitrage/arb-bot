@@ -1,4 +1,4 @@
-import { wait } from "./wait"
+import { wait } from './wait'
 
 export async function poll<T>(
 	fn: () => Promise<T>,
@@ -21,7 +21,7 @@ export async function poll<T>(
 	let timeoutId: NodeJS.Timeout
 	const timeoutPromise = new Promise<never>((_, reject) => {
 		timeoutId = setTimeout(() => {
-			reject(customError ?? new Error("Polling Timeout"))
+			reject(customError ?? new Error('Polling Timeout'))
 		}, timeoutMs)
 	})
 

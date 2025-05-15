@@ -1,9 +1,9 @@
-import { Address } from "viem"
-import { apeChain, fuse, hemi, lightlinkPhoenix } from "viem/chains"
-import { Token } from "./utils/tokens/Token"
-import { GeckoTerminalAPI } from "./geckoterminal/GeckoTerminalAPI"
-import { PoolType, PoolUtils } from "./dex/PoolUtils"
-import { ClientManager } from "./utils/ClientManager"
+import { Address } from 'viem'
+import { apeChain, fuse, hemi, lightlinkPhoenix } from 'viem/chains'
+import { Token } from './utils/tokens/Token'
+import { GeckoTerminalAPI } from './geckoterminal/GeckoTerminalAPI'
+import { PoolType, PoolUtils } from './dex/PoolUtils'
+import { ClientManager } from './utils/ClientManager'
 
 interface PoolPriceData {
 	token0: Token
@@ -38,7 +38,7 @@ interface ArbitrageOpportunity {
 /* ======== Main Function ======== */
 
 async function main() {
-	console.time("getPoolStats")
+	console.time('getPoolStats')
 
 	const chainIds = [hemi.id, lightlinkPhoenix.id, fuse.id]
 
@@ -50,7 +50,7 @@ async function main() {
 			// },
 			{
 				type: PoolType.ALGEBRA,
-				address: "0xc82b890744d7df5f4fe28dd4205edcc36ceeea50",
+				address: '0xc82b890744d7df5f4fe28dd4205edcc36ceeea50',
 			},
 			// {
 			// 	type: PoolType.ALGEBRA,
@@ -64,67 +64,67 @@ async function main() {
 		[hemi.id]: [
 			{
 				type: PoolType.UNIV3,
-				address: "0xdA44564DF732dECfd93Ba8539803C5a8dF241954",
+				address: '0xdA44564DF732dECfd93Ba8539803C5a8dF241954',
 			},
 			{
 				type: PoolType.UNIV3,
-				address: "0x3EcabBa99bEF583B58b8f0af6dD853CD9ED75ce3",
+				address: '0x3EcabBa99bEF583B58b8f0af6dD853CD9ED75ce3',
 			},
 			{
 				type: PoolType.UNIV3,
-				address: "0x9580D4519C9F27642e21085E763E761a74eF3735",
+				address: '0x9580D4519C9F27642e21085E763E761a74eF3735',
 			},
 			{
 				type: PoolType.UNIV3,
-				address: "0x3e014A9EF5F45454d9BdDb15741ce8A04e7d96F5",
+				address: '0x3e014A9EF5F45454d9BdDb15741ce8A04e7d96F5',
 			},
 			{
 				type: PoolType.UNIV3,
-				address: "0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0",
+				address: '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0',
 			},
 			{
 				type: PoolType.UNIV3,
-				address: "0xc36a310BD93E2927452de563fAAA89A86822a21f",
+				address: '0xc36a310BD93E2927452de563fAAA89A86822a21f',
 			},
 			{
 				type: PoolType.UNIV3,
-				address: "0xf7A9F3523bCEC8311a14e1baf252d545bc3C8818",
+				address: '0xf7A9F3523bCEC8311a14e1baf252d545bc3C8818',
 			},
 		],
 		[lightlinkPhoenix.id]: [
 			{
 				type: PoolType.UNIV3,
-				address: "0x2288627C696010049f6D98a84fC10F9C5F7b3Ce2",
+				address: '0x2288627C696010049f6D98a84fC10F9C5F7b3Ce2',
 			},
 			{
 				type: PoolType.UNIV3,
-				address: "0x1125452469E9B9A36FE69249309fCe8925C3eEDa",
+				address: '0x1125452469E9B9A36FE69249309fCe8925C3eEDa',
 			},
 		],
 		[fuse.id]: [
 			{
 				type: PoolType.ALGEBRA,
-				address: "0x677409B2393E2ca19b454fB904F5E634E21D3D89",
+				address: '0x677409B2393E2ca19b454fB904F5E634E21D3D89',
 			},
 			{
 				type: PoolType.ALGEBRA,
-				address: "0x23518Ca19447E7ABB8C6f6eb215A1D663c53Ea21",
+				address: '0x23518Ca19447E7ABB8C6f6eb215A1D663c53Ea21',
 			},
 			{
 				type: PoolType.ALGEBRA,
-				address: "0x5E174874C5bc45Ba96bD859A6edA4D34EE9f4424",
+				address: '0x5E174874C5bc45Ba96bD859A6edA4D34EE9f4424',
 			},
 			{
 				type: PoolType.ALGEBRA,
-				address: "0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6",
+				address: '0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6',
 			},
 			{
 				type: PoolType.ALGEBRA,
-				address: "0x51cC986Df4C54877E0Cd9122532db389cc60016B",
+				address: '0x51cC986Df4C54877E0Cd9122532db389cc60016B',
 			},
 			{
 				type: PoolType.ALGEBRA,
-				address: "0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992",
+				address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992',
 			},
 		],
 	}
@@ -137,18 +137,18 @@ async function main() {
 	// const priceUSDC = 1
 
 	const priceBTC = await GeckoTerminalAPI.getTokenPrice(
-		"0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+		'0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
 	)
 	const priceETH = await GeckoTerminalAPI.getTokenPrice(
-		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		'0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
 	)
 	const priceFUSE = await GeckoTerminalAPI.getTokenPrice(
-		"0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d",
+		'0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
 	)
 
-	console.log("\npriceBTC", priceBTC)
-	console.log("priceETH", priceETH)
-	console.log("priceFUSE", priceFUSE, "\n")
+	console.log('\npriceBTC', priceBTC)
+	console.log('priceETH', priceETH)
+	console.log('priceFUSE', priceFUSE, '\n')
 	const opportunities: ArbitrageOpportunity[] = []
 
 	for (const chainId of chainIds) {
@@ -165,7 +165,7 @@ async function main() {
 
 	logArbitrageOpportunities(opportunities)
 
-	console.timeEnd("getPoolStats")
+	console.timeEnd('getPoolStats')
 }
 
 async function updatePoolsPriceData(pools: Pool[], chainId: number) {
@@ -205,10 +205,10 @@ function calculatePriceDiff(
 }
 
 function getTokenCategory(symbol: string): keyof TokenPrices | null {
-	if (symbol.includes("BTC")) return "BTC"
-	if (symbol.includes("ETH")) return "ETH"
-	if (symbol.includes("USD") || symbol.includes("DAI")) return "USD"
-	if (symbol.includes("FUSE")) return "FUSE"
+	if (symbol.includes('BTC')) return 'BTC'
+	if (symbol.includes('ETH')) return 'ETH'
+	if (symbol.includes('USD') || symbol.includes('DAI')) return 'USD'
+	if (symbol.includes('FUSE')) return 'FUSE'
 	return null
 }
 
@@ -288,7 +288,7 @@ function logArbitrageOpportunities(
 			`\n  Actual: ${opp.actualPrice}`,
 			`\n  Difference: ${opp.priceDiffPercent.toFixed(2)}%`,
 			`\n  Chain: ${opp.pool.chainName}`,
-			"\n--------------------------------",
+			'\n--------------------------------',
 		)
 	})
 }

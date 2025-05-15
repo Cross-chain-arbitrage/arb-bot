@@ -1,4 +1,4 @@
-import { poll } from "../../src/utils/polling"
+import { poll } from '../../src/utils/polling'
 
 export function pollingTest() {
 	// Mock function that returns incrementing numbers
@@ -17,7 +17,7 @@ export function pollingTest() {
 		}
 	}
 
-	it("should return immediately if condition is met on first try", async () => {
+	it('should return immediately if condition is met on first try', async () => {
 		const fn = () => Promise.resolve(5)
 		const condition = (n: number) => n === 5
 		const result = await poll(fn, condition, 100, 10_000)
@@ -25,7 +25,7 @@ export function pollingTest() {
 		expect(result).toBe(5)
 	})
 
-	it("MUST poll until condition is met", async () => {
+	it('MUST poll until condition is met', async () => {
 		const fn = createMockFn(5, 3)
 		const condition = (n: number) => n === 5
 		const result = await poll(fn, condition, 100, 1000)
@@ -33,18 +33,18 @@ export function pollingTest() {
 		expect(result).toBe(5)
 	})
 
-	it("MUST throw custom error on timeout", async () => {
+	it('MUST throw custom error on timeout', async () => {
 		const expectedValue = 100
 		const fn = createMockFn(expectedValue, 100)
 		const condition = (n: number) => n === expectedValue
-		const customError = new Error("Custom timeout error")
+		const customError = new Error('Custom timeout error')
 
 		await expect(poll(fn, condition, 50, 100, customError)).rejects.toThrow(
-			"Custom timeout error",
+			'Custom timeout error',
 		)
 	})
 
-	it("MUST respect polling interval", async () => {
+	it('MUST respect polling interval', async () => {
 		const fn = createMockFn(5, 2)
 		const condition = (n: number) => n === 5
 		const interval = 100
@@ -60,12 +60,12 @@ export function pollingTest() {
 		expect(result).toBe(5)
 	})
 
-	it("MUST throw timeout period", async () => {
+	it('MUST throw timeout period', async () => {
 		const fn = () => Promise.resolve(1)
 		const condition = (n: number) => n === 5
 
 		const promise = poll(fn, condition, 100, 500)
 
-		await expect(promise).rejects.toThrow("Polling Timeout")
+		await expect(promise).rejects.toThrow('Polling Timeout')
 	})
 }

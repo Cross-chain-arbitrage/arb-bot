@@ -32,5 +32,5 @@ To add new test suite, create new file in `test` folder and export function that
 
 ## Devs
 
--   0xCompose
--   semidol
+- 0xCompose
+- semidol

@@ -2,15 +2,15 @@ import {
 	createClient,
 	Message,
 	MessageStatus,
-} from "@layerzerolabs/scan-client"
-import { Hash, isHash, zeroHash } from "viem"
-import { poll } from "../utils/polling"
+} from '@layerzerolabs/scan-client'
+import { Hash, isHash, zeroHash } from 'viem'
+import { poll } from '../utils/polling'
 
 export class LayerZeroScanError extends Error {
 	constructor(message: string) {
 		super(message)
 		Object.setPrototypeOf(this, LayerZeroScanError.prototype)
-		this.name = "LayerZeroScanError"
+		this.name = 'LayerZeroScanError'
 	}
 }
 
@@ -23,7 +23,7 @@ export class LayerZeroScanAPI {
 	// Assumes only one message is sent per tx
 	static async waitForDeliveryStatus(srcTxHash: Hash) {
 		if (!isHash(srcTxHash)) {
-			throw new LayerZeroScanError("srcTxHash is not a valid hash")
+			throw new LayerZeroScanError('srcTxHash is not a valid hash')
 		}
 
 		const condition = (messages: Message[]) =>
@@ -42,10 +42,10 @@ export class LayerZeroScanAPI {
 
 	static async getMessagesBySrcTxHash(srcTxHash: Hash): Promise<Message[]> {
 		if (srcTxHash === zeroHash) {
-			throw new LayerZeroScanError("srcTxHash is zero hash")
+			throw new LayerZeroScanError('srcTxHash is zero hash')
 		}
 
-		const client = createClient("mainnet")
+		const client = createClient('mainnet')
 
 		const response = await client.getMessagesBySrcTxHash(srcTxHash)
 		return response.messages

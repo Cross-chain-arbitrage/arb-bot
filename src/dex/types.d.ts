@@ -1,5 +1,5 @@
-import { Token } from "../utils/tokens/Token"
-import { Address } from "viem"
+import { Token } from '../utils/tokens/Token'
+import { Address } from 'viem'
 
 declare global {
 	interface SwapParams {

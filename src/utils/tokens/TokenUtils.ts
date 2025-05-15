@@ -1,12 +1,12 @@
-import { Address } from "viem"
+import { Address } from 'viem'
 import {
 	NATIVE_ADDRESS,
 	NativeCurrency,
 	STARGATE_NATIVE_ADDRESS,
-} from "./NativeCurrency"
-import { Token } from "./Token"
-import { ClientManager } from "../ClientManager"
-import { ERC20_ABI } from "../../abi/erc20"
+} from './NativeCurrency'
+import { Token } from './Token'
+import { ClientManager } from '../ClientManager'
+import { ERC20_ABI } from '../../abi/erc20'
 
 type TokenCacheKey = `${number}:${Address}`
 
@@ -57,17 +57,17 @@ export class TokenUtils {
 			client.readContract({
 				address,
 				abi,
-				functionName: "decimals",
+				functionName: 'decimals',
 			}),
 			client.readContract({
 				address,
 				abi,
-				functionName: "name",
+				functionName: 'name',
 			}),
 			client.readContract({
 				address,
 				abi,
-				functionName: "symbol",
+				functionName: 'symbol',
 			}),
 		])
 
@@ -77,7 +77,7 @@ export class TokenUtils {
 	}
 
 	static createNative(chainId: number): NativeCurrency {
-		const token = new NativeCurrency(chainId, "ETH", "ETH")
+		const token = new NativeCurrency(chainId, 'ETH', 'ETH')
 		this.tokenCache.set(this.getCacheKey(NATIVE_ADDRESS, chainId), token)
 		return token
 	}

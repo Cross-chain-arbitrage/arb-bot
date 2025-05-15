@@ -1,13 +1,13 @@
-import { Address, zeroAddress } from "viem"
-import { ClientManager } from "../utils/ClientManager"
-import { ALGEBRA_FACTORY_ABI } from "../abi/algebra/algebraFactory"
-import { AlgebraPool } from "./algebra/Pool"
-import { TickPool } from "./TickPool"
-import { UniV3Pool } from "./uniswapV3/Pool"
+import { Address, zeroAddress } from 'viem'
+import { ClientManager } from '../utils/ClientManager'
+import { ALGEBRA_FACTORY_ABI } from '../abi/algebra/algebraFactory'
+import { AlgebraPool } from './algebra/Pool'
+import { TickPool } from './TickPool'
+import { UniV3Pool } from './uniswapV3/Pool'
 
 export enum PoolType {
-	UNIV3 = "uniV3",
-	ALGEBRA = "algebra",
+	UNIV3 = 'uniV3',
+	ALGEBRA = 'algebra',
 }
 
 export class PoolUtils {
@@ -37,7 +37,7 @@ export class PoolUtils {
 			const poolAddress = await client.readContract({
 				address: factoryAddress,
 				abi: ALGEBRA_FACTORY_ABI,
-				functionName: "poolByPair",
+				functionName: 'poolByPair',
 				args: [token0Address, token1Address],
 			})
 
@@ -47,7 +47,7 @@ export class PoolUtils {
 
 			return poolAddress
 		} catch (error) {
-			console.error("Error fetching pool info:", error)
+			console.error('Error fetching pool info:', error)
 			return null
 		}
 	}

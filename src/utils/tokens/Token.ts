@@ -1,7 +1,7 @@
-import { Address, erc20Abi, isAddress, TransactionReceipt } from "viem"
-import { TokenError } from "../errors/TokenErrors"
-import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from "./NativeCurrency"
-import { TokenBase } from "./TokenBase"
+import { Address, erc20Abi, isAddress, TransactionReceipt } from 'viem'
+import { TokenError } from '../errors/TokenErrors'
+import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from './NativeCurrency'
+import { TokenBase } from './TokenBase'
 
 export class Token extends TokenBase {
 	constructor(
@@ -50,7 +50,7 @@ export class Token extends TokenBase {
 		const balance = await this.client.readContract({
 			address: this.address,
 			abi: erc20Abi,
-			functionName: "balanceOf",
+			functionName: 'balanceOf',
 			args: [address],
 		})
 		return balance
@@ -60,7 +60,7 @@ export class Token extends TokenBase {
 		const allowance = await this.client.readContract({
 			address: this.address,
 			abi: erc20Abi,
-			functionName: "allowance",
+			functionName: 'allowance',
 			args: [address, spender],
 		})
 		return allowance
@@ -73,7 +73,7 @@ export class Token extends TokenBase {
 		const hash = await this.wallet.writeContract({
 			address: this.address,
 			abi: erc20Abi,
-			functionName: "approve",
+			functionName: 'approve',
 			args: [spender, amount],
 			account: this.account,
 			chain: this.wallet.chain,

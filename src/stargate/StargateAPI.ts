@@ -1,26 +1,26 @@
-import axios from "axios"
-import { Token } from "../utils/tokens/Token"
-import { isValidUrl } from "../utils/validation"
-import { STARGATE_CHAINS } from "./dumped/chains"
-import { NativeCurrency } from "../utils/tokens/NativeCurrency"
-import { zeroAddress } from "viem"
+import axios from 'axios'
+import { Token } from '../utils/tokens/Token'
+import { isValidUrl } from '../utils/validation'
+import { STARGATE_CHAINS } from './dumped/chains'
+import { NativeCurrency } from '../utils/tokens/NativeCurrency'
+import { zeroAddress } from 'viem'
 
 export class StargateAPIError extends Error {
 	constructor(message: string) {
 		super(message)
 		Object.setPrototypeOf(this, StargateAPIError.prototype)
-		this.name = "StargateAPIError"
+		this.name = 'StargateAPIError'
 	}
 }
 
-const STARGATE_API_URL = "https://mainnet.stargate-api.com/v1"
+const STARGATE_API_URL = 'https://mainnet.stargate-api.com/v1'
 
 export class StargateAPI {
 	private static getApiUrl(): string {
 		const apiUrl = STARGATE_API_URL
 
 		if (!apiUrl || !isValidUrl(apiUrl)) {
-			throw new StargateAPIError("STARGATE_API_URL is not a valid URL")
+			throw new StargateAPIError('STARGATE_API_URL is not a valid URL')
 		}
 
 		return apiUrl
@@ -28,7 +28,7 @@ export class StargateAPI {
 
 	// Function to fetch tokens from the API
 	static async getTokensMetadata(
-		chainKey: string = "",
+		chainKey: string = '',
 	): Promise<StargateTokenMetadata[]> {
 		this.validateChainKey(chainKey)
 
@@ -49,7 +49,7 @@ export class StargateAPI {
 
 			return metadata
 		} catch (error) {
-			console.error("Error fetching metadata:", error)
+			console.error('Error fetching metadata:', error)
 			return []
 		}
 	}
@@ -86,13 +86,13 @@ export class StargateAPI {
 			)
 			return response.data.chains
 		} catch (error) {
-			console.error("Error fetching Stargate chains:", error)
+			console.error('Error fetching Stargate chains:', error)
 			throw error
 		}
 	}
 
 	static async getTokens(
-		chainKey: string = "",
+		chainKey: string = '',
 		includeLPs: boolean = false,
 	): Promise<StargateToken[]> {
 		try {
@@ -111,14 +111,14 @@ export class StargateAPI {
 			if (!includeLPs) {
 				tokens = tokens.filter(
 					(token) =>
-						!token.name?.includes("LP") &&
-						!token.symbol?.includes("S*"),
+						!token.name?.includes('LP') &&
+						!token.symbol?.includes('S*'),
 				)
 			}
 
 			return tokens
 		} catch (error) {
-			console.error("Error fetching tokens:", error)
+			console.error('Error fetching tokens:', error)
 			return []
 		}
 	}
@@ -155,7 +155,7 @@ export class StargateAPI {
 			// Check if the token price is within a small range of $1
 			if (!token.price?.usd) continue
 			// Aptos is supported only in Stargate V1
-			if (token.chainKey === "aptos") continue
+			if (token.chainKey === 'aptos') continue
 
 			const priceInUSD = parseFloat(token.price.usd.toString())
 			const lowerBound = 0.98
@@ -189,23 +189,23 @@ export class StargateAPI {
 	}
 
 	private static getTokenSymbol(token: StargateToken) {
-		const usdtAnalogs = ["USDT", "USDt", "m.USDT"]
+		const usdtAnalogs = ['USDT', 'USDt', 'm.USDT']
 
 		if (usdtAnalogs.includes(token.symbol)) {
-			return "USDT"
+			return 'USDT'
 		}
 
-		if (token.symbol === "USDC.e" && token.name?.includes("Stargate"))
-			return "USDC"
+		if (token.symbol === 'USDC.e' && token.name?.includes('Stargate'))
+			return 'USDC'
 
 		const avalancheBridgedUSDC = [
-			"0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", // arbitrum
-			"0x7F5c764cBc14f9669B88837ca1490cCa17c31607", // optimism
-			"0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", // polygon
+			'0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8', // arbitrum
+			'0x7F5c764cBc14f9669B88837ca1490cCa17c31607', // optimism
+			'0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // polygon
 		]
 
 		if (token.address && avalancheBridgedUSDC.includes(token.address)) {
-			return "USDC.e"
+			return 'USDC.e'
 		}
 
 		return token.symbol

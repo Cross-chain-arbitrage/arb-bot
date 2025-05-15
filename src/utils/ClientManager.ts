@@ -4,10 +4,10 @@ import {
 	PublicClient,
 	WalletClient,
 	createWalletClient,
-} from "viem"
-import * as chains from "viem/chains"
-import { getPrivateKey } from "./getAccount"
-import { privateKeyToAccount } from "viem/accounts"
+} from 'viem'
+import * as chains from 'viem/chains'
+import { getPrivateKey } from './getAccount'
+import { privateKeyToAccount } from 'viem/accounts'
 
 export class ClientManager {
 	private static clients: Map<number, PublicClient> = new Map()

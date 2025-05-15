@@ -1,28 +1,29 @@
-import { fuse } from "viem/chains"
-import { PoolType, PoolUtils } from "../src/dex/PoolUtils"
-import { ClientManager } from "../src/utils/ClientManager"
+import { fuse } from 'viem/chains'
+import { PoolType, PoolUtils } from '../src/dex/PoolUtils'
+import { ClientManager } from '../src/utils/ClientManager'
 import {
 	Client,
 	erc20Abi,
 	getContract,
 	GetContractReturnType,
 	WalletClient,
-} from "viem"
-import { AlgebraPool } from "../src/dex/algebra/Pool"
+} from 'viem'
+import { AlgebraPool } from '../src/dex/algebra/Pool'
 import {
 	killAnvil,
 	setNativeBalance,
 	setTokenBalance,
 	startAnvil,
-} from "./utils/anvil"
+} from './utils/anvil'
+import { makeSuite } from './utils/makeSuite'
 
 /* ======== Constants ======== */
 
-const wethUsdtPoolAddress = "0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6"
-const wethAddress = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590"
-const usdtAddress = "0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7"
+const wethUsdtPoolAddress = '0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6'
+const wethAddress = '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590'
+const usdtAddress = '0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7'
 const testPk =
-	"0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+	'0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
 const realFuseRpcUrl = fuse.rpcUrls.default.http[0]
 const realPk = process.env.PRIVATE_KEY
@@ -38,11 +39,16 @@ let pool: AlgebraPool
 
 /* ======== Tests ======== */
 
-export function algebraPoolTest() {
+makeSuite('algebra pool test', () => {
+	beforeAll(() => console.log('beforeAll1'))
+	afterAll(() => console.log('afterAll1'))
+	beforeAll(() => console.log('beforeAll2'))
+	afterAll(() => console.log('afterAll2'))
+
 	beforeAll(async () => {
 		ClientManager.clearClients()
 		// @ts-expect-error override readonly property
-		fuse.rpcUrls.default.http[0] = "http://localhost:8545"
+		fuse.rpcUrls.default.http[0] = 'http://localhost:8545'
 		process.env.PRIVATE_KEY = testPk
 
 		await startAnvil(realFuseRpcUrl)
@@ -99,12 +105,12 @@ export function algebraPoolTest() {
 		await killAnvil()
 	})
 
-	it("should create algebra pool with correct tokens", () => {
-		expect(pool.token0.symbol).toBe("WETH")
-		expect(pool.token1.symbol).toBe("USDT")
+	it('should create algebra pool with correct tokens', () => {
+		expect(pool.token0.symbol).toBe('WETH')
+		expect(pool.token1.symbol).toBe('USDT')
 	})
 
-	it("should correctly convert price to sqrtPriceX96 and vice versa", () => {
+	it('should correctly convert price to sqrtPriceX96 and vice versa', () => {
 		const sqrtPriceX96 = 10000000000n
 
 		const price = pool.sqrtPriceX96ToPrice(sqrtPriceX96)
@@ -113,7 +119,7 @@ export function algebraPoolTest() {
 		expect(sqrtPriceX96).toBe(sqrtPriceX962)
 	})
 
-	it("should simulate and swap token0 to token1", async () => {
+	it('should simulate and swap token0 to token1', async () => {
 		const amountIn = 10n ** 15n
 
 		await wethContract.write.approve([pool.routerAddress, amountIn], {
@@ -147,7 +153,7 @@ export function algebraPoolTest() {
 		expect(amountOut).toBe(usdtBalanceAfter - usdtBalanceBefore)
 	})
 
-	it("should simulate and swap token1 to token0", async () => {
+	it('should simulate and swap token1 to token0', async () => {
 		const pool = await PoolUtils.createPool(
 			wethUsdtPoolAddress,
 			fuse.id,
@@ -186,4 +192,4 @@ export function algebraPoolTest() {
 		expect(wethBalanceAfter).toBe(wethBalanceBefore + simulatedAmountOut)
 		expect(wethBalanceAfter - wethBalanceBefore).toBe(amountOut)
 	})
-}
+})

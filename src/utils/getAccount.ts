@@ -1,6 +1,6 @@
-import dotenv from "dotenv"
-import { Hex } from "viem"
-import { privateKeyToAccount } from "viem/accounts"
+import dotenv from 'dotenv'
+import { Hex } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
 
 dotenv.config()
 

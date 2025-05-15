@@ -1,17 +1,17 @@
-import { Token } from "../utils/tokens/Token"
-import { BaseContract } from "../utils/contracts/BaseContract"
-import { Address, TransactionReceipt } from "viem"
-import { ClientManager } from "../utils/ClientManager"
-import { TokenUtils } from "../utils/tokens/TokenUtils"
-import { UNIV3_POOL_ABI } from "../abi/univ3Pool"
-import { divideByDecimals, isSameAddress } from "../utils/common"
-import { multiplyByDecimals } from "../utils/common"
+import { Token } from '../utils/tokens/Token'
+import { BaseContract } from '../utils/contracts/BaseContract'
+import { Address, TransactionReceipt } from 'viem'
+import { ClientManager } from '../utils/ClientManager'
+import { TokenUtils } from '../utils/tokens/TokenUtils'
+import { UNIV3_POOL_ABI } from '../abi/univ3Pool'
+import { divideByDecimals, isSameAddress } from '../utils/common'
+import { multiplyByDecimals } from '../utils/common'
 
 export class TickPoolError extends Error {
 	constructor(message: string) {
 		super(message)
 		Object.setPrototypeOf(this, TickPoolError.prototype)
-		this.name = "TickPoolError"
+		this.name = 'TickPoolError'
 	}
 }
 
@@ -48,12 +48,12 @@ export abstract class TickPool extends BaseContract {
 			client.readContract({
 				address: poolAddress,
 				abi: UNIV3_POOL_ABI,
-				functionName: "token0",
+				functionName: 'token0',
 			}),
 			client.readContract({
 				address: poolAddress,
 				abi: UNIV3_POOL_ABI,
-				functionName: "token1",
+				functionName: 'token1',
 			}),
 		])
 

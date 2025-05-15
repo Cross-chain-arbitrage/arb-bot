@@ -1,10 +1,10 @@
-import { Address, decodeEventLog, zeroAddress } from "viem"
-import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
-import { TickPool } from "../TickPool"
-import { ALGEBRA_ROUTER_ABI } from "../../abi/algebra/algebraRouter"
-import { routers } from "./data"
-import { isSameAddress } from "../../utils/common"
-import { calcDeadline, getPoolImmutables } from "./helpers"
+import { Address, decodeEventLog, zeroAddress } from 'viem'
+import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
+import { TickPool } from '../TickPool'
+import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
+import { routers } from './data'
+import { isSameAddress } from '../../utils/common'
+import { calcDeadline, getPoolImmutables } from './helpers'
 
 export class AlgebraPool extends TickPool {
 	constructor(
@@ -32,7 +32,7 @@ export class AlgebraPool extends TickPool {
 		const [sqrtPriceX96] = await this.client.readContract({
 			address,
 			abi: ALGEBRA_POOL_ABI,
-			functionName: "globalState",
+			functionName: 'globalState',
 		})
 
 		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
@@ -64,7 +64,7 @@ export class AlgebraPool extends TickPool {
 		const { result: amountOut } = await this.client.simulateContract({
 			address: this.routerAddress,
 			abi: ALGEBRA_ROUTER_ABI,
-			functionName: "exactInputSingle",
+			functionName: 'exactInputSingle',
 			account: this.account.address,
 			args: [args],
 		})
@@ -80,7 +80,7 @@ export class AlgebraPool extends TickPool {
 			abi: ALGEBRA_ROUTER_ABI,
 			account: this.account,
 			chain: this.wallet.chain,
-			functionName: "exactInputSingle",
+			functionName: 'exactInputSingle',
 			args: [args],
 		})
 
@@ -98,9 +98,9 @@ export class AlgebraPool extends TickPool {
 
 				return event
 			})
-			.find((event) => event?.eventName === "Swap")
+			.find((event) => event?.eventName === 'Swap')
 
-		if (!swapEvent) throw new Error("Swap event not found")
+		if (!swapEvent) throw new Error('Swap event not found')
 
 		const amountOut =
 			swapEvent.args.amount0 < 0n

@@ -1,22 +1,22 @@
-import { Address, formatEther, Hex, zeroHash } from "viem"
-import { getChainEIdByNativeChainId } from "../layerzero/utils"
-import { padAddressToBytes32 } from "../utils/types"
-import { Token } from "../utils/tokens/Token"
-import { STARGATE_BASE_ABI } from "../abi/stargate/stargateBase"
-import { ClientManager } from "../utils/ClientManager"
-import { OFT_ABI } from "../abi/stargate/oft"
-import { STARGATE_POOL_ABI } from "../abi/stargate/stgPool"
-import { StargateAPI } from "./StargateAPI"
-import { STARGATE_CHAINS } from "./dumped/chains"
-import { NativeCurrency } from "../utils/tokens/NativeCurrency"
-import { StargateBridgeTx } from "./StargateBridgeTx"
-import logger from "../utils/logger"
+import { Address, formatEther, Hex, zeroHash } from 'viem'
+import { getChainEIdByNativeChainId } from '../layerzero/utils'
+import { padAddressToBytes32 } from '../utils/types'
+import { Token } from '../utils/tokens/Token'
+import { STARGATE_BASE_ABI } from '../abi/stargate/stargateBase'
+import { ClientManager } from '../utils/ClientManager'
+import { OFT_ABI } from '../abi/stargate/oft'
+import { STARGATE_POOL_ABI } from '../abi/stargate/stgPool'
+import { StargateAPI } from './StargateAPI'
+import { STARGATE_CHAINS } from './dumped/chains'
+import { NativeCurrency } from '../utils/tokens/NativeCurrency'
+import { StargateBridgeTx } from './StargateBridgeTx'
+import logger from '../utils/logger'
 
 export class StargateError extends Error {
 	constructor(message: string) {
 		super(message)
 		Object.setPrototypeOf(this, StargateError.prototype)
-		this.name = "StargateError"
+		this.name = 'StargateError'
 	}
 }
 
@@ -29,12 +29,12 @@ export class Stargate {
 		simulateOnly: boolean = false,
 	) {
 		if (amount <= 0n)
-			throw new StargateError("Amount must be greater than 0")
-		if (!recipient) throw new StargateError("Recipient address is required")
+			throw new StargateError('Amount must be greater than 0')
+		if (!recipient) throw new StargateError('Recipient address is required')
 		if (!toChainId && toChainId >= 1)
-			throw new StargateError("Destination chain ID is required")
+			throw new StargateError('Destination chain ID is required')
 		if (token.chainId === toChainId) {
-			throw new StargateError("Cannot send to the same chain")
+			throw new StargateError('Cannot send to the same chain')
 		}
 
 		const tokenMetadata = await StargateAPI.getTokenMetadata(
@@ -82,9 +82,9 @@ export class Stargate {
 			to: recipientBytes32,
 			amountLD: amount,
 			minAmountLD,
-			extraOptions: "0x" as Hex,
-			composeMsg: "0x" as Hex,
-			oftCmd: "0x" as Hex,
+			extraOptions: '0x' as Hex,
+			composeMsg: '0x' as Hex,
+			oftCmd: '0x' as Hex,
 		}
 
 		const client = ClientManager.getClient(token.chainId)
@@ -97,7 +97,7 @@ export class Stargate {
 			account: wallet.account,
 			address: poolOrOFT,
 			abi: STARGATE_BASE_ABI,
-			functionName: "send",
+			functionName: 'send',
 			value,
 			args: [
 				sendParams,
@@ -193,7 +193,7 @@ export class Stargate {
 				`OFT receipt: ${JSON.stringify(quote.oftFees?.oftReceipt)}`,
 			)
 		}
-		logger.info("--------------------------------")
+		logger.info('--------------------------------')
 	}
 
 	static async quote(
@@ -212,12 +212,12 @@ export class Stargate {
 		)
 
 		switch (metadata.stargateType) {
-			case "POOL":
+			case 'POOL':
 				return {
 					isOFT: false,
 					messagingFee,
 				}
-			case "OFT": {
+			case 'OFT': {
 				const [oftLimit, oftFeeDetails, oftReceipt] =
 					await Stargate.quoteOFT(
 						metadata.address,
@@ -249,13 +249,13 @@ export class Stargate {
 					},
 				}
 			}
-			case "NATIVE":
+			case 'NATIVE':
 				return {
 					isOFT: false,
 					messagingFee,
 				}
 			default:
-				throw new StargateError("Invalid stargate type")
+				throw new StargateError('Invalid stargate type')
 		}
 	}
 
@@ -276,9 +276,9 @@ export class Stargate {
 			to: recipientBytes32,
 			amountLD: amount,
 			minAmountLD: amount,
-			extraOptions: "0x" as Hex,
-			composeMsg: "0x" as Hex,
-			oftCmd: "0x" as Hex,
+			extraOptions: '0x' as Hex,
+			composeMsg: '0x' as Hex,
+			oftCmd: '0x' as Hex,
 		}
 
 		const client = ClientManager.getClient(fromChainId)
@@ -286,7 +286,7 @@ export class Stargate {
 		const messagingFee = await client.readContract({
 			address: token,
 			abi: STARGATE_BASE_ABI,
-			functionName: "quoteSend",
+			functionName: 'quoteSend',
 			args: [sendParams, payInLZ],
 		})
 
@@ -308,16 +308,16 @@ export class Stargate {
 		const result = await client.readContract({
 			address: token,
 			abi: OFT_ABI,
-			functionName: "quoteOFT",
+			functionName: 'quoteOFT',
 			args: [
 				{
 					dstEid: toChainEId,
 					to: recipientBytes32,
 					amountLD: amount,
 					minAmountLD: amount,
-					extraOptions: "0x",
-					composeMsg: "0x",
-					oftCmd: "0x",
+					extraOptions: '0x',
+					composeMsg: '0x',
+					oftCmd: '0x',
 				},
 			],
 		})
@@ -333,7 +333,7 @@ export class Stargate {
 		const client = ClientManager.getClient(chainId)
 
 		if (chainId === toChainId) {
-			throw new StargateError("Cannot getPath() to the same chain")
+			throw new StargateError('Cannot getPath() to the same chain')
 		}
 
 		const remoteEId = getChainEIdByNativeChainId(toChainId)
@@ -342,7 +342,7 @@ export class Stargate {
 		const credits = await client.readContract({
 			address: pool,
 			abi: STARGATE_POOL_ABI,
-			functionName: "paths",
+			functionName: 'paths',
 			args: [remoteEId],
 		})
 

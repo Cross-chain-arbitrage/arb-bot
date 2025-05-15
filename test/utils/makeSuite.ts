@@ -14,12 +14,12 @@ function beforeAndTest(test: () => void) {
 	beforeAll(() => {
 		//remove too verbose logs
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports
-		global.console = require("console")
+		global.console = require('console')
 
-		const isLogs = process.env.ENABLE_LOGS === "true"
+		const isLogs = process.env.ENABLE_LOGS === 'true'
 
 		if (!isLogs) {
-			jest.spyOn(console, "log").mockImplementation(() => {})
+			jest.spyOn(console, 'log').mockImplementation(() => {})
 		}
 	})
 	test()

@@ -1,13 +1,13 @@
 export const FACTORY_ABI = [
 	{
 		inputs: [
-			{ name: "tokenA", type: "address" },
-			{ name: "tokenB", type: "address" },
-			{ name: "fee", type: "uint24" },
+			{ name: 'tokenA', type: 'address' },
+			{ name: 'tokenB', type: 'address' },
+			{ name: 'fee', type: 'uint24' },
 		],
-		name: "getPool",
-		outputs: [{ name: "pool", type: "address" }],
-		stateMutability: "view",
-		type: "function",
+		name: 'getPool',
+		outputs: [{ name: 'pool', type: 'address' }],
+		stateMutability: 'view',
+		type: 'function',
 	},
 ] as const

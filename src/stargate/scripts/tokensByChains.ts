@@ -1,11 +1,11 @@
-import assert from "assert"
-import { StargateAPI } from "../StargateAPI"
+import assert from 'assert'
+import { StargateAPI } from '../StargateAPI'
 
 async function main() {
 	const allChains = await StargateAPI.getChains()
 	const tokens = await StargateAPI.getTokens()
 
-	const chainsToMap = ["hemi", "fuse", "ape", "lightlink", "degen"]
+	const chainsToMap = ['hemi', 'fuse', 'ape', 'lightlink', 'degen']
 
 	const chains = allChains.filter((chain) =>
 		chainsToMap.includes(chain.chainKey),
@@ -13,9 +13,9 @@ async function main() {
 
 	assert(
 		chains.length === chainsToMap.length,
-		"Expected " +
+		'Expected ' +
 			chainsToMap.length +
-			" chains, found only " +
+			' chains, found only ' +
 			chains.length,
 	)
 

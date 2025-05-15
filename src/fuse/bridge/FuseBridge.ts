@@ -1,22 +1,22 @@
-import { fuse } from "viem/chains"
-import { bsc, optimism } from "viem/chains"
-import { arbitrum } from "viem/chains"
-import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from "../../abi/fuse/erc20BridgeHome"
-import { ClientManager } from "../../utils/ClientManager"
-import { Token } from "../../utils/tokens/Token"
-import { getAccountAddress } from "../../utils/getAccount"
-import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from "../../abi/fuse/erc20BridgeForeign"
-import { FuseBridgeTx } from "./FuseBridgeTx"
-import { zeroHash } from "viem"
+import { fuse } from 'viem/chains'
+import { bsc, optimism } from 'viem/chains'
+import { arbitrum } from 'viem/chains'
+import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
+import { ClientManager } from '../../utils/ClientManager'
+import { Token } from '../../utils/tokens/Token'
+import { getAccountAddress } from '../../utils/getAccount'
+import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20BridgeForeign'
+import { FuseBridgeTx } from './FuseBridgeTx'
+import { zeroHash } from 'viem'
 
-const ERC20_BRIDGE_ETH_CHAINS = "0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb" // Arb, OP, BSC
-const ERC20_BRIDGE_FUSE = "0x353af4878d7452e974538706273887F7ED90Da47"
+const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
+const ERC20_BRIDGE_FUSE = '0x353af4878d7452e974538706273887F7ED90Da47'
 
 export class FuseBridgeError extends Error {
 	constructor(message: string) {
 		super(message)
 		Object.setPrototypeOf(this, FuseBridgeError.prototype)
-		this.name = "FuseBridgeError"
+		this.name = 'FuseBridgeError'
 	}
 }
 
@@ -49,23 +49,23 @@ export class FuseBridge {
 	static readonly SUPPORTED_TOKENS = [
 		{
 			chainId: fuse.id,
-			address: "0x34009565bfEeFded0F7e774629a745636Bf35E82",
-			symbol: "WBTC",
+			address: '0x34009565bfEeFded0F7e774629a745636Bf35E82',
+			symbol: 'WBTC',
 		},
 		{
 			chainId: arbitrum.id,
-			address: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
-			symbol: "WBTC",
+			address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
+			symbol: 'WBTC',
 		},
 		{
 			chainId: optimism.id,
-			address: "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
-			symbol: "WBTC",
+			address: '0x68f180fcCe6836688e9084f035309E29Bf0A2095',
+			symbol: 'WBTC',
 		},
 		{
 			chainId: bsc.id,
-			address: "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-			symbol: "WBTC",
+			address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c',
+			symbol: 'WBTC',
 		},
 	]
 
@@ -80,7 +80,7 @@ export class FuseBridge {
 	// private static readonly NATIVE_DROP = 0
 
 	private static readonly adapterParams =
-		"0x000100000000000000000000000000000000000000000000000000000000000493e0" as Hex
+		'0x000100000000000000000000000000000000000000000000000000000000000493e0' as Hex
 
 	static async bridge(
 		tokenIn: Token,
@@ -101,7 +101,7 @@ export class FuseBridge {
 			)
 
 			if (amount < tvl) {
-				throw new FuseBridgeError("Insufficient TVL on remote chain")
+				throw new FuseBridgeError('Insufficient TVL on remote chain')
 			}
 		}
 
@@ -139,7 +139,7 @@ export class FuseBridge {
 		const { request } = await client.simulateContract({
 			address,
 			abi,
-			functionName: "bridge",
+			functionName: 'bridge',
 			account: wallet.account,
 			value: quote[0],
 			args: args as FuseHomeBridgeFunctionArgs,
@@ -242,7 +242,7 @@ export class FuseBridge {
 		const result = await client.readContract({
 			address,
 			abi,
-			functionName: "estimateBridgeFee",
+			functionName: 'estimateBridgeFee',
 			args: args as [boolean, Hex],
 		})
 
@@ -273,7 +273,7 @@ export class FuseBridge {
 		const result = await client.readContract({
 			address,
 			abi: FUSE_ERC20_BRIDGE_ABI_ON_FUSE,
-			functionName: "totalValueLocked",
+			functionName: 'totalValueLocked',
 			args: [remoteChainId, remoteTokenAddress],
 		})
 

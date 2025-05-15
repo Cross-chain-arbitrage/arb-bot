@@ -1,8 +1,8 @@
 // @ts-check
 
-import eslint from "@eslint/js"
-import tseslint from "typescript-eslint"
-import unusedImports from "eslint-plugin-unused-imports"
+import eslint from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import unusedImports from 'eslint-plugin-unused-imports'
 
 export default tseslint.config(
 	eslint.configs.recommended,
@@ -18,25 +18,25 @@ export default tseslint.config(
 	},
 	{
 		plugins: {
-			"unused-imports": unusedImports,
+			'unused-imports': unusedImports,
 		},
 		rules: {
-			"no-unused-vars": "off",
-			"@typescript-eslint/no-unused-vars": "off",
-			"unused-imports/no-unused-imports": "error",
-			"unused-imports/no-unused-vars": [
-				"warn",
+			'no-unused-vars': 'off',
+			'@typescript-eslint/no-unused-vars': 'off',
+			'unused-imports/no-unused-imports': 'error',
+			'unused-imports/no-unused-vars': [
+				'warn',
 				{
-					vars: "all",
-					varsIgnorePattern: "^_",
-					args: "after-used",
-					argsIgnorePattern: "^_",
+					vars: 'all',
+					varsIgnorePattern: '^_',
+					args: 'after-used',
+					argsIgnorePattern: '^_',
 				},
 			],
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-unsafe-member-access": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
+			'@typescript-eslint/no-unsafe-assignment': 'off',
+			'@typescript-eslint/no-unsafe-call': 'off',
+			'@typescript-eslint/no-unsafe-member-access': 'off',
+			'@typescript-eslint/no-unsafe-argument': 'off',
 		},
 	},
 )

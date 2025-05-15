@@ -1,11 +1,11 @@
-import { Address, formatUnits, parseUnits } from "viem"
-import { BaseContract } from "../contracts/BaseContract"
+import { Address, formatUnits, parseUnits } from 'viem'
+import { BaseContract } from '../contracts/BaseContract'
 
 export class TokenBaseError extends Error {
 	constructor(message: string) {
 		super(message)
 		Object.setPrototypeOf(this, TokenBaseError.prototype)
-		this.name = "TokenBaseError"
+		this.name = 'TokenBaseError'
 	}
 }
 

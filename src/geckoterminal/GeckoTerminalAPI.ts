@@ -1,4 +1,4 @@
-import { Address } from "viem"
+import { Address } from 'viem'
 
 interface TokenData {
 	id: string
@@ -23,11 +23,11 @@ interface TokenData {
 
 export class GeckoTerminalAPI {
 	private static readonly baseUrl: string =
-		"https://api.geckoterminal.com/api/v2"
+		'https://api.geckoterminal.com/api/v2'
 
 	static async getTokenData(
 		address: Address,
-		network: string = "eth",
+		network: string = 'eth',
 	): Promise<TokenData> {
 		const tokenDataUrl = `${GeckoTerminalAPI.baseUrl}/networks/${network}/tokens/${address}`
 		const response = await fetch(tokenDataUrl)
@@ -41,10 +41,10 @@ export class GeckoTerminalAPI {
 	}
 
 	static async getTokenPriceETH(): Promise<number> {
-		return this.getTokenPrice("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+		return this.getTokenPrice('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
 	}
 
 	static async getTokenPriceBTC(): Promise<number> {
-		return this.getTokenPrice("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599")
+		return this.getTokenPrice('0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599')
 	}
 }
