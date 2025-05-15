@@ -1,8 +1,13 @@
 import { getContract } from "viem"
 import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
 import { ClientManager } from "../../utils/ClientManager"
+import { TokenUtils } from "../../utils/tokens/TokenUtils"
+import { Token } from "../../utils/tokens/Token"
 
-export async function getPoolImmutables(poolAddress: Address, chainId: number) {
+export async function getPoolImmutables(
+	poolAddress: Address,
+	chainId: number,
+): Promise<PoolImmutables> {
 	const client = ClientManager.getClient(chainId)
 
 	const contract = getContract({
@@ -18,10 +23,17 @@ export async function getPoolImmutables(poolAddress: Address, chainId: number) {
 		contract.read.token1(),
 	])
 
+	const token0 = await TokenUtils.fromAddress<Token>(token0Address, chainId)
+	const token1 = await TokenUtils.fromAddress<Token>(token1Address, chainId)
+
 	return {
-		token0Address,
-		token1Address,
+		token0,
+		token1,
 		fee,
 		tickSpacing: slot0Data[1],
 	}
+}
+
+export function calcDeadline(secondsToAdd: number) {
+	return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
 }

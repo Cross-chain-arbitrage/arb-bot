@@ -1,49 +1,29 @@
 import { Address, decodeEventLog, zeroAddress } from "viem"
-import { Token } from "../../utils/tokens/Token"
 import { ALGEBRA_POOL_ABI } from "../../abi/algebra/algebraPool"
 import { TickPool } from "../TickPool"
-import { TokenUtils } from "../../utils/tokens/TokenUtils"
 import { ALGEBRA_ROUTER_ABI } from "../../abi/algebra/algebraRouter"
 import { routers } from "./data"
 import { isSameAddress } from "../../utils/common"
-import { getPoolImmutables } from "./helpers"
+import { calcDeadline, getPoolImmutables } from "./helpers"
 
 export class AlgebraPool extends TickPool {
 	constructor(
 		poolAddress: Address,
 		chainId: number,
-		token0: Token,
-		token1: Token,
-		fee: number,
-		tickSpacing: number,
+		immutables: PoolImmutables,
 	) {
 		const routerAddress = routers[chainId]
 
 		if (!routerAddress)
 			throw new Error(`No router found for chain ${chainId}`)
 
-		super(
-			poolAddress,
-			chainId,
-			token0,
-			token1,
-			fee,
-			tickSpacing,
-			routerAddress,
-		)
+		super(poolAddress, chainId, immutables, routerAddress)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
 		const immutables = await getPoolImmutables(poolAddress, chainId)
 
-		return new AlgebraPool(
-			poolAddress,
-			chainId,
-			await TokenUtils.fromAddress(immutables.token0Address, chainId),
-			await TokenUtils.fromAddress(immutables.token1Address, chainId),
-			immutables.fee,
-			immutables.tickSpacing,
-		)
+		return new AlgebraPool(poolAddress, chainId, immutables)
 	}
 
 	async getPrices() {
@@ -60,44 +40,26 @@ export class AlgebraPool extends TickPool {
 		return { price, sqrtPriceX96 }
 	}
 
-	getSwapArguments(params: SwapParams, price: number) {
-		const { tokenIn, tokenOut, amountIn, slippage = 50 } = params
+	async getSwapArguments(params: SwapParams) {
+		const { price } = await this.getPrices()
 
-		const zeroToOne = this.zeroToOne(tokenIn)
-
-		const formattedAmountIn = Number(amountIn) / 10 ** tokenIn.decimals
-
-		const formattedAmountOutByPrice = zeroToOne
-			? formattedAmountIn * price
-			: formattedAmountIn / price
-
-		const amountOutByPrice = BigInt(Math.floor(formattedAmountOutByPrice))
-
-		const amountOutMinimum = this.calculateMinAmountOut(
-			amountOutByPrice,
-			slippage,
-		)
-
-		const sqrtMaxLimit = zeroToOne
-			? this.priceToSqrtPriceX96(price * (1 - slippage / 10000))
-			: this.priceToSqrtPriceX96(price * (1 + slippage / 10000))
+		const { amountOutMinimum, sqrtMaxLimit } =
+			this.calcMinAmountOutAndSqrtLimit(params, price)
 
 		return {
-			tokenIn: tokenIn.address,
-			tokenOut: tokenOut.address,
+			tokenIn: params.tokenIn.address,
+			tokenOut: params.tokenOut.address,
 			deployer: zeroAddress,
 			recipient: this.account.address,
-			deadline: BigInt(Math.floor(Date.now() / 1000) + 1000 * 60 * 5),
-			amountIn,
+			deadline: calcDeadline(60 * 5),
+			amountIn: params.amountIn,
 			amountOutMinimum,
 			limitSqrtPrice: sqrtMaxLimit,
 		}
 	}
 
 	async simulateSwap(params: SwapParams) {
-		const { price } = await this.getPrices()
-
-		const args = this.getSwapArguments(params, price)
+		const args = await this.getSwapArguments(params)
 
 		const { result: amountOut } = await this.client.simulateContract({
 			address: this.routerAddress,
@@ -107,7 +69,6 @@ export class AlgebraPool extends TickPool {
 			args: [args],
 		})
 
-		// TODO: add swap args to returned object
 		return { amountOut, args }
 	}
 
@@ -147,9 +108,5 @@ export class AlgebraPool extends TickPool {
 				: -swapEvent.args.amount1
 
 		return { receipt, amountOut }
-	}
-
-	private zeroToOne(tokenIn: Token) {
-		return isSameAddress(tokenIn.address, this.token0.address)
 	}
 }

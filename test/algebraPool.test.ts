@@ -1,17 +1,22 @@
-import { exec } from "child_process"
-import { exec as execPromise } from "./utils/helpers"
 import { fuse } from "viem/chains"
 import { PoolType, PoolUtils } from "../src/dex/PoolUtils"
 import { ClientManager } from "../src/utils/ClientManager"
 import {
 	Client,
-	encodeAbiParameters,
 	erc20Abi,
 	getContract,
-	keccak256,
-	toHex,
+	GetContractReturnType,
+	WalletClient,
 } from "viem"
 import { AlgebraPool } from "../src/dex/algebra/Pool"
+import {
+	killAnvil,
+	setNativeBalance,
+	setTokenBalance,
+	startAnvil,
+} from "./utils/anvil"
+
+/* ======== Constants ======== */
 
 const wethUsdtPoolAddress = "0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6"
 const wethAddress = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590"
@@ -22,26 +27,16 @@ const testPk =
 const realFuseRpcUrl = fuse.rpcUrls.default.http[0]
 const realPk = process.env.PRIVATE_KEY
 
-async function setTokenBalance(
-	userAddress: Address,
-	tokenAddress: Address,
-	balanceSlotIndex: bigint,
-	balance: bigint,
-	client: Client,
-) {
-	const balanceSlot = keccak256(
-		encodeAbiParameters(
-			[{ type: "address" }, { type: "uint256" }],
-			[userAddress, balanceSlotIndex],
-		),
-	)
+/* ======== Variables ======== */
 
-	await client.request({
-		// @ts-expect-error viem doesn't know about this method
-		method: "anvil_setStorageAt",
-		params: [tokenAddress, balanceSlot, toHex(balance, { size: 32 })],
-	})
-}
+let client: Client
+let walletClient: WalletClient
+let botAddress: Address
+let wethContract: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
+let usdtContract: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
+let pool: AlgebraPool
+
+/* ======== Tests ======== */
 
 export function algebraPoolTest() {
 	beforeAll(async () => {
@@ -50,24 +45,36 @@ export function algebraPoolTest() {
 		fuse.rpcUrls.default.http[0] = "http://localhost:8545"
 		process.env.PRIVATE_KEY = testPk
 
-		await startAnvil()
+		await startAnvil(realFuseRpcUrl)
 
-		const client = ClientManager.getClient(fuse.id)
-		const walletClient = ClientManager.getWalletClient(fuse.id)
+		client = ClientManager.getClient(fuse.id)
+		walletClient = ClientManager.getWalletClient(fuse.id)
+		botAddress = walletClient.account!.address
 
-		await client.request({
-			// @ts-expect-error viem doesn't know about this method
-			method: "anvil_setBalance",
-			params: [
-				walletClient.account!.address,
-				"0x1000000000000000000000000000000000000000",
-			],
+		pool = (await PoolUtils.createPool(
+			wethUsdtPoolAddress,
+			fuse.id,
+			PoolType.ALGEBRA,
+		)) as AlgebraPool
+
+		usdtContract = getContract({
+			address: pool.token1.address,
+			abi: erc20Abi,
+			client: walletClient,
+		})
+
+		wethContract = getContract({
+			address: pool.token0.address,
+			abi: erc20Abi,
+			client: walletClient,
 		})
 
 		const balanceSlotIndex = 1n
 
+		await setNativeBalance(client, botAddress, 10n ** 18n)
+
 		await setTokenBalance(
-			walletClient.account!.address,
+			botAddress,
 			wethAddress,
 			balanceSlotIndex,
 			10n ** 18n,
@@ -75,7 +82,7 @@ export function algebraPoolTest() {
 		)
 
 		await setTokenBalance(
-			walletClient.account!.address,
+			botAddress,
 			usdtAddress,
 			balanceSlotIndex,
 			10n ** 18n,
@@ -89,27 +96,15 @@ export function algebraPoolTest() {
 		fuse.rpcUrls.default.http[0] = realFuseRpcUrl
 		process.env.PRIVATE_KEY = realPk
 
-		await execPromise("pkill anvil")
+		await killAnvil()
 	})
 
-	it("should create algebra pool with correct tokens", async () => {
-		const pool = await PoolUtils.createPool(
-			wethUsdtPoolAddress,
-			fuse.id,
-			PoolType.ALGEBRA,
-		)
-
+	it("should create algebra pool with correct tokens", () => {
 		expect(pool.token0.symbol).toBe("WETH")
 		expect(pool.token1.symbol).toBe("USDT")
 	})
 
-	it("should correctly convert price to sqrtPriceX96 and vice versa", async () => {
-		const pool = await PoolUtils.createPool(
-			wethUsdtPoolAddress,
-			fuse.id,
-			PoolType.ALGEBRA,
-		)
-
+	it("should correctly convert price to sqrtPriceX96 and vice versa", () => {
 		const sqrtPriceX96 = 10000000000n
 
 		const price = pool.sqrtPriceX96ToPrice(sqrtPriceX96)
@@ -119,29 +114,11 @@ export function algebraPoolTest() {
 	})
 
 	it("should simulate and swap token0 to token1", async () => {
-		const pool = await PoolUtils.createPool(
-			wethUsdtPoolAddress,
-			fuse.id,
-			PoolType.ALGEBRA,
-		)
-
-		const walletClient = ClientManager.getWalletClient(fuse.id)
-
 		const amountIn = 10n ** 15n
 
-		await walletClient.writeContract({
-			address: wethAddress,
-			abi: erc20Abi,
-			functionName: "approve",
-			args: [(pool as AlgebraPool).routerAddress, amountIn],
+		await wethContract.write.approve([pool.routerAddress, amountIn], {
 			account: walletClient.account!,
 			chain: walletClient.chain,
-		})
-
-		const usdtContract = getContract({
-			address: pool.token1.address,
-			abi: erc20Abi,
-			client: walletClient,
 		})
 
 		const usdtBalanceBefore = await usdtContract.read.balanceOf([
@@ -177,23 +154,11 @@ export function algebraPoolTest() {
 			PoolType.ALGEBRA,
 		)
 
-		const walletClient = ClientManager.getWalletClient(fuse.id)
-
 		const amountIn = 10n ** 6n
 
-		await walletClient.writeContract({
-			address: pool.token1.address,
-			abi: erc20Abi,
-			functionName: "approve",
-			args: [(pool as AlgebraPool).routerAddress, amountIn],
+		await usdtContract.write.approve([pool.routerAddress, amountIn], {
 			account: walletClient.account!,
 			chain: walletClient.chain,
-		})
-
-		const wethContract = getContract({
-			address: pool.token0.address,
-			abi: erc20Abi,
-			client: walletClient,
 		})
 
 		const wethBalanceBefore = await wethContract.read.balanceOf([
@@ -221,27 +186,4 @@ export function algebraPoolTest() {
 		expect(wethBalanceAfter).toBe(wethBalanceBefore + simulatedAmountOut)
 		expect(wethBalanceAfter - wethBalanceBefore).toBe(amountOut)
 	})
-}
-
-async function startAnvil() {
-	const success = new Promise<void>((resolve) => {
-		const anvil = exec(`anvil --fork-url ${realFuseRpcUrl}`)
-
-		anvil.stdout?.on("data", (data) => {
-			if ((data as string).includes("Listening on 127.0.0.1:8545")) {
-				resolve()
-			}
-		})
-	})
-
-	const timeout = new Promise((_, reject) => {
-		const timer = setTimeout(() => {
-			reject(new Error("Anvil failed to start"))
-		}, 5000)
-
-		// if anvil starts successfully, don't need to keep the timer running
-		void success.finally(() => clearTimeout(timer))
-	})
-
-	await Promise.race([success, timeout])
 }

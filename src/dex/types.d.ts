@@ -2,15 +2,6 @@ import { Token } from "../utils/tokens/Token"
 import { Address } from "viem"
 
 declare global {
-	interface PoolInfo {
-		token0: Address
-		token1: Address
-		fee: number
-		sqrtPriceX96: bigint
-		liquidity: bigint
-		tick: number
-	}
-
 	interface SwapParams {
 		tokenIn: Token
 		tokenOut: Token
@@ -18,9 +9,11 @@ declare global {
 		slippage?: number // in basis points (e.g., 50 = 0.5%)
 	}
 
-	interface PoolTokens {
-		token0: Address
-		token1: Address
+	interface PoolImmutables {
+		token0: Token
+		token1: Token
+		fee: number
+		tickSpacing: number
 	}
 
 	//TODO: extract from abi

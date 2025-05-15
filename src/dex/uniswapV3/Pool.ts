@@ -9,26 +9,16 @@ export class UniV3Pool extends TickPool {
 	constructor(
 		poolAddress: Address,
 		chainId: number,
-		token0: Token,
-		token1: Token,
-		fee: number,
-		tickSpacing: number,
+		immutables: PoolImmutables,
 	) {
 		// TODO: Add router address
-		super(poolAddress, chainId, token0, token1, fee, tickSpacing, "0x")
+		super(poolAddress, chainId, immutables, "0x")
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
 		const immutables = await this.getPoolImmutables(poolAddress, chainId)
 
-		return new UniV3Pool(
-			poolAddress,
-			chainId,
-			await TokenUtils.fromAddress(immutables.token0, chainId),
-			await TokenUtils.fromAddress(immutables.token1, chainId),
-			immutables.fee,
-			immutables.tickSpacing,
-		)
+		return new UniV3Pool(poolAddress, chainId, immutables)
 	}
 
 	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {
@@ -56,12 +46,22 @@ export class UniV3Pool extends TickPool {
 		})
 
 		// Get pool data
-		const [slot0Data, token0, token1, fee] = await Promise.all([
-			contract.read.slot0(),
-			contract.read.token0(),
-			contract.read.token1(),
-			contract.read.fee(),
-		])
+		const [slot0Data, token0Address, token1Address, fee] =
+			await Promise.all([
+				contract.read.slot0(),
+				contract.read.token0(),
+				contract.read.token1(),
+				contract.read.fee(),
+			])
+
+		const token0 = await TokenUtils.fromAddress<Token>(
+			token0Address,
+			chainId,
+		)
+		const token1 = await TokenUtils.fromAddress<Token>(
+			token1Address,
+			chainId,
+		)
 
 		return {
 			token0,
