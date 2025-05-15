@@ -1,32 +1,37 @@
-interface PoolInfo {
-	token0: Address
-	token1: Address
-	fee: number
-	sqrtPriceX96: bigint
-	liquidity: bigint
-	tick: number
-}
+import { Token } from "../utils/tokens/Token"
+import { Address } from "viem"
 
-interface SwapParams {
-	tokenIn: Token
-	tokenOut: Token
-	amountIn: bigint
-	slippage?: number // in basis points (e.g., 50 = 0.5%)
-}
+declare global {
+	interface PoolInfo {
+		token0: Address
+		token1: Address
+		fee: number
+		sqrtPriceX96: bigint
+		liquidity: bigint
+		tick: number
+	}
 
-interface PoolTokens {
-	token0: Address
-	token1: Address
-}
+	interface SwapParams {
+		tokenIn: Token
+		tokenOut: Token
+		amountIn: bigint
+		slippage?: number // in basis points (e.g., 50 = 0.5%)
+	}
 
-//TODO: extract from abi
-type SwapArgs = {
-	tokenIn: Address
-	tokenOut: Address
-	deployer: Address
-	recipient: Address
-	deadline: bigint
-	amountIn: bigint
-	amountOutMinimum: bigint
-	limitSqrtPrice: bigint
+	interface PoolTokens {
+		token0: Address
+		token1: Address
+	}
+
+	//TODO: extract from abi
+	type SwapArgs = {
+		tokenIn: Address
+		tokenOut: Address
+		deployer: Address
+		recipient: Address
+		deadline: bigint
+		amountIn: bigint
+		amountOutMinimum: bigint
+		limitSqrtPrice: bigint
+	}
 }

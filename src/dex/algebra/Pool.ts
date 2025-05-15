@@ -99,9 +99,9 @@ export class AlgebraPool extends TickPool {
 			: this.priceToSqrtPriceX96(price * (1 + slippage / 10000))
 
 		return {
-			tokenIn: tokenIn.address as Address,
-			tokenOut: tokenOut.address as Address,
-			deployer: zeroAddress as Address,
+			tokenIn: tokenIn.address,
+			tokenOut: tokenOut.address,
+			deployer: zeroAddress,
 			recipient: this.account.address,
 			deadline: BigInt(Math.floor(Date.now() / 1000) + 1000 * 60 * 5),
 			amountIn,
