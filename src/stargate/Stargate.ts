@@ -10,6 +10,7 @@ import { StargateAPI } from "./StargateAPI"
 import { STARGATE_CHAINS } from "./dumped/chains"
 import { NativeCurrency } from "../utils/tokens/NativeCurrency"
 import { StargateBridgeTx } from "./StargateBridgeTx"
+import logger from "../utils/logger"
 
 export class StargateError extends Error {
 	constructor(message: string) {
@@ -47,7 +48,7 @@ export class Stargate {
 			poolOrOFT,
 			toChainId,
 			token.chainId,
-			amount,
+			// amount,
 		)
 
 		const balance = await token.balanceOf(recipient)
@@ -105,14 +106,7 @@ export class Stargate {
 			],
 		})
 
-		Stargate.logTransactionDetails(
-			token,
-			amount,
-			poolOrOFT,
-			recipient,
-			toChainId,
-			quote,
-		)
+		Stargate.logTransactionDetails(token, quote)
 
 		if (simulateOnly) {
 			return new StargateBridgeTx(
@@ -134,11 +128,12 @@ export class Stargate {
 			amount,
 		)
 	}
+
 	private static async validatePathCredits(
 		poolOrOFT: Address,
 		toChainId: number,
 		chainId: number,
-		amount: bigint,
+		// amount: bigint,
 	): Promise<void> {
 		const pathCredits = await Stargate.getPathCredits(
 			poolOrOFT,
@@ -146,17 +141,21 @@ export class Stargate {
 			chainId,
 		)
 
+		logger.info(`Path Credits ${pathCredits}`)
+
 		if (pathCredits === 0n) {
 			throw new StargateError(
 				`Bridge path doesn't exist for ${poolOrOFT} from ${chainId} to ${toChainId}`,
 			)
 		}
 
-		if (pathCredits < amount) {
-			throw new StargateError(
-				`Not enough credits for bridging ${poolOrOFT} from ${chainId} to ${toChainId}, needed ${amount}, has ${pathCredits}`,
-			)
-		}
+		// TODO: find a way to get bridging limit and validate it
+
+		// if (pathCredits < amount) {
+		// 	throw new StargateError(
+		// 		`Not enough credits for bridging ${poolOrOFT} from ${chainId} to ${toChainId}, needed ${amount}, has ${pathCredits}`,
+		// 	)
+		// }
 	}
 
 	private static async validateAllowance(
@@ -176,28 +175,25 @@ export class Stargate {
 
 	private static logTransactionDetails(
 		token: Token | NativeCurrency,
-		amount: bigint,
-		poolOrOFT: Address,
-		recipient: Address,
-		toChainId: number,
 		quote: QuoteResult,
 	): void {
-		console.log("Sending", amount, "of", poolOrOFT, "to", recipient)
-		console.log(`To: ${toChainId}`)
-		console.log("--------------------------------")
-		console.log("Messaging fee:", formatEther(quote.messagingFee.nativeFee))
+		logger.info(`--------------------------------`)
+		logger.info(
+			`Messaging fee: ${formatEther(quote.messagingFee.nativeFee)}`,
+		)
 
 		if (quote.isOFT) {
-			console.log(
-				"OFT limits:",
-				token.formatUnits(quote.oftFees?.oftLimit.minAmountLD ?? 0n),
-				"-",
-				token.formatUnits(quote.oftFees?.oftLimit.maxAmountLD ?? 0n),
+			logger.info(
+				`OFT limits: ${token.formatUnits(quote.oftFees?.oftLimit.minAmountLD ?? 0n)} - ${token.formatUnits(quote.oftFees?.oftLimit.maxAmountLD ?? 0n)}`,
 			)
-			console.log("OFT fee details:", quote.oftFees?.oftFeeDetails)
-			console.log("OFT receipt:", quote.oftFees?.oftReceipt)
+			logger.info(
+				`OFT fee details: ${JSON.stringify(quote.oftFees?.oftFeeDetails)}`,
+			)
+			logger.info(
+				`OFT receipt: ${JSON.stringify(quote.oftFees?.oftReceipt)}`,
+			)
 		}
-		console.log("--------------------------------")
+		logger.info("--------------------------------")
 	}
 
 	static async quote(
@@ -230,6 +226,18 @@ export class Stargate {
 						toChainId,
 						fromChainId,
 					)
+
+				if (oftLimit.minAmountLD > amount) {
+					throw new StargateError(
+						`Bridging min amount is greater than the amount, needed ${oftLimit.minAmountLD}, has ${amount}`,
+					)
+				}
+
+				if (oftLimit.maxAmountLD < amount) {
+					throw new StargateError(
+						`Bridging max amount is less than the amount, needed ${oftLimit.maxAmountLD}, has ${amount}`,
+					)
+				}
 
 				return {
 					isOFT: true,
@@ -329,12 +337,16 @@ export class Stargate {
 		}
 
 		const remoteEId = getChainEIdByNativeChainId(toChainId)
+
+		logger.info(`Pool Address ${pool}`)
 		const credits = await client.readContract({
 			address: pool,
 			abi: STARGATE_POOL_ABI,
 			functionName: "paths",
 			args: [remoteEId],
 		})
+
+		logger.info(`Credits ${credits}`)
 
 		return credits
 	}
