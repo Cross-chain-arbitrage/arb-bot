@@ -4,8 +4,7 @@ import { Address, TransactionReceipt } from 'viem'
 import { ClientManager } from '../utils/ClientManager'
 import { TokenUtils } from '../utils/tokens/TokenUtils'
 import { UNIV3_POOL_ABI } from '../abi/univ3Pool'
-import { divideByDecimals, isSameAddress } from '../utils/common'
-import { multiplyByDecimals } from '../utils/common'
+import { isSameAddress } from '../utils/common'
 
 export class TickPoolError extends Error {
 	constructor(message: string) {
@@ -22,13 +21,17 @@ export abstract class TickPool extends BaseContract {
 	public readonly token1: Token
 	public readonly fee: number
 	public readonly tickSpacing: number
+
+	public readonly routerAddress: Address
+	public readonly quoterAddress: Address
+
 	public readonly defaultSlippage: number = 50
 
 	constructor(
 		poolAddress: Address,
 		chainId: number,
 		immutables: PoolImmutables,
-		public readonly routerAddress: Address,
+		periphery: PoolPeriphery,
 	) {
 		super(poolAddress, chainId)
 
@@ -36,31 +39,36 @@ export abstract class TickPool extends BaseContract {
 		this.token1 = immutables.token1
 		this.fee = immutables.fee
 		this.tickSpacing = immutables.tickSpacing
+
+		this.routerAddress = periphery.router
+		this.quoterAddress = periphery.quoter
 	}
 
 	async validateSwapParams(params: SwapParams) {
+		this.validateMismatchSwapParams(params)
+
+		await Promise.all([
+			this.validateBalance(params),
+			this.validateAllowance(params),
+		])
+	}
+
+	validateMismatchSwapParams(params: SwapParams) {
 		if (isSameAddress(params.tokenIn.address, params.tokenOut.address)) {
 			throw new Error('tokenIn and tokenOut cannot be the same')
 		}
-
 		if (
 			!isSameAddress(params.tokenIn.address, this.token0.address) &&
 			!isSameAddress(params.tokenIn.address, this.token1.address)
 		) {
 			throw new Error('tokenIn must be token0 or token1')
 		}
-
 		if (
 			!isSameAddress(params.tokenOut.address, this.token0.address) &&
 			!isSameAddress(params.tokenOut.address, this.token1.address)
 		) {
 			throw new Error('tokenOut must be token0 or token1')
 		}
-
-		await Promise.all([
-			this.validateBalance(params),
-			this.validateAllowance(params),
-		])
 	}
 
 	async validateBalance(swapParams: SwapParams) {
@@ -153,36 +161,36 @@ export abstract class TickPool extends BaseContract {
 			: this.priceToSqrtPriceX96(price * (1 + slippage / bpNumber))
 	}
 
-	calcMinAmountOutAndSqrtLimit(params: SwapParams, price: number) {
-		const {
-			tokenIn,
-			tokenOut,
-			amountIn,
-			slippage = this.defaultSlippage,
-		} = params
+	// calcMinAmountOutAndSqrtLimit(params: SwapParams, price: number) {
+	// 	const {
+	// 		tokenIn,
+	// 		tokenOut,
+	// 		amountIn,
+	// 		slippage = this.defaultSlippage,
+	// 	} = params
 
-		const zeroToOne = this.zeroToOne(tokenIn)
+	// 	const zeroToOne = this.zeroToOne(tokenIn)
 
-		const formattedAmountIn = divideByDecimals(amountIn, tokenIn.decimals)
+	// 	const formattedAmountIn = divideByDecimals(amountIn, tokenIn.decimals)
 
-		const formattedAmountOutByPrice = zeroToOne
-			? formattedAmountIn * price
-			: formattedAmountIn / price
+	// 	const formattedAmountOutByPrice = zeroToOne
+	// 		? formattedAmountIn * price
+	// 		: formattedAmountIn / price
 
-		const amountOutByPrice = multiplyByDecimals(
-			formattedAmountOutByPrice,
-			tokenOut.decimals,
-		)
+	// 	const amountOutByPrice = multiplyByDecimals(
+	// 		formattedAmountOutByPrice,
+	// 		tokenOut.decimals,
+	// 	)
 
-		const amountOutMinimum = this.calcMinAmountOut(
-			amountOutByPrice,
-			slippage,
-		)
+	// 	const amountOutMinimum = this.calcMinAmountOut(
+	// 		amountOutByPrice,
+	// 		slippage,
+	// 	)
 
-		const sqrtMaxLimit = this.calcSqrtLimit(price, slippage, zeroToOne)
+	// 	const sqrtMaxLimit = this.calcSqrtLimit(price, slippage, zeroToOne)
 
-		return { amountOutMinimum, sqrtMaxLimit }
-	}
+	// 	return { amountOutMinimum, sqrtMaxLimit }
+	// }
 
 	private zeroToOne(tokenIn: Token) {
 		return isSameAddress(tokenIn.address, this.token0.address)

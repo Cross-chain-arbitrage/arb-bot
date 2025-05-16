@@ -56,6 +56,7 @@ async function startAnvil(forkRpcUrl: string, blockNumber?: number) {
 		const anvil = exec(command)
 
 		anvil.stdout?.on('data', (data) => {
+			// console.log(data)
 			if ((data as string).includes('Listening on 127.0.0.1:8545')) {
 				resolve()
 			}

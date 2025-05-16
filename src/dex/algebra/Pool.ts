@@ -2,9 +2,10 @@ import { Address, decodeEventLog, zeroAddress } from 'viem'
 import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
 import { TickPool } from '../TickPool'
 import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
-import { routers } from './data'
+import { peripheryAddresses } from './data'
 import { isSameAddress } from '../../utils/common'
 import { calcDeadline, getPoolImmutables } from './helpers'
+import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
 
 export class AlgebraPool extends TickPool {
 	constructor(
@@ -12,12 +13,12 @@ export class AlgebraPool extends TickPool {
 		chainId: number,
 		immutables: PoolImmutables,
 	) {
-		const routerAddress = routers[chainId]
+		const periphery = peripheryAddresses[chainId]
 
-		if (!routerAddress)
-			throw new Error(`No router found for chain ${chainId}`)
+		if (!periphery)
+			throw new Error(`No periphery found for chain ${chainId}`)
 
-		super(poolAddress, chainId, immutables, routerAddress)
+		super(poolAddress, chainId, immutables, periphery)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
@@ -41,10 +42,12 @@ export class AlgebraPool extends TickPool {
 	}
 
 	async getSwapArguments(params: SwapParams) {
-		const { price } = await this.getPrices()
+		const { amountOut } = await this.quoteSwap(params)
 
-		const { amountOutMinimum, sqrtMaxLimit } =
-			this.calcMinAmountOutAndSqrtLimit(params, price)
+		const amountOutMinimum = this.calcMinAmountOut(
+			amountOut,
+			params.slippage ?? this.defaultSlippage,
+		)
 
 		return {
 			tokenIn: params.tokenIn.address,
@@ -54,8 +57,28 @@ export class AlgebraPool extends TickPool {
 			deadline: calcDeadline(60 * 5),
 			amountIn: params.amountIn,
 			amountOutMinimum,
-			limitSqrtPrice: sqrtMaxLimit,
+			limitSqrtPrice: 0n, // amountOutMinimum is enough for ensuring slippage
 		}
+	}
+
+	async quoteSwap(params: SwapParams) {
+		this.validateMismatchSwapParams(params)
+
+		const { result } = await this.client.simulateContract({
+			address: this.quoterAddress,
+			abi: ALGEBRA_QUOTER_ABI,
+			functionName: 'quoteExactInputSingle',
+			account: this.account.address,
+			args: [
+				params.tokenIn.address,
+				params.tokenOut.address,
+				zeroAddress, //deployer
+				params.amountIn,
+				0n, //sqrtMaxLimit
+			],
+		})
+
+		return { amountOut: result[0], fee: result[1] }
 	}
 
 	async simulateSwap(params: SwapParams) {

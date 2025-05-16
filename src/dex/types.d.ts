@@ -27,4 +27,9 @@ declare global {
 		amountOutMinimum: bigint
 		limitSqrtPrice: bigint
 	}
+
+	interface PoolPeriphery {
+		quoter: Address
+		router: Address
+	}
 }

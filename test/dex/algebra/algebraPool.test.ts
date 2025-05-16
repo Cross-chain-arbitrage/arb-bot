@@ -77,13 +77,25 @@ makeSuite('algebra pool test', () => {
 		)
 	})
 
+	it('should quote swap', async () => {
+		const amountIn = 10n ** 18n
+
+		const { amountOut } = await pool.quoteSwap({
+			tokenIn: pool.token0,
+			tokenOut: pool.token1,
+			amountIn,
+		})
+
+		expect(amountOut).toBeDefined()
+	})
+
 	it('should create algebra pool with correct tokens', () => {
 		expect(pool.token0.symbol).toBe('WETH')
 		expect(pool.token1.symbol).toBe('USDT')
 	})
 
 	it('should simulate and swap token0 to token1', async () => {
-		const amountIn = 10n ** 15n
+		const amountIn = 10n ** 18n
 
 		await wethContract.write.approve([pool.routerAddress, amountIn], {
 			account: walletClient.account!,

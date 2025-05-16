@@ -12,7 +12,10 @@ export class UniV3Pool extends TickPool {
 		immutables: PoolImmutables,
 	) {
 		// TODO: Add router address
-		super(poolAddress, chainId, immutables, '0x')
+		super(poolAddress, chainId, immutables, {
+			quoter: '0x',
+			router: '0x',
+		})
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
