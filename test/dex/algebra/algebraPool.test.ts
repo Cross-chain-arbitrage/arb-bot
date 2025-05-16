@@ -135,7 +135,7 @@ makeSuite('algebra pool test', () => {
 			PoolType.ALGEBRA,
 		)
 
-		const amountIn = 10n ** 6n
+		const amountIn = 10n ** 9n
 
 		await usdtContract.write.approve([pool.routerAddress, amountIn], {
 			account: walletClient.account!,
