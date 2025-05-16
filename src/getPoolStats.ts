@@ -283,7 +283,7 @@ function logArbitrageOpportunities(
 	)
 	opportunities.forEach((opp) => {
 		console.log(
-			`${opp.token0Symbol}/${opp.token1Symbol} in pool ${opp.pool.address}:`,
+			`${opp.token0Symbol}/${opp.token1Symbol} in pool ${opp.pool.address} (${opp.pool.type}):`,
 			`\n  Expected: ${opp.expectedPrice}`,
 			`\n  Actual: ${opp.actualPrice}`,
 			`\n  Difference: ${opp.priceDiffPercent.toFixed(2)}%`,

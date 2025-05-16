@@ -113,8 +113,6 @@ export class FuseBridge {
 
 		const quote = await this.quote(tokenIn, toChainId, false)
 
-		console.log(quote)
-
 		const { address, abi } = this.getBridge(tokenIn.chainId)
 
 		if (tokenIn.chainId !== fuse.id) {

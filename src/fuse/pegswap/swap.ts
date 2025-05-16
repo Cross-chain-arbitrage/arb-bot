@@ -1,6 +1,7 @@
 import { PublicClient, WalletClient } from 'viem'
 import { Token } from '../../utils/tokens/Token'
 import { pegswapAbi } from '../../abi/pegswap'
+import logger from '../../utils/logger'
 
 const pegswapContract = '0xFa70dFFeA090fED2d6E9301fB10b0d4C81072E4c'
 
@@ -69,16 +70,9 @@ async function swap(
 		args: [tokenOutAddress, tokenInAddress],
 	})
 
-	console.log(
-		'Swapping',
-		amountIn,
-		'of',
-		tokenInAddress,
-		'to',
-		tokenOutAddress,
-	)
-
-	console.log('Swappable amount:', swappableAmount)
+	logger.info(`Swapping ${tokenInAddress} to ${tokenOutAddress}`)
+	logger.info(`Amount in: ${amountIn}`)
+	logger.info(`Swappable amount: ${swappableAmount}`)
 
 	if (swappableAmount < amountIn) {
 		throw new Error('Insufficient liquidity on PegSwap contract')
@@ -91,7 +85,7 @@ async function swap(
 		args: [amountIn, tokenInAddress, tokenOutAddress],
 	})
 
-	console.log('Amount out:', amountOut)
+	logger.info(`Amount out: ${amountOut}`)
 
 	return amountOut
 }
