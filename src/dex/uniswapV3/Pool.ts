@@ -7,6 +7,14 @@ import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
 import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
 import { isSameAddress } from '../../utils/common'
 
+export class UniV3PoolError extends Error {
+	constructor(message: string) {
+		super(message)
+		Object.setPrototypeOf(this, UniV3PoolError.prototype)
+		this.name = 'UniV3PoolError'
+	}
+}
+
 export class UniV3Pool extends TickPool {
 	constructor(
 		poolAddress: Address,
@@ -16,7 +24,7 @@ export class UniV3Pool extends TickPool {
 		const periphery = peripheryAddresses[chainId]
 
 		if (!periphery)
-			throw new Error(`No periphery found for chain ${chainId}`)
+			throw new UniV3PoolError(`No periphery found for chain ${chainId}`)
 
 		// TODO: Add router address
 		super(poolAddress, chainId, immutables, periphery)
@@ -121,7 +129,7 @@ export class UniV3Pool extends TickPool {
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
 		if (receipt.status !== 'success')
-			throw new Error(`Swap failed, tx: ${hash}`)
+			throw new UniV3PoolError(`Swap failed, tx: ${hash}`)
 
 		const swapEvent = receipt.logs
 			.map((log) => {
@@ -137,7 +145,7 @@ export class UniV3Pool extends TickPool {
 			})
 			.find((event) => event?.eventName === 'Swap')
 
-		if (!swapEvent) throw new Error('Swap event not found')
+		if (!swapEvent) throw new UniV3PoolError('Swap event not found')
 
 		const amountOut =
 			swapEvent.args.amount0 < 0n

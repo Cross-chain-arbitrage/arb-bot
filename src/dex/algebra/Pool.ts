@@ -7,6 +7,14 @@ import { isSameAddress } from '../../utils/common'
 import { getPoolImmutables } from './helpers'
 import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
 
+export class AlgebraPoolError extends Error {
+	constructor(message: string) {
+		super(message)
+		Object.setPrototypeOf(this, AlgebraPoolError.prototype)
+		this.name = 'AlgebraPoolError'
+	}
+}
+
 export class AlgebraPool extends TickPool {
 	constructor(
 		poolAddress: Address,
@@ -16,7 +24,9 @@ export class AlgebraPool extends TickPool {
 		const periphery = peripheryAddresses[chainId]
 
 		if (!periphery)
-			throw new Error(`No periphery found for chain ${chainId}`)
+			throw new AlgebraPoolError(
+				`No periphery found for chain ${chainId}`,
+			)
 
 		super(poolAddress, chainId, immutables, periphery)
 	}
@@ -112,7 +122,7 @@ export class AlgebraPool extends TickPool {
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
 		if (receipt.status !== 'success')
-			throw new Error(`Swap failed, tx: ${hash}`)
+			throw new AlgebraPoolError(`Swap failed, tx: ${hash}`)
 
 		const swapEvent = receipt.logs
 			.map((log) => {
@@ -128,7 +138,7 @@ export class AlgebraPool extends TickPool {
 			})
 			.find((event) => event?.eventName === 'Swap')
 
-		if (!swapEvent) throw new Error('Swap event not found')
+		if (!swapEvent) throw new AlgebraPoolError('Swap event not found')
 
 		const amountOut =
 			swapEvent.args.amount0 < 0n
