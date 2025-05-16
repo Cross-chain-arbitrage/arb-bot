@@ -4,6 +4,7 @@ import { TokenUtils } from '../../../utils/tokens/TokenUtils'
 import { Token } from '../../../utils/tokens/Token'
 import { getAccountAddress } from '../../../utils/getAccount'
 import { GeckoTerminalAPI } from '../../../geckoterminal/GeckoTerminalAPI'
+import logger from '../../../utils/logger'
 
 async function swap() {
 	const poolAddress = '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992' // WETH/WBTC pool
@@ -35,17 +36,16 @@ async function swap() {
 	const priceBTC = await GeckoTerminalAPI.getTokenPriceBTC()
 
 	const amountInUSD = Number(weth.formatUnits(balance)) * priceETH
-	console.log(`ETH price: $${priceETH}`)
+	logger.info(`ETH price: $${priceETH}`)
 	const amountOutUSD = Number(wbtc.formatUnits(amountOut)) * priceBTC
-	console.log(`BTC price: $${priceBTC}`)
+	logger.info(`BTC price: $${priceBTC}`)
 
-	console.log(`AmountIn: ${weth.formatUnits(balance)} ($${amountInUSD} USD)`)
-	console.log(
+	logger.info(`AmountIn: ${weth.formatUnits(balance)} ($${amountInUSD} USD)`)
+	logger.info(
 		`Amount out: ${wbtc.formatUnits(amountOut)} ($${amountOutUSD} USD)`,
 	)
 
-	console.log(`Potential profit: $${amountOutUSD - amountInUSD} USD`)
-	// console.log(`Args: ${args}`)
+	logger.info(`Potential profit: $${amountOutUSD - amountInUSD} USD`)
 }
 
 swap().catch(console.error)
