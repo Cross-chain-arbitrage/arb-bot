@@ -15,14 +15,13 @@ import { WBTC_ARB } from './run'
 
 /* ======== TYPES ======== */
 
-export interface ArbitrageConfig {
+export interface EconomicsConfig {
 	MIN_SPREAD_PERCENT: number
 	ARBITRAGE_AMOUNT_USD: number
 	MIN_PROFIT_USD: number
 	SLIPPAGE: number
 }
-
-export interface ArbitrageOpportunity {
+interface ArbitrageOpportunity {
 	tokenIn: Token
 	tokenInArb: Token | NativeCurrency
 	tokenOut: Token
@@ -32,21 +31,17 @@ export interface ArbitrageOpportunity {
 	potentialProfit: number
 }
 
-export interface ImmutablesConfig {
-	baseChain: {
-		id: number
-		name: string
-		geckoTerminalId: GeckoTerminalChainId
-	}
-	poolAddress: Address
-	poolChainId: number
+export interface BaseChain {
+	id: number
+	name: string
+	geckoTerminalId: GeckoTerminalChainId
 }
 
 /* ======== CLASS ======== */
 
 export class AlgebraPoolArbitrageStrategy {
-	private readonly config: ArbitrageConfig
-	private readonly immutables: ImmutablesConfig
+	private readonly config: EconomicsConfig
+	private readonly baseChain: BaseChain
 	private pool: AlgebraPool
 	private token0: Token
 	private token1: Token
@@ -54,14 +49,14 @@ export class AlgebraPoolArbitrageStrategy {
 	private token1Arb: Token | NativeCurrency
 
 	constructor(
-		config: ArbitrageConfig,
-		immutables: ImmutablesConfig,
+		config: EconomicsConfig,
+		baseChain: BaseChain,
 		pool: AlgebraPool,
 		token0Arb: Token | NativeCurrency,
 		token1Arb: Token | NativeCurrency,
 	) {
 		this.config = config
-		this.immutables = immutables
+		this.baseChain = baseChain
 		this.pool = pool
 		this.token0 = pool.token0
 		this.token1 = pool.token1
@@ -98,11 +93,11 @@ export class AlgebraPoolArbitrageStrategy {
 		const [price0, price1] = await Promise.all([
 			GeckoTerminalAPI.getTokenPriceForChain(
 				this.token0Arb.address,
-				this.immutables.baseChain.geckoTerminalId,
+				this.baseChain.geckoTerminalId,
 			),
 			GeckoTerminalAPI.getTokenPriceForChain(
 				this.token1Arb.address,
-				this.immutables.baseChain.geckoTerminalId,
+				this.baseChain.geckoTerminalId,
 			),
 		])
 
@@ -195,11 +190,11 @@ export class AlgebraPoolArbitrageStrategy {
 
 		const tokenInArb = await TokenUtils.fromAddress(
 			tokenInArbAddress,
-			this.immutables.baseChain.id,
+			this.baseChain.id,
 		)
 		const tokenOutArb = await TokenUtils.fromAddress(
 			tokenOutArbAddress,
-			this.immutables.baseChain.id,
+			this.baseChain.id,
 		)
 
 		return {
@@ -243,7 +238,7 @@ export class AlgebraPoolArbitrageStrategy {
 			)
 		}
 		logger.info(
-			`Bridged ${tokenInArb.symbol} from ${this.immutables.baseChain.name} to ${this.pool.chainId}: ${bridgeTx.hash}`,
+			`Bridged ${tokenInArb.symbol} from ${this.baseChain.name} to ${this.pool.chainId}: ${bridgeTx.hash}`,
 		)
 		await bridgeTx.waitForBridgeToFinish()
 		logger.info(
@@ -275,7 +270,7 @@ export class AlgebraPoolArbitrageStrategy {
 		if (tokenOutArb.address === WBTC_ARB && this.pool.chainId === fuse.id) {
 			bridgeBackTx = await FuseBridge.bridge(
 				tokenOutArb as Token,
-				this.immutables.baseChain.id,
+				this.baseChain.id,
 				account,
 				amountOut,
 			)
@@ -284,23 +279,23 @@ export class AlgebraPoolArbitrageStrategy {
 				tokenOut,
 				amountOut,
 				account,
-				this.immutables.baseChain.id,
+				this.baseChain.id,
 			)
 		}
 
 		logger.info(
-			`Bridged ${tokenOut.symbol} back to ${this.immutables.baseChain.name}: ${bridgeBackTx.hash}`,
+			`Bridged ${tokenOut.symbol} back to ${this.baseChain.name}: ${bridgeBackTx.hash}`,
 		)
 		await bridgeBackTx.waitForBridgeToFinish()
 		logger.info(
-			`Bridge ${tokenOut.symbol} to ${this.immutables.baseChain.name}: ${bridgeBackTx.hash} finished`,
+			`Bridge ${tokenOut.symbol} to ${this.baseChain.name}: ${bridgeBackTx.hash} finished`,
 		)
 
 		const tokenOutArbBalance = await tokenOutArb.balanceOf(account)
 
 		const tokenOutArbPrice = await GeckoTerminalAPI.getTokenPriceForChain(
 			tokenOutArb.address,
-			this.immutables.baseChain.geckoTerminalId,
+			this.baseChain.geckoTerminalId,
 		)
 
 		const tokenOutBalanceUSD =
