@@ -17,7 +17,7 @@ declare global {
 	}
 
 	//TODO: extract from abi
-	type SwapArgs = {
+	type AlgebraSwapArgs = {
 		tokenIn: Address
 		tokenOut: Address
 		deployer: Address
@@ -26,6 +26,17 @@ declare global {
 		amountIn: bigint
 		amountOutMinimum: bigint
 		limitSqrtPrice: bigint
+	}
+
+	type UniV3SwapArgs = {
+		tokenIn: Address
+		tokenOut: Address
+		fee: number
+		recipient: Address
+		deadline: bigint
+		amountIn: bigint
+		amountOutMinimum: bigint
+		sqrtPriceLimitX96: bigint
 	}
 
 	interface PoolPeriphery {

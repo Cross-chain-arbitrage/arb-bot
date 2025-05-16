@@ -4,7 +4,7 @@ import { TickPool } from '../TickPool'
 import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
 import { peripheryAddresses } from './data'
 import { isSameAddress } from '../../utils/common'
-import { calcDeadline, getPoolImmutables } from './helpers'
+import { getPoolImmutables } from './helpers'
 import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
 
 export class AlgebraPool extends TickPool {
@@ -54,7 +54,7 @@ export class AlgebraPool extends TickPool {
 			tokenOut: params.tokenOut.address,
 			deployer: zeroAddress,
 			recipient: this.account.address,
-			deadline: calcDeadline(60 * 5),
+			deadline: this.calcDeadline(60 * 5),
 			amountIn: params.amountIn,
 			amountOutMinimum,
 			limitSqrtPrice: 0n, // amountOutMinimum is enough for ensuring slippage

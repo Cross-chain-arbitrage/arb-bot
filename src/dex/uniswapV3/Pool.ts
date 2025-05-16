@@ -1,9 +1,11 @@
-import { Address, getContract, TransactionReceipt } from 'viem'
+import { Address, decodeEventLog } from 'viem'
 import { TickPool } from '../TickPool'
-import { Token } from '../../utils/tokens/Token'
-import { UNIV3_POOL_ABI } from '../../abi/univ3Pool'
-import { ClientManager } from '../../utils/ClientManager'
-import { TokenUtils } from '../../utils/tokens/TokenUtils'
+import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
+import { getPoolImmutables } from './helpers'
+import { peripheryAddresses } from './data'
+import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
+import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
+import { isSameAddress } from '../../utils/common'
 
 export class UniV3Pool extends TickPool {
 	constructor(
@@ -11,15 +13,17 @@ export class UniV3Pool extends TickPool {
 		chainId: number,
 		immutables: PoolImmutables,
 	) {
+		const periphery = peripheryAddresses[chainId]
+
+		if (!periphery)
+			throw new Error(`No periphery found for chain ${chainId}`)
+
 		// TODO: Add router address
-		super(poolAddress, chainId, immutables, {
-			quoter: '0x',
-			router: '0x',
-		})
+		super(poolAddress, chainId, immutables, periphery)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		const immutables = await this.getPoolImmutables(poolAddress, chainId)
+		const immutables = await getPoolImmutables(poolAddress, chainId)
 
 		return new UniV3Pool(poolAddress, chainId, immutables)
 	}
@@ -39,48 +43,107 @@ export class UniV3Pool extends TickPool {
 		return { price, sqrtPriceX96 }
 	}
 
-	static async getPoolImmutables(address: Address, chainId: number) {
-		const client = ClientManager.getClient(chainId)
+	async quoteSwap(params: SwapParams) {
+		this.validateMismatchSwapParams(params)
 
-		const contract = getContract({
-			address,
-			abi: UNIV3_POOL_ABI,
-			client,
+		const { result } = await this.client.simulateContract({
+			address: this.quoterAddress,
+			abi: UNIV3_QUOTER_ABI,
+			functionName: 'quoteExactInputSingle',
+			account: this.account.address,
+			args: [
+				{
+					tokenIn: params.tokenIn.address,
+					tokenOut: params.tokenOut.address,
+					amountIn: params.amountIn,
+					fee: this.fee,
+					sqrtPriceLimitX96: 0n,
+				},
+			],
 		})
 
-		// Get pool data
-		const [slot0Data, token0Address, token1Address, fee] =
-			await Promise.all([
-				contract.read.slot0(),
-				contract.read.token0(),
-				contract.read.token1(),
-				contract.read.fee(),
-			])
+		return {
+			amountOut: result[0],
+			sqrtPriceX96After: result[1],
+			initializedTicksCrossed: result[2],
+			gasEstimate: result[3],
+		}
+	}
 
-		const token0 = await TokenUtils.fromAddress<Token>(
-			token0Address,
-			chainId,
-		)
-		const token1 = await TokenUtils.fromAddress<Token>(
-			token1Address,
-			chainId,
+	async getSwapArguments(params: SwapParams) {
+		const { amountOut } = await this.quoteSwap(params)
+
+		const amountOutMinimum = this.calcMinAmountOut(
+			amountOut,
+			params.slippage ?? this.defaultSlippage,
 		)
 
 		return {
-			token0,
-			token1,
-			fee,
-			tickSpacing: slot0Data[1],
+			tokenIn: params.tokenIn.address,
+			tokenOut: params.tokenOut.address,
+			fee: this.fee,
+			recipient: this.account.address,
+			deadline: this.calcDeadline(60 * 5),
+			amountIn: params.amountIn,
+			amountOutMinimum,
+			sqrtPriceLimitX96: 0n, // amountOutMinimum is enough for ensuring slippage
 		}
 	}
 
 	async simulateSwap(params: SwapParams) {
-		// TODO: Implement
-		return { amountOut: 0n, args: {} as SwapArgs }
+		await this.validateSwapParams(params)
+
+		const args = await this.getSwapArguments(params)
+
+		const { result: amountOut } = await this.client.simulateContract({
+			address: this.routerAddress,
+			abi: UNIV3_ROUTER_ABI,
+			functionName: 'exactInputSingle',
+			account: this.account.address,
+			args: [args],
+		})
+
+		return { amountOut, args }
 	}
 
 	async swap(params: SwapParams) {
-		// TODO: Implement
-		return { receipt: {} as TransactionReceipt, amountOut: 0n }
+		const { args } = await this.simulateSwap(params)
+
+		const hash = await this.wallet.writeContract({
+			address: this.routerAddress,
+			abi: UNIV3_ROUTER_ABI,
+			account: this.account,
+			chain: this.wallet.chain,
+			functionName: 'exactInputSingle',
+			args: [args],
+		})
+
+		const receipt = await this.client.waitForTransactionReceipt({ hash })
+
+		if (receipt.status !== 'success')
+			throw new Error(`Swap failed, tx: ${hash}`)
+
+		const swapEvent = receipt.logs
+			.map((log) => {
+				if (!isSameAddress(log.address, this.address)) return null
+
+				const event = decodeEventLog({
+					abi: UNIV3_POOL_ABI,
+					data: log.data,
+					topics: log.topics,
+				})
+
+				return event
+			})
+			.find((event) => event?.eventName === 'Swap')
+
+		if (!swapEvent) throw new Error('Swap event not found')
+
+		const amountOut =
+			swapEvent.args.amount0 < 0n
+				? -swapEvent.args.amount0
+				: -swapEvent.args.amount1
+
+		return { receipt, amountOut }
 	}
 }

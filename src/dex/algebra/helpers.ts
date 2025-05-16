@@ -33,7 +33,3 @@ export async function getPoolImmutables(
 		tickSpacing: slot0Data[1],
 	}
 }
-
-export function calcDeadline(secondsToAdd: number) {
-	return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
-}

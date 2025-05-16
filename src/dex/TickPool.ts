@@ -3,7 +3,7 @@ import { BaseContract } from '../utils/contracts/BaseContract'
 import { Address, TransactionReceipt } from 'viem'
 import { ClientManager } from '../utils/ClientManager'
 import { TokenUtils } from '../utils/tokens/TokenUtils'
-import { UNIV3_POOL_ABI } from '../abi/univ3Pool'
+import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
 import { isSameAddress } from '../utils/common'
 
 export class TickPoolError extends Error {
@@ -161,6 +161,10 @@ export abstract class TickPool extends BaseContract {
 			: this.priceToSqrtPriceX96(price * (1 + slippage / bpNumber))
 	}
 
+	calcDeadline(secondsToAdd: number) {
+		return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
+	}
+
 	// calcMinAmountOutAndSqrtLimit(params: SwapParams, price: number) {
 	// 	const {
 	// 		tokenIn,
@@ -197,9 +201,9 @@ export abstract class TickPool extends BaseContract {
 	}
 
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
-	abstract simulateSwap(
-		params: SwapParams,
-	): Promise<{ amountOut: bigint; args: SwapArgs }>
+	abstract simulateSwap(params: SwapParams) //TODO: remove any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	: Promise<{ amountOut: bigint; args: any }>
 	abstract swap(params: SwapParams): Promise<{
 		receipt: TransactionReceipt
 		amountOut: bigint
