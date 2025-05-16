@@ -111,6 +111,9 @@ export class AlgebraPool extends TickPool {
 
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
+		if (receipt.status !== 'success')
+			throw new Error(`Swap failed, tx: ${hash}`)
+
 		const swapEvent = receipt.logs
 			.map((log) => {
 				if (!isSameAddress(log.address, this.address)) return null
