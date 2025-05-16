@@ -7,7 +7,7 @@ import { Token } from '../../utils/tokens/Token'
 import { getAccountAddress } from '../../utils/getAccount'
 import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20BridgeForeign'
 import { FuseBridgeTx } from './FuseBridgeTx'
-import { zeroHash } from 'viem'
+import { zeroAddress, zeroHash } from 'viem'
 
 const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
 const ERC20_BRIDGE_FUSE = '0x353af4878d7452e974538706273887F7ED90Da47'

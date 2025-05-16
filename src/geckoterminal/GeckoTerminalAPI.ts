@@ -1,4 +1,5 @@
 import { Address } from 'viem'
+import { CHAINS, GeckoTerminalChainId } from './chains'
 
 interface TokenData {
 	id: string
@@ -27,8 +28,10 @@ export class GeckoTerminalAPI {
 
 	static async getTokenData(
 		address: Address,
-		network: string = 'eth',
+		network: GeckoTerminalChainId = GeckoTerminalChainId.ETH,
 	): Promise<TokenData> {
+		this.validateChain(network)
+
 		const tokenDataUrl = `${GeckoTerminalAPI.baseUrl}/networks/${network}/tokens/${address}`
 		const response = await fetch(tokenDataUrl)
 		const data = (await response.json()) as { data: TokenData }
@@ -40,11 +43,26 @@ export class GeckoTerminalAPI {
 		return Number(tokenData.attributes.price_usd)
 	}
 
+	static async getTokenPriceForChain(
+		address: Address,
+		network: GeckoTerminalChainId,
+	): Promise<number> {
+		this.validateChain(network)
+
+		const tokenData = await this.getTokenData(address, network)
+		return Number(tokenData.attributes.price_usd)
+	}
+
 	static async getTokenPriceETH(): Promise<number> {
 		return this.getTokenPrice('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
 	}
 
 	static async getTokenPriceBTC(): Promise<number> {
 		return this.getTokenPrice('0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599')
+	}
+
+	static validateChain(chain: string) {
+		const some = CHAINS.some((c) => c.id === chain)
+		if (!some) throw new Error(`Chain ${chain} not found`)
 	}
 }
