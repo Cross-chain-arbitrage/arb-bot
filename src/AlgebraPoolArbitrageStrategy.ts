@@ -1,4 +1,3 @@
-import { arbitrum, fuse } from 'viem/chains'
 import { AlgebraPool } from './dex/algebra/Pool'
 import { Token } from './utils/tokens/Token'
 import { getAccountAddress } from './utils/getAccount'
@@ -8,31 +7,22 @@ import logger from './utils/logger'
 import { GeckoTerminalChainId } from './geckoterminal/chains'
 import { TokenUtils } from './utils/tokens/TokenUtils'
 import { NativeCurrency } from './utils/tokens/NativeCurrency'
-
-/* ======== CONSTANTS ======== */
-
-const STRATEGY_CONFIG = {
-	MIN_SPREAD_PERCENT: 0.25,
-	ARBITRAGE_AMOUNT_USD: 25,
-	MIN_PROFIT_USD: 1,
-	SLIPPAGE: 30,
-} as const
-
-const STRATEGY_IMMUTABLES: ImmutablesConfig = {
-	baseChain: {
-		id: arbitrum.id,
-		name: arbitrum.name,
-		geckoTerminalId: GeckoTerminalChainId.ARBITRUM,
-	},
-	poolAddress: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992',
-	poolChainId: fuse.id,
-	token0Arb: '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590',
-	token1Arb: '0x34009565bfEeFded0F7e774629a745636Bf35E82',
-} as const
+import { FuseBridge } from './fuse/bridge/FuseBridge'
+import { FuseBridgeTx } from './fuse/bridge/FuseBridgeTx'
+import { StargateBridgeTx } from './stargate/StargateBridgeTx'
+import { fuse } from 'viem/chains'
+import { WBTC_ARB } from './run'
 
 /* ======== TYPES ======== */
 
-interface ArbitrageOpportunity {
+export interface ArbitrageConfig {
+	MIN_SPREAD_PERCENT: number
+	ARBITRAGE_AMOUNT_USD: number
+	MIN_PROFIT_USD: number
+	SLIPPAGE: number
+}
+
+export interface ArbitrageOpportunity {
 	tokenIn: Token
 	tokenInArb: Token | NativeCurrency
 	tokenOut: Token
@@ -40,10 +30,9 @@ interface ArbitrageOpportunity {
 	amountIn: bigint
 	amountOut: bigint
 	potentialProfit: number
-	pool: AlgebraPool
 }
 
-interface ImmutablesConfig {
+export interface ImmutablesConfig {
 	baseChain: {
 		id: number
 		name: string
@@ -51,87 +40,74 @@ interface ImmutablesConfig {
 	}
 	poolAddress: Address
 	poolChainId: number
-	token0Arb: Address
-	token1Arb: Address
 }
 
 /* ======== CLASS ======== */
 
-export class ArbitrageAnyAlgebraPool {
-	private readonly config: typeof STRATEGY_CONFIG
+export class AlgebraPoolArbitrageStrategy {
+	private readonly config: ArbitrageConfig
 	private readonly immutables: ImmutablesConfig
-	private pool: AlgebraPool | null = null
-	private token0: Token | null = null
-	private token1: Token | null = null
-	private token0Arb: Token | null = null
-	private token1Arb: Token | null = null
+	private pool: AlgebraPool
+	private token0: Token
+	private token1: Token
+	private token0Arb: Token | NativeCurrency
+	private token1Arb: Token | NativeCurrency
 
 	constructor(
-		config: typeof STRATEGY_CONFIG = STRATEGY_CONFIG,
-		immutables: ImmutablesConfig = STRATEGY_IMMUTABLES,
-	) {
-		this.config = config
-		this.immutables = immutables
-	}
-
-	private async getTokens() {
-		if (
-			this.pool &&
-			this.token0 &&
-			this.token1 &&
-			this.token0Arb &&
-			this.token1Arb
-		) {
-			return {
-				token0: this.token0,
-				token1: this.token1,
-				token0Arb: this.token0Arb,
-				token1Arb: this.token1Arb,
-			}
-		}
-
-		this.pool = await AlgebraPool.create(
-			this.immutables.poolAddress,
-			this.immutables.poolChainId,
-		)
-
-		this.token0 = this.pool.token0
-		this.token1 = this.pool.token1
-
-		this.token0Arb = await TokenUtils.fromAddress<Token>(
-			this.immutables.token0Arb,
-			this.immutables.baseChain.id,
-		)
-		this.token1Arb = await TokenUtils.fromAddress<Token>(
-			this.immutables.token1Arb,
-			this.immutables.baseChain.id,
-		)
-
-		return {
-			token0: this.token0,
-			token1: this.token1,
-			token0Arb: this.token0Arb,
-			token1Arb: this.token1Arb,
-		}
-	}
-
-	private async getMarketPrices(
+		config: ArbitrageConfig,
+		immutables: ImmutablesConfig,
+		pool: AlgebraPool,
 		token0Arb: Token | NativeCurrency,
 		token1Arb: Token | NativeCurrency,
 	) {
+		this.config = config
+		this.immutables = immutables
+		this.pool = pool
+		this.token0 = pool.token0
+		this.token1 = pool.token1
+		this.token0Arb = token0Arb
+		this.token1Arb = token1Arb
+
+		// Call initialization note
+		this.onInitialized()
+	}
+
+	// Warns user of potential arbitrage paths for them to identify potential configuration issues
+	private onInitialized() {
+		logger.warn('AlgebraPoolArbitrageStrategy() initialized')
+		logger.warn(`Potential arbitrage paths:`)
+
+		const baseToken0Symbol = this.token0Arb.symbol
+		const baseToken1Symbol = this.token1Arb.symbol
+		const poolToken0Symbol = this.token0.symbol
+		const poolToken1Symbol = this.token1.symbol
+
+		logger.warn(
+			`- ${baseToken0Symbol} -> ${poolToken0Symbol} -> ${poolToken1Symbol} -> ${baseToken1Symbol}`,
+		)
+		logger.warn(
+			`- ${baseToken1Symbol} -> ${poolToken1Symbol} -> ${poolToken0Symbol} -> ${baseToken0Symbol}`,
+		)
+
+		logger.warn(
+			'If this is not the desired path, please update the configuration',
+		)
+	}
+
+	private async getTokenPrices() {
 		const [price0, price1] = await Promise.all([
 			GeckoTerminalAPI.getTokenPriceForChain(
-				token0Arb.address,
-				GeckoTerminalChainId.ARBITRUM,
+				this.token0Arb.address,
+				this.immutables.baseChain.geckoTerminalId,
 			),
 			GeckoTerminalAPI.getTokenPriceForChain(
-				token1Arb.address,
-				GeckoTerminalChainId.ARBITRUM,
+				this.token1Arb.address,
+				this.immutables.baseChain.geckoTerminalId,
 			),
 		])
 
-		logger.info(`${token0Arb.symbol} price: $${price0}`)
-		logger.info(`${token1Arb.symbol} price: $${price1}`)
+		logger.info(`${this.token0Arb.symbol} price: $${price0}`)
+		logger.info(`${this.token1Arb.symbol} price: $${price1}`)
 
 		return { price0, price1 }
 	}
@@ -139,23 +115,18 @@ export class ArbitrageAnyAlgebraPool {
 	private async validateArbitrageOpportunity(
 		initialOpportunity: ArbitrageOpportunity,
 	) {
-		const { price0, price1 } = await this.getMarketPrices(
-			initialOpportunity.tokenIn,
-			initialOpportunity.tokenOut,
-		)
+		const { price0, price1 } = await this.getTokenPrices()
 
 		const updatedOpportunity = await this.findArbitrageOpportunity(
-			initialOpportunity.pool,
 			price0,
 			price1,
-			initialOpportunity.tokenIn,
-			initialOpportunity.tokenOut,
 		)
 
 		if (
 			!updatedOpportunity ||
 			updatedOpportunity.tokenIn.address !==
-				initialOpportunity.tokenIn.address
+				initialOpportunity.tokenIn.address ||
+			updatedOpportunity.potentialProfit < this.config.MIN_PROFIT_USD
 		) {
 			return false
 		}
@@ -164,13 +135,10 @@ export class ArbitrageAnyAlgebraPool {
 	}
 
 	private async findArbitrageOpportunity(
-		pool: AlgebraPool,
 		price0: number,
 		price1: number,
-		token0: Token,
-		token1: Token,
 	): Promise<ArbitrageOpportunity | null> {
-		const { price } = await pool.getPrices()
+		const { price } = await this.pool.getPrices()
 		const priceRatio = price0 / price1
 		const difference = this.calculatePriceDiff(price, priceRatio)
 
@@ -181,17 +149,17 @@ export class ArbitrageAnyAlgebraPool {
 			return null
 		}
 
-		const tokenIn = price > priceRatio ? token0 : token1
+		const tokenIn = price > priceRatio ? this.token0 : this.token1
 		logger.info(`Token in: ${tokenIn.symbol}`)
-		const tokenOut = tokenIn === token0 ? token1 : token0
+		const tokenOut = tokenIn === this.token0 ? this.token1 : this.token0
 		logger.info(`Token out: ${tokenOut.symbol}`)
 
-		const tokenInPrice = tokenIn === token0 ? price0 : price1
-		const tokenOutPrice = tokenOut === token0 ? price0 : price1
+		const tokenInPrice = tokenIn === this.token0 ? price0 : price1
+		const tokenOutPrice = tokenOut === this.token0 ? price0 : price1
 		const arbitrageAmount = this.config.ARBITRAGE_AMOUNT_USD / tokenInPrice
 
 		const amountIn = tokenIn.parseUnits(arbitrageAmount.toString())
-		const { amountOut } = await pool.quoteSwap({
+		const { amountOut } = await this.pool.quoteSwap({
 			tokenIn,
 			tokenOut,
 			amountIn,
@@ -221,13 +189,9 @@ export class ArbitrageAnyAlgebraPool {
 		}
 
 		const tokenInArbAddress =
-			price > priceRatio
-				? this.immutables.token0Arb
-				: this.immutables.token1Arb
+			price > priceRatio ? this.token0Arb.address : this.token1Arb.address
 		const tokenOutArbAddress =
-			price > priceRatio
-				? this.immutables.token1Arb
-				: this.immutables.token0Arb
+			price > priceRatio ? this.token1Arb.address : this.token0Arb.address
 
 		const tokenInArb = await TokenUtils.fromAddress(
 			tokenInArbAddress,
@@ -244,7 +208,6 @@ export class ArbitrageAnyAlgebraPool {
 			amountIn,
 			amountOut,
 			potentialProfit,
-			pool,
 			tokenInArb,
 			tokenOutArb,
 		}
@@ -252,21 +215,39 @@ export class ArbitrageAnyAlgebraPool {
 
 	private async executeArbitrage(opportunity: ArbitrageOpportunity) {
 		const account = getAccountAddress()
-		const { tokenIn, tokenOut, amountIn, amountOut, pool } = opportunity
-
-		// 1. Bridge token from Arbitrum to target chain
-		const bridgeTx = await Stargate.send(
+		const {
 			tokenIn,
+			tokenOut,
 			amountIn,
-			account,
-			pool.chainId,
-		)
+			amountOut,
+			tokenInArb,
+			tokenOutArb,
+		} = opportunity
+
+		// 1. Bridge token from Base Chain to Opportunity Chain
+		let bridgeTx: StargateBridgeTx | FuseBridgeTx
+
+		if (tokenInArb.address === WBTC_ARB && this.pool.chainId === fuse.id) {
+			bridgeTx = await FuseBridge.bridge(
+				tokenInArb as Token,
+				this.pool.chainId,
+				account,
+				amountIn,
+			)
+		} else {
+			bridgeTx = await Stargate.send(
+				tokenInArb,
+				amountIn,
+				account,
+				this.pool.chainId,
+			)
+		}
 		logger.info(
-			`Bridged ${tokenIn.symbol} from Arbitrum to target chain: ${bridgeTx.hash}`,
+			`Bridged ${tokenInArb.symbol} from ${this.immutables.baseChain.name} to ${this.pool.chainId}: ${bridgeTx.hash}`,
 		)
 		await bridgeTx.waitForBridgeToFinish()
 		logger.info(
-			`Bridge ${tokenIn.symbol} to target chain: ${bridgeTx.hash} finished`,
+			`Bridge ${tokenInArb.symbol} to ${this.pool.chainId} finished: ${bridgeTx.hash}`,
 		)
 
 		// 1.5. Check that arbitrage opportunity is still valid
@@ -278,7 +259,7 @@ export class ArbitrageAnyAlgebraPool {
 		}
 
 		// 2. Swap on target chain
-		const swapTx = await pool.swap({
+		const swapTx = await this.pool.swap({
 			tokenIn,
 			tokenOut,
 			amountIn,
@@ -288,23 +269,32 @@ export class ArbitrageAnyAlgebraPool {
 			`Swapped ${tokenIn.symbol} for ${tokenOut.symbol}: ${swapTx.receipt.transactionHash}`,
 		)
 
-		// 3. Bridge back to Arbitrum
-		const bridgeBackTx = await Stargate.send(
-			tokenOut,
-			amountOut,
-			account,
-			arbitrum.id,
-		)
+		// 3. Bridge back to Base Chain
+		let bridgeBackTx: StargateBridgeTx | FuseBridgeTx
+
+		if (tokenOutArb.address === WBTC_ARB && this.pool.chainId === fuse.id) {
+			bridgeBackTx = await FuseBridge.bridge(
+				tokenOutArb as Token,
+				this.immutables.baseChain.id,
+				account,
+				amountOut,
+			)
+		} else {
+			bridgeBackTx = await Stargate.send(
+				tokenOut,
+				amountOut,
+				account,
+				this.immutables.baseChain.id,
+			)
+		}
 
 		logger.info(
-			`Bridged ${tokenOut.symbol} back to Arbitrum: ${bridgeBackTx.hash}`,
+			`Bridged ${tokenOut.symbol} back to ${this.immutables.baseChain.name}: ${bridgeBackTx.hash}`,
 		)
 		await bridgeBackTx.waitForBridgeToFinish()
 		logger.info(
-			`Bridge ${tokenOut.symbol} to Arbitrum: ${bridgeBackTx.hash} finished`,
+			`Bridge ${tokenOut.symbol} to ${this.immutables.baseChain.name}: ${bridgeBackTx.hash} finished`,
 		)
-
-		const tokenOutArb = opportunity.tokenOutArb
 
 		const tokenOutArbBalance = await tokenOutArb.balanceOf(account)
 
@@ -331,24 +321,12 @@ export class ArbitrageAnyAlgebraPool {
 
 	public async arbitrage(simulate: boolean) {
 		try {
-			// Initialize
-			const { token0, token1 } = await this.getTokens()
-			const { price0, price1 } = await this.getMarketPrices(
-				token0,
-				token1,
-			)
-			const pool = await AlgebraPool.create(
-				this.immutables.poolAddress,
-				this.immutables.poolChainId,
-			)
+			const { price0, price1 } = await this.getTokenPrices()
 
 			// Find opportunity
 			const opportunity = await this.findArbitrageOpportunity(
-				pool,
 				price0,
 				price1,
-				token0,
-				token1,
 			)
 
 			if (!opportunity) return
@@ -363,20 +341,9 @@ export class ArbitrageAnyAlgebraPool {
 			await this.executeArbitrage(opportunity)
 			logger.info('Arbitrage completed successfully!')
 		} catch (error) {
-			logger.error('Error executing arbitrage:', error)
+			logger.error('Error executing arbitrage')
+			console.error(error)
 			throw error
 		}
 	}
-}
-
-// Only run if this file is executed directly
-if (require.main === module) {
-	const simulate = process.argv.includes('--simulate')
-	const arbitrage = new ArbitrageAnyAlgebraPool()
-
-	arbitrage.arbitrage(simulate).catch((error) => {
-		logger.error('Error executing arbitrage')
-		console.error(error)
-		process.exit(1)
-	})
 }
