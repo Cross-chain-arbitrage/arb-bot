@@ -6,9 +6,12 @@ import { getAccountAddress } from '../../src/utils/getAccount'
 import { Token } from '../../src/utils/tokens/Token'
 import { zeroHash } from 'viem'
 import { makeSuite } from '../utils/makeSuite'
+import { useAnvil } from '../utils/anvil'
 makeSuite('FuseBridge', () => {
 	const WBTC_ARB_ADDRESS = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
 	const WBTC_FUSE_ADDRESS = '0x34009565bfEeFded0F7e774629a745636Bf35E82'
+
+	useAnvil(fuse.id)
 
 	it('should bridge WBTC from Fuse to Arbitrum', async () => {
 		// TODO: pin block 35736370 on fuse
