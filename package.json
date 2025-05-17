@@ -33,6 +33,7 @@
 		"@highlight-run/pino": "^0.1.6",
 		"@layerzerolabs/lz-v2-utilities": "^3.0.94",
 		"@layerzerolabs/scan-client": "^0.0.8",
+		"@lifi/sdk": "^3.7.0",
 		"@types/node": "^22.15.3",
 		"axios": "^1.7.7",
 		"dotenv": "^16.4.5",
