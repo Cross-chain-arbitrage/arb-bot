@@ -11,7 +11,7 @@ import { FuseBridge } from './fuse/bridge/FuseBridge'
 import { FuseBridgeTx } from './fuse/bridge/FuseBridgeTx'
 import { StargateBridgeTx } from './stargate/StargateBridgeTx'
 import { fuse } from 'viem/chains'
-import { WBTC_ARB } from './run'
+import { WBTC_ARB } from './arbitrage'
 import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
 
 /* ======== TYPES ======== */
