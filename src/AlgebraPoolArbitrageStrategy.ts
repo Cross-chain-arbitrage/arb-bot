@@ -12,6 +12,7 @@ import { FuseBridgeTx } from './fuse/bridge/FuseBridgeTx'
 import { StargateBridgeTx } from './stargate/StargateBridgeTx'
 import { fuse } from 'viem/chains'
 import { WBTC_ARB } from './run'
+import { wait } from './utils/common'
 
 /* ======== TYPES ======== */
 
@@ -47,6 +48,8 @@ export class AlgebraPoolArbitrageStrategy {
 	private token1: Token
 	private token0Arb: Token | NativeCurrency
 	private token1Arb: Token | NativeCurrency
+
+	private timeForTransactionToPropagate: number = 5_000
 
 	constructor(
 		config: EconomicsConfig,
@@ -263,6 +266,8 @@ export class AlgebraPoolArbitrageStrategy {
 		logger.info(
 			`Swapped ${tokenIn.symbol} for ${tokenOut.symbol}: ${swapTx.receipt.transactionHash}`,
 		)
+
+		await wait(this.timeForTransactionToPropagate)
 
 		// 3. Bridge back to Base Chain
 		let bridgeBackTx: StargateBridgeTx | FuseBridgeTx
