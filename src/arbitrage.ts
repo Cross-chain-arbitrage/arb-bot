@@ -8,9 +8,14 @@ import { GeckoTerminalChainId } from './geckoterminal/chains'
 import { AlgebraPool } from './dex/algebra/Pool'
 import { TokenUtils } from './utils/tokens/TokenUtils'
 import { EconomicsConfig } from './AlgebraPoolArbitrageStrategy'
+import { UniV3Pool } from './dex/uniswapV3/Pool'
+import { wait } from './utils/common'
+
 /* ======== CONSTANTS ======== */
 
 export const WBTC_ARB = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
+
+const ARBITRAGE_POLLING_INTERVAL = 15 * 60_000 // 15 minutes
 
 const STRATEGY_CONFIG: EconomicsConfig = {
 	MIN_SPREAD_PERCENT: 0.25,
@@ -19,7 +24,8 @@ const STRATEGY_CONFIG: EconomicsConfig = {
 	SLIPPAGE: 30,
 } as const
 
-const poolAddress = '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992'
+const fusePoolAddress = '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992'
+const basePoolAddress = '0x2f5e87C9312fa29aed5c179E456625D79015299c'
 const poolChainId = fuse.id
 
 const baseChain: BaseChain = {
@@ -32,21 +38,28 @@ async function main() {
 	// catch flag --simulate
 	const simulate = process.argv.includes('--simulate')
 
-	const pool = await AlgebraPool.create(poolAddress, poolChainId)
+	const fusePool = await AlgebraPool.create(fusePoolAddress, poolChainId)
+	const arbPool = await UniV3Pool.create(basePoolAddress, baseChain.id)
+
+	const baseToken = TokenUtils.createNative(baseChain.id)
 
 	const token0Arb = TokenUtils.createNative(baseChain.id)
-
 	const token1Arb = await TokenUtils.fromAddress(WBTC_ARB, baseChain.id)
 
 	const strategy = new AlgebraPoolArbitrageStrategy(
 		STRATEGY_CONFIG,
 		baseChain,
-		pool,
+		arbPool,
+		fusePool,
+		baseToken,
 		token0Arb,
 		token1Arb,
 	)
 
-	await strategy.arbitrage(simulate)
+	while (true) {
+		await strategy.arbitrage(simulate)
+		await wait(ARBITRAGE_POLLING_INTERVAL)
+	}
 }
 
 // Only run if this file is executed directly

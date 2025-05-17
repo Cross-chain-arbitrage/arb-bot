@@ -13,8 +13,13 @@ import { StargateBridgeTx } from './stargate/StargateBridgeTx'
 import { fuse } from 'viem/chains'
 import { WBTC_ARB } from './arbitrage'
 import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
+import { UniV3Pool } from './dex/uniswapV3/Pool'
+import { WETH } from './utils/tokens/WETH'
+import { zeroAddress } from 'viem'
 
 /* ======== TYPES ======== */
+
+const WETH_ARB = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
 
 export interface EconomicsConfig {
 	MIN_SPREAD_PERCENT: number
@@ -22,6 +27,7 @@ export interface EconomicsConfig {
 	MIN_PROFIT_USD: number
 	SLIPPAGE: number
 }
+
 interface ArbitrageOpportunity {
 	tokenIn: Token
 	tokenInArb: Token | NativeCurrency
@@ -38,34 +44,56 @@ export interface BaseChain {
 	geckoTerminalId: GeckoTerminalChainId
 }
 
+export class StrategyConfigurationError extends Error {
+	constructor(message: string) {
+		super(message)
+		Object.setPrototypeOf(this, StrategyConfigurationError.prototype)
+		this.name = 'StrategyConfigurationError'
+	}
+}
+
 /* ======== CLASS ======== */
 
 export class AlgebraPoolArbitrageStrategy {
-	private readonly config: EconomicsConfig
-	private readonly baseChain: BaseChain
-	private pool: AlgebraPool
 	private token0: Token
 	private token1: Token
-	private token0Arb: Token | NativeCurrency
-	private token1Arb: Token | NativeCurrency
 
 	constructor(
-		config: EconomicsConfig,
-		baseChain: BaseChain,
-		pool: AlgebraPool,
-		token0Arb: Token | NativeCurrency,
-		token1Arb: Token | NativeCurrency,
+		private readonly config: EconomicsConfig,
+		private readonly baseChain: BaseChain,
+		private readonly baseChainPool: UniV3Pool,
+		private readonly pool: AlgebraPool,
+		private readonly baseToken: Token | NativeCurrency,
+		private readonly token0Arb: Token | NativeCurrency,
+		private readonly token1Arb: Token | NativeCurrency,
 	) {
-		this.config = config
-		this.baseChain = baseChain
-		this.pool = pool
 		this.token0 = pool.token0
 		this.token1 = pool.token1
-		this.token0Arb = token0Arb
-		this.token1Arb = token1Arb
 
 		// Call initialization note
 		this.onInitialized()
+
+		if (baseChainPool.chainId !== baseChain.id) {
+			throw new StrategyConfigurationError(
+				`Base chain pool chainId (${baseChainPool.chainId}) does not match base chain id (${baseChain.id})`,
+			)
+		}
+
+		if (baseToken.chainId !== baseChain.id) {
+			throw new StrategyConfigurationError(
+				`Base token chainId (${baseToken.chainId}) does not match base chain id (${baseChain.id})`,
+			)
+		}
+
+		if (
+			baseToken.address !== zeroAddress &&
+			baseToken.address !== token0Arb.address &&
+			baseToken.address !== token1Arb.address
+		) {
+			throw new StrategyConfigurationError(
+				`Base token (${baseToken.symbol}) is not the same as token0Arb (${token0Arb.symbol}) or token1Arb (${token1Arb.symbol})`,
+			)
+		}
 	}
 
 	// Warns user of potential arbitrage paths for them to identify potential configuration issues
@@ -218,6 +246,28 @@ export class AlgebraPoolArbitrageStrategy {
 			tokenOutArb,
 		} = opportunity
 
+		// 0. Swap baseToken for tokenInArb, if needed
+		if (this.baseToken.address !== tokenInArb.address) {
+			let tokenToSwap = this.baseToken
+
+			if (this.baseToken instanceof NativeCurrency) {
+				const weth = new WETH(WETH_ARB, this.baseChain.id)
+				await weth.deposit(amountIn)
+				tokenToSwap = weth as Token
+			}
+
+			const swapTx = await this.baseChainPool.swap({
+				tokenIn: tokenToSwap as Token,
+				tokenOut: tokenInArb as Token,
+				amountIn: amountIn,
+				slippage: this.config.SLIPPAGE,
+			})
+
+			logger.info(
+				`Swapped ${this.baseToken.symbol} for ${tokenInArb.symbol}: ${swapTx.receipt.transactionHash}`,
+			)
+		}
+
 		// 1. Bridge token from Base Chain to Opportunity Chain
 		let bridgeTx: StargateBridgeTx | FuseBridgeTx
 
@@ -289,6 +339,19 @@ export class AlgebraPoolArbitrageStrategy {
 		logger.info(
 			`Bridge ${tokenOut.symbol} to ${this.baseChain.name}: ${bridgeBackTx.hash} finished`,
 		)
+
+		// 4. Sell tokenOutArb for baseToken
+		// if (tokenOutArb.address !== this.baseToken.address) {
+		// 	const swapTx = await this.baseChainPool.swap({
+		// 		tokenIn: tokenOutArb as Token,
+		// 		tokenOut: this.baseToken,
+		// 		amountIn: amountOut,
+		// 		slippage: this.config.SLIPPAGE,
+		// 	})
+		// 	logger.info(
+		// 		`Swapped ${tokenOutArb.symbol} for ${this.baseToken.symbol}: ${swapTx.receipt.transactionHash}`,
+		// 	)
+		// }
 
 		const tokenOutArbBalance = await tokenOutArb.balanceOf(account)
 

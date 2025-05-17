@@ -11,6 +11,10 @@ export class NativeCurrency extends TokenBase {
 		super(STARGATE_NATIVE_ADDRESS, chainId, symbol, 18, name)
 	}
 
+	isNative(): this is NativeCurrency {
+		return true
+	}
+
 	validateNativeAddress(address: Address) {
 		if (address === NATIVE_ADDRESS || address === STARGATE_NATIVE_ADDRESS)
 			return

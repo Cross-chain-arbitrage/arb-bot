@@ -1,4 +1,5 @@
 import { arbitrage } from './arbitrage'
+import { wait } from './utils/common'
 import logger from './utils/logger'
 
 const POLLING_INTERVAL = 10000 // 10 seconds
@@ -13,7 +14,7 @@ async function monitor() {
 		}
 
 		// Wait before next check
-		await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL))
+		await wait(POLLING_INTERVAL)
 	}
 }
 

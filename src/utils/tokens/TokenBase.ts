@@ -1,6 +1,5 @@
 import { Address, formatUnits, parseUnits } from 'viem'
 import { BaseContract } from '../contracts/BaseContract'
-
 export class TokenBaseError extends Error {
 	constructor(message: string) {
 		super(message)
@@ -19,6 +18,8 @@ export abstract class TokenBase extends BaseContract {
 	) {
 		super(address, chainId)
 	}
+
+	abstract isNative(): boolean
 
 	abstract balanceOf(address: Address): Promise<bigint>
 
