@@ -81,7 +81,7 @@ export class StargateAPI {
 		const apiUrl = this.getApiUrl()
 
 		try {
-			const response = await axios.get<{ chains: Chain[] }>(
+			const response = await axios.get<{ chains: StargateAPIChain[] }>(
 				`${apiUrl}/chains`,
 			)
 			return response.data.chains

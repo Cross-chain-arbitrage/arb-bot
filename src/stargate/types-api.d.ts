@@ -41,7 +41,7 @@ interface Stablecoin {
 	}[]
 }
 
-interface Chain {
+interface StargateAPIChain {
 	chainKey: string
 	chainType: 'evm' | 'aptos' | 'solana'
 	chainId: number

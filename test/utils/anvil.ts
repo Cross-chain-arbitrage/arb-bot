@@ -6,6 +6,7 @@ import { Client } from 'viem'
 import { exec as execPromise } from './helpers'
 import { ClientManager } from '../../src/utils/ClientManager'
 import { Chain } from 'viem'
+import { getPrivateKey } from '../../src/utils/getAccount'
 
 /* ======== useAnvil ======== */
 
@@ -20,7 +21,7 @@ const testPk =
 export function useAnvil(chainId: number, blockNumber?: number) {
 	const chain = ClientManager.findChainById(chainId)
 	const realRpcUrl = chain.rpcUrls.default.http[0]
-	const realPk = process.env.PRIVATE_KEY
+	const realPk = getPrivateKey()
 
 	beforeAll(async () => {
 		await startAnvilAndSetTestEnv(chain, realRpcUrl, blockNumber)
