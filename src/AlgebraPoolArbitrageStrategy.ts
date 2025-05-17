@@ -13,6 +13,7 @@ import { StargateBridgeTx } from './stargate/StargateBridgeTx'
 import { fuse } from 'viem/chains'
 import { WBTC_ARB } from './run'
 import { wait } from './utils/common'
+import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
 
 /* ======== TYPES ======== */
 
@@ -154,28 +155,26 @@ export class AlgebraPoolArbitrageStrategy {
 
 		const tokenInPrice = tokenIn === this.token0 ? price0 : price1
 		const tokenOutPrice = tokenOut === this.token0 ? price0 : price1
-		const arbitrageAmount = this.config.ARBITRAGE_AMOUNT_USD / tokenInPrice
 
-		const amountIn = tokenIn.parseUnits(arbitrageAmount.toString())
-		const { amountOut } = await this.pool.quoteSwap({
+		const {
+			amountIn,
+			amountOut,
+			amountInUSD,
+			amountOutUSD,
+			potentialProfit,
+		} = await BatchQuoteOptimizer.optimizeAmountIn(
 			tokenIn,
 			tokenOut,
-			amountIn,
-		})
-
-		const amountInUSD = (
-			Number(tokenIn.formatUnits(amountIn)) * tokenInPrice
-		).toFixed(2)
-		const amountOutUSD = (
-			Number(tokenOut.formatUnits(amountOut)) * tokenOutPrice
-		).toFixed(2)
-		const potentialProfit = Number(amountOutUSD) - Number(amountInUSD)
+			tokenInPrice,
+			tokenOutPrice,
+			this.pool,
+		)
 
 		logger.info(
-			`AmountIn: ${tokenIn.formatUnits(amountIn)}, ${tokenIn.symbol} ($${amountInUSD} USD)`,
+			`AmountIn: ${tokenIn.formatUnits(amountIn)}, ${tokenIn.symbol} ($${amountInUSD.toFixed(2)} USD)`,
 		)
 		logger.info(
-			`Amount out: ${tokenOut.formatUnits(amountOut)}, ${tokenOut.symbol} ($${amountOutUSD} USD)`,
+			`Amount out: ${tokenOut.formatUnits(amountOut)}, ${tokenOut.symbol} ($${amountOutUSD.toFixed(2)} USD)`,
 		)
 		logger.warn(`Potential profit: $${potentialProfit.toFixed(2)} USD`)
 
@@ -274,7 +273,7 @@ export class AlgebraPoolArbitrageStrategy {
 
 		if (tokenOutArb.address === WBTC_ARB && this.pool.chainId === fuse.id) {
 			bridgeBackTx = await FuseBridge.bridge(
-				tokenOutArb as Token,
+				tokenOut,
 				this.baseChain.id,
 				account,
 				amountOut,
