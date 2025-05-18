@@ -1,6 +1,6 @@
 import { Address, Hash } from 'viem'
 import { Tx } from '../../utils/transactions/Tx'
-import { LayerZeroScanAPI } from '../../layerzero/LayerZeroScanAPI'
+import { LayerZeroScanAPI } from '../../data-apis/layerzeroscan/LayerZeroScanAPI'
 
 export class FuseBridgeTx extends Tx {
 	dstTxHash?: Hash

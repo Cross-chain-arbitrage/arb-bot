@@ -3,7 +3,7 @@ import { AlgebraPool } from '../Pool'
 import { TokenUtils } from '../../../utils/tokens/TokenUtils'
 import { Token } from '../../../utils/tokens/Token'
 import { getAccountAddress } from '../../../utils/getAccount'
-import { GeckoTerminalAPI } from '../../../geckoterminal/GeckoTerminalAPI'
+import { GeckoTerminalAPI } from '../../../data-apis/geckoterminal/GeckoTerminalAPI'
 import logger from '../../../utils/logger'
 
 async function swap() {

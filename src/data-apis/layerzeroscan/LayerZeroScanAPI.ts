@@ -4,7 +4,7 @@ import {
 	MessageStatus,
 } from '@layerzerolabs/scan-client'
 import { Hash, isHash, zeroHash } from 'viem'
-import { poll } from '../utils/polling'
+import { poll } from '../../utils/polling'
 
 export class LayerZeroScanError extends Error {
 	constructor(message: string) {

@@ -4,7 +4,7 @@ import {
 	AlgebraPoolArbitrageStrategy,
 	BaseChain,
 } from './strategies/AlgebraPoolArbitrageStrategy'
-import { GeckoTerminalChainId } from './geckoterminal/chains'
+import { GeckoTerminalChainId } from './data-apis/geckoterminal/chains'
 import { AlgebraPool } from './dex/algebra/Pool'
 import { TokenUtils } from './utils/tokens/TokenUtils'
 import { EconomicsConfig } from './strategies/AlgebraPoolArbitrageStrategy'

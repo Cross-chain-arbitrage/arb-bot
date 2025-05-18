@@ -1,6 +1,6 @@
 import { bsc, fuse, optimism } from 'viem/chains'
 import { arbitrum } from 'viem/chains'
-import { FuseBridge } from '../../src/fuse/bridge/FuseBridge'
+import { FuseBridge } from '../../src/bridges/bridge/FuseBridge'
 import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
 import { getAccountAddress } from '../../src/utils/getAccount'
 import { Token } from '../../src/utils/tokens/Token'
