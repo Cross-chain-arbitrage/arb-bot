@@ -8,6 +8,9 @@ Our goals for this stage is:
 - Configuring infrastructure
 - Setup more strategies!
 - Unit and integration testing strategies
+- Graphs, graphs, graphs
+- LiFi Module
+- 1inch module
 
 Potential Pools to integrate:
 
