@@ -10,6 +10,8 @@ interface PoolPriceData {
 	token1: Token
 	price0To1: number
 	price1To0: number
+	reserve0: bigint
+	reserve1: bigint
 }
 
 interface Pool {
@@ -85,10 +87,6 @@ async function main() {
 			{
 				type: PoolType.UNIV3,
 				address: '0xc36a310BD93E2927452de563fAAA89A86822a21f',
-			},
-			{
-				type: PoolType.UNIV3,
-				address: '0xf7A9F3523bCEC8311a14e1baf252d545bc3C8818',
 			},
 		],
 		[lightlinkPhoenix.id]: [
@@ -179,6 +177,10 @@ async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 				pool.type,
 			)
 			const { price } = await Pool.getPrices()
+			const [reserve0, reserve1] = await Promise.all([
+				Pool.token0.balanceOf(Pool.address),
+				Pool.token1.balanceOf(Pool.address),
+			])
 
 			if (price !== null) {
 				pool.priceData = {
@@ -186,6 +188,8 @@ async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 					token1: Pool.token1,
 					price0To1: price,
 					price1To0: 1 / price,
+					reserve0,
+					reserve1,
 				}
 			}
 		} catch (error) {
@@ -277,17 +281,23 @@ function findArbitrageOpportunities(
 function logArbitrageOpportunities(
 	opportunities: ArbitrageOpportunity[],
 ): void {
-	// Sort by absolute difference from 100%
 	opportunities.sort(
 		(a, b) => Math.abs(a.priceDiffPercent) - Math.abs(b.priceDiffPercent),
 	)
 	opportunities.forEach((opp) => {
+		const { reserve0, reserve1 } = opp.pool.priceData!
+		const formattedReserve0 =
+			opp.pool.priceData!.token0.formatUnits(reserve0)
+		const formattedReserve1 =
+			opp.pool.priceData!.token1.formatUnits(reserve1)
+
 		console.log(
 			`${opp.token0Symbol}/${opp.token1Symbol} in pool ${opp.pool.address} (${opp.pool.type}):`,
 			`\n  Expected: ${opp.expectedPrice}`,
 			`\n  Actual: ${opp.actualPrice}`,
 			`\n  Difference: ${opp.priceDiffPercent.toFixed(2)}%`,
 			`\n  Chain: ${opp.pool.chainName}`,
+			`\n  Liquidity: ${formattedReserve0} ${opp.token0Symbol} / ${formattedReserve1} ${opp.token1Symbol}`,
 			'\n--------------------------------',
 		)
 	})
