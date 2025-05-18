@@ -3,11 +3,11 @@ import logger from './utils/logger'
 import {
 	AlgebraPoolArbitrageStrategy,
 	BaseChain,
-} from './AlgebraPoolArbitrageStrategy'
+} from './strategies/AlgebraPoolArbitrageStrategy'
 import { GeckoTerminalChainId } from './geckoterminal/chains'
 import { AlgebraPool } from './dex/algebra/Pool'
 import { TokenUtils } from './utils/tokens/TokenUtils'
-import { EconomicsConfig } from './AlgebraPoolArbitrageStrategy'
+import { EconomicsConfig } from './strategies/AlgebraPoolArbitrageStrategy'
 import { UniV3Pool } from './dex/uniswapV3/Pool'
 import { wait } from './utils/common'
 
@@ -15,12 +15,12 @@ import { wait } from './utils/common'
 
 export const WBTC_ARB = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
 
-const ARBITRAGE_POLLING_INTERVAL = 15 * 60_000 // 15 minutes
+const ARBITRAGE_POLLING_INTERVAL = 20 * 60_000 // 15 minutes
 
 const STRATEGY_CONFIG: EconomicsConfig = {
 	MIN_SPREAD_PERCENT: 0.25,
 	ARBITRAGE_AMOUNT_USD: 340,
-	MIN_PROFIT_USD: 1,
+	MIN_PROFIT_USD: 2,
 	SLIPPAGE: 30,
 } as const
 

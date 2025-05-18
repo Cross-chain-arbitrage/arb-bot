@@ -1,20 +1,20 @@
-import { AlgebraPool } from './dex/algebra/Pool'
-import { Token } from './utils/tokens/Token'
-import { getAccountAddress } from './utils/getAccount'
-import { GeckoTerminalAPI } from './geckoterminal/GeckoTerminalAPI'
-import { Stargate } from './stargate/Stargate'
-import logger from './utils/logger'
-import { GeckoTerminalChainId } from './geckoterminal/chains'
-import { TokenUtils } from './utils/tokens/TokenUtils'
-import { NativeCurrency } from './utils/tokens/NativeCurrency'
-import { FuseBridge } from './fuse/bridge/FuseBridge'
-import { FuseBridgeTx } from './fuse/bridge/FuseBridgeTx'
-import { StargateBridgeTx } from './stargate/StargateBridgeTx'
+import { AlgebraPool } from '../dex/algebra/Pool'
+import { Token } from '../utils/tokens/Token'
+import { getAccountAddress } from '../utils/getAccount'
+import { GeckoTerminalAPI } from '../geckoterminal/GeckoTerminalAPI'
+import { Stargate } from '../stargate/Stargate'
+import logger from '../utils/logger'
+import { GeckoTerminalChainId } from '../geckoterminal/chains'
+import { TokenUtils } from '../utils/tokens/TokenUtils'
+import { NativeCurrency } from '../utils/tokens/NativeCurrency'
+import { FuseBridge } from '../fuse/bridge/FuseBridge'
+import { FuseBridgeTx } from '../fuse/bridge/FuseBridgeTx'
+import { StargateBridgeTx } from '../stargate/StargateBridgeTx'
 import { fuse } from 'viem/chains'
-import { WBTC_ARB } from './arbitrage'
-import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
-import { UniV3Pool } from './dex/uniswapV3/Pool'
-import { WETH } from './utils/tokens/WETH'
+import { WBTC_ARB } from '../arbitrage'
+import { BatchQuoteOptimizer } from '../optimizers/BatchQuoteOptimizer'
+import { UniV3Pool } from '../dex/uniswapV3/Pool'
+import { WETH } from '../utils/tokens/WETH'
 import { zeroAddress } from 'viem'
 
 /* ======== TYPES ======== */
@@ -340,14 +340,18 @@ export class AlgebraPoolArbitrageStrategy {
 			`Bridge ${tokenOut.symbol} to ${this.baseChain.name}: ${bridgeBackTx.hash} finished`,
 		)
 
-		// 4. Sell tokenOutArb for baseToken
+		// 4. Sell tokenOutArb for baseToken, if needed
 		// if (tokenOutArb.address !== this.baseToken.address) {
+		// 	const tokenToGet =
+		// 		this.baseToken instanceof NativeCurrency ? WETH : this.baseToken
+
 		// 	const swapTx = await this.baseChainPool.swap({
 		// 		tokenIn: tokenOutArb as Token,
-		// 		tokenOut: this.baseToken,
+		// 		tokenOut: tokenToGet as Token,
 		// 		amountIn: amountOut,
 		// 		slippage: this.config.SLIPPAGE,
 		// 	})
+
 		// 	logger.info(
 		// 		`Swapped ${tokenOutArb.symbol} for ${this.baseToken.symbol}: ${swapTx.receipt.transactionHash}`,
 		// 	)
