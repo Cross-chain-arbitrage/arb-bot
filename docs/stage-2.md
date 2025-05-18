@@ -203,4 +203,8 @@ With example of Fuse arbitrage we will be having much more expenses in terms of 
 
 ### Conclusion
 
-TBD
+We finished 2nd stage finding ourselves coding lots fo modules for all possible cases without much result. The only opportunity that we successfully exploited was WETH/WBTC on Fuse. This opportunity is viable mostly because of WBTC being bridged via FuseBridge which is a custom bridging solution for Fuse Chain.
+
+Our solution is almost ready to be automated, it lacks stability and error handling, but already shows that it is ready to execute on opportunity
+
+The next step is getting more opportunities via polling more pools. Because WETH/WBTC pool gives projections for $700/monthly optimistically. That's not enough to bootstrap "arbitrage gallera"
