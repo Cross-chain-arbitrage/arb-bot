@@ -14,7 +14,7 @@ import { fuse } from 'viem/chains'
 import { WBTC_ARB } from '../arbitrage'
 import { BatchQuoteOptimizer } from '../optimizers/BatchQuoteOptimizer'
 import { UniV3Pool } from '../dex/uniswapV3/Pool'
-import { WETH } from '../utils/tokens/WETH'
+// import { WETH } from '../utils/tokens/WETH'
 import { zeroAddress } from 'viem'
 
 /* ======== TYPES ======== */
@@ -247,26 +247,26 @@ export class AlgebraPoolArbitrageStrategy {
 		} = opportunity
 
 		// 0. Swap baseToken for tokenInArb, if needed
-		if (this.baseToken.address !== tokenInArb.address) {
-			let tokenToSwap = this.baseToken
+		// if (this.baseToken.address !== tokenInArb.address) {
+		// 	let tokenToSwap = this.baseToken
 
-			if (this.baseToken instanceof NativeCurrency) {
-				const weth = new WETH(WETH_ARB, this.baseChain.id)
-				await weth.deposit(amountIn)
-				tokenToSwap = weth as Token
-			}
+		// 	if (this.baseToken instanceof NativeCurrency) {
+		// 		const weth = new WETH(WETH_ARB, this.baseChain.id)
+		// 		await weth.deposit(amountIn)
+		// 		tokenToSwap = weth as Token
+		// 	}
 
-			const swapTx = await this.baseChainPool.swap({
-				tokenIn: tokenToSwap as Token,
-				tokenOut: tokenInArb as Token,
-				amountIn: amountIn,
-				slippage: this.config.SLIPPAGE,
-			})
+		// 	const swapTx = await this.baseChainPool.swap({
+		// 		tokenIn: tokenToSwap as Token,
+		// 		tokenOut: tokenInArb as Token,
+		// 		amountIn: amountIn,
+		// 		slippage: this.config.SLIPPAGE,
+		// 	})
 
-			logger.info(
-				`Swapped ${this.baseToken.symbol} for ${tokenInArb.symbol}: ${swapTx.receipt.transactionHash}`,
-			)
-		}
+		// 	logger.info(
+		// 		`Swapped ${this.baseToken.symbol} for ${tokenInArb.symbol}: ${swapTx.receipt.transactionHash}`,
+		// 	)
+		// }
 
 		// 1. Bridge token from Base Chain to Opportunity Chain
 		let bridgeTx: StargateBridgeTx | FuseBridgeTx
