@@ -2,20 +2,20 @@ import { AlgebraPool } from '../dex/algebra/Pool'
 import { Token } from '../utils/tokens/Token'
 import { getAccountAddress } from '../utils/getAccount'
 import { GeckoTerminalAPI } from '../data-apis/geckoterminal/GeckoTerminalAPI'
-import { Stargate } from '../stargate/Stargate'
 import logger from '../utils/logger'
 import { GeckoTerminalChainId } from '../data-apis/geckoterminal/chains'
 import { TokenUtils } from '../utils/tokens/TokenUtils'
 import { NativeCurrency } from '../utils/tokens/NativeCurrency'
-import { FuseBridge } from '../bridges/bridge/FuseBridge'
-import { FuseBridgeTx } from '../bridges/bridge/FuseBridgeTx'
-import { StargateBridgeTx } from '../stargate/StargateBridgeTx'
+import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
+import { FuseBridgeTx } from '../bridges/FuseBridge/FuseBridgeTx'
 import { fuse } from 'viem/chains'
 import { WBTC_ARB } from '../arbitrage'
 import { BatchQuoteOptimizer } from '../optimizers/BatchQuoteOptimizer'
 import { UniV3Pool } from '../dex/uniswapV3/Pool'
 // import { WETH } from '../utils/tokens/WETH'
 import { zeroAddress } from 'viem'
+import { Stargate } from '../bridges/Stargate/Stargate'
+import { StargateBridgeTx } from '../bridges/Stargate/StargateBridgeTx'
 
 /* ======== TYPES ======== */
 
@@ -279,11 +279,11 @@ export class AlgebraPoolArbitrageStrategy {
 				amountIn,
 			)
 		} else {
-			bridgeTx = await Stargate.send(
+			bridgeTx = await Stargate.bridge(
 				tokenInArb,
 				amountIn,
-				account,
 				this.pool.chainId,
+				account,
 			)
 		}
 		logger.info(
@@ -324,11 +324,11 @@ export class AlgebraPoolArbitrageStrategy {
 				amountOut,
 			)
 		} else {
-			bridgeBackTx = await Stargate.send(
+			bridgeBackTx = await Stargate.bridge(
 				tokenOut,
 				amountOut,
-				account,
 				this.baseChain.id,
+				account,
 			)
 		}
 
