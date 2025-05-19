@@ -12,6 +12,9 @@ Our goals for this stage is:
 - LiFi Module
 - 1inch module
 
+Research what the fuck is this guy doing:
+0xcf57bfbc6e4acda88147634148ab17cbbe875ee4
+
 Potential Pools to integrate:
 
 - WETH/USDC.e Hemi
