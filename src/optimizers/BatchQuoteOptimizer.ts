@@ -57,9 +57,9 @@ export class BatchQuoteOptimizer {
 		tokenInPrice: number,
 		tokenOutPrice: number,
 		pool: AlgebraPool,
-		initialValueUSD: number = 20,
-		stepUSD: number = 20,
-		stepsAmount: number = 20,
+		initialValueUSD: number = 15,
+		stepUSD: number = 15,
+		stepsAmount: number = 22,
 	): Promise<OptimizedSwap> {
 		const amounts = Array.from({ length: stepsAmount }, (_, i) =>
 			this.calculateAmountIn(
