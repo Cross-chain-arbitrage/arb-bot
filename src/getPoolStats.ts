@@ -41,6 +41,8 @@ interface ArbitrageOpportunity {
 		tokenOut: Token
 		amountIn: bigint
 		amountOut: bigint
+		amountInUSD: number
+		amountOutUSD: number
 		profitUSD: number
 	}
 }
@@ -297,6 +299,8 @@ async function findArbitrageOpportunities(
 					tokenOut: profitData.tokenOut,
 					amountIn: profitData.amountIn,
 					amountOut: profitData.amountOut,
+					amountInUSD: profitData.amountInUSD,
+					amountOutUSD: profitData.amountOutUSD,
 					profitUSD: profitData.potentialProfit,
 				}
 			}
@@ -338,8 +342,8 @@ function logArbitrageOpportunities(
 		if (opp.potentialProfit) {
 			console.log(
 				`\n  Potential Profit:`,
-				`\n    Input: ${opp.potentialProfit.tokenIn.formatUnits(opp.potentialProfit.amountIn)} ${opp.potentialProfit.tokenIn.symbol}`,
-				`\n    Output: ${opp.potentialProfit.tokenOut.formatUnits(opp.potentialProfit.amountOut)} ${opp.potentialProfit.tokenOut.symbol}`,
+				`\n    Input: ${opp.potentialProfit.tokenIn.formatUnits(opp.potentialProfit.amountIn)} ${opp.potentialProfit.tokenIn.symbol} ($${opp.potentialProfit.amountInUSD.toFixed(2)})`,
+				`\n    Output: ${opp.potentialProfit.tokenOut.formatUnits(opp.potentialProfit.amountOut)} ${opp.potentialProfit.tokenOut.symbol} ($${opp.potentialProfit.amountOutUSD.toFixed(2)})`,
 				`\n    Profit: $${opp.potentialProfit.profitUSD.toFixed(2)} USD`,
 			)
 		}

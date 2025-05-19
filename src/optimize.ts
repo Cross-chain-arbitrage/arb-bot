@@ -1,18 +1,12 @@
 import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
-import { Token } from './utils/tokens/Token'
+
 import { TickPool } from './dex/TickPool'
 
 export async function findArbitrageOpportunity(
 	pool: TickPool,
 	actualPrice0USD: number,
 	actualPrice1USD: number,
-): Promise<{
-	tokenIn: Token
-	tokenOut: Token
-	amountIn: bigint
-	amountOut: bigint
-	potentialProfit: number
-} | null> {
+) {
 	const { price } = await pool.getPrices()
 	const priceRatio = actualPrice0USD / actualPrice1USD
 
@@ -57,6 +51,8 @@ export async function findArbitrageOpportunity(
 		tokenOut,
 		amountIn,
 		amountOut,
+		amountInUSD,
+		amountOutUSD,
 		potentialProfit,
 	}
 }
