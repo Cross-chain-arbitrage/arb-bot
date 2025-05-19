@@ -39,8 +39,8 @@ export async function findArbitrageOpportunity(
 			tokenInPrice,
 			tokenOutPrice,
 			pool,
-			200,
-			25,
+			50,
+			50,
 			40,
 		)
 
