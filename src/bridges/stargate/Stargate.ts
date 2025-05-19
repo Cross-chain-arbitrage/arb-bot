@@ -1,16 +1,16 @@
-import { Address, formatEther, Hex, zeroHash } from 'viem'
-import { getChainEIdByNativeChainId } from '../layerzero/utils'
-import { padAddressToBytes32 } from '../utils/types'
-import { Token } from '../utils/tokens/Token'
-import { STARGATE_BASE_ABI } from '../abi/stargate/stargateBase'
-import { ClientManager } from '../utils/ClientManager'
-import { OFT_ABI } from '../abi/stargate/oft'
-import { STARGATE_POOL_ABI } from '../abi/stargate/stgPool'
-import { StargateAPI } from './StargateAPI'
+import { zeroHash, formatEther } from 'viem'
+import { OFT_ABI } from '../../abi/stargate/oft'
+import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
+import { STARGATE_POOL_ABI } from '../../abi/stargate/stgPool'
+import { getChainEIdByNativeChainId } from '../../data-apis/layerzeroscan/utils'
+import { ClientManager } from '../../utils/ClientManager'
+import logger from '../../utils/logger'
+import { NativeCurrency } from '../../utils/tokens/NativeCurrency'
+import { Token } from '../../utils/tokens/Token'
+import { padAddressToBytes32 } from '../../utils/types'
 import { STARGATE_CHAINS } from './dumped/chains'
-import { NativeCurrency } from '../utils/tokens/NativeCurrency'
+import { StargateAPI } from './StargateAPI'
 import { StargateBridgeTx } from './StargateBridgeTx'
-import logger from '../utils/logger'
 
 export class StargateError extends Error {
 	constructor(message: string) {
@@ -21,11 +21,11 @@ export class StargateError extends Error {
 }
 
 export class Stargate {
-	static async send(
+	static async bridge(
 		token: Token | NativeCurrency,
 		amount: bigint,
-		recipient: Address,
 		toChainId: number,
+		recipient: Address,
 		simulateOnly: boolean = false,
 	) {
 		if (amount <= 0n)

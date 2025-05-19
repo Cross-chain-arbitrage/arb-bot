@@ -1,9 +1,9 @@
 import axios from 'axios'
-import { Token } from '../utils/tokens/Token'
-import { isValidUrl } from '../utils/validation'
-import { STARGATE_CHAINS } from './dumped/chains'
-import { NativeCurrency } from '../utils/tokens/NativeCurrency'
 import { zeroAddress } from 'viem'
+import { NativeCurrency } from '../../utils/tokens/NativeCurrency'
+import { isValidUrl } from '../../utils/validation'
+import { STARGATE_CHAINS } from './dumped/chains'
+import { Token } from '../../utils/tokens/Token'
 
 export class StargateAPIError extends Error {
 	constructor(message: string) {
