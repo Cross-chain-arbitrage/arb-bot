@@ -4,6 +4,7 @@ import { Token } from './utils/tokens/Token'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { ClientManager } from './utils/ClientManager'
+import { findArbitrageOpportunity } from './optimize'
 
 interface PoolPriceData {
 	token0: Token
@@ -35,6 +36,13 @@ interface ArbitrageOpportunity {
 	expectedPrice: number
 	actualPrice: number
 	priceDiffPercent: number
+	potentialProfit?: {
+		tokenIn: Token
+		tokenOut: Token
+		amountIn: bigint
+		amountOut: bigint
+		profitUSD: number
+	}
 }
 
 /* ======== Main Function ======== */
@@ -118,10 +126,6 @@ async function main() {
 			},
 			{
 				type: PoolType.ALGEBRA,
-				address: '0x51cC986Df4C54877E0Cd9122532db389cc60016B',
-			},
-			{
-				type: PoolType.ALGEBRA,
 				address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992',
 			},
 		],
@@ -147,18 +151,18 @@ async function main() {
 	console.log('\npriceBTC', priceBTC)
 	console.log('priceETH', priceETH)
 	console.log('priceFUSE', priceFUSE, '\n')
+
 	const opportunities: ArbitrageOpportunity[] = []
 
 	for (const chainId of chainIds) {
 		const pools = poolByChain[chainId]
-
-		const opportunitiesOnChain = findArbitrageOpportunities(
+		const chainOpportunities = await findArbitrageOpportunities(
 			pools,
 			priceBTC,
 			priceETH,
 			priceFUSE,
 		)
-		opportunities.push(...opportunitiesOnChain)
+		opportunities.push(...chainOpportunities)
 	}
 
 	logArbitrageOpportunities(opportunities)
@@ -208,7 +212,7 @@ function calculatePriceDiff(
 	return (actualPrice / expectedPrice) * 100 - 100
 }
 
-function getTokenCategory(symbol: string): keyof TokenPrices | null {
+export function getTokenCategory(symbol: string): keyof TokenPrices | null {
 	if (symbol.includes('BTC')) return 'BTC'
 	if (symbol.includes('ETH')) return 'ETH'
 	if (symbol.includes('USD') || symbol.includes('DAI')) return 'USD'
@@ -224,12 +228,12 @@ function calculateExpectedPrice(
 	return prices[token0Category] / prices[token1Category]
 }
 
-function findArbitrageOpportunities(
+async function findArbitrageOpportunities(
 	pools: Pool[],
 	priceBTC: number,
 	priceETH: number,
 	priceFUSE: number,
-): ArbitrageOpportunity[] {
+): Promise<ArbitrageOpportunity[]> {
 	const prices: TokenPrices = {
 		BTC: priceBTC,
 		ETH: priceETH,
@@ -265,14 +269,48 @@ function findArbitrageOpportunities(
 		)
 		const priceDiff = calculatePriceDiff(price0To1, expectedPrice)
 
-		opportunities.push({
+		const opportunity: ArbitrageOpportunity = {
 			pool,
 			token0Symbol: token0.symbol,
 			token1Symbol: token1.symbol,
 			expectedPrice,
 			actualPrice: price0To1,
 			priceDiffPercent: priceDiff,
-		})
+		}
+
+		// Calculate potential profit if price difference is significant
+		if (Math.abs(priceDiff) >= 0.25) {
+			// Using MIN_SPREAD_PERCENT from optimize.ts
+			try {
+				const tickPool = await PoolUtils.createPool(
+					pool.address,
+					pool.priceData.token0.chainId,
+					pool.type,
+				)
+
+				const profitData = await findArbitrageOpportunity(
+					tickPool,
+					prices[token0Cat],
+					prices[token1Cat],
+				)
+				if (profitData) {
+					opportunity.potentialProfit = {
+						tokenIn: profitData.tokenIn,
+						tokenOut: profitData.tokenOut,
+						amountIn: profitData.amountIn,
+						amountOut: profitData.amountOut,
+						profitUSD: profitData.potentialProfit,
+					}
+				}
+			} catch (error) {
+				console.error(
+					`Error calculating profit for pool ${pool.address}:`,
+					error,
+				)
+			}
+		}
+
+		opportunities.push(opportunity)
 	}
 
 	return opportunities
@@ -298,8 +336,18 @@ function logArbitrageOpportunities(
 			`\n  Difference: ${opp.priceDiffPercent.toFixed(2)}%`,
 			`\n  Chain: ${opp.pool.chainName}`,
 			`\n  Liquidity: ${formattedReserve0} ${opp.token0Symbol} / ${formattedReserve1} ${opp.token1Symbol}`,
-			'\n--------------------------------',
 		)
+
+		if (opp.potentialProfit) {
+			console.log(
+				`\n  Potential Profit:`,
+				`\n    Input: ${opp.potentialProfit.tokenIn.formatUnits(opp.potentialProfit.amountIn)} ${opp.potentialProfit.tokenIn.symbol}`,
+				`\n    Output: ${opp.potentialProfit.tokenOut.formatUnits(opp.potentialProfit.amountOut)} ${opp.potentialProfit.tokenOut.symbol}`,
+				`\n    Profit: $${opp.potentialProfit.profitUSD.toFixed(2)} USD`,
+			)
+		}
+
+		console.log('\n--------------------------------')
 	})
 }
 
