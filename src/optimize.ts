@@ -1,7 +1,5 @@
 import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
-import logger from './utils/logger'
 import { Token } from './utils/tokens/Token'
-import { calculatePriceDiff } from './utils/common'
 import { TickPool } from './dex/TickPool'
 
 export async function findArbitrageOpportunity(
@@ -43,7 +41,7 @@ export async function findArbitrageOpportunity(
 			pool,
 			200,
 			25,
-			20,
+			40,
 		)
 
 	// logger.info(

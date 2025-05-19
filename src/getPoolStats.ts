@@ -278,36 +278,33 @@ async function findArbitrageOpportunities(
 			priceDiffPercent: priceDiff,
 		}
 
-		// Calculate potential profit if price difference is significant
-		if (Math.abs(priceDiff) >= 0.25) {
-			// Using MIN_SPREAD_PERCENT from optimize.ts
-			try {
-				const tickPool = await PoolUtils.createPool(
-					pool.address,
-					pool.priceData.token0.chainId,
-					pool.type,
-				)
+		// Calculate potential profit
+		try {
+			const tickPool = await PoolUtils.createPool(
+				pool.address,
+				pool.priceData.token0.chainId,
+				pool.type,
+			)
 
-				const profitData = await findArbitrageOpportunity(
-					tickPool,
-					prices[token0Cat],
-					prices[token1Cat],
-				)
-				if (profitData) {
-					opportunity.potentialProfit = {
-						tokenIn: profitData.tokenIn,
-						tokenOut: profitData.tokenOut,
-						amountIn: profitData.amountIn,
-						amountOut: profitData.amountOut,
-						profitUSD: profitData.potentialProfit,
-					}
+			const profitData = await findArbitrageOpportunity(
+				tickPool,
+				prices[token0Cat],
+				prices[token1Cat],
+			)
+			if (profitData) {
+				opportunity.potentialProfit = {
+					tokenIn: profitData.tokenIn,
+					tokenOut: profitData.tokenOut,
+					amountIn: profitData.amountIn,
+					amountOut: profitData.amountOut,
+					profitUSD: profitData.potentialProfit,
 				}
-			} catch (error) {
-				console.error(
-					`Error calculating profit for pool ${pool.address}:`,
-					error,
-				)
 			}
+		} catch (error) {
+			console.error(
+				`Error calculating profit for pool ${pool.address}:`,
+				error,
+			)
 		}
 
 		opportunities.push(opportunity)
