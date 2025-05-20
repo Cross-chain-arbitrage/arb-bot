@@ -71,6 +71,11 @@ export abstract class TickPool extends BaseContract {
 		}
 	}
 
+	abstract quoteSwap(params: SwapParams): Promise<{
+		amountOut: bigint
+		fee: number
+	}>
+
 	async validateBalance(swapParams: SwapParams) {
 		const { tokenIn, amountIn } = swapParams
 
@@ -201,9 +206,10 @@ export abstract class TickPool extends BaseContract {
 	}
 
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
-	abstract simulateSwap(params: SwapParams) //TODO: remove any
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	: Promise<{ amountOut: bigint; args: any }>
+	abstract simulateSwap(
+		params: SwapParams, //TODO: remove any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	): Promise<{ amountOut: bigint; args: any }>
 	abstract swap(params: SwapParams): Promise<{
 		receipt: TransactionReceipt
 		amountOut: bigint
