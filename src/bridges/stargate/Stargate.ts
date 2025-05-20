@@ -109,24 +109,12 @@ export class Stargate {
 		Stargate.logTransactionDetails(token, quote)
 
 		if (simulateOnly) {
-			return new StargateBridgeTx(
-				zeroHash,
-				token.chainId,
-				recipient,
-				recipient,
-				amount,
-			)
+			return new StargateBridgeTx(zeroHash, token.chainId, token, amount)
 		}
 
 		const txHash = await wallet.writeContract(request)
 
-		return new StargateBridgeTx(
-			txHash,
-			token.chainId,
-			recipient,
-			recipient,
-			amount,
-		)
+		return new StargateBridgeTx(txHash, token.chainId, token, amount)
 	}
 
 	private static async validatePathCredits(

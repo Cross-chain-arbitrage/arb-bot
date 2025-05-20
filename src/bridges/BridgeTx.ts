@@ -3,18 +3,21 @@ import { LayerZeroScanAPI } from '../data-apis/layerzeroscan/LayerZeroScanAPI'
 import { Tx } from '../utils/transactions/Tx'
 import { BridgeTx } from './Bridge'
 import { Message } from '@layerzerolabs/scan-client'
+import { NativeCurrency } from '../utils/tokens/NativeCurrency'
+import { Token } from '../utils/tokens/Token'
 
 export class LZBridgeTx extends Tx implements BridgeTx {
-	dstTxHash?: Hash
+	public srcTx: Tx
+	public dstTx?: Tx
 
 	constructor(
 		hash: string,
 		chainId: number,
-		from: Address,
-		to: Address,
-		value: bigint,
+		public readonly token: Token | NativeCurrency,
+		public readonly amount: bigint,
 	) {
-		super(hash, chainId, from, to, value)
+		super(hash, chainId)
+		this.srcTx = new Tx(hash, chainId)
 	}
 
 	async waitForBridgeToFinish(): Promise<Message> {
@@ -22,7 +25,7 @@ export class LZBridgeTx extends Tx implements BridgeTx {
 			this.hash as Hash,
 		)
 
-		this.dstTxHash = message.dstTxHash! as Hash
+		this.dstTx = new Tx(message.dstTxHash!, message.dstChainId)
 
 		return message
 	}

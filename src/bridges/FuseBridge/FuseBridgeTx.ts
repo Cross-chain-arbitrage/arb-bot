@@ -1,18 +1,12 @@
-import { Address, Hash } from 'viem'
+import { Hash } from 'viem'
 import { Tx } from '../../utils/transactions/Tx'
 import { LayerZeroScanAPI } from '../../data-apis/layerzeroscan/LayerZeroScanAPI'
 
 export class FuseBridgeTx extends Tx {
 	dstTxHash?: Hash
 
-	constructor(
-		hash: string,
-		chainId: number,
-		from: Address,
-		to: Address,
-		value: bigint,
-	) {
-		super(hash, chainId, from, to, value)
+	constructor(hash: string, chainId: number) {
+		super(hash, chainId)
 	}
 
 	async waitForBridgeToFinish() {

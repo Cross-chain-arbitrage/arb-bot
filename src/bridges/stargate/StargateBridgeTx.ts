@@ -1,31 +1,15 @@
-import { Address, Hash } from 'viem'
-import { Tx } from '../../utils/transactions/Tx'
-import { LayerZeroScanAPI } from '../../data-apis/layerzeroscan/LayerZeroScanAPI'
+import { Hash } from 'viem'
+import { LZBridgeTx } from '../BridgeTx'
+import { NativeCurrency } from '../../utils/tokens/NativeCurrency'
+import { Token } from '../../utils/tokens/Token'
 
-export class StargateBridgeTx extends Tx {
-	dstTxHash?: Hash
-
+export class StargateBridgeTx extends LZBridgeTx {
 	constructor(
-		hash: string,
-		chainId: number,
-		from: Address,
-		to: Address,
-		value: bigint,
+		srcTxHash: Hash,
+		srcChainId: number,
+		token: Token | NativeCurrency,
+		amount: bigint,
 	) {
-		super(hash, chainId, from, to, value)
-	}
-
-	async waitForBridgeToFinish() {
-		const message = await LayerZeroScanAPI.waitForDeliveryStatus(
-			this.hash as Hash,
-		)
-
-		this.dstTxHash = message.dstTxHash! as Hash
-
-		return message
-	}
-
-	get srcTxHash() {
-		return this.hash
+		super(srcTxHash, srcChainId, token, amount)
 	}
 }

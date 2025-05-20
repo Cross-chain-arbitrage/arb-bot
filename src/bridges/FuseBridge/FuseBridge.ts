@@ -144,24 +144,12 @@ export class FuseBridge {
 		})
 
 		if (simulateOnly) {
-			return new FuseBridgeTx(
-				zeroHash,
-				tokenIn.chainId,
-				getAccountAddress(),
-				recipient,
-				quote[0],
-			)
+			return new FuseBridgeTx(zeroHash, tokenIn.chainId)
 		}
 
 		const txHash = await wallet.writeContract(request)
 
-		return new FuseBridgeTx(
-			txHash,
-			tokenIn.chainId,
-			getAccountAddress(),
-			recipient,
-			quote[0],
-		)
+		return new FuseBridgeTx(txHash, tokenIn.chainId)
 	}
 
 	private static async validateBalance(

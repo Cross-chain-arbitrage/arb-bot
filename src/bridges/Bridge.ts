@@ -1,14 +1,14 @@
 import { Address } from 'viem'
 import { Token } from '../utils/tokens/Token'
 import { NativeCurrency } from '../utils/tokens/NativeCurrency'
+import { Tx } from '../utils/transactions/Tx'
 
 export interface BridgeTx {
-	hash: string
-	sourceChainId: number
-	sender: Address
-	recipient: Address
+	srcTx: Tx
+	dstTx?: Tx
+	token: Token | NativeCurrency
 	amount: bigint
-	waitForBridgeToFinish(): Promise<any>
+	waitForBridgeToFinish(): Promise<unknown>
 }
 
 export interface Bridge {
