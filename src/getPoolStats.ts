@@ -1,5 +1,5 @@
 import { Address } from 'viem'
-import { apeChain, fuse, hemi, lightlinkPhoenix } from 'viem/chains'
+import { apeChain, fuse, hemi, lightlinkPhoenix, unichain } from 'viem/chains'
 import { Token } from './utils/tokens/Token'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
@@ -52,7 +52,7 @@ interface ArbitrageOpportunity {
 async function main() {
 	console.time('getPoolStats')
 
-	const chainIds = [hemi.id, lightlinkPhoenix.id, fuse.id]
+	const chainIds = [hemi.id, lightlinkPhoenix.id, fuse.id, unichain.id]
 
 	const poolByChain: Record<number, Pool[]> = {
 		[apeChain.id]: [
@@ -73,6 +73,13 @@ async function main() {
 			// 	address: "0xf4D9235269a96aaDaFc9aDAe454a0618eBE37949",
 			// },
 		],
+		[unichain.id]: [
+			// {
+			// 	type: PoolType.UNIV3,
+			// 	address:
+			// 		'0x3258f413c7a88cda2fa8709a589d221a80f6574f63df5a5b6774485d8acc39d9',
+			// },
+		],
 		[hemi.id]: [
 			{
 				type: PoolType.UNIV3,
@@ -90,10 +97,11 @@ async function main() {
 				type: PoolType.UNIV3,
 				address: '0x3e014A9EF5F45454d9BdDb15741ce8A04e7d96F5',
 			},
-			{
-				type: PoolType.UNIV3,
-				address: '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0',
-			},
+			// Low liquidity
+			// {
+			// 	type: PoolType.UNIV3,
+			// 	address: '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0',
+			// },
 			{
 				type: PoolType.UNIV3,
 				address: '0xc36a310BD93E2927452de563fAAA89A86822a21f',
