@@ -1,9 +1,9 @@
 import { arbitrum, base, fuse } from 'viem/chains'
-import { StargateAPI } from '../../src/stargate/StargateAPI'
 import { NativeCurrency } from '../../src/utils/tokens/NativeCurrency'
 import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
 import { zeroAddress } from 'viem'
 import { makeSuite } from '../utils/makeSuite'
+import { StargateAPI } from '../../src/bridges/Stargate/StargateAPI'
 
 makeSuite('StargateAPI', () => {
 	it('should get tokens metadata', async () => {
