@@ -22,3 +22,10 @@ export function divideByDecimals(amount: bigint, decimals: number): number {
 export function multiplyByDecimals(amount: number, decimals: number): bigint {
 	return BigInt(Math.floor(amount * 10 ** decimals))
 }
+
+export function calculatePriceDiff(
+	actualPrice: number,
+	expectedPrice: number,
+): number {
+	return (actualPrice / expectedPrice) * 100 - 100
+}
