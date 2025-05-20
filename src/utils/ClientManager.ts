@@ -4,6 +4,7 @@ import {
 	PublicClient,
 	WalletClient,
 	createWalletClient,
+	Chain,
 } from 'viem'
 import * as chains from 'viem/chains'
 import { getPrivateKey } from './getAccount'
@@ -64,7 +65,7 @@ export class ClientManager {
 		return client as PublicClient
 	}
 
-	static findChainById(chainId: number) {
+	static findChainById(chainId: number): Chain {
 		const chain = Object.values(chains).find(
 			(chain) => chain.id === chainId,
 		)
@@ -73,6 +74,21 @@ export class ClientManager {
 			throw new Error(`Chain with id ${chainId} not found in viem chains`)
 		}
 
+		return chain
+	}
+
+	static findChainByName(chainName: string) {
+		chainName = chainName.toLowerCase()
+
+		if (chainName === 'bsc' || chainName === 'bnb') return chains.bsc
+
+		if (chainName === 'ethereum' || chainName === 'mainnet')
+			return chains.mainnet
+
+		const chain = Object.values(chains).find((chain) => {
+			if (chain.name.toLowerCase().includes('testnet')) return false
+			return chain.name.toLowerCase().includes(chainName.toLowerCase())
+		})
 		return chain
 	}
 
