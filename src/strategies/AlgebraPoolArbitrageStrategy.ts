@@ -193,6 +193,9 @@ export class AlgebraPoolArbitrageStrategy {
 			tokenInPrice,
 			tokenOutPrice,
 			this.pool,
+			25,
+			25,
+			40,
 		)
 
 		logger.info(
