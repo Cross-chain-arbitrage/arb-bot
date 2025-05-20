@@ -77,7 +77,7 @@ export class ClientManager {
 		return chain
 	}
 
-	static findChainByName(chainName: string) {
+	static findChainByName(chainName: string): Chain {
 		chainName = chainName.toLowerCase()
 
 		if (chainName === 'bsc' || chainName === 'bnb') return chains.bsc
@@ -89,7 +89,7 @@ export class ClientManager {
 			if (chain.name.toLowerCase().includes('testnet')) return false
 			return chain.name.toLowerCase().includes(chainName.toLowerCase())
 		})
-		return chain
+		return chain as Chain
 	}
 
 	static clearClients(): void {
