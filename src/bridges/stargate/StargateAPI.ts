@@ -14,6 +14,7 @@ export class StargateAPIError extends Error {
 }
 
 const STARGATE_API_URL = 'https://mainnet.stargate-api.com/v1'
+const STARGATE_OLD_API_URL = 'https://stargate.finance/api/v1'
 
 export class StargateAPI {
 	private static getApiUrl(): string {
@@ -78,11 +79,9 @@ export class StargateAPI {
 	}
 
 	static async getChains() {
-		const apiUrl = this.getApiUrl()
-
 		try {
 			const response = await axios.get<{ chains: StargateAPIChain[] }>(
-				`${apiUrl}/chains`,
+				`${STARGATE_OLD_API_URL}/chains`,
 			)
 			return response.data.chains
 		} catch (error) {
@@ -96,10 +95,8 @@ export class StargateAPI {
 		includeLPs: boolean = false,
 	): Promise<StargateToken[]> {
 		try {
-			const apiUrl = this.getApiUrl()
-
 			const response = await axios.get<{ tokens: StargateToken[] }>(
-				`${apiUrl}/tokens`,
+				`${STARGATE_API_URL}/tokens`,
 			)
 
 			let tokens = response.data.tokens
