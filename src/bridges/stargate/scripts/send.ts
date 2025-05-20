@@ -1,11 +1,11 @@
-import * as chains from 'viem/chains'
 import { zeroAddress } from 'viem'
-import { TokenUtils } from '../../utils/tokens/TokenUtils'
 import { Stargate } from '../Stargate'
-import { getAccountAddress } from '../../utils/getAccount'
 import { arbitrum } from 'viem/chains'
 import { fuse } from 'viem/chains'
-import logger from '../../utils/logger'
+import { getAccountAddress } from '../../../utils/getAccount'
+import logger from '../../../utils/logger'
+import { TokenUtils } from '../../../utils/tokens/TokenUtils'
+import { ClientManager } from '../../../utils/ClientManager'
 
 const TOKEN_IN_SYMBOLS: string[] = ['ETH', 'USDC', 'USDT']
 
@@ -45,7 +45,7 @@ async function send() {
 	}
 
 	// Find chains by name
-	const fromChain = getChainByName(fromChainName)
+	const fromChain = ClientManager.findChainByName(fromChainName)
 	if (!fromChain) {
 		logger.error("Invalid 'fromChain' name")
 		process.exit(1)
@@ -53,7 +53,7 @@ async function send() {
 
 	logger.info(`From Chain: ${fromChain.name} (${fromChain.id})`)
 
-	const toChain = getChainByName(toChainName)
+	const toChain = ClientManager.findChainByName(toChainName)
 	if (!toChain) {
 		logger.error("Invalid 'toChain' name " + toChainName)
 		process.exit(1)
@@ -92,24 +92,16 @@ async function send() {
 		`Sending ${tokenIn.formatUnits(amountIn)} of ${tokenIn.symbol} to ${toChain.id}`,
 	)
 
-	const bridgeTx = await Stargate.send(
+	const bridgeTx = await Stargate.bridge(
 		tokenIn,
 		amountIn,
-		recipient,
 		toChain.id,
+		recipient,
 	)
 
 	logger.info(`TxHash: ${bridgeTx.hash}`)
 	await bridgeTx.waitForBridgeToFinish()
-	logger.info(`DstTxHash: ${bridgeTx.dstTxHash}`)
-}
-
-function getChainByName(chainName: string) {
-	const chain = Object.values(chains).find((chain) => {
-		if (chain.name.toLowerCase().includes('testnet')) return false
-		return chain.name.toLowerCase().includes(chainName.toLowerCase())
-	})
-	return chain
+	logger.info(`DstTxHash: ${bridgeTx.dstTx?.hash}`)
 }
 
 send().catch(console.error)
