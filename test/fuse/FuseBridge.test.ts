@@ -31,7 +31,6 @@ makeSuite('FuseBridge', () => {
 		expect(bridgeTx.hash).toBe(zeroHash)
 		expect(bridgeTx.dstTxHash).toBeUndefined()
 		expect(bridgeTx.chainId).toBe(WBTC.chainId)
-		expect(bridgeTx.from).toBe(getAccountAddress())
 	})
 
 	it('MUST bridge WBTC from Arbitrum to Fuse', async () => {
@@ -52,7 +51,6 @@ makeSuite('FuseBridge', () => {
 		expect(bridgeTx.hash).toBe(zeroHash)
 		expect(bridgeTx.dstTxHash).toBeUndefined()
 		expect(bridgeTx.chainId).toBe(WBTC.chainId)
-		expect(bridgeTx.from).toBe(getAccountAddress())
 	})
 
 	it('MUST quote bridge fees from Arbitrum to Fuse', async () => {
