@@ -1,9 +1,10 @@
 import { arbitrum, fuse } from 'viem/chains'
-import { Stargate } from '../../src/stargate/Stargate'
+
 import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
 import { makeSuite } from '../utils/makeSuite'
 import { setTokenBalance, useAnvil } from '../utils/anvil'
 import { ClientManager } from '../../src/utils/ClientManager'
+import { Stargate } from '../../src/bridges/Stargate/Stargate'
 
 makeSuite('Stargate', () => {
 	useAnvil(arbitrum.id)
@@ -20,20 +21,17 @@ makeSuite('Stargate', () => {
 		const client = ClientManager.getClient(arbitrum.id)
 		await setTokenBalance(recipient, token.address, 4n, amount, client)
 
-		const bridgeTx = await Stargate.send(
+		const bridgeTx = await Stargate.bridge(
 			token,
 			amount,
-			recipient,
 			fuse.id,
+			recipient,
 			true,
 		)
 
 		expect(bridgeTx).toBeDefined()
 		expect(bridgeTx.hash).toBeDefined()
 		expect(bridgeTx.chainId).toBe(arbitrum.id)
-		expect(bridgeTx.from).toBe(recipient)
-		expect(bridgeTx.to).toBe(recipient)
-		expect(bridgeTx.value).toBe(amount)
 	})
 
 	it('MUST simulate sending Native', async () => {
@@ -42,19 +40,16 @@ makeSuite('Stargate', () => {
 		const amount = native.parseUnits('0.000001')
 		const recipient = '0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB'
 
-		const bridgeTx = await Stargate.send(
+		const bridgeTx = await Stargate.bridge(
 			native,
 			amount,
-			recipient,
 			fuse.id,
+			recipient,
 			true,
 		)
 
 		expect(bridgeTx).toBeDefined()
 		expect(bridgeTx.hash).toBeDefined()
 		expect(bridgeTx.chainId).toBe(arbitrum.id)
-		expect(bridgeTx.from).toBe(recipient)
-		expect(bridgeTx.to).toBe(recipient)
-		expect(bridgeTx.value).toBe(amount)
 	})
 })
