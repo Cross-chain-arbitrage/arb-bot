@@ -1,10 +1,10 @@
-import { Address } from 'viem'
-import { apeChain, fuse, hemi, lightlinkPhoenix, unichain } from 'viem/chains'
+import { Address, isAddress } from 'viem'
 import { Token } from './utils/tokens/Token'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { ClientManager } from './utils/ClientManager'
 import { findArbitrageOpportunity } from './optimize'
+import { poolsByChain } from './pools'
 
 interface PoolPriceData {
 	token0: Token
@@ -15,7 +15,7 @@ interface PoolPriceData {
 	reserve1: bigint
 }
 
-interface Pool {
+export interface Pool {
 	type: PoolType
 	address: Address
 	chainName?: string
@@ -27,6 +27,7 @@ interface TokenPrices {
 	ETH: number
 	USD: number
 	FUSE: number
+	// RIF: number
 }
 
 interface ArbitrageOpportunity {
@@ -52,97 +53,10 @@ interface ArbitrageOpportunity {
 async function main() {
 	console.time('getPoolStats')
 
-	const chainIds = [hemi.id, lightlinkPhoenix.id, fuse.id, unichain.id]
-
-	const poolByChain: Record<number, Pool[]> = {
-		[apeChain.id]: [
-			// {
-			// 	type: PoolType.ALGEBRA,
-			// 	address: "0xbd04919285728923e298f898294319a84a0dbd1e",
-			// },
-			{
-				type: PoolType.ALGEBRA,
-				address: '0xc82b890744d7df5f4fe28dd4205edcc36ceeea50',
-			},
-			// {
-			// 	type: PoolType.ALGEBRA,
-			// 	address: "0x674843C06FF83502ddb4D37c2E09C01cdA38cbc8",
-			// },
-			// {
-			// 	type: PoolType.ALGEBRA,
-			// 	address: "0xf4D9235269a96aaDaFc9aDAe454a0618eBE37949",
-			// },
-		],
-		[unichain.id]: [
-			// {
-			// 	type: PoolType.UNIV3,
-			// 	address:
-			// 		'0x3258f413c7a88cda2fa8709a589d221a80f6574f63df5a5b6774485d8acc39d9',
-			// },
-		],
-		[hemi.id]: [
-			{
-				type: PoolType.UNIV3,
-				address: '0xdA44564DF732dECfd93Ba8539803C5a8dF241954',
-			},
-			{
-				type: PoolType.UNIV3,
-				address: '0x3EcabBa99bEF583B58b8f0af6dD853CD9ED75ce3',
-			},
-			{
-				type: PoolType.UNIV3,
-				address: '0x9580D4519C9F27642e21085E763E761a74eF3735',
-			},
-			{
-				type: PoolType.UNIV3,
-				address: '0x3e014A9EF5F45454d9BdDb15741ce8A04e7d96F5',
-			},
-			// Low liquidity
-			// {
-			// 	type: PoolType.UNIV3,
-			// 	address: '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0',
-			// },
-			{
-				type: PoolType.UNIV3,
-				address: '0xc36a310BD93E2927452de563fAAA89A86822a21f',
-			},
-		],
-		[lightlinkPhoenix.id]: [
-			{
-				type: PoolType.UNIV3,
-				address: '0x2288627C696010049f6D98a84fC10F9C5F7b3Ce2',
-			},
-			{
-				type: PoolType.UNIV3,
-				address: '0x1125452469E9B9A36FE69249309fCe8925C3eEDa',
-			},
-		],
-		[fuse.id]: [
-			{
-				type: PoolType.ALGEBRA,
-				address: '0x677409B2393E2ca19b454fB904F5E634E21D3D89',
-			},
-			{
-				type: PoolType.ALGEBRA,
-				address: '0x23518Ca19447E7ABB8C6f6eb215A1D663c53Ea21',
-			},
-			{
-				type: PoolType.ALGEBRA,
-				address: '0x5E174874C5bc45Ba96bD859A6edA4D34EE9f4424',
-			},
-			{
-				type: PoolType.ALGEBRA,
-				address: '0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6',
-			},
-			{
-				type: PoolType.ALGEBRA,
-				address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992',
-			},
-		],
-	}
+	const chainIds = Object.keys(poolsByChain).map((el) => Number(el))
 
 	for (const chainId of chainIds) {
-		await updatePoolsPriceData(poolByChain[chainId], chainId)
+		await updatePoolsPriceData(poolsByChain[chainId], chainId)
 	}
 
 	// const priceUSDT = 1
@@ -157,6 +71,7 @@ async function main() {
 	const priceFUSE = await GeckoTerminalAPI.getTokenPrice(
 		'0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
 	)
+	// const priceRIF = await CoinMarketCapAPI.getTokenPrice('RIF')
 
 	console.log('\npriceBTC', priceBTC)
 	console.log('priceETH', priceETH)
@@ -165,12 +80,13 @@ async function main() {
 	const opportunities: ArbitrageOpportunity[] = []
 
 	for (const chainId of chainIds) {
-		const pools = poolByChain[chainId]
+		const pools = poolsByChain[chainId]
 		const chainOpportunities = await findArbitrageOpportunities(
 			pools,
 			priceBTC,
 			priceETH,
 			priceFUSE,
+			// priceRIF,
 		)
 		opportunities.push(...chainOpportunities)
 	}
@@ -182,8 +98,19 @@ async function main() {
 
 async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 	for (const pool of pools) {
+		if (!isAddress(pool.address)) {
+			pool.address = (pool.address as string).toLowerCase() as Address
+		}
+
 		try {
 			pool.chainName = ClientManager.findChainById(chainId)?.name
+
+			if (pool.type === PoolType.UNKNOWN) {
+				console.warn(
+					`Pool ${pool.address}:${pool.chainName} has unknown pool type`,
+				)
+				continue
+			}
 
 			const Pool = await PoolUtils.createPool(
 				pool.address,
@@ -222,11 +149,15 @@ function calculatePriceDiff(
 	return (actualPrice / expectedPrice) * 100 - 100
 }
 
+const STABLECOIN_SYMBOLS = ['USDT', 'USDC', 'DAI', 'DOC']
+
 export function getTokenCategory(symbol: string): keyof TokenPrices | null {
 	if (symbol.includes('BTC')) return 'BTC'
 	if (symbol.includes('ETH')) return 'ETH'
-	if (symbol.includes('USD') || symbol.includes('DAI')) return 'USD'
+	if (STABLECOIN_SYMBOLS.includes(symbol) || symbol.includes('USD'))
+		return 'USD'
 	if (symbol.includes('FUSE')) return 'FUSE'
+	// if (symbol.includes('RIF')) return 'RIF'
 	return null
 }
 
@@ -243,12 +174,14 @@ async function findArbitrageOpportunities(
 	priceBTC: number,
 	priceETH: number,
 	priceFUSE: number,
+	// priceRIF: number,
 ): Promise<ArbitrageOpportunity[]> {
 	const prices: TokenPrices = {
 		BTC: priceBTC,
 		ETH: priceETH,
 		USD: 1,
 		FUSE: priceFUSE,
+		// RIF: priceRIF,
 	}
 
 	const opportunities: ArbitrageOpportunity[] = []
