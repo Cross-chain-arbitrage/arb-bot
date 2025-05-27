@@ -247,9 +247,9 @@ export class UniV2Pool extends Pool {
 			)
 		}
 
-		if (params.slippage && params.slippage >= 5000) {
+		if (params.slippage && params.slippage >= 3000) {
 			throw new UniV2PoolError(
-				`Slippage is too high: ${params.slippage / 10000}%`,
+				`Slippage is too high: ${(params.slippage / 10000) * 100}%`,
 			)
 		}
 	}

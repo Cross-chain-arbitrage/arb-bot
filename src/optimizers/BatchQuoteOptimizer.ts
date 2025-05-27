@@ -1,4 +1,4 @@
-import { TickPool } from '../dex/TickPool'
+import { Pool } from '../dex/Pool'
 import { Token } from '../utils/tokens/Token'
 
 interface OptimizedSwap {
@@ -56,7 +56,7 @@ export class BatchQuoteOptimizer {
 		tokenOut: Token,
 		tokenInPrice: number,
 		tokenOutPrice: number,
-		pool: TickPool,
+		pool: Pool,
 		initialValueUSD: number = 15,
 		stepUSD: number = 15,
 		stepsAmount: number = 22,

@@ -139,10 +139,11 @@ export const poolsByChain: Record<number, Pool[]> = {
 			type: PoolType.UNIV3,
 			address: '0xD022Cee10c5Cf25c50311c426536Eb8E313030b2',
 		},
-		{
-			type: PoolType.UNIV3,
-			address: '0xa89a86d3d9481a741833208676fa57d0f1d5C6Cb',
-		},
+		// RIF/USDT pool
+		// {
+		// 	type: PoolType.UNIV3,
+		// 	address: '0xa89a86d3d9481a741833208676fa57d0f1d5C6Cb',
+		// },
 		{
 			type: PoolType.UNIV3,
 			address: '0xE4Aad3D85ddc67cc2BB57599d27914C43DC89FE7',
@@ -177,20 +178,21 @@ export const poolsByChain: Record<number, Pool[]> = {
 	// 		address: '0xafEABAAbe0DFc504D56dFF53bf6b218BAFB76123',
 	// 	},
 	// ],
-	[flowMainnet.id]: [
-		{
-			type: PoolType.UNKNOWN, // CurveStableSwap
-			address: '0x20ca5d1C8623ba6AC8f02E41cCAFFe7bb6C92B57',
-		},
-		{
-			type: PoolType.UNKNOWN, // UniV2?
-			address: '0x681A3c23E7704e5c90e45ABf800996145a8096fD',
-		},
-		{
-			type: PoolType.UNKNOWN, // CurveTriCrypto
-			address: '0xff08315328040dA4Ca1bE88E1165E88abeA1C431',
-		},
-	],
+	// No supported pools
+	// [flowMainnet.id]: [
+	// 	{
+	// 		type: PoolType.UNKNOWN, // CurveStableSwap
+	// 		address: '0x20ca5d1C8623ba6AC8f02E41cCAFFe7bb6C92B57',
+	// 	},
+	// 	{
+	// 		type: PoolType.UNKNOWN, // UniV2?
+	// 		address: '0x681A3c23E7704e5c90e45ABf800996145a8096fD',
+	// 	},
+	// 	{
+	// 		type: PoolType.UNKNOWN, // CurveTriCrypto
+	// 		address: '0xff08315328040dA4Ca1bE88E1165E88abeA1C431',
+	// 	},
+	// ],
 	// Fucking Black Market, tons of money, almost no verified pools (or they are proxies 💀)
 	// [flare.id]: [
 	// 	{

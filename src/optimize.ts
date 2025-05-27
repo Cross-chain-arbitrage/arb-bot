@@ -1,9 +1,8 @@
+import { Pool } from './dex/Pool'
 import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
 
-import { TickPool } from './dex/TickPool'
-
 export async function findArbitrageOpportunity(
-	pool: TickPool,
+	pool: Pool,
 	actualPrice0USD: number,
 	actualPrice1USD: number,
 ) {
