@@ -8,7 +8,7 @@ import {
 	mainnet,
 } from 'viem/chains'
 import { PoolType } from './dex/PoolUtils'
-import { Pool } from './getPoolStats'
+import { Pool } from './getArbitrageOpportunities'
 
 export const poolsByChain: Record<number, Pool[]> = {
 	// [apeChain.id]: [

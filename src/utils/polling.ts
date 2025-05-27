@@ -19,6 +19,7 @@ export async function poll<T>(
 	}
 
 	let timeoutId: NodeJS.Timeout
+
 	const timeoutPromise = new Promise<never>((_, reject) => {
 		timeoutId = setTimeout(() => {
 			reject(customError ?? new Error('Polling Timeout'))
@@ -29,5 +30,17 @@ export async function poll<T>(
 		return await Promise.race([pollUntilCondition(), timeoutPromise])
 	} finally {
 		clearTimeout(timeoutId!)
+	}
+}
+
+export async function infinitePoll(
+	fn: () => Promise<void>,
+	intervalMs: number,
+): Promise<void> {
+	await fn()
+
+	while (true) {
+		await wait(intervalMs)
+		await fn()
 	}
 }

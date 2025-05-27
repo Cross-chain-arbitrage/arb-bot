@@ -29,3 +29,7 @@ export function calculatePriceDiff(
 ): number {
 	return (actualPrice / expectedPrice) * 100 - 100
 }
+
+export function shortenAddress(address: Address): string {
+	return address.slice(0, 6) + '...' + address.slice(-4)
+}
