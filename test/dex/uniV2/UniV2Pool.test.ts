@@ -1,7 +1,6 @@
 import { mainnet } from 'viem/chains'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import {
-	Client,
 	erc20Abi,
 	getContract,
 	GetContractReturnType,
@@ -14,45 +13,38 @@ import { makeSuite } from '../../utils/makeSuite'
 
 /* ======== Constants ======== */
 
-const poolAddress = '0x4Ce3687fEd17e19324F23e305593Ab13bBd55c4D' // WETH/USDC pool
+const poolAddress = '0x4Ce3687fEd17e19324F23e305593Ab13bBd55c4D' // WETH/FUSE pool
 const wethAddress = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 const fuseAddress = '0x970B9bB2C0444F5E81e9d0eFb84C8ccdcdcAf84d'
 
 /* ======== Variables ======== */
 
-let client: Client
 let walletClient: WalletClient
 let botAddress: Address
-let wethContract: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
-let usdcContract: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
+let WETH: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
+let FUSE: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
 let pool: UniV2Pool
 
 makeSuite('Uniswap V2 Pool', () => {
 	useAnvil(mainnet.id)
 
 	beforeAll(async () => {
-		client = ClientManager.getClient(mainnet.id)
 		walletClient = ClientManager.getWalletClient(mainnet.id)
 		botAddress = walletClient.account!.address
 
 		pool = await UniV2Pool.create(poolAddress, mainnet.id)
 
-		usdcContract = getContract({
+		FUSE = getContract({
 			address: pool.token1.address,
 			abi: erc20Abi,
 			client: walletClient,
 		})
 
-		wethContract = getContract({
+		WETH = getContract({
 			address: pool.token0.address,
 			abi: erc20Abi,
 			client: walletClient,
 		})
-
-		// Set up test balances
-		await setNativeBalance(client, botAddress, 10n ** 18n)
-		await setTokenBalance(botAddress, wethAddress, 1n, 10n ** 18n, client)
-		await setTokenBalance(botAddress, fuseAddress, 1n, 10n ** 18n, client)
 	})
 
 	describe('Pool Creation', () => {
@@ -77,22 +69,24 @@ makeSuite('Uniswap V2 Pool', () => {
 	})
 
 	describe('Swap Quoting', () => {
-		it('should quote swap WETH to USDC', async () => {
-			const amountIn = 10n ** 18n // 1 WETH
+		it('should quote swap WETH to FUSE', async () => {
+			const amountIn = pool.token1.parseUnits('1')
+
 			const { amountOut, fee } = await pool.quoteSwap({
-				tokenIn: pool.token0,
-				tokenOut: pool.token1,
+				tokenIn: pool.token1,
+				tokenOut: pool.token0,
 				amountIn,
 			})
 			expect(amountOut).toBeDefined()
 			expect(fee).toBe(0.003) // 0.3% fee
 		})
 
-		it('should quote swap USDC to WETH', async () => {
-			const amountIn = 10n ** 6n * 1000n // 1000 USDC
+		it('should quote swap FUSE to WETH', async () => {
+			const amountIn = pool.token0.parseUnits('1000')
+
 			const { amountOut, fee } = await pool.quoteSwap({
-				tokenIn: pool.token1,
-				tokenOut: pool.token0,
+				tokenIn: pool.token0,
+				tokenOut: pool.token1,
 				amountIn,
 			})
 			expect(amountOut).toBeDefined()
@@ -101,16 +95,38 @@ makeSuite('Uniswap V2 Pool', () => {
 	})
 
 	describe('Swap Execution', () => {
-		it('should swap WETH to USDC', async () => {
-			const amountIn = 10n ** 18n // 1 WETH
-			await wethContract.write.approve([pool.routerAddress, amountIn], {
+		beforeEach(async () => {
+			const client = ClientManager.getClient(mainnet.id)
+
+			// Set up test balances
+			await setNativeBalance(client, botAddress, 10n ** 18n)
+			await setTokenBalance(
+				botAddress,
+				wethAddress,
+				1n,
+				10n ** 18n,
+				client,
+			)
+			await setTokenBalance(
+				botAddress,
+				fuseAddress,
+				1n,
+				10n ** 18n,
+				client,
+			)
+		})
+
+		it('should swap WETH to FUSE', async () => {
+			const amountIn = pool.token1.parseUnits('1')
+
+			await WETH.write.approve([pool.routerAddress, amountIn], {
 				account: walletClient.account!,
 				chain: walletClient.chain,
 			})
 
-			const balanceBefore = await usdcContract.read.balanceOf([
-				botAddress,
-			])
+			console.log(await WETH.read.balanceOf([botAddress]))
+
+			const balanceBefore = await FUSE.read.balanceOf([botAddress])
 			const { amountOut: simulated } = await pool.simulateSwap({
 				tokenIn: pool.token0,
 				tokenOut: pool.token1,
@@ -125,21 +141,20 @@ makeSuite('Uniswap V2 Pool', () => {
 				slippage: 50,
 			})
 
-			const balanceAfter = await usdcContract.read.balanceOf([botAddress])
+			const balanceAfter = await FUSE.read.balanceOf([botAddress])
 			expect(balanceAfter - balanceBefore).toBe(amountOut)
 			expect(amountOut).toBe(simulated)
 		})
 
-		it('should swap USDC to WETH', async () => {
-			const amountIn = 10n ** 6n * 1000n // 1000 USDC
-			await usdcContract.write.approve([pool.routerAddress, amountIn], {
+		it('should swap FUSE to WETH', async () => {
+			const amountIn = pool.token0.parseUnits('1000')
+
+			await FUSE.write.approve([pool.routerAddress, amountIn], {
 				account: walletClient.account!,
 				chain: walletClient.chain,
 			})
 
-			const balanceBefore = await wethContract.read.balanceOf([
-				botAddress,
-			])
+			const balanceBefore = await WETH.read.balanceOf([botAddress])
 			const { amountOut: simulated } = await pool.simulateSwap({
 				tokenIn: pool.token1,
 				tokenOut: pool.token0,
@@ -154,42 +169,42 @@ makeSuite('Uniswap V2 Pool', () => {
 				slippage: 50,
 			})
 
-			const balanceAfter = await wethContract.read.balanceOf([botAddress])
+			const balanceAfter = await WETH.read.balanceOf([botAddress])
 			expect(balanceAfter - balanceBefore).toBe(amountOut)
 			expect(amountOut).toBe(simulated)
 		})
 	})
 
 	describe('Error Handling', () => {
-		it('should throw when amount in is too low', async () => {
-			await expect(
+		it('should throw when amount in is too low', () => {
+			expect(() =>
 				pool.validateMismatchSwapParams({
 					tokenIn: pool.token0,
 					tokenOut: pool.token1,
 					amountIn: 1n,
 				}),
-			).rejects.toThrow('Amount in is too low')
+			).toThrow('Amount in is too low, 0.000000000000000001 FUSE')
 		})
 
-		it('should throw when slippage is too high', async () => {
-			await expect(
+		it('should throw when slippage is too high', () => {
+			expect(() =>
 				pool.validateMismatchSwapParams({
 					tokenIn: pool.token0,
 					tokenOut: pool.token1,
 					amountIn: 10n ** 18n,
 					slippage: 5000,
 				}),
-			).rejects.toThrow('Slippage is too high')
+			).toThrow('Slippage is too high: 50%')
 		})
 
-		it('should throw when tokens are the same', async () => {
-			await expect(
+		it('should throw when tokens are the same', () => {
+			expect(() =>
 				pool.validateMismatchSwapParams({
 					tokenIn: pool.token0,
 					tokenOut: pool.token0,
 					amountIn: 10n ** 18n,
 				}),
-			).rejects.toThrow('Token in and token out cannot be the same')
+			).toThrow('Token in and token out cannot be the same')
 		})
 	})
 })
