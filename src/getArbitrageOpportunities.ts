@@ -57,9 +57,13 @@ export async function getArbitrageOpportunities(): Promise<
 
 	const chainIds = Object.keys(poolsByChain).map((el) => Number(el))
 
+	const updates: Promise<void>[] = []
+
 	for (const chainId of chainIds) {
-		await updatePoolsPriceData(poolsByChain[chainId], chainId)
+		updates.push(updatePoolsPriceData(poolsByChain[chainId], chainId))
 	}
+
+	await Promise.all(updates)
 
 	// const priceUSDT = 1
 	// const priceUSDC = 1
@@ -73,27 +77,23 @@ export async function getArbitrageOpportunities(): Promise<
 	const priceFUSE = await GeckoTerminalAPI.getTokenPrice(
 		'0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
 	)
-	// const priceRIF = await CoinMarketCapAPI.getTokenPrice('RIF')
 
 	console.log('\npriceBTC', priceBTC)
 	console.log('priceETH', priceETH)
 	console.log('priceFUSE', priceFUSE, '\n')
 
-	const opportunities: ArbitrageOpportunity[] = []
+	const promises: Promise<ArbitrageOpportunity[]>[] = []
 
 	for (const chainId of chainIds) {
 		const pools = poolsByChain[chainId]
-		const chainOpportunities = await findArbitrageOpportunities(
-			pools,
-			priceBTC,
-			priceETH,
-			priceFUSE,
-			// priceRIF,
+		promises.push(
+			findArbitrageOpportunities(pools, priceBTC, priceETH, priceFUSE),
 		)
-		opportunities.push(...chainOpportunities)
 	}
 
-	logArbitrageOpportunities(opportunities)
+	const opportunities = (await Promise.all(promises)).flat()
+
+	logArbitrageOpportunities(opportunities.flat())
 
 	console.timeEnd('getPoolStats')
 
@@ -161,7 +161,6 @@ export function getTokenCategory(symbol: string): keyof TokenPrices | null {
 	if (STABLECOIN_SYMBOLS.includes(symbol) || symbol.includes('USD'))
 		return 'USD'
 	if (symbol.includes('FUSE')) return 'FUSE'
-	// if (symbol.includes('RIF')) return 'RIF'
 	return null
 }
 
@@ -249,7 +248,7 @@ async function findArbitrageOpportunities(
 			}
 		} catch (error) {
 			console.error(
-				`Error calculating profit for pool ${pool.address}:`,
+				`Error calculating profit for pool ${pool.address}:${pool.chainName}`,
 				error,
 			)
 		}

@@ -17,6 +17,14 @@ interface SwapQuote {
 	potentialProfit: number
 }
 
+export class BatchQuoteOptimizerError extends Error {
+	constructor(message: string) {
+		super(message)
+		Object.setPrototypeOf(this, BatchQuoteOptimizerError.prototype)
+		this.name = 'BatchQuoteOptimizerError'
+	}
+}
+
 export class BatchQuoteOptimizer {
 	private static calculateAmountIn(
 		tokenIn: Token,

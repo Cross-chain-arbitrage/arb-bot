@@ -4,7 +4,6 @@ import {
 	fuse,
 	story,
 	rootstock,
-	flowMainnet,
 	mainnet,
 } from 'viem/chains'
 import { PoolType } from './dex/PoolUtils'
