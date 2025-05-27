@@ -35,18 +35,41 @@ async function main() {
 	logger.info(`Found ${tokens.length} tokens`)
 
 	const chainKeys: Map<string, StargateAPIChain | Chain> = new Map()
+	const tokensByChain: Map<
+		string,
+		{
+			address: Address
+			symbol: string
+		}[]
+	> = new Map()
 	const unidentifiedChains: Set<string> = new Set()
 
 	const stargateChains = await StargateAPI.getChains()
 
 	for (const token of tokens) {
+		if (tokensByChain.has(token.chainKey)) {
+			tokensByChain.get(token.chainKey)?.push({
+				address: token.token.address,
+				symbol: token.token.symbol,
+			})
+		} else {
+			tokensByChain.set(token.chainKey, [
+				{
+					address: token.token.address,
+					symbol: token.token.symbol,
+				},
+			])
+		}
+
 		if (chainKeys.has(token.chainKey)) continue
 
-		let chain: StargateAPIChain | Chain | undefined = stargateChains.find(
-			(chain) => chain.chainKey === token.chainKey,
-		)
+		let chain: StargateAPIChain | Chain | undefined =
+			ClientManager.findChainByName(token.chainKey)
 
-		if (!chain) chain = ClientManager.findChainByName(token.chainKey)
+		if (!chain)
+			chain = stargateChains.find(
+				(chain) => chain.chainKey === token.chainKey,
+			)
 
 		if (!chain) {
 			unidentifiedChains.add(token.chainKey)
@@ -67,6 +90,20 @@ async function main() {
 
 	// console.log(supportedTokens)
 	logger.info(`Supported tokens length: ${supportedTokens.length}`)
+
+	chainKeys.forEach((chain, key) => {
+		logger.info(`${key}: ${chain.name}`)
+		const explorer = (chain as Chain).blockExplorers?.default
+		logger.info(
+			`${key}: ${explorer?.url ?? explorer?.apiUrl ?? 'No explorer'}`,
+		)
+
+		for (const token of tokensByChain.get(key) ?? []) {
+			logger.info(`${token.symbol} - ${token.address}`)
+		}
+
+		logger.info('----------------------------')
+	})
 
 	// s
 	return
