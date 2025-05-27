@@ -13,7 +13,7 @@
 		"tokens": "npx tsx src/tokens.ts",
 		"tokensByChains": "npx tsx src/tokensByChains.ts",
 		"getPoolStats": "npx tsx src/getPoolStats.ts",
-		"stg:send": "npx tsx src/stargate/scripts/send.ts",
+		"stg:send": "npx tsx src/bridges/stargate/scripts/send.ts",
 		"fuse:bridge": "npx tsx src/fuse/bridge/scripts/bridge.ts",
 		"algebra:swap": "npx tsx src/dex/algebra/scripts/swap.ts",
 		"lint": "npx eslint src",
