@@ -87,6 +87,8 @@ export class ClientManager {
 
 		const chain = Object.values(chains).find((chain) => {
 			if (chain.name.toLowerCase().includes('testnet')) return false
+			if (chain.name.toLowerCase().includes('goerli')) return false
+			if (chain.name.toLowerCase().includes('sepolia')) return false
 			return chain.name.toLowerCase().includes(chainName.toLowerCase())
 		})
 		return chain as Chain
