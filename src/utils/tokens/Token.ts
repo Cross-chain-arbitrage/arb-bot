@@ -2,6 +2,7 @@ import { Address, erc20Abi, isAddress, TransactionReceipt } from 'viem'
 import { TokenError } from '../errors/TokenErrors'
 import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from './NativeCurrency'
 import { TokenBase } from './TokenBase'
+import { isSameAddress } from '../common'
 
 export class Token extends TokenBase {
 	constructor(
@@ -18,6 +19,13 @@ export class Token extends TokenBase {
 
 	isNative(): this is Token {
 		return false
+	}
+
+	isSame(token: Token): boolean {
+		return (
+			isSameAddress(this.address, token.address) &&
+			this.chainId === token.chainId
+		)
 	}
 
 	private validateTokenAddress(address: Address): void {
