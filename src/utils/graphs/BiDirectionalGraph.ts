@@ -1,5 +1,7 @@
+import { Token } from '../tokens/Token'
+
 type TokenId = `${number}:${Address}`
-type GraphNode = TokenId
+type GraphNode = Token
 
 type Exchangeable = boolean
 
@@ -22,11 +24,15 @@ export class BiDirectionalTokenGraph {
 
 	addEdge(node1: GraphNode, node2: GraphNode) {
 		if (!this.adjacencyMatrix.has(node1)) {
-			throw new BiDirectionalTokenGraphError(`No such node ${node1}`)
+			throw new BiDirectionalTokenGraphError(
+				`No such node ${this.tokenToId(node1)}`,
+			)
 		}
 
 		if (!this.adjacencyMatrix.has(node2)) {
-			throw new BiDirectionalTokenGraphError(`No such node ${node2}`)
+			throw new BiDirectionalTokenGraphError(
+				`No such node ${this.tokenToId(node2)}`,
+			)
 		}
 
 		const map = this.adjacencyMatrix.get(node1)!
@@ -34,7 +40,9 @@ export class BiDirectionalTokenGraph {
 
 		if (edge) {
 			throw new BiDirectionalTokenGraphError(
-				`Edge already exist for nodes [${node1}, ${node2}]`,
+				`Edge already exist for nodes [${this.tokenToId(
+					node1,
+				)}, ${this.tokenToId(node2)}]`,
 			)
 		}
 
@@ -48,7 +56,7 @@ export class BiDirectionalTokenGraph {
 	addNode(node: GraphNode) {
 		if (this.adjacencyMatrix.has(node)) {
 			throw new BiDirectionalTokenGraphError(
-				`Node ${node} already exists`,
+				`Node ${this.tokenToId(node)} already exists`,
 			)
 		}
 
@@ -57,5 +65,9 @@ export class BiDirectionalTokenGraph {
 
 	isCircular(): boolean {
 		return false
+	}
+
+	tokenToId(token: Token): TokenId {
+		return `${token.chainId}:${token.address}`
 	}
 }
