@@ -43,4 +43,8 @@ declare global {
 		quoter: Address
 		router: Address
 	}
+
+	interface UniV2PoolPeriphery {
+		router: Address
+	}
 }

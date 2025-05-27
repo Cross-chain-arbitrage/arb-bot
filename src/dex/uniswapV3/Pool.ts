@@ -72,9 +72,7 @@ export class UniV3Pool extends TickPool {
 
 		return {
 			amountOut: result[0],
-			sqrtPriceX96After: result[1],
-			initializedTicksCrossed: result[2],
-			gasEstimate: result[3],
+			fee: this.fee,
 		}
 	}
 
@@ -86,7 +84,7 @@ export class UniV3Pool extends TickPool {
 			params.slippage ?? this.defaultSlippage,
 		)
 
-		return {
+		const args: UniV3SwapArgs = {
 			tokenIn: params.tokenIn.address,
 			tokenOut: params.tokenOut.address,
 			fee: this.fee,
@@ -94,8 +92,10 @@ export class UniV3Pool extends TickPool {
 			deadline: this.calcDeadline(60 * 5),
 			amountIn: params.amountIn,
 			amountOutMinimum,
-			sqrtPriceLimitX96: 0n, // amountOutMinimum is enough for ensuring slippage
+			sqrtPriceLimitX96: 0n,
 		}
+
+		return args
 	}
 
 	async simulateSwap(params: SwapParams) {

@@ -2,12 +2,15 @@ import { Address, zeroAddress } from 'viem'
 import { ClientManager } from '../utils/ClientManager'
 import { ALGEBRA_FACTORY_ABI } from '../abi/algebra/algebraFactory'
 import { AlgebraPool } from './algebra/Pool'
-import { TickPool } from './TickPool'
 import { UniV3Pool } from './uniswapV3/Pool'
+import { UniV2Pool } from './uniswapV2/Pool'
+import { Pool } from './Pool'
 
 export enum PoolType {
 	UNIV3 = 'uniV3',
+	UNIV2 = 'uniV2',
 	ALGEBRA = 'algebra',
+	UNKNOWN = 'unknown',
 }
 
 export class PoolUtils {
@@ -15,12 +18,16 @@ export class PoolUtils {
 		poolAddress: Address,
 		chainId: number,
 		poolType: PoolType,
-	): Promise<TickPool> {
+	): Promise<Pool> {
 		switch (poolType) {
 			case PoolType.ALGEBRA:
 				return AlgebraPool.create(poolAddress, chainId)
 			case PoolType.UNIV3:
 				return UniV3Pool.create(poolAddress, chainId)
+			case PoolType.UNIV2:
+				return UniV2Pool.create(poolAddress, chainId)
+			default:
+				throw new Error('Unknown pool type')
 		}
 	}
 
