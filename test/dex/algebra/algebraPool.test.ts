@@ -1,5 +1,4 @@
 import { fuse } from 'viem/chains'
-import { PoolType, PoolUtils } from '../../../src/dex/PoolUtils'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import {
 	Client,
@@ -38,11 +37,7 @@ makeSuite('algebra pool test', () => {
 		walletClient = ClientManager.getWalletClient(fuse.id)
 		botAddress = walletClient.account!.address
 
-		pool = (await PoolUtils.createPool(
-			wethUsdtPoolAddress,
-			fuse.id,
-			PoolType.ALGEBRA,
-		)) as AlgebraPool
+		pool = await AlgebraPool.create(wethUsdtPoolAddress, fuse.id)
 
 		usdtContract = getContract({
 			address: pool.token1.address,
@@ -129,11 +124,7 @@ makeSuite('algebra pool test', () => {
 	})
 
 	it('should simulate and swap token1 to token0', async () => {
-		const pool = await PoolUtils.createPool(
-			wethUsdtPoolAddress,
-			fuse.id,
-			PoolType.ALGEBRA,
-		)
+		const pool = await AlgebraPool.create(wethUsdtPoolAddress, fuse.id)
 
 		const amountIn = 10n ** 9n
 
