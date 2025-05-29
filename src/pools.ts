@@ -133,35 +133,35 @@ export const poolsByChain: Record<number, Pool[]> = {
 			address: '0x3dd013fddf4daa3b642a1538e274d85e8e54ae8b',
 		},
 	],
-	[rootstock.id]: [
-		{
-			type: PoolType.UNIV3,
-			address: '0xD022Cee10c5Cf25c50311c426536Eb8E313030b2',
-		},
-		// RIF/USDT pool
-		// {
-		// 	type: PoolType.UNIV3,
-		// 	address: '0xa89a86d3d9481a741833208676fa57d0f1d5C6Cb',
-		// },
-		{
-			type: PoolType.UNIV3,
-			address: '0xE4Aad3D85ddc67cc2BB57599d27914C43DC89FE7',
-		},
-		{
-			type: PoolType.UNIV3,
-			address: '0xe54D5c25Aad95CDa8979eE502D4f3d70892444D1',
-		},
-		// USDRIF/USDT
-		// {
-		// 	type: PoolType.UNIV3,
-		// 	address: '0x69c4D1FcD58CBDd7f9857aC4F8d56A1Cc6B598Fe',
-		// },
-		// MSTRs/USDT
-		// {
-		// 	type: PoolType.UNIV3,
-		// 	address: '0xC7EBDeDc369858e7032Aa72833964b82f1fC1c31',
-		// },
-	],
+	// [rootstock.id]: [
+	// 	{
+	// 		type: PoolType.UNIV3,
+	// 		address: '0xD022Cee10c5Cf25c50311c426536Eb8E313030b2',
+	// 	},
+	// 	// RIF/USDT pool
+	// 	// {
+	// 	// 	type: PoolType.UNIV3,
+	// 	// 	address: '0xa89a86d3d9481a741833208676fa57d0f1d5C6Cb',
+	// 	// },
+	// 	{
+	// 		type: PoolType.UNIV3,
+	// 		address: '0xE4Aad3D85ddc67cc2BB57599d27914C43DC89FE7',
+	// 	},
+	// 	{
+	// 		type: PoolType.UNIV3,
+	// 		address: '0xe54D5c25Aad95CDa8979eE502D4f3d70892444D1',
+	// 	},
+	// 	// USDRIF/USDT
+	// 	// {
+	// 	// 	type: PoolType.UNIV3,
+	// 	// 	address: '0x69c4D1FcD58CBDd7f9857aC4F8d56A1Cc6B598Fe',
+	// 	// },
+	// 	// MSTRs/USDT
+	// 	// {
+	// 	// 	type: PoolType.UNIV3,
+	// 	// 	address: '0xC7EBDeDc369858e7032Aa72833964b82f1fC1c31',
+	// 	// },
+	// ],
 	// Bullshit Etherscan instead of BlockScout
 	// [taiko.id]: [
 	// 	{
