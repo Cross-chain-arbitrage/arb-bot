@@ -6,9 +6,9 @@ import { TgNotificationService } from './notification/TgNotificationService'
 import { infinitePoll } from './utils/polling'
 
 const MIN_DIFFERENCE_TO_NOTIFY = 2
-const MIN_PROFIT_TO_NOTIFY = 4
+const MIN_PROFIT_TO_NOTIFY = 5
 
-const POLL_INTERVAL_MS = 0.25 * 60 * 1000
+const POLL_INTERVAL_MS = 5 * 60 * 1000
 
 const NotificationService = new TgNotificationService()
 
