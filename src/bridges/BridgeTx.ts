@@ -1,10 +1,10 @@
 import { Hash } from 'viem'
 import { LayerZeroScanAPI } from '../data-apis/layerzeroscan/LayerZeroScanAPI'
-import { Tx } from '../utils/transactions/Tx'
+import { Tx } from '../primitives/transactions/Tx'
 import { BridgeTx } from './Bridge'
 import { Message } from '@layerzerolabs/scan-client'
-import { NativeCurrency } from '../utils/tokens/NativeCurrency'
-import { Token } from '../utils/tokens/Token'
+import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
+import { Token } from '../primitives/tokens/Token'
 
 export class LZBridgeTx extends Tx implements BridgeTx {
 	public srcTx: Tx

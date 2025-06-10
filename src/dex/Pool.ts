@@ -1,12 +1,12 @@
-import { BaseContract } from '../utils/contracts/BaseContract'
-import { Token } from '../utils/tokens/Token'
+import { BaseContract } from '../primitives/contracts/BaseContract'
+import { Token } from '../primitives/tokens/Token'
 
 export abstract class Pool extends BaseContract {
 	constructor(
 		public readonly token0: Token,
 		public readonly token1: Token,
 		poolAddress: Address,
-		chainId: number,
+		public chainId: number,
 	) {
 		super(poolAddress, chainId)
 	}

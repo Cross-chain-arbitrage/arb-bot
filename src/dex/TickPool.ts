@@ -1,8 +1,8 @@
-import { Token } from '../utils/tokens/Token'
-import { BaseContract } from '../utils/contracts/BaseContract'
+import { Token } from '../primitives/tokens/Token'
+import { BaseContract } from '../primitives/contracts/BaseContract'
 import { Address, TransactionReceipt } from 'viem'
 import { ClientManager } from '../utils/ClientManager'
-import { TokenUtils } from '../utils/tokens/TokenUtils'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
 import { isSameAddress } from '../utils/common'
 
@@ -208,8 +208,8 @@ export abstract class TickPool extends BaseContract {
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
 	abstract simulateSwap(
 		params: SwapParams, //TODO: remove any
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	): Promise<{ amountOut: bigint; args: any }>
+	) // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	: Promise<{ amountOut: bigint; args: any }>
 	abstract swap(params: SwapParams): Promise<{
 		receipt: TransactionReceipt
 		amountOut: bigint

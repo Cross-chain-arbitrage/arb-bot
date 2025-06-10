@@ -1,5 +1,5 @@
 import { Pool } from '../dex/Pool'
-import { Token } from '../utils/tokens/Token'
+import { Token } from '../primitives/tokens/Token'
 
 interface OptimizedSwap {
 	amountIn: bigint

@@ -1,11 +1,8 @@
 import { AlgebraPool } from '../dex/algebra/Pool'
-import { Token } from '../utils/tokens/Token'
 import { getAccountAddress } from '../utils/getAccount'
 import { GeckoTerminalAPI } from '../data-apis/geckoterminal/GeckoTerminalAPI'
 import logger from '../utils/logger'
 import { GeckoTerminalChainId } from '../data-apis/geckoterminal/chains'
-import { TokenUtils } from '../utils/tokens/TokenUtils'
-import { NativeCurrency } from '../utils/tokens/NativeCurrency'
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { FuseBridgeTx } from '../bridges/FuseBridge/FuseBridgeTx'
 import { fuse } from 'viem/chains'
@@ -16,6 +13,9 @@ import { UniV3Pool } from '../dex/uniswapV3/Pool'
 import { zeroAddress } from 'viem'
 import { Stargate } from '../bridges/Stargate/Stargate'
 import { StargateBridgeTx } from '../bridges/Stargate/StargateBridgeTx'
+import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { Token } from '../primitives/tokens/Token'
 
 /* ======== TYPES ======== */
 

@@ -1,7 +1,7 @@
 import { Address } from 'viem'
-import { Token } from '../utils/tokens/Token'
-import { NativeCurrency } from '../utils/tokens/NativeCurrency'
-import { Tx } from '../utils/transactions/Tx'
+import { Token } from '../primitives/tokens/Token'
+import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
+import { Tx } from '../primitives/transactions/Tx'
 
 export interface BridgeTx {
 	srcTx: Tx

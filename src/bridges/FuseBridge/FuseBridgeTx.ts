@@ -1,5 +1,5 @@
 import { Hash } from 'viem'
-import { Tx } from '../../utils/transactions/Tx'
+import { Tx } from '../../primitives/transactions/Tx'
 import { LayerZeroScanAPI } from '../../data-apis/layerzeroscan/LayerZeroScanAPI'
 
 export class FuseBridgeTx extends Tx {

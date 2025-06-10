@@ -1,7 +1,7 @@
 import { Hash } from 'viem'
 import { LZBridgeTx } from '../BridgeTx'
-import { NativeCurrency } from '../../utils/tokens/NativeCurrency'
-import { Token } from '../../utils/tokens/Token'
+import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
+import { Token } from '../../primitives/tokens/Token'
 
 export class StargateBridgeTx extends LZBridgeTx {
 	constructor(

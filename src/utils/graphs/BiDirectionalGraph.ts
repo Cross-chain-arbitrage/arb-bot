@@ -1,4 +1,4 @@
-import { Token } from '../tokens/Token'
+import { Token } from '../../primitives/tokens/Token'
 
 type TokenId = `${number}:${Address}`
 type GraphNode = Token
