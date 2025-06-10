@@ -1,4 +1,4 @@
-# Probabilistic Cross-Chain Arbitrage
+# Cross Chain Arbitrage
 
 This method utilizes Stargate's Hydra chains to have slippageless bridges and universal USDT/USDC/ETH deployments on every chain
 
