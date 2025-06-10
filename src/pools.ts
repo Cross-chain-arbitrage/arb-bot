@@ -1,11 +1,4 @@
-import {
-	hemi,
-	lightlinkPhoenix,
-	fuse,
-	story,
-	rootstock,
-	mainnet,
-} from 'viem/chains'
+import * as chains from 'viem/chains'
 import { PoolType } from './dex/PoolUtils'
 import { Pool } from './getArbitrageOpportunities'
 
@@ -35,7 +28,7 @@ export const poolsByChain: Record<number, Pool[]> = {
 	// 	// 		'0x3258f413c7a88cda2fa8709a589d221a80f6574f63df5a5b6774485d8acc39d9',
 	// 	// },
 	// ],
-	[hemi.id]: [
+	[chains.hemi.id]: [
 		{
 			type: PoolType.UNIV3,
 			address: '0xdA44564DF732dECfd93Ba8539803C5a8dF241954',
@@ -62,13 +55,13 @@ export const poolsByChain: Record<number, Pool[]> = {
 			address: '0xc36a310BD93E2927452de563fAAA89A86822a21f',
 		},
 	],
-	[mainnet.id]: [
-		{
-			type: PoolType.UNIV2,
-			address: '0x4ce3687fed17e19324f23e305593ab13bbd55c4d',
-		},
-	],
-	[lightlinkPhoenix.id]: [
+	// [mainnet.id]: [
+	// 	{
+	// 		type: PoolType.UNIV2,
+	// 		address: '0x4ce3687fed17e19324f23e305593ab13bbd55c4d',
+	// 	},
+	// ],
+	[chains.lightlinkPhoenix.id]: [
 		{
 			type: PoolType.UNIV3,
 			address: '0x2288627C696010049f6D98a84fC10F9C5F7b3Ce2',
@@ -78,7 +71,7 @@ export const poolsByChain: Record<number, Pool[]> = {
 			address: '0x1125452469E9B9A36FE69249309fCe8925C3eEDa',
 		},
 	],
-	[fuse.id]: [
+	[chains.fuse.id]: [
 		{
 			type: PoolType.ALGEBRA,
 			address: '0x677409B2393E2ca19b454fB904F5E634E21D3D89',
@@ -100,6 +93,13 @@ export const poolsByChain: Record<number, Pool[]> = {
 			address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992',
 		},
 	],
+	// [bsc.id]: [
+	// Fuse/WBNB
+	// {
+	// 	type: PoolType.UNIV2,
+	// 	address: '0x6483f166b9e4310a165a55fea04f867499aded06',
+	// },
+	// ],
 	// Fetching errored because of different globalState return signature
 	// [superposition.id]: [
 	// {
@@ -123,7 +123,7 @@ export const poolsByChain: Record<number, Pool[]> = {
 	// 	address: '0xC444d2219A7C6E39ffe467c2BFB6415060DC499C',
 	// },
 	// ],
-	[story.id]: [
+	[chains.story.id]: [
 		{
 			type: PoolType.UNIV3,
 			address: '0x0012dc8daed76fd687b51ad6a4683aa151d3d59d',
