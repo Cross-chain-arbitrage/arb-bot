@@ -1,6 +1,6 @@
 import { arbitrum, base, fuse } from 'viem/chains'
-import { NativeCurrency } from '../../src/utils/tokens/NativeCurrency'
-import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
+import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
+import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { zeroAddress } from 'viem'
 import { makeSuite } from '../utils/makeSuite'
 import { StargateAPI } from '../../src/bridges/Stargate/StargateAPI'

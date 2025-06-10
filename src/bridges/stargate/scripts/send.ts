@@ -4,7 +4,7 @@ import { arbitrum } from 'viem/chains'
 import { fuse } from 'viem/chains'
 import { getAccountAddress } from '../../../utils/getAccount'
 import logger from '../../../utils/logger'
-import { TokenUtils } from '../../../utils/tokens/TokenUtils'
+import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../../utils/ClientManager'
 
 const TOKEN_IN_SYMBOLS: string[] = ['ETH', 'USDC', 'USDT']

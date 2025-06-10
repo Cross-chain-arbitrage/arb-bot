@@ -1,5 +1,5 @@
 import { Account, Address, isAddress, PublicClient, WalletClient } from 'viem'
-import { ClientManager } from '../ClientManager'
+import { ClientManager } from '../../utils/ClientManager'
 
 export class BaseContractError extends Error {
 	constructor(message: string) {

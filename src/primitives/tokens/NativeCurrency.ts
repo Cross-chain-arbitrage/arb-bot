@@ -1,6 +1,6 @@
 import { Address } from 'viem'
 import { TokenBase } from './TokenBase'
-import { NativeCurrencyError } from '../errors/TokenErrors'
+import { NativeCurrencyError } from './TokenErrors'
 
 export const NATIVE_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 export const STARGATE_NATIVE_ADDRESS =

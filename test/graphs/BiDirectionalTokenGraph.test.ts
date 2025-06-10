@@ -3,7 +3,7 @@ import {
 	BiDirectionalTokenGraphError,
 } from '../../src/utils/graphs/BiDirectionalGraph'
 import { makeSuite } from '../utils/makeSuite'
-import { Token } from '../../src/utils/tokens/Token'
+import { Token } from '../../src/primitives/tokens/Token'
 
 makeSuite('BiDirectionalTokenGraph', () => {
 	let graph: BiDirectionalTokenGraph

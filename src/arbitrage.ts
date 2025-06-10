@@ -6,7 +6,7 @@ import {
 } from './strategies/AlgebraPoolArbitrageStrategy'
 import { GeckoTerminalChainId } from './data-apis/geckoterminal/chains'
 import { AlgebraPool } from './dex/algebra/Pool'
-import { TokenUtils } from './utils/tokens/TokenUtils'
+import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { EconomicsConfig } from './strategies/AlgebraPoolArbitrageStrategy'
 import { UniV3Pool } from './dex/uniswapV3/Pool'
 import { wait } from './utils/common'

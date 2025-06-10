@@ -1,5 +1,5 @@
 import { Address, isAddress } from 'viem'
-import { Token } from './utils/tokens/Token'
+import { Token } from './primitives/tokens/Token'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { ClientManager } from './utils/ClientManager'

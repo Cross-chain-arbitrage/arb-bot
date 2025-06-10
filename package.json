@@ -17,6 +17,7 @@
 		"fuse:bridge": "npx tsx src/fuse/bridge/scripts/bridge.ts",
 		"algebra:swap": "npx tsx src/dex/algebra/scripts/swap.ts",
 		"lint": "npx eslint src",
+		"check-types": "npx tsc --noEmit",
 		"lint:fix": "npx eslint src --fix",
 		"arbitrage": "npx tsx src/arbitrage.ts",
 		"arbitrage:sim": "npx tsx src/arbitrage.ts --simulate",

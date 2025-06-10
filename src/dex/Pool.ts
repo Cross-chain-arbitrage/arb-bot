@@ -1,3 +1,4 @@
+import { TransactionReceipt } from 'viem'
 import { BaseContract } from '../primitives/contracts/BaseContract'
 import { Token } from '../primitives/tokens/Token'
 
@@ -18,5 +19,8 @@ export abstract class Pool extends BaseContract {
 		fee: number
 	}>
 
-	abstract swap(params: SwapParams): Promise<string>
+	abstract swap(params: SwapParams): Promise<{
+		amountOut: bigint
+		receipt: TransactionReceipt
+	}>
 }

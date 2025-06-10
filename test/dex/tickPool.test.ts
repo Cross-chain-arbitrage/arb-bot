@@ -12,8 +12,8 @@ import { PoolType } from '../../src/dex/PoolUtils'
 import { makeSuite } from '../utils/makeSuite'
 import { setTokenBalance, useAnvil } from '../utils/anvil'
 import { PoolUtils } from '../../src/dex/PoolUtils'
-import { Token } from '../../src/utils/tokens/Token'
-import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
+import { Token } from '../../src/primitives/tokens/Token'
+import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 
 /* ======== Constants ======== */
 
@@ -56,11 +56,11 @@ makeSuite('TickPool', () => {
 
 		usdcToken = await TokenUtils.fromAddress<Token>(usdcAddress, fuse.id)
 
-		pool = await PoolUtils.createPool(
+		pool = (await PoolUtils.createPool(
 			wethUsdtPoolAddress,
 			fuse.id,
 			PoolType.ALGEBRA,
-		)
+		)) as unknown as TickPool
 	})
 
 	it('should correctly convert price to sqrtPriceX96 and vice versa', () => {

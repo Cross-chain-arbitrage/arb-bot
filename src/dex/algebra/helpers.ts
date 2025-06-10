@@ -1,8 +1,8 @@
 import { getContract } from 'viem'
 import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
 import { ClientManager } from '../../utils/ClientManager'
-import { TokenUtils } from '../../utils/tokens/TokenUtils'
-import { Token } from '../../utils/tokens/Token'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { Token } from '../../primitives/tokens/Token'
 
 export async function getPoolImmutables(
 	poolAddress: Address,

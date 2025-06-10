@@ -1,5 +1,5 @@
 import { WETH_ABI } from '../../abi/weth'
-import { getAccountAddress } from '../getAccount'
+import { getAccountAddress } from '../../utils/getAccount'
 import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'
 import { TokenUtils } from './TokenUtils'

@@ -1,8 +1,8 @@
 import { Address, erc20Abi, isAddress, TransactionReceipt } from 'viem'
-import { TokenError } from '../errors/TokenErrors'
+import { TokenError } from './TokenErrors'
 import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from './NativeCurrency'
 import { TokenBase } from './TokenBase'
-import { isSameAddress } from '../common'
+import { isSameAddress } from '../../utils/common'
 
 export class Token extends TokenBase {
 	constructor(

@@ -36,7 +36,7 @@ makeSuite('Uniswap V3 pool test', () => {
 			poolAddress,
 			hemi.id,
 			PoolType.UNIV3,
-		)) as UniV3Pool
+		)) as unknown as UniV3Pool
 
 		usdcContract = getContract({
 			address: pool.token1.address,

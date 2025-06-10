@@ -1,7 +1,7 @@
 import { getContract } from 'viem'
 import { ClientManager } from '../../utils/ClientManager'
-import { TokenUtils } from '../../utils/tokens/TokenUtils'
-import { Token } from '../../utils/tokens/Token'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { Token } from '../../primitives/tokens/Token'
 import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
 
 export async function getPoolImmutables(

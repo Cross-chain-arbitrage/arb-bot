@@ -2,8 +2,8 @@ import { arbitrum, fuse } from 'viem/chains'
 import { getAccountAddress } from '../../../utils/getAccount'
 
 import { FuseBridge } from '../FuseBridge'
-import { TokenUtils } from '../../../utils/tokens/TokenUtils'
-import { Token } from '../../../utils/tokens/Token'
+import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
+import { Token } from '../../../primitives/tokens/Token'
 import logger from '../../../utils/logger'
 
 async function main() {

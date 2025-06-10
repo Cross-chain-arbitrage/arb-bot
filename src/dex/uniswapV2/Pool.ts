@@ -2,11 +2,11 @@ import { Address, decodeEventLog } from 'viem'
 import { UNIV2_POOL_ABI } from '../../abi/uniV2/pool'
 import { isSameAddress } from '../../utils/common'
 import { Pool } from '../Pool'
-import { Token } from '../../utils/tokens/Token'
+import { Token } from '../../primitives/tokens/Token'
 import { UNIV2_ROUTER_ABI } from '../../abi/uniV2/router'
 import { peripheryAddresses } from './data'
 import { ClientManager } from '../../utils/ClientManager'
-import { TokenUtils } from '../../utils/tokens/TokenUtils'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 
 export class UniV2PoolError extends Error {
 	constructor(message: string) {

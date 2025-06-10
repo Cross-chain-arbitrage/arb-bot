@@ -5,7 +5,7 @@ import {
 	STARGATE_NATIVE_ADDRESS,
 } from './NativeCurrency'
 import { Token } from './Token'
-import { ClientManager } from '../ClientManager'
+import { ClientManager } from '../../utils/ClientManager'
 import { ERC20_ABI } from '../../abi/erc20'
 
 type TokenCacheKey = `${number}:${Address}`

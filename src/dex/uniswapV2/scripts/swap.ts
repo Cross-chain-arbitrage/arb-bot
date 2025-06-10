@@ -2,12 +2,12 @@ import { rootstock } from 'viem/chains'
 import { getAccountAddress } from '../../../utils/getAccount'
 
 import logger from '../../../utils/logger'
-import { UniV3Pool } from '../Pool'
+import { UniV2Pool } from '../Pool'
 
 async function swap() {
 	const poolAddress = '0xa89a86d3d9481a741833208676fa57d0f1d5c6cb' // RIF/USDT pool
 
-	const pool = await UniV3Pool.create(poolAddress, rootstock.id)
+	const pool = await UniV2Pool.create(poolAddress, rootstock.id)
 
 	const swapToRIF = true
 

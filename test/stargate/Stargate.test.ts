@@ -1,6 +1,6 @@
 import { arbitrum, fuse } from 'viem/chains'
 
-import { TokenUtils } from '../../src/utils/tokens/TokenUtils'
+import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { makeSuite } from '../utils/makeSuite'
 import { setTokenBalance, useAnvil } from '../utils/anvil'
 import { ClientManager } from '../../src/utils/ClientManager'
