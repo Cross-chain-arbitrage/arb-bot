@@ -1,9 +1,11 @@
+import { parseUnits } from 'viem'
 import { arbitrum, fuse } from 'viem/chains'
+import { Graph, GraphEdge, GraphError } from '../../src/graphs/Graph'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
-import { Graph, GraphEdge, GraphError } from '../../src/utils/graphs/Graph'
 import { makeSuite } from '../utils/makeSuite'
+import { getWethWbtcFuseGraph } from './examples/BtcWethGraph'
 
 makeSuite('Graph', () => {
 	const WBTC_ARB_ADDR = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
@@ -195,16 +197,12 @@ makeSuite('Graph', () => {
 		let WBTC_ARB: Token
 		let WETH_FUSE: Token
 		let ETH_ARB: NativeCurrency
-		let FUSE_FUSE: NativeCurrency
-		let WBTC_FUSE: Token
 
 		beforeEach(async () => {
 			ETH_ARB = TokenUtils.createNative(arbitrum.id)
-			FUSE_FUSE = TokenUtils.createNative(fuse.id)
 
 			WBTC_ARB = await TokenUtils.fromAddress(WBTC_ARB_ADDR, arbitrum.id)
 			WETH_FUSE = await TokenUtils.fromAddress(WETH_FUSE_ADDR, fuse.id)
-			WBTC_FUSE = await TokenUtils.fromAddress(WBTC_FUSE_ADDR, fuse.id)
 		})
 
 		it('MUST throw an error if an edge is added with a node that does not exist', () => {
@@ -237,6 +235,9 @@ makeSuite('Graph', () => {
 		it('MUST throw an error if edge is added twice', () => {
 			const graph = new Graph()
 
+			graph.addNode(WBTC_ARB)
+			graph.addNode(WETH_FUSE)
+
 			const edge: GraphEdge = {
 				from: WBTC_ARB,
 				to: WETH_FUSE,
@@ -253,6 +254,23 @@ makeSuite('Graph', () => {
 
 			graph.addEdge(edge)
 			expect(() => graph.addEdge(edge)).toThrow(GraphError)
+		})
+	})
+
+	describe('Printing', () => {
+		let graph: Graph
+
+		beforeEach(async () => {
+			graph = await getWethWbtcFuseGraph()
+		})
+
+		it('MUST be able to print the graph as a table', async () => {
+			const table = await graph.toTable(parseUnits('0.001', 18))
+			expect(table.length).toBe(8)
+		})
+
+		it('MUST be able to print the graph as a table', async () => {
+			await graph.printTable(parseUnits('0.001', 18))
 		})
 	})
 })
