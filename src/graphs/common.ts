@@ -1,4 +1,4 @@
-import { TokenBase } from '../../primitives/tokens/TokenBase'
+import { TokenBase } from '../primitives/tokens/TokenBase'
 
 export class Action {
 	constructor(public readonly actionType: ActionType) {}

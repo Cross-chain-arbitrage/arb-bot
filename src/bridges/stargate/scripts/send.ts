@@ -1,11 +1,10 @@
 import { zeroAddress } from 'viem'
-import { Stargate } from '../Stargate'
-import { arbitrum } from 'viem/chains'
-import { fuse } from 'viem/chains'
-import { getAccountAddress } from '../../../utils/getAccount'
-import logger from '../../../utils/logger'
+import { arbitrum, fuse } from 'viem/chains'
 import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../../utils/ClientManager'
+import { getAccountAddress } from '../../../utils/getAccount'
+import logger from '../../../utils/logger'
+import { Stargate } from '../Stargate'
 
 const TOKEN_IN_SYMBOLS: string[] = ['ETH', 'USDC', 'USDT']
 
@@ -94,9 +93,9 @@ async function send() {
 
 	const bridgeTx = await Stargate.bridge(
 		tokenIn,
-		amountIn,
 		toChain.id,
 		recipient,
+		amountIn,
 	)
 
 	logger.info(`TxHash: ${bridgeTx.hash}`)

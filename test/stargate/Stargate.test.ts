@@ -1,10 +1,10 @@
 import { arbitrum, fuse } from 'viem/chains'
 
-import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
-import { makeSuite } from '../utils/makeSuite'
-import { setTokenBalance, useAnvil } from '../utils/anvil'
-import { ClientManager } from '../../src/utils/ClientManager'
 import { Stargate } from '../../src/bridges/Stargate/Stargate'
+import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
+import { ClientManager } from '../../src/utils/ClientManager'
+import { setTokenBalance, useAnvil } from '../utils/anvil'
+import { makeSuite } from '../utils/makeSuite'
 
 makeSuite('Stargate', () => {
 	useAnvil(arbitrum.id)
@@ -23,9 +23,9 @@ makeSuite('Stargate', () => {
 
 		const bridgeTx = await Stargate.bridge(
 			token,
-			amount,
 			fuse.id,
 			recipient,
+			amount,
 			true,
 		)
 
@@ -42,9 +42,9 @@ makeSuite('Stargate', () => {
 
 		const bridgeTx = await Stargate.bridge(
 			native,
-			amount,
 			fuse.id,
 			recipient,
+			amount,
 			true,
 		)
 
