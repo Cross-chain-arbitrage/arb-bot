@@ -5,14 +5,15 @@ interface ArbitragePath {
 	edges: GraphEdge[]
 	startAmount: bigint
 	endAmount: bigint
-	profit: number
+	profitAmount: bigint
+	profitPercentage: number
 }
 
 export async function findArbitragePath(
 	startToken: GraphNode,
 	startAmount: bigint,
 	graph: Graph,
-	maxDepth: number = 8,
+	maxDepth: number = 7,
 ): Promise<ArbitragePath | null> {
 	const distances = new Map<GraphNode, number>()
 	const predecessors = new Map<GraphNode, GraphEdge>()
@@ -25,17 +26,26 @@ export async function findArbitragePath(
 	// Run Bellman-Ford
 	for (let i = 0; i < maxDepth; i++) {
 		for (const edge of graph.edges) {
-			const fromId = edge.from
+			const from = edge.from
 			const to = edge.to
 
-			const currentAmount = amounts.get(fromId)!
+			const currentAmount = amounts.get(from)
+			const fromDistance = distances.get(from)
+
+			if (!currentAmount) continue
+			if (fromDistance === undefined) continue
+
 			const { rate, amountOut } = await edge.action.getRate(currentAmount)
 
-			const newDist = distances.get(fromId)! + rate
+			const newDist = fromDistance + rate
 
-			if (newDist < (distances.get(to) ?? Infinity)) {
+			const toDistance = distances.get(to) ?? Infinity
+
+			if (newDist < toDistance) {
 				distances.set(to, newDist)
+
 				predecessors.set(to, edge)
+
 				amounts.set(to, amountOut)
 
 				// Check for negative cycle
@@ -51,6 +61,44 @@ export async function findArbitragePath(
 	}
 
 	return null
+}
+
+async function reconstructCycle(
+	predecessors: Map<GraphNode, GraphEdge>,
+	startToken: GraphNode,
+	startAmount: bigint,
+): Promise<ArbitragePath> {
+	const edges: GraphEdge[] = []
+	let currentToken = startToken
+
+	// Reconstruct the cycle by following predecessors
+	do {
+		const edge = predecessors.get(currentToken)!
+		edges.push(edge)
+		currentToken = edge.from
+	} while (currentToken !== startToken)
+
+	// Reverse the edges to get the correct order
+	edges.reverse()
+
+	// Calculate amounts and profit
+
+	let amount = startAmount
+	for (const edge of edges) {
+		const { amountOut } = await edge.action.getRate(amount)
+		amount = amountOut
+	}
+
+	const profitAmount = amount - startAmount
+	const profitPercentage = (Number(profitAmount) / Number(startAmount)) * 100
+
+	return {
+		edges,
+		startAmount,
+		endAmount: amount,
+		profitAmount,
+		profitPercentage,
+	}
 }
 
 export async function findOptimalArbitrage(
@@ -74,44 +122,10 @@ export async function findOptimalArbitrage(
 			graph,
 			maxDepth,
 		)
-		if (path && (!bestPath || path.profit > bestPath.profit)) {
+		if (path && (!bestPath || path.profitAmount > bestPath.profitAmount)) {
 			bestPath = path
 		}
 	}
 
 	return bestPath
-}
-
-async function reconstructCycle(
-	predecessors: Map<GraphNode, GraphEdge>,
-	startToken: GraphNode,
-	startAmount: bigint,
-): Promise<ArbitragePath> {
-	const edges: GraphEdge[] = []
-	let currentToken = startToken
-
-	let endAmount = BigInt(0)
-
-	// Reconstruct the cycle by following predecessors
-	do {
-		const edge = predecessors.get(currentToken)!
-		edges.push(edge)
-		currentToken = edge.from
-	} while (currentToken !== startToken)
-
-	// Reverse the edges to get the correct order
-	edges.reverse()
-
-	// Calculate amounts and profit
-
-	endAmount = (await edges[edges.length - 1].action.getRate(startAmount))
-		.amountOut
-	const profit = (Number(endAmount - startAmount) / Number(startAmount)) * 100
-
-	return {
-		edges,
-		startAmount,
-		endAmount,
-		profit,
-	}
 }
