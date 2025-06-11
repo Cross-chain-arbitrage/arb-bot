@@ -1,10 +1,10 @@
 import { Token } from '../primitives/tokens/Token'
-import { BaseContract } from '../primitives/contracts/BaseContract'
 import { Address, TransactionReceipt } from 'viem'
 import { ClientManager } from '../utils/ClientManager'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
 import { isSameAddress } from '../utils/common'
+import { Pool } from './Pool'
 
 export class TickPoolError extends Error {
 	constructor(message: string) {
@@ -16,9 +16,7 @@ export class TickPoolError extends Error {
 
 const BASIS_POINTS = 10000n
 
-export abstract class TickPool extends BaseContract {
-	public readonly token0: Token
-	public readonly token1: Token
+export abstract class TickPool extends Pool {
 	public readonly fee: number
 	public readonly tickSpacing: number
 
@@ -33,10 +31,8 @@ export abstract class TickPool extends BaseContract {
 		immutables: PoolImmutables,
 		periphery: PoolPeriphery,
 	) {
-		super(poolAddress, chainId)
+		super(immutables.token0, immutables.token1, poolAddress, chainId)
 
-		this.token0 = immutables.token0
-		this.token1 = immutables.token1
 		this.fee = immutables.fee
 		this.tickSpacing = immutables.tickSpacing
 
@@ -208,8 +204,8 @@ export abstract class TickPool extends BaseContract {
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
 	abstract simulateSwap(
 		params: SwapParams, //TODO: remove any
-	) // eslint-disable-next-line @typescript-eslint/no-explicit-any
-	: Promise<{ amountOut: bigint; args: any }>
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	): Promise<{ amountOut: bigint; args: any }>
 	abstract swap(params: SwapParams): Promise<{
 		receipt: TransactionReceipt
 		amountOut: bigint
