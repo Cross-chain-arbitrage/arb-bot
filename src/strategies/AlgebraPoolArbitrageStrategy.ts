@@ -1,21 +1,21 @@
-import { AlgebraPool } from '../dex/algebra/Pool'
-import { getAccountAddress } from '../utils/getAccount'
-import { GeckoTerminalAPI } from '../data-apis/geckoterminal/GeckoTerminalAPI'
-import logger from '../utils/logger'
-import { GeckoTerminalChainId } from '../data-apis/geckoterminal/chains'
-import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
-import { FuseBridgeTx } from '../bridges/FuseBridge/FuseBridgeTx'
 import { fuse } from 'viem/chains'
 import { WBTC_ARB } from '../arbitrage'
-import { BatchQuoteOptimizer } from '../optimizers/BatchQuoteOptimizer'
+import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
+import { FuseBridgeTx } from '../bridges/FuseBridge/FuseBridgeTx'
+import { GeckoTerminalChainId } from '../data-apis/geckoterminal/chains'
+import { GeckoTerminalAPI } from '../data-apis/geckoterminal/GeckoTerminalAPI'
+import { AlgebraPool } from '../dex/algebra/Pool'
 import { UniV3Pool } from '../dex/uniswapV3/Pool'
+import { BatchQuoteOptimizer } from '../optimizers/BatchQuoteOptimizer'
+import { getAccountAddress } from '../utils/getAccount'
+import logger from '../utils/logger'
 // import { WETH } from '../utils/tokens/WETH'
 import { zeroAddress } from 'viem'
 import { Stargate } from '../bridges/Stargate/Stargate'
 import { StargateBridgeTx } from '../bridges/Stargate/StargateBridgeTx'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
-import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { Token } from '../primitives/tokens/Token'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
 
 /* ======== TYPES ======== */
 
@@ -316,6 +316,17 @@ export class AlgebraPoolArbitrageStrategy {
 			`Swapped ${tokenIn.symbol} for ${tokenOut.symbol}: ${swapTx.receipt.transactionHash}`,
 		)
 
+		const tokenOutArbPrice = await GeckoTerminalAPI.getTokenPriceForChain(
+			tokenOutArb.address,
+			this.baseChain.geckoTerminalId,
+		)
+		const amountOutUSD =
+			Number(tokenOut.formatUnits(amountOut)) * tokenOutArbPrice
+
+		logger.info(
+			`Amount out: ${tokenOut.formatUnits(amountOut)} ${tokenOut.symbol} ($${amountOutUSD.toFixed(2)} USD)`,
+		)
+
 		// 3. Bridge back to Base Chain
 		let bridgeBackTx: StargateBridgeTx | FuseBridgeTx
 
@@ -361,11 +372,6 @@ export class AlgebraPoolArbitrageStrategy {
 		// }
 
 		const tokenOutArbBalance = await tokenOutArb.balanceOf(account)
-
-		const tokenOutArbPrice = await GeckoTerminalAPI.getTokenPriceForChain(
-			tokenOutArb.address,
-			this.baseChain.geckoTerminalId,
-		)
 
 		const tokenOutBalanceUSD =
 			Number(tokenOutArb.formatUnits(tokenOutArbBalance)) *
