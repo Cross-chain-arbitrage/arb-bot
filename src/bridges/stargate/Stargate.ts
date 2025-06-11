@@ -63,7 +63,7 @@ export class Stargate {
 			await this.validateAllowance(recipient, poolOrOFT, amount, token)
 		}
 
-		const quote = await Stargate.quote(
+		const quote = await Stargate._quote(
 			tokenMetadata,
 			amount,
 			recipient,
@@ -181,6 +181,26 @@ export class Stargate {
 	}
 
 	static async quote(
+		token: Token | NativeCurrency,
+		amount: bigint,
+		recipient: Address,
+		toChainId: number,
+	) {
+		const tokenMetadata = await StargateAPI.getTokenMetadata(
+			token,
+			Stargate.getChainKey(token.chainId),
+		)
+
+		return await Stargate._quote(
+			tokenMetadata,
+			amount,
+			recipient,
+			toChainId,
+			token.chainId,
+		)
+	}
+
+	private static async _quote(
 		metadata: StargateTokenMetadata,
 		amount: bigint,
 		recipient: Address,
