@@ -1,9 +1,9 @@
 import { arbitrum, fuse } from 'viem/chains'
+import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
+import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { Graph, GraphEdge, GraphError } from '../../src/utils/graphs/Graph'
 import { makeSuite } from '../utils/makeSuite'
-import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
-import { Token } from '../../src/primitives/tokens/Token'
 
 makeSuite('Graph', () => {
 	const WBTC_ARB_ADDR = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
