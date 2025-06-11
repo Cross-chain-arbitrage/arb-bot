@@ -1,12 +1,12 @@
-import { zeroHash, formatEther } from 'viem'
+import { formatEther, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
 import { STARGATE_POOL_ABI } from '../../abi/stargate/stgPool'
 import { getChainEIdByNativeChainId } from '../../data-apis/layerzeroscan/utils'
-import { ClientManager } from '../../utils/ClientManager'
-import logger from '../../utils/logger'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
+import { ClientManager } from '../../utils/ClientManager'
+import logger from '../../utils/logger'
 import { padAddressToBytes32 } from '../../utils/types'
 import { STARGATE_CHAINS } from './dumped/chains'
 import { StargateAPI } from './StargateAPI'
@@ -22,10 +22,10 @@ export class StargateError extends Error {
 
 export class Stargate {
 	static async bridge(
-		token: Token | NativeCurrency,
-		amount: bigint,
+		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		recipient: Address,
+		amount: bigint,
 		simulateOnly: boolean = false,
 	) {
 		if (amount <= 0n)
@@ -33,13 +33,13 @@ export class Stargate {
 		if (!recipient) throw new StargateError('Recipient address is required')
 		if (!toChainId && toChainId >= 1)
 			throw new StargateError('Destination chain ID is required')
-		if (token.chainId === toChainId) {
+		if (tokenIn.chainId === toChainId) {
 			throw new StargateError('Cannot send to the same chain')
 		}
 
 		const tokenMetadata = await StargateAPI.getTokenMetadata(
-			token,
-			Stargate.getChainKey(token.chainId),
+			tokenIn,
+			Stargate.getChainKey(tokenIn.chainId),
 		)
 
 		const poolOrOFT = tokenMetadata.address
@@ -47,11 +47,11 @@ export class Stargate {
 		await Stargate.validatePathCredits(
 			poolOrOFT,
 			toChainId,
-			token.chainId,
+			tokenIn.chainId,
 			// amount,
 		)
 
-		const balance = await token.balanceOf(recipient)
+		const balance = await tokenIn.balanceOf(recipient)
 
 		if (balance < amount) {
 			throw new StargateError(
@@ -59,8 +59,8 @@ export class Stargate {
 			)
 		}
 
-		if (token instanceof Token) {
-			await this.validateAllowance(recipient, poolOrOFT, amount, token)
+		if (tokenIn instanceof Token) {
+			await this.validateAllowance(recipient, poolOrOFT, amount, tokenIn)
 		}
 
 		const quote = await Stargate._quote(
@@ -68,7 +68,7 @@ export class Stargate {
 			amount,
 			recipient,
 			toChainId,
-			token.chainId,
+			tokenIn.chainId,
 		)
 
 		const toChainEId = getChainEIdByNativeChainId(toChainId)
@@ -87,10 +87,10 @@ export class Stargate {
 			oftCmd: '0x' as Hex,
 		}
 
-		const client = ClientManager.getClient(token.chainId)
-		const wallet = ClientManager.getWalletClient(token.chainId)
+		const client = ClientManager.getClient(tokenIn.chainId)
+		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
 
-		const isNative = token instanceof NativeCurrency
+		const isNative = tokenIn instanceof NativeCurrency
 		const value = quote.messagingFee.nativeFee + (isNative ? amount : 0n)
 
 		const { request } = await client.simulateContract({
@@ -106,15 +106,20 @@ export class Stargate {
 			],
 		})
 
-		Stargate.logTransactionDetails(token, quote)
+		Stargate.logTransactionDetails(tokenIn, quote)
 
 		if (simulateOnly) {
-			return new StargateBridgeTx(zeroHash, token.chainId, token, amount)
+			return new StargateBridgeTx(
+				zeroHash,
+				tokenIn.chainId,
+				tokenIn,
+				amount,
+			)
 		}
 
 		const txHash = await wallet.writeContract(request)
 
-		return new StargateBridgeTx(txHash, token.chainId, token, amount)
+		return new StargateBridgeTx(txHash, tokenIn.chainId, tokenIn, amount)
 	}
 
 	private static async validatePathCredits(
@@ -181,14 +186,14 @@ export class Stargate {
 	}
 
 	static async quote(
-		token: Token | NativeCurrency,
-		amount: bigint,
-		recipient: Address,
+		tokenIn: Token | NativeCurrency,
 		toChainId: number,
+		recipient: Address,
+		amount: bigint,
 	) {
 		const tokenMetadata = await StargateAPI.getTokenMetadata(
-			token,
-			Stargate.getChainKey(token.chainId),
+			tokenIn,
+			Stargate.getChainKey(tokenIn.chainId),
 		)
 
 		return await Stargate._quote(
@@ -196,7 +201,7 @@ export class Stargate {
 			amount,
 			recipient,
 			toChainId,
-			token.chainId,
+			tokenIn.chainId,
 		)
 	}
 

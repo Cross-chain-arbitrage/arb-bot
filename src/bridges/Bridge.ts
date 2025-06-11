@@ -1,6 +1,6 @@
 import { Address } from 'viem'
-import { Token } from '../primitives/tokens/Token'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
+import { Token } from '../primitives/tokens/Token'
 import { Tx } from '../primitives/transactions/Tx'
 
 export interface BridgeTx {
@@ -22,10 +22,10 @@ export interface Bridge {
 	 * @returns BridgeTx object containing transaction details
 	 */
 	bridge(
-		token: Token | NativeCurrency,
-		amount: bigint,
+		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		recipient: Address,
+		amountIn: bigint,
 		simulateOnly?: boolean,
 	): Promise<BridgeTx>
 
@@ -37,8 +37,9 @@ export interface Bridge {
 	 * @returns Tuple of [nativeFee, zroFee]
 	 */
 	quote(
-		token: Token | NativeCurrency,
+		tokenIn: Token | NativeCurrency,
 		toChainId: number,
-		useZro?: boolean,
+		recipient: Address,
+		amountIn: bigint,
 	): Promise<[bigint, bigint]>
 }

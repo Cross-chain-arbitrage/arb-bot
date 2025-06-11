@@ -1,8 +1,8 @@
 import { zeroAddress } from 'viem'
-import { Stargate } from '../../bridges/Stargate/Stargate'
-import { Pool } from '../../dex/Pool'
-import { Token } from '../../primitives/tokens/Token'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
+import { Stargate } from '../bridges/Stargate/Stargate'
+import { Pool } from '../dex/Pool'
+import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
+import { Token } from '../primitives/tokens/Token'
 
 // // For DEX pools
 async function getPoolRate(
@@ -29,9 +29,9 @@ async function getStargateBridgeRate(
 ): Promise<{ rate: number; amountOut: bigint }> {
 	const quote = await Stargate.quote(
 		tokenIn,
-		amountIn,
-		zeroAddress,
 		tokenOut.chainId,
+		zeroAddress,
+		amountIn,
 	)
 
 	let amountOut: bigint

@@ -284,9 +284,9 @@ export class AlgebraPoolArbitrageStrategy {
 		} else {
 			bridgeTx = await Stargate.bridge(
 				tokenInArb,
-				amountIn,
 				this.pool.chainId,
 				account,
+				amountIn,
 			)
 		}
 		logger.info(
@@ -340,9 +340,9 @@ export class AlgebraPoolArbitrageStrategy {
 		} else {
 			bridgeBackTx = await Stargate.bridge(
 				tokenOut,
-				amountOut,
 				this.baseChain.id,
 				account,
+				amountOut,
 			)
 		}
 

@@ -1,13 +1,11 @@
-import { fuse } from 'viem/chains'
-import { bsc, optimism } from 'viem/chains'
-import { arbitrum } from 'viem/chains'
-import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
-import { ClientManager } from '../../utils/ClientManager'
-import { Token } from '../../primitives/tokens/Token'
-import { getAccountAddress } from '../../utils/getAccount'
-import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20BridgeForeign'
-import { FuseBridgeTx } from './FuseBridgeTx'
 import { zeroHash } from 'viem'
+import { arbitrum, bsc, fuse, optimism } from 'viem/chains'
+import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20BridgeForeign'
+import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
+import { Token } from '../../primitives/tokens/Token'
+import { ClientManager } from '../../utils/ClientManager'
+import { getAccountAddress } from '../../utils/getAccount'
+import { FuseBridgeTx } from './FuseBridgeTx'
 
 const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
 const ERC20_BRIDGE_FUSE = '0x353af4878d7452e974538706273887F7ED90Da47'
@@ -217,6 +215,7 @@ export class FuseBridge {
 	static async quote(
 		tokenIn: Token,
 		toChainId: number,
+		// amountIn: bigint,
 		useZro: boolean = false,
 	) {
 		const client = ClientManager.getClient(tokenIn.chainId)
