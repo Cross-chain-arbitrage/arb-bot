@@ -47,16 +47,11 @@ export class GraphError extends Error {
 	}
 }
 
-interface TableRow {
-	from: string
-	to: string
-	action: string
-	rate: number
-}
-
 export class Graph {
 	edges: Set<GraphEdge> = new Set()
 	nodes: Set<GraphNode> = new Set()
+
+	swapsCache: Map<GraphNode, Map<GraphNode, bigint>> = new Map()
 
 	constructor() {}
 
@@ -89,14 +84,21 @@ export class Graph {
 			type: ActionType.SWAP,
 			pool,
 			getRate: async (amountIn: bigint) => {
+				console.log(
+					'\nGetting rate for',
+					from.symbol,
+					to.symbol,
+					from.formatUnits(amountIn),
+				)
 				const { amountOut } = await pool.quoteSwap({
 					tokenIn: from,
 					tokenOut: to,
 					amountIn,
 					slippage,
 				})
-
+				console.log('Amount out', to.formatUnits(amountOut))
 				const rate = -Math.log(Number(amountOut) / Number(amountIn))
+				console.log('Rate', rate)
 
 				return {
 					rate,
@@ -114,86 +116,5 @@ export class Graph {
 		}
 
 		this.nodes.add(node)
-	}
-
-	async toTable(amount: bigint): Promise<TableRow[]> {
-		const rows: TableRow[] = []
-
-		for (const edge of this.edges) {
-			const { rate } = await edge.getRate(amount)
-
-			rows.push({
-				from: `${edge.from.symbol} (${edge.from.chainId})`,
-				to: `${edge.to.symbol} (${edge.to.chainId})`,
-				action: edge.type,
-				rate: rate,
-			})
-		}
-
-		return rows
-	}
-
-	async printTable(amount: bigint): Promise<void> {
-		const rows = await this.toTable(amount)
-
-		// Calculate column widths
-		const widths = {
-			from: Math.max('From'.length, ...rows.map((r) => r.from.length)),
-			to: Math.max('To'.length, ...rows.map((r) => r.to.length)),
-			action: Math.max(
-				'Action'.length,
-				...rows.map((r) => r.action.length),
-			),
-			rate: Math.max(
-				'Rate'.length,
-				...rows.map((r) => r.rate.toFixed(6).length),
-			),
-		}
-
-		// Print header
-		console.log(
-			'From'.padEnd(widths.from) +
-				' | ' +
-				'To'.padEnd(widths.to) +
-				' | ' +
-				'Action'.padEnd(widths.action) +
-				' | ' +
-				'Rate'.padEnd(widths.rate),
-		)
-		console.log(
-			'-'.repeat(
-				widths.from + widths.to + widths.action + widths.rate + 6,
-			),
-		)
-
-		// Print rows
-		for (const row of rows) {
-			console.log(
-				row.from.padEnd(widths.from) +
-					' | ' +
-					row.to.padEnd(widths.to) +
-					' | ' +
-					row.action.padEnd(widths.action) +
-					' | ' +
-					row.rate.toFixed(6).padEnd(widths.rate),
-			)
-		}
-	}
-
-	async toMermaid(amount: bigint): Promise<string> {
-		const rows: string[] = []
-
-		for (const edge of this.edges) {
-			const { rate } = await edge.getRate(amount)
-
-			const from = edge.from.symbol + '_' + edge.from.chainId
-			const to = edge.to.symbol + '_' + edge.to.chainId
-
-			const row = `${from}["${edge.from.symbol}"] --> |${rate}| ${to}["${edge.to.symbol}"]`
-
-			rows.push(row)
-		}
-
-		return 'flowchart TB\n' + rows.join('\n') + '\n'
 	}
 }

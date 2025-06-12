@@ -20,7 +20,7 @@ const ARB_POOL_TYPE = PoolType.UNIV3
 
 /* ============ Constants ============ */
 const SLIPPAGE = 50
-const MAX_PATH_LENGTH = 7
+const MAX_PATH_LENGTH = 5
 
 /* ============ Strategy ============ */
 export class FuseWbtcGraphStrategy {
@@ -114,6 +114,7 @@ export class FuseWbtcGraphStrategy {
 		})
 
 		/* ============ WRAP/UNWRAP: WETH (ARB) <-> ETH (ARB) ============ */
+
 		const getWrapRate = (amountIn: bigint) => {
 			return {
 				rate: -Math.log(1),
@@ -124,14 +125,14 @@ export class FuseWbtcGraphStrategy {
 		graph.addEdge({
 			from: WETH_ARB,
 			to: ETH_ARB,
-			type: ActionType.WRAP,
+			type: ActionType.UNWRAP,
 			getRate: getWrapRate,
 		})
 
 		graph.addEdge({
 			from: ETH_ARB,
 			to: WETH_ARB,
-			type: ActionType.UNWRAP,
+			type: ActionType.WRAP,
 			getRate: getWrapRate,
 		})
 
