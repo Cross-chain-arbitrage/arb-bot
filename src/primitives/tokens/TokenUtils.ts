@@ -1,12 +1,12 @@
 import { Address } from 'viem'
+import { ERC20_ABI } from '../../abi/erc20'
+import { ClientManager } from '../../utils/ClientManager'
 import {
 	NATIVE_ADDRESS,
 	NativeCurrency,
 	STARGATE_NATIVE_ADDRESS,
 } from './NativeCurrency'
 import { Token } from './Token'
-import { ClientManager } from '../../utils/ClientManager'
-import { ERC20_ABI } from '../../abi/erc20'
 
 type TokenCacheKey = `${number}:${Address}`
 
@@ -50,6 +50,11 @@ export class TokenUtils {
 		if (this.isNative(address)) {
 			const token = this.createNative(chainId)
 
+			this.tokenCache.set(
+				this.getCacheKey(NATIVE_ADDRESS, chainId),
+				token,
+			)
+
 			return token as T
 		}
 
@@ -76,9 +81,13 @@ export class TokenUtils {
 		return token as T
 	}
 
-	static createNative(chainId: number): NativeCurrency {
-		const token = new NativeCurrency(chainId, 'ETH', 'ETH')
-		this.tokenCache.set(this.getCacheKey(NATIVE_ADDRESS, chainId), token)
-		return token
+	// It's probably should be publicly accessible
+	// It creates and rewrites instance that was cached
+	private static createNative(chainId: number): NativeCurrency {
+		return new NativeCurrency(chainId, 'ETH', 'ETH')
+	}
+
+	static async getNative(chainId: number): Promise<NativeCurrency> {
+		return await this.fromAddress(NATIVE_ADDRESS, chainId)
 	}
 }

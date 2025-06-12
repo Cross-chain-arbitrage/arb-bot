@@ -1,10 +1,10 @@
 import { Address, zeroAddress } from 'viem'
-import { ClientManager } from '../utils/ClientManager'
 import { ALGEBRA_FACTORY_ABI } from '../abi/algebra/algebraFactory'
+import { ClientManager } from '../utils/ClientManager'
 import { AlgebraPool } from './algebra/Pool'
-import { UniV3Pool } from './uniswapV3/Pool'
-import { UniV2Pool } from './uniswapV2/Pool'
 import { Pool } from './Pool'
+import { UniV2Pool } from './uniswapV2/Pool'
+import { UniV3Pool } from './uniswapV3/Pool'
 
 export enum PoolType {
 	UNIV3 = 'uniV3',

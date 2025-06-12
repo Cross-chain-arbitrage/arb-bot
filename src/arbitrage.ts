@@ -1,15 +1,15 @@
 import { arbitrum, fuse } from 'viem/chains'
-import logger from './utils/logger'
+import { GeckoTerminalChainId } from './data-apis/geckoterminal/chains'
+import { AlgebraPool } from './dex/algebra/Pool'
+import { UniV3Pool } from './dex/uniswapV3/Pool'
+import { TokenUtils } from './primitives/tokens/TokenUtils'
 import {
 	AlgebraPoolArbitrageStrategy,
 	BaseChain,
+	EconomicsConfig,
 } from './strategies/AlgebraPoolArbitrageStrategy'
-import { GeckoTerminalChainId } from './data-apis/geckoterminal/chains'
-import { AlgebraPool } from './dex/algebra/Pool'
-import { TokenUtils } from './primitives/tokens/TokenUtils'
-import { EconomicsConfig } from './strategies/AlgebraPoolArbitrageStrategy'
-import { UniV3Pool } from './dex/uniswapV3/Pool'
 import { wait } from './utils/common'
+import logger from './utils/logger'
 
 /* ======== CONSTANTS ======== */
 
@@ -41,9 +41,9 @@ async function main() {
 	const fusePool = await AlgebraPool.create(fusePoolAddress, poolChainId)
 	const arbPool = await UniV3Pool.create(basePoolAddress, baseChain.id)
 
-	const baseToken = TokenUtils.createNative(baseChain.id)
+	const baseToken = await TokenUtils.getNative(baseChain.id)
 
-	const token0Arb = TokenUtils.createNative(baseChain.id)
+	const token0Arb = await TokenUtils.getNative(baseChain.id)
 	const token1Arb = await TokenUtils.fromAddress(WBTC_ARB, baseChain.id)
 
 	const strategy = new AlgebraPoolArbitrageStrategy(
