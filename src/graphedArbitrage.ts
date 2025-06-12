@@ -9,7 +9,7 @@ async function main() {
 	const startToken = await TokenUtils.getNative(arbitrum.id)
 	const startAmount = startToken.parseUnits('0.005')
 
-	const path = await strategy.findPath(startToken, startAmount)
+	const { path } = await strategy.findPath(startToken, startAmount)
 
 	if (!path) {
 		console.log('No arbitrage path found')
