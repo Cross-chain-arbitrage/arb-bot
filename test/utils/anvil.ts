@@ -1,8 +1,8 @@
-import { exec } from 'child_process'
+import { ChildProcess, exec } from 'child_process'
+import getPort from 'get-port'
 import { Chain, Client, encodeAbiParameters, keccak256, toHex } from 'viem'
 import { ClientManager } from '../../src/utils/ClientManager'
 import { getPrivateKey } from '../../src/utils/getAccount'
-import { exec as execPromise } from './helpers'
 
 /* ======== useAnvil ======== */
 
@@ -16,98 +16,128 @@ export function useAnvil(anvilConfig: AnvilConfig) {
 	const chain = ClientManager.findChainById(anvilConfig.chainId)
 
 	const defaultRpcUrl = chain.rpcUrls.default.http[0]
-	const rpcUrlForAnvil = anvilConfig.rpcUrl ?? defaultRpcUrl
 
 	const realPk = getPrivateKey()
 
+	const anvil = new Anvil(anvilConfig)
+
 	beforeAll(async () => {
-		await startAnvilAndSetTestEnv(
-			chain,
-			rpcUrlForAnvil,
-			anvilConfig.blockNumber,
-			anvilConfig.timeoutStartAnvil,
-		)
+		await startAnvilAndSetTestEnv(anvil, chain, defaultRpcUrl)
 	})
 
-	afterAll(async () => {
-		await killAnvilAndRestoreEnv(chain, defaultRpcUrl, realPk)
+	afterAll(() => {
+		killAnvilAndRestoreEnv(anvil, chain, defaultRpcUrl, realPk)
 	})
 }
 
 async function startAnvilAndSetTestEnv(
+	anvil: Anvil,
 	chain: Chain,
-	realRpcUrl: string,
-	blockNumber?: number,
-	timeoutStartAnvil = 5000,
+	defaultRpcUrl: string,
 ) {
 	ClientManager.clearClients()
 
 	process.env.PRIVATE_KEY = testPk
+
+	await anvil.start(defaultRpcUrl)
+
 	// @ts-expect-error override readonly property
-	chain.rpcUrls.default.http[0] = 'http://localhost:8545'
-
-	await startAnvil(realRpcUrl, blockNumber, timeoutStartAnvil)
+	chain.rpcUrls.default.http[0] = `http://localhost:${anvil.port}`
 }
 
-async function startAnvil(
-	forkRpcUrl: string,
-	blockNumber?: number,
-	timeoutStartAnvil?: number,
-) {
-	const success = new Promise<void>((resolve, reject) => {
-		let command = `anvil --fork-url "${forkRpcUrl}"`
-
-		if (typeof blockNumber === 'number') {
-			command += ` --fork-block-number ${blockNumber}`
-		}
-
-		// console.log(`executing:\n${command}\nwith timeout ${timeoutStartAnvil}`)
-
-		const anvil = exec(command)
-
-		anvil.stdout?.on('data', (data) => {
-			// console.log(data)
-
-			if ((data as string).includes('Listening on 127.0.0.1:8545')) {
-				resolve()
-			}
-		})
-
-		anvil.stderr?.on('data', (data) => {
-			// console.error(data)
-
-			if ((data as string).includes('Error:')) {
-				reject(new Error('Anvil failed to start'))
-			}
-		})
-	})
-
-	const timeout = new Promise((_, reject) => {
-		const timer = setTimeout(() => {
-			reject(new Error('Anvil failed to start'))
-		}, timeoutStartAnvil)
-
-		// if anvil starts successfully, don't need to keep the timer running
-		void success.finally(() => clearTimeout(timer))
-	})
-
-	await Promise.race([success, timeout])
-}
-
-async function killAnvilAndRestoreEnv(
+function killAnvilAndRestoreEnv(
+	anvil: Anvil,
 	chain: Chain,
 	defaultRpcUrl: string,
 	realPk: string | undefined,
 ) {
-	await killAnvil()
+	anvil.stop()
 	ClientManager.clearClients()
 	// @ts-expect-error override readonly property
 	chain.rpcUrls.default.http[0] = defaultRpcUrl
 	process.env.PRIVATE_KEY = realPk
 }
 
-async function killAnvil() {
-	await execPromise('pkill anvil')
+class Anvil {
+	readonly config: AnvilConfig
+	private _port: number | undefined
+	private _process: ChildProcess | undefined
+
+	get port() {
+		if (!this._port) {
+			throw new Error('Anvil not started')
+		}
+
+		return this._port
+	}
+
+	get process() {
+		if (!this._process) {
+			throw new Error('Anvil not started')
+		}
+
+		return this._process
+	}
+
+	constructor(config: AnvilConfig) {
+		this.config = config
+	}
+
+	public async start(fallbackRpcUrl: string) {
+		this._port = await getPort()
+
+		const command = this.buildCommand(fallbackRpcUrl)
+
+		this._process = exec(command)
+
+		await this.onAnvilStart()
+	}
+
+	public stop() {
+		if (this.process) {
+			this.process.kill('SIGTERM')
+		}
+	}
+
+	private buildCommand(fallbackRpcUrl: string) {
+		const rpcUrlToUse = this.config.rpcUrl ?? fallbackRpcUrl
+
+		let command = `anvil --fork-url "${rpcUrlToUse}" --port ${this.port}`
+
+		if (typeof this.config.blockNumber === 'number') {
+			command += ` --fork-block-number ${this.config.blockNumber}`
+		}
+		console.log(command)
+		return command
+	}
+
+	private onAnvilStart() {
+		return new Promise<void>((resolve, reject) => {
+			const process = this.process
+
+			process?.stdout?.on('data', (data) => {
+				if (
+					(data as string).includes(
+						`Listening on 127.0.0.1:${this.port}`,
+					)
+				) {
+					resolve()
+				}
+			})
+
+			process?.stderr?.on('data', (data) => {
+				if ((data as string).includes('Error:')) {
+					reject(new Error('Anvil failed to start'))
+				}
+			})
+
+			const timer = setTimeout(() => {
+				reject(new Error('Anvil failed to start'))
+			}, this.config.timeoutStartAnvil || 5000)
+
+			process?.stdout?.on('data', () => clearTimeout(timer))
+		})
+	}
 }
 
 /* ======== storage helpers ======== */

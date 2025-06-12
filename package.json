@@ -43,6 +43,7 @@
 		"axios": "^1.7.7",
 		"dotenv": "^16.4.5",
 		"eslint-plugin-unused-imports": "^4.1.4",
+		"get-port": "5",
 		"node-telegram-bot-api": "^0.66.0",
 		"pino": "^9.6.0",
 		"pino-pretty": "^13.0.0",
