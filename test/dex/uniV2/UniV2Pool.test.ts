@@ -37,12 +37,12 @@ makeSuite('Uniswap V2 Pool', () => {
 		botAddress = walletClient.account!.address
 		pool = await UniV2Pool.create(poolAddress, mainnet.id)
 		FUSE = getContract({
-			address: pool.token1.address,
+			address: pool.token0.address,
 			abi: erc20Abi,
 			client: walletClient,
 		})
 		WETH = getContract({
-			address: pool.token0.address,
+			address: pool.token1.address,
 			abi: erc20Abi,
 			client: walletClient,
 		})
@@ -95,29 +95,41 @@ makeSuite('Uniswap V2 Pool', () => {
 		})
 	})
 
-	describe('Swap Execution', () => {
+	describe.only('Swap Execution', () => {
 		beforeEach(async () => {
 			const client = ClientManager.getClient(mainnet.id)
 
 			// Set up test balances
 			await setNativeBalance(client, botAddress, 10n ** 18n)
+
 			await setTokenBalance(
 				botAddress,
 				wethAddress,
-				1n,
+				3n,
 				10n ** 18n,
 				client,
 			)
+
 			await setTokenBalance(
 				botAddress,
 				fuseAddress,
-				1n,
+				0n,
 				10n ** 18n,
 				client,
 			)
+
+			await WETH.write.approve([pool.routerAddress, 10n ** 22n], {
+				account: walletClient.account!,
+				chain: walletClient.chain,
+			})
+
+			await FUSE.write.approve([pool.routerAddress, 10n ** 22n], {
+				account: walletClient.account!,
+				chain: walletClient.chain,
+			})
 		})
 
-		it('should swap WETH to FUSE', async () => {
+		it.only('should swap WETH to FUSE', async () => {
 			const amountIn = pool.token1.parseUnits('1')
 
 			await WETH.write.approve([pool.routerAddress, amountIn], {
