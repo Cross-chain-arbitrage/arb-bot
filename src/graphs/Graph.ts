@@ -50,8 +50,7 @@ export class GraphError extends Error {
 export class Graph {
 	edges: Set<GraphEdge> = new Set()
 	nodes: Set<GraphNode> = new Set()
-
-	swapsCache: Map<GraphNode, Map<GraphNode, bigint>> = new Map()
+	private swapsCache: Map<string, bigint> = new Map()
 
 	constructor() {}
 
@@ -84,10 +83,26 @@ export class Graph {
 			type: ActionType.SWAP,
 			pool,
 			getRate: async (amountIn: bigint) => {
+				const cacheKey = `${pool.address}/${from.chainId}:${from.address}-${to.chainId}:${to.address}:${amountIn.toString()}`
+				const cachedAmount = this.swapsCache.get(cacheKey)
+
+				if (cachedAmount) {
+					console.log('Using cached rate for', from.symbol, to.symbol)
+					const cachedRate = -Math.log(
+						Number(cachedAmount) / Number(amountIn),
+					)
+					return {
+						rate: cachedRate,
+						amountOut: cachedAmount,
+					}
+				}
+
 				console.log(
 					'\nGetting rate for',
 					from.symbol,
+					from.chainId,
 					to.symbol,
+					to.chainId,
 					from.formatUnits(amountIn),
 				)
 				const { amountOut } = await pool.quoteSwap({
@@ -99,6 +114,9 @@ export class Graph {
 				console.log('Amount out', to.formatUnits(amountOut))
 				const rate = -Math.log(Number(amountOut) / Number(amountIn))
 				console.log('Rate', rate)
+
+				// Cache the result
+				this.swapsCache.set(cacheKey, amountOut)
 
 				return {
 					rate,
