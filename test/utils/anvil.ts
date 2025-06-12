@@ -116,6 +116,7 @@ async function killAnvil() {
 
 /**
  * @param balanceSlotIndex 0 for standard ERC20, 1 for OFT
+ * @dev WBTC ARB has balance slot 51!!! WTF?
  */
 export async function setTokenBalance(
 	userAddress: Address,

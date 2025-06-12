@@ -3,8 +3,10 @@ import { arbitrum, bsc, fuse, optimism } from 'viem/chains'
 import { FuseBridge } from '../../src/bridges/FuseBridge/FuseBridge'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
+import { getAlchemyRpcUrl } from '../../src/utils/alchemy'
+import { ClientManager } from '../../src/utils/ClientManager'
 import { getAccountAddress } from '../../src/utils/getAccount'
-import { useAnvil } from '../utils/anvil'
+import { setTokenBalance, useAnvil } from '../utils/anvil'
 import { makeSuite } from '../utils/makeSuite'
 
 makeSuite('FuseBridge', () => {
@@ -12,7 +14,9 @@ makeSuite('FuseBridge', () => {
 	const WBTC_FUSE_ADDRESS = '0x34009565bfEeFded0F7e774629a745636Bf35E82'
 
 	describe('Fuse Chain', () => {
-		useAnvil(fuse.id, 35736370)
+		useAnvil({
+			chainId: fuse.id,
+		})
 
 		it('MUST quote bridge fees from Fuse to Arbitrum', async () => {
 			const WBTC = await TokenUtils.fromAddress<Token>(
@@ -33,11 +37,27 @@ makeSuite('FuseBridge', () => {
 				fuse.id,
 			)
 
+			const amount = WBTC.parseUnits('0.00000001')
+
+			const wallet = ClientManager.getWalletClient(fuse.id)
+
+			await setTokenBalance(
+				wallet.account!.address,
+				WBTC_FUSE_ADDRESS,
+				0n,
+				amount,
+				wallet,
+			)
+
+			const { address: bridgeAddr } = FuseBridge.getBridge(fuse.id)
+
+			await WBTC.approve(bridgeAddr, amount)
+
 			const bridgeTx = await FuseBridge.bridge(
 				WBTC,
 				arbitrum.id,
 				getAccountAddress(),
-				WBTC.parseUnits('0.0000001'),
+				amount,
 				true,
 			)
 
@@ -48,7 +68,10 @@ makeSuite('FuseBridge', () => {
 	})
 
 	describe('Arbitrum Chain', () => {
-		useAnvil(arbitrum.id, 336625734)
+		useAnvil({
+			chainId: arbitrum.id,
+			rpcUrl: getAlchemyRpcUrl(arbitrum.id),
+		})
 
 		it('MUST quote bridge fees from Arbitrum to Fuse', async () => {
 			const WBTC = await TokenUtils.fromAddress<Token>(
@@ -63,17 +86,34 @@ makeSuite('FuseBridge', () => {
 		})
 
 		it('MUST bridge WBTC from Arbitrum to Fuse', async () => {
-			// TODO: pin block 336625734 on arbitrum
 			const WBTC = await TokenUtils.fromAddress<Token>(
 				WBTC_ARB_ADDRESS,
 				arbitrum.id,
 			)
 
+			const amount = WBTC.parseUnits('1')
+
+			const wallet = ClientManager.getWalletClient(arbitrum.id)
+
+			const balanceSlot = 51n
+
+			await setTokenBalance(
+				wallet.account!.address,
+				WBTC_ARB_ADDRESS,
+				balanceSlot,
+				amount,
+				wallet,
+			)
+
+			const { address: bridgeAddr } = FuseBridge.getBridge(arbitrum.id)
+
+			await WBTC.approve(bridgeAddr, amount)
+
 			const bridgeTx = await FuseBridge.bridge(
 				WBTC,
 				fuse.id,
-				getAccountAddress(),
-				WBTC.parseUnits('0.0000001'),
+				wallet.account!.address,
+				amount,
 				true,
 			)
 

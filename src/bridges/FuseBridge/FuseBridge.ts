@@ -4,7 +4,6 @@ import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20Brid
 import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
-import { getAccountAddress } from '../../utils/getAccount'
 import { FuseBridgeTx } from './FuseBridgeTx'
 
 const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
@@ -103,7 +102,9 @@ export class FuseBridge {
 			}
 		}
 
-		await this.validateBalance(tokenIn, getAccountAddress(), amount)
+		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+
+		await this.validateBalance(tokenIn, wallet.account!.address, amount)
 
 		const client = ClientManager.getClient(tokenIn.chainId)
 
@@ -115,7 +116,7 @@ export class FuseBridge {
 
 		if (tokenIn.chainId !== fuse.id) {
 			await this.validateAllowance(
-				getAccountAddress(),
+				wallet.account!.address,
 				address,
 				amount,
 				tokenIn,
@@ -129,8 +130,6 @@ export class FuseBridge {
 			amount,
 			unwrapWeth,
 		)
-
-		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
 
 		const { request } = await client.simulateContract({
 			address,
@@ -175,7 +174,7 @@ export class FuseBridge {
 		if (allowance >= amount) return
 
 		throw new FuseBridgeError(
-			`Insufficient allowance, needed ${amount}, has ${allowance}`,
+			`Insufficient allowance of ${token.symbol} from ${recipient} to ${bridge} on chain ${token.chainId}, needed ${amount}, has ${allowance}`,
 		)
 	}
 
@@ -271,7 +270,7 @@ export class FuseBridge {
 		}
 	}
 
-	private static getBridge(chainId: number): {
+	static getBridge(chainId: number): {
 		address: Address
 		abi:
 			| typeof FUSE_ERC20_BRIDGE_ABI_ON_FUSE
