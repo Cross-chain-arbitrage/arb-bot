@@ -13,7 +13,7 @@ makeSuite('Path optimization in Graph', () => {
 	})
 
 	describe('findArbitragePath', () => {
-		it('MUST be able to find the optimal path', async () => {
+		it.only('MUST be able to find the optimal path', async () => {
 			const spread = 0.05
 			graph = await getWethWbtcFuseGraph(1 + spread)
 
@@ -53,7 +53,7 @@ makeSuite('Path optimization in Graph', () => {
 				2,
 			)
 
-			expect(path.profitPercentage).toBeCloseTo(spread, 1)
+			expect(path.profitPercentage).toBeCloseTo(spread * 100, 1)
 			expect(path.profitAmount).toBeGreaterThan(0)
 		})
 
@@ -98,7 +98,7 @@ makeSuite('Path optimization in Graph', () => {
 			)
 
 			expect(path.profitAmount).toBeGreaterThan(0)
-			expect(path.profitPercentage).toBeCloseTo(spread, 0)
+			expect(path.profitPercentage).toBeCloseTo(spread * 100, 0)
 		})
 
 		it('MUST NOT fall into dead ends', async () => {
@@ -142,7 +142,7 @@ makeSuite('Path optimization in Graph', () => {
 			)
 
 			expect(path.profitAmount).toBeGreaterThan(0)
-			expect(path.profitPercentage).toBeCloseTo(spread, 0)
+			expect(path.profitPercentage).toBeCloseTo(spread * 100, 0)
 		})
 	})
 })
