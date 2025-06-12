@@ -17,7 +17,7 @@ export class WETH extends Token {
 
 	constructor(address: Address, chainId: number) {
 		super(address, chainId, 'WETH', 18, 'Wrapped Ether')
-		this.native = TokenUtils.createNative(chainId)
+		this.native = TokenUtils.getNative(chainId)
 	}
 
 	async deposit(amount: bigint) {

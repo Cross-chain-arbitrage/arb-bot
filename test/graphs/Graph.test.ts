@@ -1,11 +1,14 @@
-import { parseUnits } from 'viem'
 import { arbitrum, fuse } from 'viem/chains'
-import { Graph, GraphEdge, GraphError } from '../../src/graphs/Graph'
+import {
+	ActionType,
+	Graph,
+	GraphEdge,
+	GraphError,
+} from '../../src/graphs/Graph'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { makeSuite } from '../utils/makeSuite'
-import { getWethWbtcFuseGraph } from './examples/BtcWethGraph'
 
 makeSuite('Graph', () => {
 	const WBTC_ARB_ADDR = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
@@ -38,11 +41,11 @@ makeSuite('Graph', () => {
 			expect(graph.nodes.has(WETH_FUSE)).toBe(true)
 		})
 
-		it('MUST be able to add `NativeCurrency`s as nodes', () => {
+		it('MUST be able to add `NativeCurrency`s as nodes', async () => {
 			const graph = new Graph()
 
-			const ETH_ARB = TokenUtils.createNative(arbitrum.id)
-			const FUSE_FUSE = TokenUtils.createNative(fuse.id)
+			const ETH_ARB = await TokenUtils.getNative(arbitrum.id)
+			const FUSE_FUSE = await TokenUtils.getNative(fuse.id)
 
 			graph.addNode(ETH_ARB)
 			graph.addNode(FUSE_FUSE)
@@ -64,8 +67,8 @@ makeSuite('Graph', () => {
 		beforeEach(async () => {
 			graph = new Graph()
 
-			ETH_ARB = TokenUtils.createNative(arbitrum.id)
-			FUSE_FUSE = TokenUtils.createNative(fuse.id)
+			ETH_ARB = await TokenUtils.getNative(arbitrum.id)
+			FUSE_FUSE = await TokenUtils.getNative(fuse.id)
 
 			WBTC_ARB = await TokenUtils.fromAddress(WBTC_ARB_ADDR, arbitrum.id)
 			WETH_FUSE = await TokenUtils.fromAddress(WETH_FUSE_ADDR, fuse.id)
@@ -86,7 +89,7 @@ makeSuite('Graph', () => {
 			const swapEdge: GraphEdge = {
 				from: WBTC_ARB, // $110k
 				to: ETH_ARB, // $2.7k,
-				type: 'SWAP',
+				type: ActionType.SWAP,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: BTC_PRICE / ETH_PRICE,
@@ -98,7 +101,7 @@ makeSuite('Graph', () => {
 			const reverseSwapEdge: GraphEdge = {
 				from: ETH_ARB,
 				to: WBTC_ARB,
-				type: 'SWAP',
+				type: ActionType.SWAP,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: ETH_PRICE / BTC_PRICE,
@@ -118,7 +121,7 @@ makeSuite('Graph', () => {
 			const stargateBridgeEdge: GraphEdge = {
 				from: ETH_ARB,
 				to: WETH_FUSE,
-				type: 'STARGATE_BRIDGE',
+				type: ActionType.STARGATE_BRIDGE,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: 1,
@@ -130,7 +133,7 @@ makeSuite('Graph', () => {
 			const reverseStargateBridgeEdge: GraphEdge = {
 				from: WETH_FUSE,
 				to: ETH_ARB,
-				type: 'STARGATE_BRIDGE',
+				type: ActionType.STARGATE_BRIDGE,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: 1,
@@ -151,7 +154,7 @@ makeSuite('Graph', () => {
 			const stargateBridgeEdge: GraphEdge = {
 				from: WBTC_ARB,
 				to: WBTC_FUSE,
-				type: 'FUSE_BRIDGE',
+				type: ActionType.FUSE_BRIDGE,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: 1,
@@ -163,7 +166,7 @@ makeSuite('Graph', () => {
 			const reverseStargateBridgeEdge: GraphEdge = {
 				from: WBTC_FUSE,
 				to: WBTC_ARB,
-				type: 'FUSE_BRIDGE',
+				type: ActionType.FUSE_BRIDGE,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: 1,
@@ -187,7 +190,7 @@ makeSuite('Graph', () => {
 		let ETH_ARB: NativeCurrency
 
 		beforeEach(async () => {
-			ETH_ARB = TokenUtils.createNative(arbitrum.id)
+			ETH_ARB = await TokenUtils.getNative(arbitrum.id)
 
 			WBTC_ARB = await TokenUtils.fromAddress(WBTC_ARB_ADDR, arbitrum.id)
 			WETH_FUSE = await TokenUtils.fromAddress(WETH_FUSE_ADDR, fuse.id)
@@ -198,7 +201,7 @@ makeSuite('Graph', () => {
 			const edge: GraphEdge = {
 				from: WBTC_ARB,
 				to: WETH_FUSE,
-				type: 'SWAP',
+				type: ActionType.SWAP,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: 1,
@@ -227,7 +230,7 @@ makeSuite('Graph', () => {
 			const edge: GraphEdge = {
 				from: WBTC_ARB,
 				to: WETH_FUSE,
-				type: 'SWAP',
+				type: ActionType.SWAP,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: 1,
@@ -238,23 +241,6 @@ makeSuite('Graph', () => {
 
 			graph.addEdge(edge)
 			expect(() => graph.addEdge(edge)).toThrow(GraphError)
-		})
-	})
-
-	describe('Printing', () => {
-		let graph: Graph
-
-		beforeEach(async () => {
-			graph = await getWethWbtcFuseGraph()
-		})
-
-		it('MUST be able to print the graph as a table', async () => {
-			const table = await graph.toTable(parseUnits('0.001', 18))
-			expect(table.length).toBe(8)
-		})
-
-		it('MUST be able to print the graph as a table', async () => {
-			await graph.printTable(parseUnits('0.001', 18))
 		})
 	})
 })

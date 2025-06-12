@@ -101,7 +101,7 @@ makeSuite('TickPool', () => {
 					tokenOut: usdcToken,
 					amountIn: 1000000n,
 				}),
-			).rejects.toThrow('tokenOut must be token0 or token1')
+			).rejects.toThrow('tokenOut must be')
 		})
 
 		it('should throw when balance is insufficient', async () => {

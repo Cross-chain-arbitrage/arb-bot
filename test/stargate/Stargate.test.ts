@@ -52,7 +52,7 @@ makeSuite('Stargate', () => {
 	})
 
 	it('MUST simulate sending Native', async () => {
-		const native = TokenUtils.createNative(arbitrum.id)
+		const native = await TokenUtils.getNative(arbitrum.id)
 
 		const amount = native.parseUnits('1')
 

@@ -26,16 +26,14 @@ makeSuite('Path optimization in Graph', () => {
 
 			const startAmount = startToken.parseUnits('0.001')
 
-			const path = (await findArbitragePath(
+			const { path } = await findArbitragePath(
 				startToken,
 				startAmount,
 				graph,
 				4,
-			))!
+			)
 
-			expect(path).not.toBeNull()
-
-			await graph.printTable(startAmount)
+			if (!path) throw new Error('No path found')
 
 			expect(path.edges.length).toBe(4)
 
@@ -70,14 +68,14 @@ makeSuite('Path optimization in Graph', () => {
 
 			const startAmount = startToken.parseUnits('0.001')
 
-			const path = (await findArbitragePath(
+			const { path } = await findArbitragePath(
 				startToken,
 				startAmount,
 				graph,
 				4,
-			))!
+			)
 
-			expect(path).not.toBeNull()
+			if (!path) throw new Error('No path found')
 
 			console.log('path', path.edges)
 
@@ -114,14 +112,14 @@ makeSuite('Path optimization in Graph', () => {
 
 			const startAmount = startToken.parseUnits('0.001')
 
-			const path = (await findArbitragePath(
+			const { path } = await findArbitragePath(
 				startToken,
 				startAmount,
 				graph,
 				4,
-			))!
+			)
 
-			expect(path).not.toBeNull()
+			if (!path) throw new Error('No path found')
 
 			console.log('path', path.edges)
 

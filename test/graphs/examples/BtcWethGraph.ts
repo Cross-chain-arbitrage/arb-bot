@@ -1,5 +1,5 @@
 import { arbitrum, fuse } from 'viem/chains'
-import { Graph, GraphEdgeAction } from '../../../src/graphs/Graph'
+import { ActionType, Graph, GraphEdgeAction } from '../../../src/graphs/Graph'
 import { TokenUtils } from '../../../src/primitives/tokens/TokenUtils'
 import { safeMultiply } from '../../../src/utils/math'
 
@@ -12,8 +12,8 @@ export async function getWethWbtcFuseGraph(
 
 	const graph = new Graph()
 
-	const ETH_ARB = TokenUtils.createNative(arbitrum.id)
-	const FUSE_FUSE = TokenUtils.createNative(fuse.id)
+	const ETH_ARB = await TokenUtils.getNative(arbitrum.id)
+	const FUSE_FUSE = await TokenUtils.getNative(fuse.id)
 
 	const WBTC_ARB = await TokenUtils.fromAddress(WBTC_ARB_ADDR, arbitrum.id)
 	const WETH_FUSE = await TokenUtils.fromAddress(WETH_FUSE_ADDR, fuse.id)
@@ -33,7 +33,7 @@ export async function getWethWbtcFuseGraph(
 	graph.addEdge({
 		from: ETH_ARB,
 		to: WBTC_ARB,
-		type: 'SWAP',
+		type: ActionType.SWAP,
 		getRate: (amountIn: bigint) => {
 			const price = ETH_PRICE / BTC_PRICE
 			const rate = -Math.log(price)
@@ -46,7 +46,7 @@ export async function getWethWbtcFuseGraph(
 	graph.addEdge({
 		from: WBTC_ARB,
 		to: ETH_ARB,
-		type: 'SWAP',
+		type: ActionType.SWAP,
 		getRate: (amountIn: bigint) => {
 			const price = BTC_PRICE / ETH_PRICE
 			const rate = -Math.log(price)
@@ -61,7 +61,7 @@ export async function getWethWbtcFuseGraph(
 	graph.addEdge({
 		from: WBTC_FUSE,
 		to: WETH_FUSE,
-		type: 'SWAP',
+		type: ActionType.SWAP,
 		getRate: (amountIn: bigint) => {
 			const price = BTC_PRICE / ETH_PRICE / ethPoolPriceMultiplier
 			console.log(price)
@@ -75,7 +75,7 @@ export async function getWethWbtcFuseGraph(
 	graph.addEdge({
 		from: WETH_FUSE,
 		to: WBTC_FUSE,
-		type: 'SWAP',
+		type: ActionType.SWAP,
 		getRate: (amountIn: bigint) => {
 			const price = (ETH_PRICE * ethPoolPriceMultiplier) / BTC_PRICE
 			const rate = -Math.log(price)
@@ -88,7 +88,7 @@ export async function getWethWbtcFuseGraph(
 
 	// STARGATE BRIDGE: ETH (ARB) <-> WETH (FUSE)
 	const stargateBridgeAction: GraphEdgeAction = {
-		type: 'STARGATE_BRIDGE',
+		type: ActionType.STARGATE_BRIDGE,
 		getRate: (amountIn: bigint) => {
 			return {
 				rate: -Math.log(1),
@@ -100,19 +100,19 @@ export async function getWethWbtcFuseGraph(
 	graph.addEdge({
 		from: ETH_ARB,
 		to: WETH_FUSE,
-		type: 'STARGATE_BRIDGE',
+		type: ActionType.STARGATE_BRIDGE,
 		getRate: stargateBridgeAction.getRate,
 	})
 	graph.addEdge({
 		from: WETH_FUSE,
 		to: ETH_ARB,
-		type: 'STARGATE_BRIDGE',
+		type: ActionType.STARGATE_BRIDGE,
 		getRate: stargateBridgeAction.getRate,
 	})
 
 	// FUSE BRIDGE: WBTC (FUSE) <-> WBTC (ARB)
 	const fuseBridgeAction: GraphEdgeAction = {
-		type: 'FUSE_BRIDGE',
+		type: ActionType.FUSE_BRIDGE,
 		getRate: (amountIn: bigint) => {
 			return {
 				rate: -Math.log(1),
@@ -124,13 +124,13 @@ export async function getWethWbtcFuseGraph(
 	graph.addEdge({
 		from: WBTC_FUSE,
 		to: WBTC_ARB,
-		type: 'FUSE_BRIDGE',
+		type: ActionType.FUSE_BRIDGE,
 		getRate: fuseBridgeAction.getRate,
 	})
 	graph.addEdge({
 		from: WBTC_ARB,
 		to: WBTC_FUSE,
-		type: 'FUSE_BRIDGE',
+		type: ActionType.FUSE_BRIDGE,
 		getRate: fuseBridgeAction.getRate,
 	})
 
