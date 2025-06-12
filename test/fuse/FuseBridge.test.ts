@@ -1,80 +1,86 @@
-import { bsc, fuse, optimism } from 'viem/chains'
-import { arbitrum } from 'viem/chains'
+import { zeroHash } from 'viem'
+import { arbitrum, bsc, fuse, optimism } from 'viem/chains'
 import { FuseBridge } from '../../src/bridges/FuseBridge/FuseBridge'
+import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { getAccountAddress } from '../../src/utils/getAccount'
-import { Token } from '../../src/primitives/tokens/Token'
-import { zeroHash } from 'viem'
-import { makeSuite } from '../utils/makeSuite'
 import { useAnvil } from '../utils/anvil'
+import { makeSuite } from '../utils/makeSuite'
+
 makeSuite('FuseBridge', () => {
 	const WBTC_ARB_ADDRESS = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
 	const WBTC_FUSE_ADDRESS = '0x34009565bfEeFded0F7e774629a745636Bf35E82'
 
-	useAnvil(fuse.id)
+	describe('Fuse Chain', () => {
+		useAnvil(fuse.id, 35736370)
 
-	it('should bridge WBTC from Fuse to Arbitrum', async () => {
-		// TODO: pin block 35736370 on fuse
-		const WBTC = await TokenUtils.fromAddress<Token>(
-			WBTC_FUSE_ADDRESS,
-			fuse.id,
-		)
+		it('MUST quote bridge fees from Fuse to Arbitrum', async () => {
+			const WBTC = await TokenUtils.fromAddress<Token>(
+				WBTC_FUSE_ADDRESS,
+				fuse.id,
+			)
 
-		const bridgeTx = await FuseBridge.bridge(
-			WBTC,
-			arbitrum.id,
-			getAccountAddress(),
-			WBTC.parseUnits('0.0000001'),
-			true,
-		)
+			const result = await FuseBridge.quote(WBTC, arbitrum.id)
 
-		expect(bridgeTx.hash).toBe(zeroHash)
-		expect(bridgeTx.dstTxHash).toBeUndefined()
-		expect(bridgeTx.chainId).toBe(WBTC.chainId)
+			expect(result[0]).toBeGreaterThan(0n)
+			expect(result[1]).toBeGreaterThanOrEqual(0n)
+		})
+
+		it('should bridge WBTC from Fuse to Arbitrum', async () => {
+			// TODO: pin block 35736370 on fuse
+			const WBTC = await TokenUtils.fromAddress<Token>(
+				WBTC_FUSE_ADDRESS,
+				fuse.id,
+			)
+
+			const bridgeTx = await FuseBridge.bridge(
+				WBTC,
+				arbitrum.id,
+				getAccountAddress(),
+				WBTC.parseUnits('0.0000001'),
+				true,
+			)
+
+			expect(bridgeTx.hash).toBe(zeroHash)
+			expect(bridgeTx.dstTxHash).toBeUndefined()
+			expect(bridgeTx.chainId).toBe(WBTC.chainId)
+		})
 	})
 
-	it('MUST bridge WBTC from Arbitrum to Fuse', async () => {
-		// TODO: pin block 336625734 on arbitrum
-		const WBTC = await TokenUtils.fromAddress<Token>(
-			WBTC_ARB_ADDRESS,
-			arbitrum.id,
-		)
+	describe('Arbitrum Chain', () => {
+		useAnvil(arbitrum.id, 336625734)
 
-		const bridgeTx = await FuseBridge.bridge(
-			WBTC,
-			fuse.id,
-			getAccountAddress(),
-			WBTC.parseUnits('0.0000001'),
-			true,
-		)
+		it('MUST quote bridge fees from Arbitrum to Fuse', async () => {
+			const WBTC = await TokenUtils.fromAddress<Token>(
+				WBTC_ARB_ADDRESS,
+				arbitrum.id,
+			)
 
-		expect(bridgeTx.hash).toBe(zeroHash)
-		expect(bridgeTx.dstTxHash).toBeUndefined()
-		expect(bridgeTx.chainId).toBe(WBTC.chainId)
-	})
+			const result = await FuseBridge.quote(WBTC, fuse.id)
 
-	it('MUST quote bridge fees from Arbitrum to Fuse', async () => {
-		const WBTC = await TokenUtils.fromAddress<Token>(
-			WBTC_ARB_ADDRESS,
-			arbitrum.id,
-		)
+			expect(result[0]).toBeGreaterThan(0n)
+			expect(result[1]).toBeGreaterThanOrEqual(0n)
+		})
 
-		const result = await FuseBridge.quote(WBTC, fuse.id)
+		it('MUST bridge WBTC from Arbitrum to Fuse', async () => {
+			// TODO: pin block 336625734 on arbitrum
+			const WBTC = await TokenUtils.fromAddress<Token>(
+				WBTC_ARB_ADDRESS,
+				arbitrum.id,
+			)
 
-		expect(result[0]).toBeGreaterThan(0n)
-		expect(result[1]).toBeGreaterThanOrEqual(0n)
-	})
+			const bridgeTx = await FuseBridge.bridge(
+				WBTC,
+				fuse.id,
+				getAccountAddress(),
+				WBTC.parseUnits('0.0000001'),
+				true,
+			)
 
-	it('MUST quote bridge fees from Fuse to Arbitrum', async () => {
-		const WBTC = await TokenUtils.fromAddress<Token>(
-			WBTC_FUSE_ADDRESS,
-			fuse.id,
-		)
-
-		const result = await FuseBridge.quote(WBTC, arbitrum.id)
-
-		expect(result[0]).toBeGreaterThan(0n)
-		expect(result[1]).toBeGreaterThanOrEqual(0n)
+			expect(bridgeTx.hash).toBe(zeroHash)
+			expect(bridgeTx.dstTxHash).toBeUndefined()
+			expect(bridgeTx.chainId).toBe(WBTC.chainId)
+		})
 	})
 
 	it('validateChain() MUST throw if an unsupported chain is provided', () => {
