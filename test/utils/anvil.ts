@@ -11,8 +11,8 @@ const testPk =
 
 /**
  * Starts anvil in describe and replace viem rpc url and private key
- * @param chainId - anvil run as fork of this chain
- * @param blockNumber - fork is from this block number, default is latest
+ * @param chainId -
+ * @param blockNumber -
  */
 export function useAnvil(anvilConfig: AnvilConfig) {
 	const chain = ClientManager.findChainById(anvilConfig.chainId)
@@ -56,14 +56,15 @@ async function startAnvil(
 	blockNumber?: number,
 	timeoutStartAnvil?: number,
 ) {
-	const success = new Promise<void>((resolve) => {
-		let command = `anvil --fork-url ${forkRpcUrl}`
+	const success = new Promise<void>((resolve, reject) => {
+		let command = `anvil --fork-url "${forkRpcUrl}"`
 
 		if (typeof blockNumber === 'number') {
 			command += ` --fork-block-number ${blockNumber}`
 		}
 
-		// console.log('executing', command, 'with timeout', timeoutStartAnvil)
+		// console.log(`executing:\n${command}\nwith timeout ${timeoutStartAnvil}`)
+
 		const anvil = exec(command)
 
 		anvil.stdout?.on('data', (data) => {
@@ -76,6 +77,10 @@ async function startAnvil(
 
 		anvil.stderr?.on('data', (data) => {
 			// console.error(data)
+
+			if ((data as string).includes('Error:')) {
+				reject(new Error('Anvil failed to start'))
+			}
 		})
 	})
 

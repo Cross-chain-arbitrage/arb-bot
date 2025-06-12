@@ -6,6 +6,7 @@ import {
 } from 'viem'
 import { mainnet } from 'viem/chains'
 import { UniV2Pool } from '../../../src/dex/uniswapV2/Pool'
+import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
 import { makeSuite } from '../../utils/makeSuite'
@@ -27,7 +28,7 @@ let pool: UniV2Pool
 makeSuite('Uniswap V2 Pool', () => {
 	useAnvil({
 		chainId: mainnet.id,
-		rpcUrl: 'https://eth.llamarpc.com',
+		rpcUrl: getAlchemyRpcUrl(mainnet.id),
 		timeoutStartAnvil: 20000,
 	})
 
