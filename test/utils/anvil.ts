@@ -11,8 +11,6 @@ const testPk =
 
 /**
  * Starts anvil in describe and replace viem rpc url and private key
- * @param chainId -
- * @param blockNumber -
  */
 export function useAnvil(anvilConfig: AnvilConfig) {
 	const chain = ClientManager.findChainById(anvilConfig.chainId)
