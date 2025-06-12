@@ -2,7 +2,7 @@ import { parseUnits } from 'viem'
 import { GetRate, Graph, GraphEdge, GraphNode } from './Graph'
 import { EdgeWithRate } from './visualization'
 
-interface ArbitragePath {
+export interface ArbitragePath {
 	edges: GraphEdge[]
 	startAmount: bigint
 	endAmount: bigint
@@ -19,7 +19,7 @@ export async function findArbitragePath(
 	path: ArbitragePath | null
 	edgesWithRate: Map<string, EdgeWithRate>
 }> {
-	console.time('Bellman-Ford Algorithm')
+	// console.time('Bellman-Ford Algorithm')
 	const distances = new Map<GraphNode, number>()
 	const predecessors = new Map<GraphNode, GraphEdge>()
 	const amounts = new Map<GraphNode, bigint>()
@@ -52,6 +52,7 @@ export async function findArbitragePath(
 			})
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		const quotePromises = quotes.map(({ quote }) => quote)
 		await Promise.all(quotePromises)
 
@@ -99,9 +100,9 @@ export async function findArbitragePath(
 			}
 		}
 	}
-	console.log('')
-	console.timeEnd('Bellman-Ford Algorithm')
-	console.log('')
+	// console.log('')
+	// console.timeEnd('Bellman-Ford Algorithm')
+	// console.log('')
 
 	return { path: null, edgesWithRate }
 }

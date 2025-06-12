@@ -1,6 +1,8 @@
 import { Pool } from './dex/Pool'
 import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
 
+export function findArbOpportunityByGraph() {}
+
 export async function findArbitrageOpportunity(
 	pool: Pool,
 	actualPrice0USD: number,
