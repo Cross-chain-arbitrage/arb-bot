@@ -1,7 +1,16 @@
+import { Pool } from '../dex/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 
 export type GraphNode = Token | NativeCurrency
+
+export enum ActionType {
+	SWAP = 'SWAP',
+	STARGATE_BRIDGE = 'STARGATE_BRIDGE',
+	FUSE_BRIDGE = 'FUSE_BRIDGE',
+	WRAP = 'WRAP',
+	UNWRAP = 'UNWRAP',
+}
 
 type GetRate =
 	| ((amountIn: bigint) => Promise<{
@@ -13,19 +22,17 @@ type GetRate =
 			amountOut: bigint
 	  })
 
-export type GraphEdgeAction =
+export type GraphEdgeAction = (
 	| {
-			type: 'SWAP'
-			getRate: GetRate
+			type: ActionType.SWAP
+			pool: Pool
 	  }
 	| {
-			type: 'STARGATE_BRIDGE'
-			getRate: GetRate
+			type: ActionType
 	  }
-	| {
-			type: 'FUSE_BRIDGE'
-			getRate: GetRate
-	  }
+) & {
+	getRate: GetRate
+}
 
 export type GraphEdge = {
 	from: GraphNode
