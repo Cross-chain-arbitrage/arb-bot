@@ -1,5 +1,5 @@
 import { parseUnits } from 'viem'
-import { Graph, GraphEdge, GraphNode } from './Graph'
+import { GetRate, Graph, GraphEdge, GraphNode } from './Graph'
 import { EdgeWithRate } from './visualization'
 
 interface ArbitragePath {
@@ -32,9 +32,13 @@ export async function findArbitragePath(
 
 	// Run Bellman-Ford
 	for (let i = 0; i < maxDepth; i++) {
+		const quotes: {
+			quote: ReturnType<GetRate>
+			edge: GraphEdge
+		}[] = []
+
 		for (const edge of graph.edges) {
 			const from = edge.from
-			const to = edge.to
 
 			const currentAmount = amounts.get(from)
 			const fromDistance = distances.get(from)
@@ -42,7 +46,20 @@ export async function findArbitragePath(
 			if (!currentAmount) continue
 			if (fromDistance === undefined) continue
 
-			const { rate, amountOut } = await edge.getRate(currentAmount)
+			quotes.push({
+				quote: edge.getRate(currentAmount),
+				edge,
+			})
+		}
+
+		const quotePromises = quotes.map(({ quote }) => quote)
+		await Promise.all(quotePromises)
+
+		for (const { quote, edge } of quotes) {
+			const from = edge.from
+			const to = edge.to
+
+			const { rate, amountOut } = await quote
 
 			const fromTo = `${from.chainId}:${from.address} -> ${to.chainId}:${to.address}`
 
@@ -51,6 +68,9 @@ export async function findArbitragePath(
 				from,
 				to,
 			})
+
+			const fromDistance = distances.get(from)
+			if (fromDistance === undefined) continue
 
 			const newDist = fromDistance + rate
 

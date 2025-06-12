@@ -12,7 +12,7 @@ export enum ActionType {
 	UNWRAP = 'UNWRAP',
 }
 
-type GetRate =
+export type GetRate =
 	| ((amountIn: bigint) => Promise<{
 			rate: number // negative log of exchange rate
 			amountOut: bigint
