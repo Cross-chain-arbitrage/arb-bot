@@ -48,7 +48,7 @@ export class TokenUtils {
 		const abi = ERC20_ABI
 
 		if (this.isNative(address)) {
-			const token = this.createNative(chainId)
+			const token = this._createNative(chainId)
 
 			this.tokenCache.set(
 				this.getCacheKey(NATIVE_ADDRESS, chainId),
@@ -81,13 +81,20 @@ export class TokenUtils {
 		return token as T
 	}
 
-	// It's probably should be publicly accessible
-	// It creates and rewrites instance that was cached
-	private static createNative(chainId: number): NativeCurrency {
+	private static _createNative(chainId: number): NativeCurrency {
 		return new NativeCurrency(chainId, 'ETH', 'ETH')
 	}
 
-	static async getNative(chainId: number): Promise<NativeCurrency> {
-		return await this.fromAddress(NATIVE_ADDRESS, chainId)
+	static getNative(chainId: number): NativeCurrency {
+		const cacheKey = this.getCacheKey(NATIVE_ADDRESS, chainId)
+		const cachedToken = this.tokenCache.get(cacheKey)
+
+		if (cachedToken) {
+			return cachedToken as NativeCurrency
+		}
+
+		const token = this._createNative(chainId)
+		this.tokenCache.set(cacheKey, token)
+		return token
 	}
 }
