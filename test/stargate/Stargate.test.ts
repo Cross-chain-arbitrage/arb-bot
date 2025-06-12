@@ -1,10 +1,11 @@
 import { arbitrum, fuse } from 'viem/chains'
 
 import { Stargate } from '../../src/bridges/stargate/Stargate'
+import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { getAlchemyRpcUrl } from '../../src/utils/alchemy'
 import { ClientManager } from '../../src/utils/ClientManager'
-import { setTokenBalance, useAnvil } from '../utils/anvil'
+import { setNativeBalance, setTokenBalance, useAnvil } from '../utils/anvil'
 import { makeSuite } from '../utils/makeSuite'
 
 makeSuite('Stargate', () => {
@@ -14,19 +15,31 @@ makeSuite('Stargate', () => {
 	})
 
 	it('MUST simulate sending Token', async () => {
-		const token = await TokenUtils.fromAddress(
+		const USDT0 = await TokenUtils.fromAddress<Token>(
 			'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
 			arbitrum.id,
 		)
 
-		const amount = token.parseUnits('1')
-		const recipient = '0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB'
+		const amount = USDT0.parseUnits('1')
+		// const balanceSlot = 4n
+		const wallet = ClientManager.getWalletClient(arbitrum.id)
+		const recipient = wallet.account!.address
 
-		const client = ClientManager.getClient(arbitrum.id)
-		await setTokenBalance(recipient, token.address, 4n, amount, client)
+		for (let i = 0; i < 100; i++) {
+			await setTokenBalance(
+				recipient,
+				USDT0.address,
+				BigInt(i),
+				amount,
+				wallet,
+			)
+		}
+
+		const bridgeAddr = await Stargate.getBridgeAddress(USDT0)
+		await USDT0.approve(bridgeAddr, amount)
 
 		const bridgeTx = await Stargate.bridge(
-			token,
+			USDT0,
 			fuse.id,
 			recipient,
 			amount,
@@ -41,8 +54,12 @@ makeSuite('Stargate', () => {
 	it('MUST simulate sending Native', async () => {
 		const native = TokenUtils.createNative(arbitrum.id)
 
-		const amount = native.parseUnits('0.000001')
-		const recipient = '0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB'
+		const amount = native.parseUnits('1')
+
+		const wallet = ClientManager.getWalletClient(arbitrum.id)
+		const recipient = wallet.account!.address
+
+		await setNativeBalance(wallet, recipient, amount * 2n)
 
 		const bridgeTx = await Stargate.bridge(
 			native,
