@@ -1,5 +1,6 @@
 import { parseUnits } from 'viem'
 import { Graph, GraphEdge, GraphNode } from './Graph'
+import { EdgeWithRate } from './visualization'
 
 interface ArbitragePath {
 	edges: GraphEdge[]
@@ -14,7 +15,10 @@ export async function findArbitragePath(
 	startAmount: bigint,
 	graph: Graph,
 	maxDepth: number = 7,
-): Promise<ArbitragePath | null> {
+): Promise<{
+	path: ArbitragePath | null
+	edgesWithRate: Map<string, EdgeWithRate>
+}> {
 	const distances = new Map<GraphNode, number>()
 	const predecessors = new Map<GraphNode, GraphEdge>()
 	const amounts = new Map<GraphNode, bigint>()
@@ -22,6 +26,8 @@ export async function findArbitragePath(
 	// Initialize
 	distances.set(startToken, 0)
 	amounts.set(startToken, startAmount)
+
+	const edgesWithRate = new Map<string, EdgeWithRate>()
 
 	// Run Bellman-Ford
 	for (let i = 0; i < maxDepth; i++) {
@@ -37,6 +43,14 @@ export async function findArbitragePath(
 
 			const { rate, amountOut } = await edge.getRate(currentAmount)
 
+			const fromTo = `${from.chainId}:${from.address} -> ${to.chainId}:${to.address}`
+
+			edgesWithRate.set(fromTo, {
+				rate,
+				from,
+				to,
+			})
+
 			const newDist = fromDistance + rate
 
 			const toDistance = distances.get(to) ?? Infinity
@@ -50,17 +64,22 @@ export async function findArbitragePath(
 
 				// Check for negative cycle
 				if (to === startToken && newDist < 0) {
-					return reconstructCycle(
+					const path = await reconstructCycle(
 						predecessors,
 						startToken,
 						startAmount,
 					)
+
+					return {
+						path,
+						edgesWithRate,
+					}
 				}
 			}
 		}
 	}
 
-	return null
+	return { path: null, edgesWithRate }
 }
 
 async function reconstructCycle(
@@ -116,7 +135,7 @@ export async function findOptimalArbitrage(
 	let bestPath: ArbitragePath | null = null
 
 	for (const amount of amounts) {
-		const path = await findArbitragePath(
+		const { path } = await findArbitragePath(
 			startToken,
 			amount,
 			graph,
