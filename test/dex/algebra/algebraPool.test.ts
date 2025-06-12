@@ -1,5 +1,3 @@
-import { fuse } from 'viem/chains'
-import { ClientManager } from '../../../src/utils/ClientManager'
 import {
 	Client,
 	erc20Abi,
@@ -7,9 +5,10 @@ import {
 	GetContractReturnType,
 	WalletClient,
 } from 'viem'
+import { fuse } from 'viem/chains'
 import { AlgebraPool } from '../../../src/dex/algebra/Pool'
-import { setNativeBalance, setTokenBalance } from '../../utils/anvil'
-import { useAnvil } from '../../utils/anvil'
+import { ClientManager } from '../../../src/utils/ClientManager'
+import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
 import { makeSuite } from '../../utils/makeSuite'
 
 /* ======== Constants ======== */
@@ -30,7 +29,9 @@ let pool: AlgebraPool
 /* ======== Tests ======== */
 
 makeSuite('algebra pool test', () => {
-	useAnvil(fuse.id)
+	useAnvil({
+		chainId: fuse.id,
+	})
 
 	beforeAll(async () => {
 		client = ClientManager.getClient(fuse.id)

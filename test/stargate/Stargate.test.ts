@@ -2,12 +2,16 @@ import { arbitrum, fuse } from 'viem/chains'
 
 import { Stargate } from '../../src/bridges/stargate/Stargate'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
+import { getAlchemyRpcUrl } from '../../src/utils/alchemy'
 import { ClientManager } from '../../src/utils/ClientManager'
 import { setTokenBalance, useAnvil } from '../utils/anvil'
 import { makeSuite } from '../utils/makeSuite'
 
 makeSuite('Stargate', () => {
-	useAnvil(arbitrum.id)
+	useAnvil({
+		chainId: arbitrum.id,
+		rpcUrl: getAlchemyRpcUrl(arbitrum.id),
+	})
 
 	it('MUST simulate sending Token', async () => {
 		const token = await TokenUtils.fromAddress(

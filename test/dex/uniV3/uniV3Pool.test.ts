@@ -1,6 +1,3 @@
-import { hemi } from 'viem/chains'
-import { PoolType, PoolUtils } from '../../../src/dex/PoolUtils'
-import { ClientManager } from '../../../src/utils/ClientManager'
 import {
 	Client,
 	erc20Abi,
@@ -8,9 +5,11 @@ import {
 	GetContractReturnType,
 	WalletClient,
 } from 'viem'
+import { hemi } from 'viem/chains'
+import { PoolType, PoolUtils } from '../../../src/dex/PoolUtils'
 import { UniV3Pool } from '../../../src/dex/uniswapV3/Pool'
-import { setNativeBalance, setTokenBalance } from '../../utils/anvil'
-import { useAnvil } from '../../utils/anvil'
+import { ClientManager } from '../../../src/utils/ClientManager'
+import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
 import { makeSuite } from '../../utils/makeSuite'
 
 const poolAddress = '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0'
@@ -25,7 +24,9 @@ let usdcContract: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
 let pool: UniV3Pool
 
 makeSuite('Uniswap V3 pool test', () => {
-	useAnvil(hemi.id)
+	useAnvil({
+		chainId: hemi.id,
+	})
 
 	beforeAll(async () => {
 		client = ClientManager.getClient(hemi.id)
