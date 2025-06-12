@@ -5,9 +5,9 @@
 import { Address, Chain } from 'viem'
 
 import { BlockscoutAPI } from '../../../data-apis/blockscout/BlockscoutAPI'
-import { StargateAPI } from '../StargateAPI'
-import logger from '../../../utils/logger'
 import { ClientManager } from '../../../utils/ClientManager'
+import logger from '../../../utils/logger'
+import { StargateAPI } from '../StargateAPI'
 
 interface TokenMetadata {
 	address: Address
@@ -108,18 +108,18 @@ async function main() {
 	// s
 	return
 
-	// 3. For each chain, get pools
-	const pools: PoolInfo[] = []
-	for (const chainId of SUPPORTED_CHAINS) {
-		const chainTokens = supportedTokens.filter(
-			(token) => token.chainId === chainId,
-		)
-		const chainPools = await getPoolsForChain(chainId, chainTokens)
-		pools.push(...chainPools)
-	}
+	// // 3. For each chain, get pools
+	// const pools: PoolInfo[] = []
+	// for (const chainId of SUPPORTED_CHAINS) {
+	// 	const chainTokens = supportedTokens.filter(
+	// 		(token) => token.chainId === chainId,
+	// 	)
+	// 	const chainPools = await getPoolsForChain(chainId, chainTokens)
+	// 	pools.push(...chainPools)
+	// }
 
-	console.log(`Found ${pools.length} potential pools`)
-	console.timeEnd('getPools')
+	// console.log(`Found ${pools.length} potential pools`)
+	// console.timeEnd('getPools')
 }
 
 async function getPoolsForChain(

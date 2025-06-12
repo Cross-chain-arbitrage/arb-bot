@@ -8,9 +8,9 @@ import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
 import logger from '../../utils/logger'
 import { padAddressToBytes32 } from '../../utils/types'
-import { STARGATE_CHAINS } from './dumped/chains'
 import { StargateAPI } from './StargateAPI'
 import { StargateBridgeTx } from './StargateBridgeTx'
+import { STARGATE_CHAINS } from './dumped/chains'
 
 export class StargateError extends Error {
 	constructor(message: string) {

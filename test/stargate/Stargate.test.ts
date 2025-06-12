@@ -1,6 +1,6 @@
 import { arbitrum, fuse } from 'viem/chains'
 
-import { Stargate } from '../../src/bridges/Stargate/Stargate'
+import { Stargate } from '../../src/bridges/stargate/Stargate'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { ClientManager } from '../../src/utils/ClientManager'
 import { setTokenBalance, useAnvil } from '../utils/anvil'
