@@ -1,9 +1,9 @@
-import { Token } from '../primitives/tokens/Token'
 import { Address, TransactionReceipt } from 'viem'
-import { ClientManager } from '../utils/ClientManager'
-import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
-import { isSameAddress } from '../utils/common'
+import { Token } from '../primitives/tokens/Token'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { ClientManager } from '../utils/ClientManager'
+import { isSameAddress, shortenAddress } from '../utils/common'
 import { Pool } from './Pool'
 
 export class TickPoolError extends Error {
@@ -51,19 +51,29 @@ export abstract class TickPool extends Pool {
 
 	validateMismatchSwapParams(params: SwapParams) {
 		if (isSameAddress(params.tokenIn.address, params.tokenOut.address)) {
-			throw new Error('tokenIn and tokenOut cannot be the same')
+			throw new TickPoolError('tokenIn and tokenOut cannot be the same')
 		}
+
 		if (
 			!isSameAddress(params.tokenIn.address, this.token0.address) &&
 			!isSameAddress(params.tokenIn.address, this.token1.address)
 		) {
-			throw new Error('tokenIn must be token0 or token1')
+			throw new TickPoolError('tokenIn must be token0 or token1')
 		}
+
 		if (
 			!isSameAddress(params.tokenOut.address, this.token0.address) &&
 			!isSameAddress(params.tokenOut.address, this.token1.address)
 		) {
-			throw new Error('tokenOut must be token0 or token1')
+			throw new TickPoolError(
+				`tokenOut must be ${this.token0.symbol} (${this.token0.chainId}:${shortenAddress(this.token0.address)}) ` +
+					`or ${this.token1.symbol} (${this.token1.chainId}:${shortenAddress(this.token1.address)}), ` +
+					`got ${params.tokenOut.symbol} (${params.tokenOut.chainId}:${shortenAddress(params.tokenOut.address)})`,
+			)
+		}
+
+		if (params.amountIn <= 0n) {
+			throw new TickPoolError('amountIn cannot be 0 or negative')
 		}
 	}
 
@@ -78,7 +88,7 @@ export abstract class TickPool extends Pool {
 		const balance = await tokenIn.balanceOf(this.account.address)
 
 		if (balance < amountIn) {
-			throw new Error(
+			throw new TickPoolError(
 				`Insufficient balance, needed ${amountIn}, has ${balance}`,
 			)
 		}
@@ -93,7 +103,7 @@ export abstract class TickPool extends Pool {
 		)
 
 		if (allowance < amountIn) {
-			throw new Error(
+			throw new TickPoolError(
 				`Insufficient allowance, needed ${amountIn}, has ${allowance}`,
 			)
 		}
@@ -204,8 +214,8 @@ export abstract class TickPool extends Pool {
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
 	abstract simulateSwap(
 		params: SwapParams, //TODO: remove any
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	): Promise<{ amountOut: bigint; args: any }>
+	) // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	: Promise<{ amountOut: bigint; args: any }>
 	abstract swap(params: SwapParams): Promise<{
 		receipt: TransactionReceipt
 		amountOut: bigint
