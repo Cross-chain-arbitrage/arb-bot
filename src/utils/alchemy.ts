@@ -1,5 +1,4 @@
-export const arbUrl = 'https://arb-mainnet.g.alchemy.com/v2/'
-export const fuseUrl = 'https://fuse-mainnet.g.alchemy.com/v2/'
+import { arbitrum } from 'viem/chains'
 
 export function getAlchemyApiKey() {
 	const apiKey = process.env.ALCHEMY_API_KEY
@@ -7,4 +6,16 @@ export function getAlchemyApiKey() {
 		throw new Error('ALCHEMY_API_KEY is not set')
 	}
 	return apiKey
+}
+
+export function getAlchemyRpcUrl(chainId: number) {
+	const apiKey = getAlchemyApiKey()
+	let chainKey = ''
+	switch (chainId) {
+		case arbitrum.id:
+			chainKey = 'arb'
+			break
+	}
+
+	return `https://${chainKey}.g.alchemy.com/v2/${apiKey}`
 }
