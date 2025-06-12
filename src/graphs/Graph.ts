@@ -87,7 +87,6 @@ export class Graph {
 				const cachedAmount = this.swapsCache.get(cacheKey)
 
 				if (cachedAmount) {
-					console.log('Using cached rate for', from.symbol, to.symbol)
 					const cachedRate = -Math.log(
 						Number(cachedAmount) / Number(amountIn),
 					)
@@ -97,23 +96,13 @@ export class Graph {
 					}
 				}
 
-				console.log(
-					'\nGetting rate for',
-					from.symbol,
-					from.chainId,
-					to.symbol,
-					to.chainId,
-					from.formatUnits(amountIn),
-				)
 				const { amountOut } = await pool.quoteSwap({
 					tokenIn: from,
 					tokenOut: to,
 					amountIn,
 					slippage,
 				})
-				console.log('Amount out', to.formatUnits(amountOut))
 				const rate = -Math.log(Number(amountOut) / Number(amountIn))
-				console.log('Rate', rate)
 
 				// Cache the result
 				this.swapsCache.set(cacheKey, amountOut)
