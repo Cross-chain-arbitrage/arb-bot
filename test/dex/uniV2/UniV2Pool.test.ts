@@ -1,14 +1,13 @@
-import { mainnet } from 'viem/chains'
-import { ClientManager } from '../../../src/utils/ClientManager'
 import {
 	erc20Abi,
 	getContract,
 	GetContractReturnType,
 	WalletClient,
 } from 'viem'
+import { mainnet } from 'viem/chains'
 import { UniV2Pool } from '../../../src/dex/uniswapV2/Pool'
-import { setNativeBalance, setTokenBalance } from '../../utils/anvil'
-import { useAnvil } from '../../utils/anvil'
+import { ClientManager } from '../../../src/utils/ClientManager'
+import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
 import { makeSuite } from '../../utils/makeSuite'
 
 /* ======== Constants ======== */

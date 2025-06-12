@@ -1,5 +1,5 @@
 import { zeroAddress } from 'viem'
-import { Stargate } from '../bridges/Stargate/Stargate'
+import { Stargate } from '../bridges/stargate/Stargate'
 import { Pool } from '../dex/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
