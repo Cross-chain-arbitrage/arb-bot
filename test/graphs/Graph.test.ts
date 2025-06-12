@@ -86,28 +86,24 @@ makeSuite('Graph', () => {
 			const swapEdge: GraphEdge = {
 				from: WBTC_ARB, // $110k
 				to: ETH_ARB, // $2.7k,
-				action: {
-					type: 'SWAP',
-					getRate: (amountIn: bigint) => {
-						return Promise.resolve({
-							rate: BTC_PRICE / ETH_PRICE,
-							amountOut: amountIn,
-						})
-					},
+				type: 'SWAP',
+				getRate: (amountIn: bigint) => {
+					return Promise.resolve({
+						rate: BTC_PRICE / ETH_PRICE,
+						amountOut: amountIn,
+					})
 				},
 			}
 
 			const reverseSwapEdge: GraphEdge = {
 				from: ETH_ARB,
 				to: WBTC_ARB,
-				action: {
-					type: 'SWAP',
-					getRate: (amountIn: bigint) => {
-						return Promise.resolve({
-							rate: ETH_PRICE / BTC_PRICE,
-							amountOut: amountIn,
-						})
-					},
+				type: 'SWAP',
+				getRate: (amountIn: bigint) => {
+					return Promise.resolve({
+						rate: ETH_PRICE / BTC_PRICE,
+						amountOut: amountIn,
+					})
 				},
 			}
 			graph.addEdge(swapEdge)
@@ -122,28 +118,24 @@ makeSuite('Graph', () => {
 			const stargateBridgeEdge: GraphEdge = {
 				from: ETH_ARB,
 				to: WETH_FUSE,
-				action: {
-					type: 'STARGATE_BRIDGE',
-					getRate: (amountIn: bigint) => {
-						return Promise.resolve({
-							rate: 1,
-							amountOut: amountIn,
-						})
-					},
+				type: 'STARGATE_BRIDGE',
+				getRate: (amountIn: bigint) => {
+					return Promise.resolve({
+						rate: 1,
+						amountOut: amountIn,
+					})
 				},
 			}
 
 			const reverseStargateBridgeEdge: GraphEdge = {
 				from: WETH_FUSE,
 				to: ETH_ARB,
-				action: {
-					type: 'STARGATE_BRIDGE',
-					getRate: (amountIn: bigint) => {
-						return Promise.resolve({
-							rate: 1,
-							amountOut: amountIn,
-						})
-					},
+				type: 'STARGATE_BRIDGE',
+				getRate: (amountIn: bigint) => {
+					return Promise.resolve({
+						rate: 1,
+						amountOut: amountIn,
+					})
 				},
 			}
 
@@ -159,28 +151,24 @@ makeSuite('Graph', () => {
 			const stargateBridgeEdge: GraphEdge = {
 				from: WBTC_ARB,
 				to: WBTC_FUSE,
-				action: {
-					type: 'FUSE_BRIDGE',
-					getRate: (amountIn: bigint) => {
-						return Promise.resolve({
-							rate: 1,
-							amountOut: amountIn,
-						})
-					},
+				type: 'FUSE_BRIDGE',
+				getRate: (amountIn: bigint) => {
+					return Promise.resolve({
+						rate: 1,
+						amountOut: amountIn,
+					})
 				},
 			}
 
 			const reverseStargateBridgeEdge: GraphEdge = {
 				from: WBTC_FUSE,
 				to: WBTC_ARB,
-				action: {
-					type: 'STARGATE_BRIDGE',
-					getRate: (amountIn: bigint) => {
-						return Promise.resolve({
-							rate: 1,
-							amountOut: amountIn,
-						})
-					},
+				type: 'FUSE_BRIDGE',
+				getRate: (amountIn: bigint) => {
+					return Promise.resolve({
+						rate: 1,
+						amountOut: amountIn,
+					})
 				},
 			}
 
@@ -210,14 +198,12 @@ makeSuite('Graph', () => {
 			const edge: GraphEdge = {
 				from: WBTC_ARB,
 				to: WETH_FUSE,
-				action: {
-					type: 'SWAP',
-					getRate: (amountIn: bigint) => {
-						return Promise.resolve({
-							rate: 1,
-							amountOut: amountIn,
-						})
-					},
+				type: 'SWAP',
+				getRate: (amountIn: bigint) => {
+					return Promise.resolve({
+						rate: 1,
+						amountOut: amountIn,
+					})
 				},
 			}
 
@@ -241,14 +227,12 @@ makeSuite('Graph', () => {
 			const edge: GraphEdge = {
 				from: WBTC_ARB,
 				to: WETH_FUSE,
-				action: {
-					type: 'SWAP',
-					getRate: (amountIn: bigint) => {
-						return Promise.resolve({
-							rate: 1,
-							amountOut: amountIn,
-						})
-					},
+				type: 'SWAP',
+				getRate: (amountIn: bigint) => {
+					return Promise.resolve({
+						rate: 1,
+						amountOut: amountIn,
+					})
 				},
 			}
 

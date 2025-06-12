@@ -27,11 +27,10 @@ export type GraphEdgeAction =
 			getRate: GetRate
 	  }
 
-export interface GraphEdge {
+export type GraphEdge = {
 	from: GraphNode
 	to: GraphNode
-	action: GraphEdgeAction
-}
+} & GraphEdgeAction
 
 export class GraphError extends Error {
 	constructor(message: string) {
@@ -90,11 +89,11 @@ export class Graph {
 		const rows: TableRow[] = []
 
 		for (const edge of this.edges) {
-			const { rate } = await edge.action.getRate(amount)
+			const { rate } = await edge.getRate(amount)
 			rows.push({
 				from: `${edge.from.symbol} (${edge.from.chainId})`,
 				to: `${edge.to.symbol} (${edge.to.chainId})`,
-				action: edge.action.type,
+				action: edge.type,
 				rate: rate,
 			})
 		}

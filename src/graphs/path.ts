@@ -35,7 +35,7 @@ export async function findArbitragePath(
 			if (!currentAmount) continue
 			if (fromDistance === undefined) continue
 
-			const { rate, amountOut } = await edge.action.getRate(currentAmount)
+			const { rate, amountOut } = await edge.getRate(currentAmount)
 
 			const newDist = fromDistance + rate
 
@@ -85,7 +85,7 @@ async function reconstructCycle(
 
 	let amount = startAmount
 	for (const edge of edges) {
-		const { amountOut } = await edge.action.getRate(amount)
+		const { amountOut } = await edge.getRate(amount)
 		amount = amountOut
 	}
 

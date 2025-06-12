@@ -9,7 +9,7 @@ import { makeSuite } from '../utils/makeSuite'
 makeSuite('Stargate', () => {
 	useAnvil(arbitrum.id)
 
-	it.only('MUST simulate sending Token', async () => {
+	it('MUST simulate sending Token', async () => {
 		const token = await TokenUtils.fromAddress(
 			'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
 			arbitrum.id,

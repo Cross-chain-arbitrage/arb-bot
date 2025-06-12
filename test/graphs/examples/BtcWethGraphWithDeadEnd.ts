@@ -39,31 +39,27 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 	graph.addEdge({
 		from: ETH_ARB,
 		to: WBTC_ARB,
-		action: {
-			type: 'SWAP',
-			getRate: (amountIn: bigint) => {
-				const price = ETH_PRICE / BTC_PRICE
-				const rate = -Math.log(price)
-				return {
-					rate,
-					amountOut: safeMultiply(amountIn, price),
-				}
-			},
+		type: 'SWAP',
+		getRate: (amountIn: bigint) => {
+			const price = ETH_PRICE / BTC_PRICE
+			const rate = -Math.log(price)
+			return {
+				rate,
+				amountOut: safeMultiply(amountIn, price),
+			}
 		},
 	})
 	graph.addEdge({
 		from: WBTC_ARB,
 		to: ETH_ARB,
-		action: {
-			type: 'SWAP',
-			getRate: (amountIn: bigint) => {
-				const price = BTC_PRICE / ETH_PRICE
-				const rate = -Math.log(price)
-				return {
-					rate,
-					amountOut: safeMultiply(amountIn, price),
-				}
-			},
+		type: 'SWAP',
+		getRate: (amountIn: bigint) => {
+			const price = BTC_PRICE / ETH_PRICE
+			const rate = -Math.log(price)
+			return {
+				rate,
+				amountOut: safeMultiply(amountIn, price),
+			}
 		},
 	})
 
@@ -71,32 +67,27 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 	graph.addEdge({
 		from: WBTC_FUSE,
 		to: WETH_FUSE,
-		action: {
-			type: 'SWAP',
-			getRate: (amountIn: bigint) => {
-				const price = BTC_PRICE / ETH_PRICE / ethPoolPriceMultiplier
-				console.log(price)
-				const rate = -Math.log(price)
-				return {
-					rate,
-					amountOut: safeMultiply(amountIn, price),
-				}
-			},
+		type: 'SWAP',
+		getRate: (amountIn: bigint) => {
+			const price = BTC_PRICE / ETH_PRICE / ethPoolPriceMultiplier
+			const rate = -Math.log(price)
+			return {
+				rate,
+				amountOut: safeMultiply(amountIn, price),
+			}
 		},
 	})
 	graph.addEdge({
 		from: WETH_FUSE,
 		to: WBTC_FUSE,
-		action: {
-			type: 'SWAP',
-			getRate: (amountIn: bigint) => {
-				const price = (ETH_PRICE * ethPoolPriceMultiplier) / BTC_PRICE
-				const rate = -Math.log(price)
-				return {
-					rate,
-					amountOut: safeMultiply(amountIn, price),
-				}
-			},
+		type: 'SWAP',
+		getRate: (amountIn: bigint) => {
+			const price = (ETH_PRICE * ethPoolPriceMultiplier) / BTC_PRICE
+			const rate = -Math.log(price)
+			return {
+				rate,
+				amountOut: safeMultiply(amountIn, price),
+			}
 		},
 	})
 
@@ -114,12 +105,14 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 	graph.addEdge({
 		from: ETH_ARB,
 		to: WETH_FUSE,
-		action: stargateBridgeAction,
+		type: 'STARGATE_BRIDGE',
+		getRate: stargateBridgeAction.getRate,
 	})
 	graph.addEdge({
 		from: WETH_FUSE,
 		to: ETH_ARB,
-		action: stargateBridgeAction,
+		type: 'STARGATE_BRIDGE',
+		getRate: stargateBridgeAction.getRate,
 	})
 
 	// FUSE BRIDGE: WBTC (FUSE) <-> WBTC (ARB)
@@ -136,42 +129,40 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 	graph.addEdge({
 		from: WBTC_FUSE,
 		to: WBTC_ARB,
-		action: fuseBridgeAction,
+		type: 'FUSE_BRIDGE',
+		getRate: fuseBridgeAction.getRate,
 	})
 	graph.addEdge({
 		from: WBTC_ARB,
 		to: WBTC_FUSE,
-		action: fuseBridgeAction,
+		type: 'FUSE_BRIDGE',
+		getRate: fuseBridgeAction.getRate,
 	})
 
 	// Swap to USDT
 	graph.addEdge({
 		from: ETH_ARB,
 		to: USDT_ARB,
-		action: {
-			type: 'SWAP',
-			getRate: (amountIn: bigint) => {
-				const price = ETH_PRICE
-				return {
-					rate: -Math.log(price),
-					amountOut: safeMultiply(amountIn, price),
-				}
-			},
+		type: 'SWAP',
+		getRate: (amountIn: bigint) => {
+			const price = ETH_PRICE
+			return {
+				rate: -Math.log(price),
+				amountOut: safeMultiply(amountIn, price),
+			}
 		},
 	})
 
 	graph.addEdge({
 		from: USDT_ARB,
 		to: ETH_ARB,
-		action: {
-			type: 'SWAP',
-			getRate: (amountIn: bigint) => {
-				const price = 1 / ETH_PRICE
-				return {
-					rate: -Math.log(price),
-					amountOut: safeMultiply(amountIn, price),
-				}
-			},
+		type: 'SWAP',
+		getRate: (amountIn: bigint) => {
+			const price = 1 / ETH_PRICE
+			return {
+				rate: -Math.log(price),
+				amountOut: safeMultiply(amountIn, price),
+			}
 		},
 	})
 

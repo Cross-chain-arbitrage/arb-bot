@@ -35,7 +35,7 @@ makeSuite('Path optimization in Graph', () => {
 
 			expect(path).not.toBeNull()
 
-			console.log('path', path.edges)
+			await graph.printTable(startAmount)
 
 			expect(path.edges.length).toBe(4)
 
