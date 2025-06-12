@@ -1,27 +1,67 @@
 IMAGE_REPO = europe-north2-docker.pkg.dev/crypto-galaxy-385309/docker-registry/swag-bot
-IMAGE_TAG = latest
 
-.PHONY: build push deploy docker-login help
+# Git settings
+MANIFEST_PATH = infra/manifests/swag-bot/values.yaml
 
-build:
-	@echo "Building Docker image..."
+.PHONY: build push deploy docker-login update-manifest setup-github-token help
+
+generate-tag:
+	@echo $(shell date +%Y%m%d-%H%M%S)-$(shell git rev-parse --short HEAD) > .image_tag
+
+get-tag: generate-tag
+	$(eval IMAGE_TAG := $(shell cat .image_tag))
+
+build: get-tag
+	@echo "Building Docker image with tag: $(IMAGE_TAG)"
 	docker build --platform linux/amd64 -t $(IMAGE_REPO):$(IMAGE_TAG) .
 
 push: build
-	@echo "Pushing Docker image..."
+	@echo "Pushing Docker image with tag: $(IMAGE_TAG)"
 	docker push $(IMAGE_REPO):$(IMAGE_TAG)
 
-deploy: push
-	@echo "Docker image pushed! ArgoCD will handle the deployment."
-	@echo "Check ArgoCD UI for deployment status."
+update-manifest: push
+	rm -rf /tmp/infra-temp
+	git clone git@github.com:my-org/infra.git /tmp/infra-temp
+	
+	# Update values.yaml
+	sed -i.bak 's|tag: ".*"|tag: "$(IMAGE_TAG)"|' /tmp/infra-temp/$(MANIFEST_PATH)
+	rm -f /tmp/infra-temp/$(MANIFEST_PATH).bak
+	
+	# Commit and push
+	cd /tmp/infra-temp && \
+	git add $(MANIFEST_PATH) && \
+	git commit -m "Update image tag to $(IMAGE_TAG)" && \
+	git push
+	
+	# Cleanup
+	rm -rf /tmp/infra-temp
+
+deploy: update-manifest
+	@echo "✅ Deployment completed!"
+	@echo "Image tag: $(IMAGE_TAG)"
+	@echo "Manifest updated in $(GITHUB_OWNER)/$(GITHUB_REPO)"
+	@echo "ArgoCD will sync automatically"
+	@rm -f .image_tag
 
 docker-login:
 	@echo "Configuring Docker for Artifact Registry..."
 	gcloud auth configure-docker europe-north2-docker.pkg.dev
 
+setup-github-token:
+	@echo "Create GitHub token and save it:"
+	@echo "echo 'your-token-here' > ~/.github_token"
+	@echo "chmod 600 ~/.github_token"
+
 help:
 	@echo "Available commands:"
-	@echo "  build        - Build Docker image"
-	@echo "  push         - Build and push Docker image"
-	@echo "  deploy       - Build and push (ArgoCD handles deployment)"
-	@echo "  docker-login - Configure Docker for Artifact Registry" 
+	@echo "  build               - Build Docker image with unique tag"
+	@echo "  push                - Build and push Docker image"
+	@echo "  deploy              - Build, push, and update manifest via GitHub API"
+	@echo "  docker-login        - Configure Docker for Artifact Registry"
+	@echo "  setup-github-token  - Instructions for setting up GitHub token"
+	@echo ""
+	@echo "Current image tag: $(IMAGE_TAG)"
+	@echo ""
+	@echo "Required setup:"
+	@echo "1. Set GITHUB_OWNER and GITHUB_REPO in Makefile"
+	@echo "2. Create GitHub token: make setup-github-token"

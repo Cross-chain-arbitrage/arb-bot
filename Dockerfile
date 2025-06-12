@@ -11,7 +11,7 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 # Copy source code
-COPY src/hello.ts .
+COPY . .
 
 # Set environment variables
 ENV NODE_ENV=production
