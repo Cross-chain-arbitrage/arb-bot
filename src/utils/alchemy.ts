@@ -13,11 +13,10 @@ export function getAlchemyRpcUrl(chainId: number) {
 	let chainKey = ''
 	switch (chainId) {
 		case arbitrum.id:
-			chainKey = 'arb'
+			chainKey = 'arb-mainnet'
 			break
 		case mainnet.id:
-			chainKey =
-				'https://eth-mainnet.g.alchemy.com/v2/REDACTED_API_KEY'
+			chainKey = 'eth-mainnet'
 			break
 	}
 
