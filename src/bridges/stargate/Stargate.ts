@@ -122,6 +122,17 @@ export class Stargate {
 		return new StargateBridgeTx(txHash, tokenIn.chainId, tokenIn, amount)
 	}
 
+	static async getBridgeAddress(
+		token: Token | NativeCurrency,
+	): Promise<Address> {
+		const tokenMetadata = await StargateAPI.getTokenMetadata(
+			token,
+			Stargate.getChainKey(token.chainId),
+		)
+
+		return tokenMetadata.address
+	}
+
 	private static async validatePathCredits(
 		poolOrOFT: Address,
 		toChainId: number,
@@ -168,7 +179,6 @@ export class Stargate {
 		token: Token | NativeCurrency,
 		quote: QuoteResult,
 	): void {
-		logger.info(`--------------------------------`)
 		logger.info(
 			`Messaging fee: ${formatEther(quote.messagingFee.nativeFee)}`,
 		)
@@ -182,7 +192,6 @@ export class Stargate {
 			// 	`OFT receipt: ${JSON.stringify(quote.oftFees?.oftReceipt)}`,
 			// )
 		}
-		logger.info('--------------------------------')
 	}
 
 	static async quote(
