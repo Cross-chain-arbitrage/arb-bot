@@ -25,20 +25,21 @@ let FUSE: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
 let pool: UniV2Pool
 
 makeSuite('Uniswap V2 Pool', () => {
-	useAnvil(mainnet.id)
+	useAnvil({
+		chainId: mainnet.id,
+		rpcUrl: 'https://eth.llamarpc.com',
+		timeoutStartAnvil: 20000,
+	})
 
 	beforeAll(async () => {
 		walletClient = ClientManager.getWalletClient(mainnet.id)
 		botAddress = walletClient.account!.address
-
 		pool = await UniV2Pool.create(poolAddress, mainnet.id)
-
 		FUSE = getContract({
 			address: pool.token1.address,
 			abi: erc20Abi,
 			client: walletClient,
 		})
-
 		WETH = getContract({
 			address: pool.token0.address,
 			abi: erc20Abi,

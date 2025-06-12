@@ -1,12 +1,8 @@
 import { exec } from 'child_process'
-import { toHex } from 'viem'
-import { encodeAbiParameters } from 'viem'
-import { keccak256 } from 'viem'
-import { Client } from 'viem'
-import { exec as execPromise } from './helpers'
+import { Chain, Client, encodeAbiParameters, keccak256, toHex } from 'viem'
 import { ClientManager } from '../../src/utils/ClientManager'
-import { Chain } from 'viem'
 import { getPrivateKey } from '../../src/utils/getAccount'
+import { exec as execPromise } from './helpers'
 
 /* ======== useAnvil ======== */
 
@@ -18,17 +14,25 @@ const testPk =
  * @param chainId - anvil run as fork of this chain
  * @param blockNumber - fork is from this block number, default is latest
  */
-export function useAnvil(chainId: number, blockNumber?: number) {
-	const chain = ClientManager.findChainById(chainId)
-	const realRpcUrl = chain.rpcUrls.default.http[0]
+export function useAnvil(anvilConfig: AnvilConfig) {
+	const chain = ClientManager.findChainById(anvilConfig.chainId)
+
+	const defaultRpcUrl = chain.rpcUrls.default.http[0]
+	const rpcUrlForAnvil = anvilConfig.rpcUrl ?? defaultRpcUrl
+
 	const realPk = getPrivateKey()
 
 	beforeAll(async () => {
-		await startAnvilAndSetTestEnv(chain, realRpcUrl, blockNumber)
+		await startAnvilAndSetTestEnv(
+			chain,
+			rpcUrlForAnvil,
+			anvilConfig.blockNumber,
+			anvilConfig.timeoutStartAnvil,
+		)
 	})
 
 	afterAll(async () => {
-		await killAnvilAndRestoreEnv(chain, realRpcUrl, realPk)
+		await killAnvilAndRestoreEnv(chain, defaultRpcUrl, realPk)
 	})
 }
 
@@ -36,6 +40,7 @@ async function startAnvilAndSetTestEnv(
 	chain: Chain,
 	realRpcUrl: string,
 	blockNumber?: number,
+	timeoutStartAnvil = 5000,
 ) {
 	ClientManager.clearClients()
 
@@ -43,10 +48,14 @@ async function startAnvilAndSetTestEnv(
 	// @ts-expect-error override readonly property
 	chain.rpcUrls.default.http[0] = 'http://localhost:8545'
 
-	await startAnvil(realRpcUrl, blockNumber)
+	await startAnvil(realRpcUrl, blockNumber, timeoutStartAnvil)
 }
 
-async function startAnvil(forkRpcUrl: string, blockNumber?: number) {
+async function startAnvil(
+	forkRpcUrl: string,
+	blockNumber?: number,
+	timeoutStartAnvil?: number,
+) {
 	const success = new Promise<void>((resolve) => {
 		let command = `anvil --fork-url ${forkRpcUrl}`
 
@@ -54,20 +63,26 @@ async function startAnvil(forkRpcUrl: string, blockNumber?: number) {
 			command += ` --fork-block-number ${blockNumber}`
 		}
 
+		// console.log('executing', command, 'with timeout', timeoutStartAnvil)
 		const anvil = exec(command)
 
 		anvil.stdout?.on('data', (data) => {
 			// console.log(data)
+
 			if ((data as string).includes('Listening on 127.0.0.1:8545')) {
 				resolve()
 			}
+		})
+
+		anvil.stderr?.on('data', (data) => {
+			// console.error(data)
 		})
 	})
 
 	const timeout = new Promise((_, reject) => {
 		const timer = setTimeout(() => {
 			reject(new Error('Anvil failed to start'))
-		}, 5000)
+		}, timeoutStartAnvil)
 
 		// if anvil starts successfully, don't need to keep the timer running
 		void success.finally(() => clearTimeout(timer))
@@ -78,13 +93,13 @@ async function startAnvil(forkRpcUrl: string, blockNumber?: number) {
 
 async function killAnvilAndRestoreEnv(
 	chain: Chain,
-	realRpcUrl: string,
+	defaultRpcUrl: string,
 	realPk: string | undefined,
 ) {
 	await killAnvil()
 	ClientManager.clearClients()
 	// @ts-expect-error override readonly property
-	chain.rpcUrls.default.http[0] = realRpcUrl
+	chain.rpcUrls.default.http[0] = defaultRpcUrl
 	process.env.PRIVATE_KEY = realPk
 }
 
