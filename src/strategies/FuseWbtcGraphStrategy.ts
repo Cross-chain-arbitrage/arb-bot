@@ -20,7 +20,7 @@ const ARB_POOL_TYPE = PoolType.UNIV3
 
 /* ============ Constants ============ */
 const SLIPPAGE = 50
-const MAX_PATH_LENGTH = 4
+const MAX_PATH_LENGTH = 7
 
 /* ============ Strategy ============ */
 export class FuseWbtcGraphStrategy {
@@ -59,93 +59,17 @@ export class FuseWbtcGraphStrategy {
 			FUSE_POOL_TYPE,
 		)
 
-		// SWAP: WETH (ARB) <-> WBTC (ARB)
-		graph.addEdge({
-			from: WETH_ARB,
-			to: WBTC_ARB,
-			type: ActionType.SWAP,
-			pool: arbPool,
-			getRate: async (amountIn: bigint) => {
-				const { amountOut } = await arbPool.quoteSwap({
-					tokenIn: WETH_ARB,
-					tokenOut: WBTC_ARB,
-					amountIn,
-					slippage: SLIPPAGE,
-				})
+		/* ============ SWAP: WETH (ARB) <-> WBTC (ARB) ============ */
 
-				const rate = -Math.log(Number(amountOut) / Number(amountIn))
+		graph.addSwapEdge(WETH_ARB, WBTC_ARB, arbPool, SLIPPAGE)
 
-				return {
-					rate,
-					amountOut,
-				}
-			},
-		})
-		graph.addEdge({
-			from: WBTC_ARB,
-			to: WETH_ARB,
-			type: ActionType.SWAP,
-			pool: arbPool,
-			getRate: async (amountIn: bigint) => {
-				const { amountOut } = await arbPool.quoteSwap({
-					tokenIn: WBTC_ARB,
-					tokenOut: WETH_ARB,
-					amountIn: amountIn,
-					slippage: SLIPPAGE,
-				})
+		graph.addSwapEdge(WBTC_ARB, WETH_ARB, arbPool, SLIPPAGE)
 
-				const rate = -Math.log(Number(amountOut) / Number(amountIn))
+		/* ============ SWAP: WBTC (FUSE) <-> WETH (FUSE) ============ */
 
-				return {
-					rate,
-					amountOut,
-				}
-			},
-		})
+		graph.addSwapEdge(WBTC_FUSE, WETH_FUSE, fusePool, SLIPPAGE)
 
-		/* ============ SWAP: WBTC (FUSE) -> WETH (FUSE) ============ */
-		graph.addEdge({
-			from: WBTC_FUSE,
-			to: WETH_FUSE,
-			type: ActionType.SWAP,
-			pool: fusePool,
-			getRate: async (amountIn: bigint) => {
-				const { amountOut } = await fusePool.quoteSwap({
-					tokenIn: WBTC_FUSE,
-					tokenOut: WETH_FUSE,
-					amountIn,
-					slippage: 50,
-				})
-
-				const rate = -Math.log(Number(amountOut) / Number(amountIn))
-
-				return {
-					rate,
-					amountOut,
-				}
-			},
-		})
-		graph.addEdge({
-			from: WETH_FUSE,
-			to: WBTC_FUSE,
-			type: ActionType.SWAP,
-			pool: fusePool,
-			getRate: async (amountIn: bigint) => {
-				const { amountOut } = await fusePool.quoteSwap({
-					tokenIn: WETH_FUSE,
-					tokenOut: WBTC_FUSE,
-					amountIn,
-					slippage: 50,
-				})
-
-				const rate = -Math.log(Number(amountOut) / Number(amountIn))
-
-				return {
-					rate,
-					amountOut,
-				}
-			},
-		})
+		graph.addSwapEdge(WETH_FUSE, WBTC_FUSE, fusePool, SLIPPAGE)
 
 		/* ============ STARGATE BRIDGE: ETH (ARB) <-> WETH (FUSE) ============ */
 		const getStargateBridgeRate = (amountIn: bigint) => {

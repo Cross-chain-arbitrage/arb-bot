@@ -82,6 +82,30 @@ export class Graph {
 		this.edges.add(edge)
 	}
 
+	addSwapEdge(from: GraphNode, to: GraphNode, pool: Pool, slippage: number) {
+		this.addEdge({
+			from,
+			to,
+			type: ActionType.SWAP,
+			pool,
+			getRate: async (amountIn: bigint) => {
+				const { amountOut } = await pool.quoteSwap({
+					tokenIn: from,
+					tokenOut: to,
+					amountIn,
+					slippage,
+				})
+
+				const rate = -Math.log(Number(amountOut) / Number(amountIn))
+
+				return {
+					rate,
+					amountOut,
+				}
+			},
+		})
+	}
+
 	addNode(node: GraphNode) {
 		if (this.nodes.has(node)) {
 			throw new GraphError(
@@ -97,6 +121,7 @@ export class Graph {
 
 		for (const edge of this.edges) {
 			const { rate } = await edge.getRate(amount)
+
 			rows.push({
 				from: `${edge.from.symbol} (${edge.from.chainId})`,
 				to: `${edge.to.symbol} (${edge.to.chainId})`,
@@ -153,5 +178,22 @@ export class Graph {
 					row.rate.toFixed(6).padEnd(widths.rate),
 			)
 		}
+	}
+
+	async toMermaid(amount: bigint): Promise<string> {
+		const rows: string[] = []
+
+		for (const edge of this.edges) {
+			const { rate } = await edge.getRate(amount)
+
+			const from = edge.from.symbol + '_' + edge.from.chainId
+			const to = edge.to.symbol + '_' + edge.to.chainId
+
+			const row = `${from}["${edge.from.symbol}"] --> |${rate}| ${to}["${edge.to.symbol}"]`
+
+			rows.push(row)
+		}
+
+		return 'flowchart TB\n' + rows.join('\n') + '\n'
 	}
 }
