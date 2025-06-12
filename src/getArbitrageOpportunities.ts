@@ -1,5 +1,4 @@
 import { Address, isAddress } from 'viem'
-import { GeckoTerminalChainId } from './data-apis/geckoterminal/chains'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { findArbitrageOpportunity } from './optimize'
@@ -69,14 +68,8 @@ export async function getArbitrageOpportunities(): Promise<
 	// const priceUSDT = 1
 	// const priceUSDC = 1
 
-	const priceBTC = await GeckoTerminalAPI.getTokenPriceForChain(
-		'0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
-		GeckoTerminalChainId.ARBITRUM,
-	)
-	const priceETH = await GeckoTerminalAPI.getTokenPriceForChain(
-		'0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
-		GeckoTerminalChainId.ARBITRUM,
-	)
+	const priceBTC = await GeckoTerminalAPI.getTokenPriceBTC()
+	const priceETH = await GeckoTerminalAPI.getTokenPriceETH()
 	const priceFUSE = await GeckoTerminalAPI.getTokenPrice(
 		'0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
 	)

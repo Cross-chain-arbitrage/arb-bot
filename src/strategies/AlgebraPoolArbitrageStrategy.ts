@@ -121,14 +121,8 @@ export class AlgebraPoolArbitrageStrategy {
 
 	private async getTokenPrices() {
 		const [price0, price1] = await Promise.all([
-			GeckoTerminalAPI.getTokenPriceForChain(
-				this.token0Arb.address,
-				this.baseChain.geckoTerminalId,
-			),
-			GeckoTerminalAPI.getTokenPriceForChain(
-				this.token1Arb.address,
-				this.baseChain.geckoTerminalId,
-			),
+			GeckoTerminalAPI.getTokenPriceETH(),
+			GeckoTerminalAPI.getTokenPriceBTC(),
 		])
 
 		logger.info(`${this.token0Arb.symbol} price: $${price0}`)
