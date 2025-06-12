@@ -41,9 +41,9 @@ async function main() {
 	const fusePool = await AlgebraPool.create(fusePoolAddress, poolChainId)
 	const arbPool = await UniV3Pool.create(basePoolAddress, baseChain.id)
 
-	const baseToken = await TokenUtils.getNative(baseChain.id)
+	const baseToken = TokenUtils.getNative(baseChain.id)
 
-	const token0Arb = await TokenUtils.getNative(baseChain.id)
+	const token0Arb = TokenUtils.getNative(baseChain.id)
 	const token1Arb = await TokenUtils.fromAddress(WBTC_ARB, baseChain.id)
 
 	const strategy = new AlgebraPoolArbitrageStrategy(

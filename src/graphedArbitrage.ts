@@ -6,7 +6,7 @@ import { FuseWbtcGraphStrategy } from './strategies/FuseWbtcGraphStrategy'
 async function main() {
 	const strategy = await FuseWbtcGraphStrategy.setup()
 
-	const startToken = await TokenUtils.getNative(arbitrum.id)
+	const startToken = TokenUtils.getNative(arbitrum.id)
 	const startAmount = startToken.parseUnits('0.005')
 
 	const { path } = await strategy.findPath(startToken, startAmount)

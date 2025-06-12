@@ -29,7 +29,7 @@ export class FuseWbtcGraphStrategy {
 	static async setup(): Promise<FuseWbtcGraphStrategy> {
 		const graph = new Graph()
 
-		const ETH_ARB = await TokenUtils.getNative(arbitrum.id)
+		const ETH_ARB = TokenUtils.getNative(arbitrum.id)
 
 		const WBTC_ARB = await TokenUtils.fromAddress(
 			WBTC_ARB_ADDR,
