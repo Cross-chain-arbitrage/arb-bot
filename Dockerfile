@@ -1,0 +1,20 @@
+# Use Node.js Alpine version
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock ./
+
+# Install dependencies
+RUN yarn install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# Run the monitor script
+CMD ["yarn", "monitor"]
