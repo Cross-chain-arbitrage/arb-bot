@@ -1,8 +1,8 @@
-import { makeSuite } from '../utils/makeSuite'
-import { LiFi } from '../../src/lifi/LiFi'
 import { RoutesRequest } from '@lifi/sdk'
+import { LiFi } from '../../src/lifi/LiFi'
+import { makeSuite } from '../utils/makeSuite'
 
-makeSuite.only('LiFi', () => {
+makeSuite('LiFi', () => {
 	it('MUST get routes', async () => {
 		const lifi = new LiFi()
 

@@ -1,6 +1,6 @@
 import { Message, MessageStatus } from '@layerzerolabs/scan-client'
-import { LayerZeroScanAPI } from '../../src/data-apis/layerzeroscan/LayerZeroScanAPI'
 import { Hash, isHash, zeroHash } from 'viem'
+import { LayerZeroScanAPI } from '../../src/data-apis/layerzeroscan/LayerZeroScanAPI'
 import { makeSuite } from '../utils/makeSuite'
 
 makeSuite('LayerZeroScanAPI', () => {

@@ -13,7 +13,7 @@ makeSuite('Path optimization in Graph', () => {
 	})
 
 	describe('findArbitragePath', () => {
-		it.only('MUST be able to find the optimal path', async () => {
+		it('MUST be able to find the optimal path', async () => {
 			const spread = 0.05
 			graph = await getWethWbtcFuseGraph(1 + spread)
 

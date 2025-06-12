@@ -95,7 +95,7 @@ makeSuite('Uniswap V2 Pool', () => {
 		})
 	})
 
-	describe.only('Swap Execution', () => {
+	describe('Swap Execution', () => {
 		beforeEach(async () => {
 			const client = ClientManager.getClient(mainnet.id)
 
@@ -106,7 +106,7 @@ makeSuite('Uniswap V2 Pool', () => {
 				botAddress,
 				wethAddress,
 				3n,
-				10n ** 18n,
+				10n ** 25n,
 				client,
 			)
 
@@ -114,22 +114,12 @@ makeSuite('Uniswap V2 Pool', () => {
 				botAddress,
 				fuseAddress,
 				0n,
-				10n ** 18n,
+				10n ** 25n,
 				client,
 			)
-
-			await WETH.write.approve([pool.routerAddress, 10n ** 22n], {
-				account: walletClient.account!,
-				chain: walletClient.chain,
-			})
-
-			await FUSE.write.approve([pool.routerAddress, 10n ** 22n], {
-				account: walletClient.account!,
-				chain: walletClient.chain,
-			})
 		})
 
-		it.only('should swap WETH to FUSE', async () => {
+		it('should swap WETH to FUSE', async () => {
 			const amountIn = pool.token1.parseUnits('1')
 
 			await WETH.write.approve([pool.routerAddress, amountIn], {
@@ -137,30 +127,30 @@ makeSuite('Uniswap V2 Pool', () => {
 				chain: walletClient.chain,
 			})
 
-			console.log(await WETH.read.balanceOf([botAddress]))
-
 			const balanceBefore = await FUSE.read.balanceOf([botAddress])
+
 			const { amountOut: simulated } = await pool.simulateSwap({
-				tokenIn: pool.token0,
-				tokenOut: pool.token1,
+				tokenIn: pool.token1,
+				tokenOut: pool.token0,
 				amountIn,
 				slippage: 50,
 			})
 
 			const { amountOut } = await pool.swap({
-				tokenIn: pool.token0,
-				tokenOut: pool.token1,
+				tokenIn: pool.token1,
+				tokenOut: pool.token0,
 				amountIn,
 				slippage: 50,
 			})
 
-			const balanceAfter = await FUSE.read.balanceOf([botAddress])
-			expect(balanceAfter - balanceBefore).toBe(amountOut)
+			const fuseBalanceAfter = await FUSE.read.balanceOf([botAddress])
+
+			expect(fuseBalanceAfter - balanceBefore).toBe(amountOut)
 			expect(amountOut).toBe(simulated)
 		})
 
 		it('should swap FUSE to WETH', async () => {
-			const amountIn = pool.token0.parseUnits('1000')
+			const amountIn = pool.token1.parseUnits('1000')
 
 			await FUSE.write.approve([pool.routerAddress, amountIn], {
 				account: walletClient.account!,
@@ -168,21 +158,23 @@ makeSuite('Uniswap V2 Pool', () => {
 			})
 
 			const balanceBefore = await WETH.read.balanceOf([botAddress])
+
 			const { amountOut: simulated } = await pool.simulateSwap({
-				tokenIn: pool.token1,
-				tokenOut: pool.token0,
+				tokenIn: pool.token0,
+				tokenOut: pool.token1,
 				amountIn,
 				slippage: 50,
 			})
 
 			const { amountOut } = await pool.swap({
-				tokenIn: pool.token1,
-				tokenOut: pool.token0,
+				tokenIn: pool.token0,
+				tokenOut: pool.token1,
 				amountIn,
 				slippage: 50,
 			})
 
 			const balanceAfter = await WETH.read.balanceOf([botAddress])
+
 			expect(balanceAfter - balanceBefore).toBe(amountOut)
 			expect(amountOut).toBe(simulated)
 		})
