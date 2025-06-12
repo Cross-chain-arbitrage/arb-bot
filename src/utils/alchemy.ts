@@ -1,4 +1,4 @@
-import { arbitrum } from 'viem/chains'
+import { arbitrum, mainnet } from 'viem/chains'
 
 export function getAlchemyApiKey() {
 	const apiKey = process.env.ALCHEMY_API_KEY
@@ -14,6 +14,10 @@ export function getAlchemyRpcUrl(chainId: number) {
 	switch (chainId) {
 		case arbitrum.id:
 			chainKey = 'arb'
+			break
+		case mainnet.id:
+			chainKey =
+				'https://eth-mainnet.g.alchemy.com/v2/REDACTED_API_KEY'
 			break
 	}
 
