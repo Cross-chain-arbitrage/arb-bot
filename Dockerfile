@@ -11,10 +11,10 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 # Copy source code
-COPY . .
+COPY src/hello.ts .
 
 # Set environment variables
 ENV NODE_ENV=production
 
-# Run the monitor script
+# Run monitor
 CMD ["yarn", "monitor"]
