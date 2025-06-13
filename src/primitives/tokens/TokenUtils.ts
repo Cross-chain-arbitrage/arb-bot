@@ -48,6 +48,33 @@ export class TokenUtils {
 		return !this.isNative(address)
 	}
 
+	static getWrappedNative(chainId: number): WrappedNative {
+		const wrappedToken = wrappedTokens[chainId]
+
+		if (!wrappedToken) {
+			throw new Error(`Wrapped Native not found for chain ${chainId}`)
+		}
+
+		const cachedToken = this.tokenCache.get(
+			this.getCacheKey(wrappedToken, chainId),
+		)
+
+		if (cachedToken) {
+			return cachedToken as WrappedNative
+		}
+
+		const token = new WrappedNative(
+			chainId,
+			wrappedToken,
+			18,
+			'Wrapped Native',
+		)
+
+		this.tokenCache.set(this.getCacheKey(wrappedToken, chainId), token)
+
+		return token
+	}
+
 	static async fromAddress<T extends Token | NativeCurrency | WrappedNative>(
 		address: Address,
 		chainId: number,

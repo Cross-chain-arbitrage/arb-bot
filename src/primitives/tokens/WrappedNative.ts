@@ -1,4 +1,4 @@
-import { arbitrum } from 'viem/chains'
+import { arbitrum, hemi, lightlinkPhoenix } from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
 import { getAccountAddress } from '../../utils/getAccount'
 import { NativeCurrency } from './NativeCurrency'
@@ -15,6 +15,8 @@ export class WethError extends Error {
 
 export const wrappedTokens: Record<number, Address | undefined> = {
 	[arbitrum.id]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
+	[lightlinkPhoenix.id]: '0x7EbeF2A4b1B09381Ec5B9dF8C5c6f2dBECA59c73',
+	[hemi.id]: '0x4200000000000000000000000000000000000006',
 }
 
 export class WrappedNative extends Token {
