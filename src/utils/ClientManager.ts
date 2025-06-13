@@ -67,8 +67,8 @@ export class ClientManager {
 		const rpc = this.getCustomRpcUrl(chainId)
 
 		if (rpc) {
-			console.log('Using Alchemy RPC for chain', chainId)
-			console.log('RPC', rpc)
+			// console.log('Using Alchemys RPC for chain', chainId)
+			// console.log('RPC', rpc)
 			chain.rpcUrls.default.http = [rpc]
 		}
 
