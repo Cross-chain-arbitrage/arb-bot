@@ -16,7 +16,7 @@ async function main() {
 		return
 	}
 
-	console.log('=========== Path ============')
+	console.log('\n=================== Path ===================\n')
 
 	path.edges.forEach((edge) => {
 		console.log(
@@ -24,7 +24,7 @@ async function main() {
 		)
 	})
 
-	console.log('=========== Values ============')
+	console.log('\n=================== Values ===================\n')
 
 	const priceETH = await GeckoTerminalAPI.getTokenPriceETH()
 
