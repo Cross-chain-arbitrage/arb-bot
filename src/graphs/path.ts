@@ -61,8 +61,6 @@ export async function findArbitragePath(
 			const from = edge.from
 			const to = edge.to
 
-			console.log('Quoting', from.toString(), to.toString())
-
 			const { rate, amountOut } = await quote
 
 			const fromTo = `${from.toString()} -> ${to.toString()}`
