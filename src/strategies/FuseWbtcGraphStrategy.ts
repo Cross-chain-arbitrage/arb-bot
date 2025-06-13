@@ -31,16 +31,19 @@ export class FuseWbtcGraphStrategy {
 
 		const ETH_ARB = TokenUtils.getNative(arbitrum.id)
 
-		const WBTC_ARB = await TokenUtils.fromAddress(
-			WBTC_ARB_ADDR,
-			arbitrum.id,
-		)
-		const WETH_FUSE = await TokenUtils.fromAddress(WETH_FUSE_ADDR, fuse.id)
-		const WETH_ARB = await TokenUtils.fromAddress(
-			WETH_ARB_ADDR,
-			arbitrum.id,
-		)
-		const WBTC_FUSE = await TokenUtils.fromAddress(WBTC_FUSE_ADDR, fuse.id)
+		const promises = [
+			TokenUtils.fromAddress(WBTC_ARB_ADDR, arbitrum.id),
+			TokenUtils.fromAddress(WETH_FUSE_ADDR, fuse.id),
+			TokenUtils.fromAddress(WETH_ARB_ADDR, arbitrum.id),
+			TokenUtils.fromAddress(WBTC_FUSE_ADDR, fuse.id),
+		]
+
+		await Promise.all(promises)
+
+		const WBTC_ARB = await promises[0]
+		const WETH_FUSE = await promises[1]
+		const WETH_ARB = await promises[2]
+		const WBTC_FUSE = await promises[3]
 
 		graph.addNode(ETH_ARB)
 		graph.addNode(WBTC_ARB)
