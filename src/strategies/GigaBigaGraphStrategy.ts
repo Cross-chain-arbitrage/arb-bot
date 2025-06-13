@@ -1,11 +1,9 @@
 import { arbitrum, fuse, hemi, lightlinkPhoenix } from 'viem/chains'
 import { StargateAPI } from '../bridges/stargate/StargateAPI'
-import { GeckoTerminalAPI } from '../data-apis/geckoterminal/GeckoTerminalAPI'
 import { Pool } from '../dex/Pool'
 import { PoolUtils } from '../dex/PoolUtils'
 import { ActionType, Graph, GraphNode } from '../graphs/Graph'
-import { ArbitragePath, findArbitragePath } from '../graphs/path'
-import { EdgeWithRate, getMermaidGraph } from '../graphs/visualization'
+import { findArbitragePath } from '../graphs/path'
 import { poolsByChain } from '../pools'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
@@ -20,7 +18,7 @@ const WBTC_FUSE_ADDR = '0x34009565bfEeFded0F7e774629a745636Bf35E82'
 /* ============ Constants ============ */
 
 const SLIPPAGE = 50
-const MAX_PATH_LENGTH = 5
+const MAX_PATH_LENGTH = 7
 
 /* ============ Strategy ============ */
 export class GigaBigaGraphStrategy {
@@ -267,53 +265,4 @@ async function main() {
 		edgesWithRate,
 	)
 }
-
-async function prettyPrintPath(
-	startToken: GraphNode,
-	startAmount: bigint,
-	path: ArbitragePath | null,
-	edgesWithRate: Map<string, EdgeWithRate>,
-) {
-	if (!path) {
-		console.log('No arbitrage path found')
-
-		const mermaidGraph = getMermaidGraph(edgesWithRate)
-
-		console.log(mermaidGraph)
-		return
-	}
-
-	console.log('\n=================== Path ===================\n')
-
-	path.edges.forEach((edge) => {
-		console.log(
-			`${edge.from.symbol} (${edge.from.chainId}) -- ${edge.type} --> ${edge.to.symbol} (${edge.to.chainId})`,
-		)
-	})
-
-	console.log('\n=================== Values ===================\n')
-
-	const priceETH = await GeckoTerminalAPI.getTokenPriceETH()
-
-	console.log(
-		'Start amount',
-		Number(startToken.formatUnits(startAmount)).toFixed(4),
-		startToken.symbol,
-		`($${(priceETH * Number(startToken.formatUnits(startAmount))).toFixed(2)})`,
-	)
-
-	console.log(
-		'End amount',
-		Number(startToken.formatUnits(path.endAmount)).toFixed(4),
-		`($${(priceETH * Number(startToken.formatUnits(path.endAmount))).toFixed(2)})`,
-	)
-
-	console.log(
-		'Profit amount',
-		startToken.formatUnits(path.profitAmount),
-		`($${(priceETH * Number(startToken.formatUnits(path.profitAmount))).toFixed(2)})`,
-	)
-	console.log('Profit percentage', `${path.profitPercentage.toFixed(2)}%`)
-}
-
 void main()
