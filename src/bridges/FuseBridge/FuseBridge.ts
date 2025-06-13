@@ -1,7 +1,8 @@
-import { zeroHash } from 'viem'
+import { zeroAddress, zeroHash } from 'viem'
 import { arbitrum, bsc, fuse, optimism } from 'viem/chains'
 import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20BridgeForeign'
 import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
+import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
 import { FuseBridgeTx } from './FuseBridgeTx'
@@ -88,6 +89,7 @@ export class FuseBridge {
 	): Promise<FuseBridgeTx> {
 		const unwrapWeth = false
 
+		this.validateRecipient(tokenIn.chainId, recipient)
 		this.validateChain(tokenIn.chainId)
 		this.validateChain(toChainId)
 
@@ -147,6 +149,26 @@ export class FuseBridge {
 		const txHash = await wallet.writeContract(request)
 
 		return new FuseBridgeTx(txHash, tokenIn.chainId)
+	}
+
+	static async approveToBridge(
+		tokenIn: Token | NativeCurrency,
+		amount: bigint,
+	) {
+		if (tokenIn instanceof NativeCurrency) return
+
+		const bridge = this.getBridge(tokenIn.chainId)
+
+		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+		const userAddr = wallet.account!.address
+
+		const allowance = await tokenIn.allowance(userAddr, bridge.address)
+
+		if (allowance >= amount) return
+
+		const tx = await tokenIn.approve(bridge.address, amount)
+
+		return tx
 	}
 
 	private static async validateBalance(
@@ -295,5 +317,19 @@ export class FuseBridge {
 		}
 
 		return LZ_V1_CHAIN_EIDS[chainId]
+	}
+
+	static validateRecipient(chainId: number, recipient: Address) {
+		if (recipient === zeroAddress) {
+			throw new FuseBridgeError('Recipient cannot be the zero address')
+		}
+
+		const wallet = ClientManager.getWalletClient(chainId)
+
+		if (wallet.account!.address !== recipient) {
+			throw new FuseBridgeError(
+				'Recipient is not the same as the wallet address',
+			)
+		}
 	}
 }
