@@ -75,27 +75,13 @@ export class FuseWbtcGraphStrategy {
 		graph.addSwapEdge(WETH_FUSE, WBTC_FUSE, fusePool, SLIPPAGE)
 
 		/* ============ STARGATE BRIDGE: ETH (ARB) <-> WETH (FUSE) ============ */
-		const getStargateBridgeRate = (amountIn: bigint) => {
-			return {
-				rate: -Math.log(1),
-				amountOut: amountIn,
-			}
-		}
 
-		graph.addEdge({
-			from: ETH_ARB,
-			to: WETH_FUSE,
-			type: ActionType.STARGATE_BRIDGE,
-			getRate: getStargateBridgeRate,
-		})
-		graph.addEdge({
-			from: WETH_FUSE,
-			to: ETH_ARB,
-			type: ActionType.STARGATE_BRIDGE,
-			getRate: getStargateBridgeRate,
-		})
+		graph.addStargateBridgeEdge(ETH_ARB, WETH_FUSE)
+
+		graph.addStargateBridgeEdge(WETH_FUSE, ETH_ARB)
 
 		/* ============ FUSE BRIDGE: WBTC (FUSE) <-> WBTC (ARB) ============ */
+
 		const getFuseBridgeRate = (amountIn: bigint) => {
 			return {
 				rate: -Math.log(1),
