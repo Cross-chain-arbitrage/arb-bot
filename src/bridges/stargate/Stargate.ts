@@ -257,10 +257,7 @@ export class Stargate {
 
 		const cachedQuote = this.quoteCache.get(cacheKey)
 
-		if (cachedQuote) {
-			console.log('~ Stargate ~ _quote ~ Used cached quote', cacheKey)
-			return cachedQuote
-		}
+		if (cachedQuote) return cachedQuote
 
 		const messagingFee = await Stargate.quoteSend(
 			metadata.address,
