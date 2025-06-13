@@ -1,4 +1,4 @@
-import { arbitrum, fuse } from 'viem/chains'
+import { arbitrum, fuse, hemi, lightlinkPhoenix } from 'viem/chains'
 import { StargateAPI } from '../bridges/stargate/StargateAPI'
 import { GeckoTerminalAPI } from '../data-apis/geckoterminal/GeckoTerminalAPI'
 import { Pool } from '../dex/Pool'
@@ -78,6 +78,16 @@ export class GigaBigaGraphStrategy {
 		console.log('nodes', graph.nodes.size)
 		console.log('nodes', graph.nodes)
 
+		/* =============== NATIVE TOKENS =============== */
+
+		const ETH_ARB = TokenUtils.getNative(arbitrum.id)
+		const ETH_LIGHTLINK = TokenUtils.getNative(lightlinkPhoenix.id)
+		const ETH_HEMI = TokenUtils.getNative(hemi.id)
+
+		graph.addNode(ETH_ARB)
+		graph.addNode(ETH_LIGHTLINK)
+		graph.addNode(ETH_HEMI)
+
 		/* =============== SWAPS =============== */
 
 		for (const pool of pools) {
@@ -107,7 +117,7 @@ export class GigaBigaGraphStrategy {
 				console.log('Found Stargate token', token.symbol, token.chainId)
 			} catch (error) {
 				console.log(
-					`${token.symbol} ${token.chainId} is not a stargate token`,
+					`${token.symbol} ${token.chainId} ${token.address} is not a stargate token`,
 				)
 				continue
 			}
@@ -167,7 +177,7 @@ export class GigaBigaGraphStrategy {
 			getRate: getFuseBridgeRate,
 		})
 
-		/* ============ WRAP/UNWRAP: WETH (ARB) <-> ETH (ARB) ============ */
+		/* ============ WRAP/UNWRAP ============ */
 
 		const getWrapRate = (amountIn: bigint) => {
 			return {
@@ -176,13 +186,9 @@ export class GigaBigaGraphStrategy {
 			}
 		}
 
-		const WETH_ARB = await TokenUtils.fromAddress(
-			WETH_ARB_ADDR,
-			arbitrum.id,
-		)
-		const ETH_ARB = TokenUtils.getNative(arbitrum.id)
-
-		graph.addNode(ETH_ARB)
+		const WETH_ARB = TokenUtils.getWrappedNative(arbitrum.id)
+		const WETH_LIGHTLINK = TokenUtils.getWrappedNative(lightlinkPhoenix.id)
+		const WETH_HEMI = TokenUtils.getWrappedNative(hemi.id)
 
 		graph.addEdge({
 			from: WETH_ARB,
@@ -194,6 +200,34 @@ export class GigaBigaGraphStrategy {
 		graph.addEdge({
 			from: ETH_ARB,
 			to: WETH_ARB,
+			type: ActionType.WRAP,
+			getRate: getWrapRate,
+		})
+
+		graph.addEdge({
+			from: WETH_LIGHTLINK,
+			to: ETH_LIGHTLINK,
+			type: ActionType.UNWRAP,
+			getRate: getWrapRate,
+		})
+
+		graph.addEdge({
+			from: ETH_LIGHTLINK,
+			to: WETH_LIGHTLINK,
+			type: ActionType.WRAP,
+			getRate: getWrapRate,
+		})
+
+		graph.addEdge({
+			from: WETH_HEMI,
+			to: ETH_HEMI,
+			type: ActionType.UNWRAP,
+			getRate: getWrapRate,
+		})
+
+		graph.addEdge({
+			from: ETH_HEMI,
+			to: WETH_HEMI,
 			type: ActionType.WRAP,
 			getRate: getWrapRate,
 		})
