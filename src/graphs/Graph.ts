@@ -136,60 +136,22 @@ export class Graph {
 			)
 			const cachedResult = this.getRateCache.get(cacheKey)
 
-			if (cachedResult) {
-				console.log('\nCached getRate call result')
-				return cachedResult
-			}
-
-			console.log('\nGetting rate for stargate bridge edge\n')
-			console.log(`from: ${from.symbol} (${from.chainId})	`)
-			console.log(`to: ${to.symbol} (${to.chainId})`)
-			console.log(
-				`amountIn: ${from.formatUnits(amountIn)} ${from.symbol}`,
-			)
+			if (cachedResult) return cachedResult
 
 			const quote = await Stargate.quote(from, to.chainId, amountIn)
 
-			if (quote.oftFees) {
-				console.log('has OFT fees')
-				const amountOut = quote.oftFees.oftReceipt.amountReceivedLD
+			const amountOut = Stargate.getExpectedAmountOut(quote, amountIn)
 
-				const rate = this.calcRate(amountIn, amountOut)
+			const rate = this.calcRate(amountIn, amountOut)
 
-				console.log(
-					`amountOut: ${to.formatUnits(amountOut)} ${to.symbol}`,
-				)
-				console.log(`rate: ${rate}`)
+			this.getRateCache.set(cacheKey, {
+				rate,
+				amountOut,
+			})
 
-				this.getRateCache.set(cacheKey, {
-					rate,
-					amountOut,
-				})
-
-				return {
-					rate,
-					amountOut,
-				}
-			} else {
-				console.log("doesn't have OFT fees")
-
-				const amountOut = amountIn
-				const rate = this.calcRate(amountIn, amountOut)
-
-				console.log(
-					`amountOut: ${to.formatUnits(amountOut)} ${to.symbol}`,
-				)
-				console.log(`rate: ${rate}`)
-
-				this.getRateCache.set(cacheKey, {
-					rate,
-					amountOut,
-				})
-
-				return {
-					rate,
-					amountOut,
-				}
+			return {
+				rate,
+				amountOut,
 			}
 		}
 
