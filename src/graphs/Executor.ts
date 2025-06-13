@@ -9,6 +9,10 @@ import { ActionType, GraphEdge } from './Graph'
 import { ArbitragePath } from './path'
 
 export class Executor {
+	/**
+	 * Execute the arbitrage path
+	 * @returns actual end amount
+	 */
 	static async execute(arbitragePath: ArbitragePath) {
 		const {
 			edges,
@@ -38,17 +42,10 @@ export class Executor {
 			logger.info(logMsg)
 		}
 
-		return {
-			inputAmount,
-			endAmount,
-			profitAmount,
-			profitPercentage,
-		}
+		return inputAmount //actual end amount
 	}
 
 	static async executeEdge(edge: GraphEdge, inputAmount: bigint) {
-		const { from, to } = edge
-
 		switch (edge.type) {
 			case ActionType.SWAP:
 				return await this.executeSwap(edge, inputAmount)
