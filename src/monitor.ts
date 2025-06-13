@@ -3,7 +3,7 @@ import {
 	getArbitrageOpportunities,
 } from './getArbitrageOpportunities'
 import { TgNotificationService } from './notification/TgNotificationService'
-import { infinitePoll } from './utils/polling'
+import { runFuncWithDelay } from './utils/polling'
 
 const MIN_DIFFERENCE_TO_NOTIFY = 2
 const MIN_PROFIT_TO_NOTIFY = 5
@@ -23,7 +23,7 @@ type ID = `${string}:${string}`
 
 const opportunityRecords = new Map<ID, ArbitrageOpportunityRecord>()
 
-infinitePoll(monitor, POLL_INTERVAL_MS).catch(console.error)
+runFuncWithDelay(monitor, POLL_INTERVAL_MS).catch(console.error)
 
 async function monitor() {
 	const opportunities = await getArbitrageOpportunities()

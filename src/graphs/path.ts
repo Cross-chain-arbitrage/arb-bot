@@ -19,7 +19,7 @@ export async function findArbitragePath(
 	path: ArbitragePath | null
 	edgesWithRate: Map<string, EdgeWithRate>
 }> {
-	console.time('Bellman-Ford Algorithm')
+	// console.time('Bellman-Ford Algorithm')
 
 	const distances = new Map<GraphNode, number>()
 	const predecessors = new Map<GraphNode, GraphEdge>()
@@ -93,8 +93,8 @@ export async function findArbitragePath(
 						startAmount,
 					)
 
-					console.log('\nNegative cycle found!\n')
-					console.timeEnd('Bellman-Ford Algorithm')
+					// console.log('\nNegative cycle found!\n')
+					// console.timeEnd('Bellman-Ford Algorithm')
 
 					return {
 						path,
@@ -105,9 +105,9 @@ export async function findArbitragePath(
 		}
 	}
 
-	console.log('\n')
-	console.timeEnd('Bellman-Ford Algorithm')
-	console.log('\n')
+	// console.log('\n')
+	// console.timeEnd('Bellman-Ford Algorithm')
+	// console.log('\n')
 
 	return { path: null, edgesWithRate }
 }

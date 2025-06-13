@@ -3,13 +3,18 @@ import { BaseContract } from '../primitives/contracts/BaseContract'
 import { Token } from '../primitives/tokens/Token'
 
 export abstract class Pool extends BaseContract {
+	routerAddress: Address
+
 	constructor(
 		public readonly token0: Token,
 		public readonly token1: Token,
 		poolAddress: Address,
+		routerAddress: Address,
 		public chainId: number,
 	) {
 		super(poolAddress, chainId)
+
+		this.routerAddress = routerAddress
 	}
 
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>

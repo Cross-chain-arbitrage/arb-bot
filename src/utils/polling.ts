@@ -33,7 +33,7 @@ export async function poll<T>(
 	}
 }
 
-export async function infinitePoll(
+export async function runFuncWithDelay(
 	fn: () => Promise<void>,
 	intervalMs: number,
 ): Promise<void> {

@@ -1,12 +1,12 @@
 import { Address, decodeEventLog } from 'viem'
 import { UNIV2_POOL_ABI } from '../../abi/uniV2/pool'
+import { UNIV2_ROUTER_ABI } from '../../abi/uniV2/router'
+import { Token } from '../../primitives/tokens/Token'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { ClientManager } from '../../utils/ClientManager'
 import { isSameAddress } from '../../utils/common'
 import { Pool } from '../Pool'
-import { Token } from '../../primitives/tokens/Token'
-import { UNIV2_ROUTER_ABI } from '../../abi/uniV2/router'
 import { peripheryAddresses } from './data'
-import { ClientManager } from '../../utils/ClientManager'
-import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 
 export class UniV2PoolError extends Error {
 	constructor(message: string) {
@@ -17,8 +17,6 @@ export class UniV2PoolError extends Error {
 }
 
 export class UniV2Pool extends Pool {
-	public readonly routerAddress: Address
-
 	constructor(
 		poolAddress: Address,
 		chainId: number,
@@ -30,9 +28,7 @@ export class UniV2Pool extends Pool {
 		if (!periphery)
 			throw new UniV2PoolError(`No periphery found for chain ${chainId}`)
 
-		super(token0, token1, poolAddress, chainId)
-
-		this.routerAddress = periphery.router
+		super(token0, token1, poolAddress, periphery.router, chainId)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {

@@ -20,7 +20,6 @@ export abstract class TickPool extends Pool {
 	public readonly fee: number
 	public readonly tickSpacing: number
 
-	public readonly routerAddress: Address
 	public readonly quoterAddress: Address
 
 	public readonly defaultSlippage: number = 50
@@ -31,12 +30,17 @@ export abstract class TickPool extends Pool {
 		immutables: PoolImmutables,
 		periphery: PoolPeriphery,
 	) {
-		super(immutables.token0, immutables.token1, poolAddress, chainId)
+		super(
+			immutables.token0,
+			immutables.token1,
+			poolAddress,
+			periphery.router,
+			chainId,
+		)
 
 		this.fee = immutables.fee
 		this.tickSpacing = immutables.tickSpacing
 
-		this.routerAddress = periphery.router
 		this.quoterAddress = periphery.quoter
 	}
 
