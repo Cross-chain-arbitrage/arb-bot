@@ -1,3 +1,4 @@
+import TTLCache from '@isaacs/ttlcache'
 import { Stargate } from '../bridges/stargate/Stargate'
 import { Pool } from '../dex/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
@@ -13,15 +14,14 @@ export enum ActionType {
 	UNWRAP = 'UNWRAP',
 }
 
+export type GetRateResult = {
+	rate: number // negative log of exchange rate
+	amountOut: bigint
+}
+
 export type GetRate =
-	| ((amountIn: bigint) => Promise<{
-			rate: number // negative log of exchange rate
-			amountOut: bigint
-	  }>)
-	| ((amountIn: bigint) => {
-			rate: number // negative log of exchange rate
-			amountOut: bigint
-	  })
+	| ((amountIn: bigint) => Promise<GetRateResult>)
+	| ((amountIn: bigint) => GetRateResult)
 
 export type GraphEdgeAction = (
 	| {
@@ -52,15 +52,13 @@ export class Graph {
 	edges: Set<GraphEdge> = new Set()
 	nodes: Set<GraphNode> = new Set()
 
-	private getRateCache: Map<
-		string,
-		{
-			rate: number
-			amountOut: bigint
-		}
-	> = new Map()
+	private swapCache: TTLCache<string, GetRateResult>
 
-	constructor() {}
+	constructor(swapCacheTTL: number = 1000 * 1) {
+		this.swapCache = new TTLCache<string, GetRateResult>({
+			ttl: swapCacheTTL,
+		})
+	}
 
 	addEdge(edge: GraphEdge) {
 		if (this.edges.has(edge)) {
@@ -100,7 +98,7 @@ export class Graph {
 			pool,
 			getRate: async (amountIn: bigint) => {
 				const cacheKey = this.getSwapCacheKey(from, to, pool, amountIn)
-				const cachedResult = this.getRateCache.get(cacheKey)
+				const cachedResult = this.swapCache.get(cacheKey)
 
 				if (cachedResult) return cachedResult
 
@@ -113,7 +111,7 @@ export class Graph {
 				const rate = this.calcRate(amountIn, amountOut)
 
 				// Cache the result
-				this.getRateCache.set(cacheKey, {
+				this.swapCache.set(cacheKey, {
 					rate,
 					amountOut,
 				})
@@ -165,18 +163,6 @@ export class Graph {
 		amountIn: bigint,
 	) {
 		return `${from.chainId}:${from.address}-${to.chainId}:${to.address}:${ActionType.SWAP}:${pool.address}:${amountIn.toString()}`
-	}
-
-	private getCacheKey(edge: Omit<GraphEdge, 'getRate'>, amountIn: bigint) {
-		if (edge.type === ActionType.SWAP) {
-			throw new GraphError(
-				'Use other getSwapCacheKey to get cache key for swap edge',
-			)
-		}
-
-		const { from, to, type } = edge
-
-		return `${from.chainId}:${from.address}-${to.chainId}:${to.address}:${type}:${amountIn.toString()}`
 	}
 
 	private calcRate(amountIn: bigint, amountOut: bigint) {
