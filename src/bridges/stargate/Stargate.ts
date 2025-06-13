@@ -197,9 +197,24 @@ export class Stargate {
 	static async quote(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
+		amount: bigint,
+	): Promise<QuoteResult> {
+		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+
+		return this.quoteWithRecipient(
+			tokenIn,
+			toChainId,
+			wallet.account!.address,
+			amount,
+		)
+	}
+
+	static async quoteWithRecipient(
+		tokenIn: Token | NativeCurrency,
+		toChainId: number,
 		recipient: Address,
 		amount: bigint,
-	) {
+	): Promise<QuoteResult> {
 		const tokenMetadata = await StargateAPI.getTokenMetadata(
 			tokenIn,
 			Stargate.getChainKey(tokenIn.chainId),
