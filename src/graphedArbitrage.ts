@@ -1,5 +1,6 @@
 import { arbitrum } from 'viem/chains'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
+import { getMermaidGraph } from './graphs/visualization'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { FuseWbtcGraphStrategy } from './strategies/FuseWbtcGraphStrategy'
 
@@ -9,10 +10,17 @@ async function main() {
 	const startToken = TokenUtils.getNative(arbitrum.id)
 	const startAmount = startToken.parseUnits('0.005')
 
-	const { path } = await strategy.findPath(startToken, startAmount)
+	const { path, edgesWithRate } = await strategy.findPath(
+		startToken,
+		startAmount,
+	)
 
 	if (!path) {
 		console.log('No arbitrage path found')
+
+		const mermaidGraph = getMermaidGraph(edgesWithRate)
+
+		console.log(mermaidGraph)
 		return
 	}
 
