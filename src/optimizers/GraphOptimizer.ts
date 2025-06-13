@@ -2,16 +2,25 @@ import { Graph, GraphNode } from '../graphs/Graph'
 import { ArbitragePath, findArbitragePath } from '../graphs/path'
 import { EdgeWithRate } from '../graphs/visualization'
 
+const DEFAULT_OPTIONS = {
+	initialValueUSD: 15,
+	stepUSD: 15,
+	stepsAmount: 22,
+	maxPathLength: 7,
+}
+
 export class GraphOptimizer {
 	static async findOpportunity(
 		startToken: GraphNode,
 		startTokenUSDPrice: number,
 		graph: Graph,
-		initialValueUSD: number = 15,
-		stepUSD: number = 15,
-		stepsAmount: number = 22,
-		maxPathLength: number = 7,
+		options: GraphOptimizerOptions = {},
 	) {
+		const { initialValueUSD, stepUSD, stepsAmount, maxPathLength } = {
+			...DEFAULT_OPTIONS,
+			...options,
+		}
+
 		const algorithmResultsPromises: Promise<{
 			path: ArbitragePath | null
 			edgesWithRate: Map<string, EdgeWithRate>
