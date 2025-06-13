@@ -27,7 +27,10 @@ export class Stargate {
 		recipient: Address,
 		amount: bigint,
 		simulateOnly: boolean = false,
-	) {
+	): Promise<{
+		bridgeTx: StargateBridgeTx
+		expectedAmountOut: bigint
+	}> {
 		if (amount <= 0n)
 			throw new StargateError('Amount must be greater than 0')
 		if (!recipient) throw new StargateError('Recipient address is required')
@@ -108,18 +111,31 @@ export class Stargate {
 
 		Stargate.logTransactionDetails(tokenIn, quote)
 
+		const expectedAmountOut = Stargate.getExpectedAmountOut(quote, amount)
+
 		if (simulateOnly) {
-			return new StargateBridgeTx(
-				zeroHash,
-				tokenIn.chainId,
-				tokenIn,
-				amount,
-			)
+			return {
+				bridgeTx: new StargateBridgeTx(
+					zeroHash,
+					tokenIn.chainId,
+					tokenIn,
+					amount,
+				),
+				expectedAmountOut: amount,
+			}
 		}
 
 		const txHash = await wallet.writeContract(request)
 
-		return new StargateBridgeTx(txHash, tokenIn.chainId, tokenIn, amount)
+		return {
+			bridgeTx: new StargateBridgeTx(
+				txHash,
+				tokenIn.chainId,
+				tokenIn,
+				amount,
+			),
+			expectedAmountOut,
+		}
 	}
 
 	static async getBridgeAddress(
@@ -391,5 +407,14 @@ export class Stargate {
 		}
 
 		return chain.chainKey
+	}
+
+	static getExpectedAmountOut(quote: QuoteResult, amountIn: bigint): bigint {
+		if (quote.oftFees) {
+			return quote.oftFees.oftReceipt.amountReceivedLD
+		} else {
+			// TODO: WILL BREAK IN CASE OF DIFFERENT DECIMALS
+			return amountIn
+		}
 	}
 }
