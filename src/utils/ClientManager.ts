@@ -49,7 +49,7 @@ export class ClientManager {
 
 	static getClient(chainId: number): PublicClient {
 		const batch = {
-			multicall: false,
+			multicall: true,
 		}
 
 		const cacheTime = 4000
