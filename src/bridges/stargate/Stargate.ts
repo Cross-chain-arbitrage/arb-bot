@@ -40,10 +40,7 @@ export class Stargate {
 			throw new StargateError('Cannot send to the same chain')
 		}
 
-		const tokenMetadata = await StargateAPI.getTokenMetadata(
-			tokenIn,
-			Stargate.getChainKey(tokenIn.chainId),
-		)
+		const tokenMetadata = await StargateAPI.getTokenMetadata(tokenIn)
 
 		const poolOrOFT = tokenMetadata.address
 
@@ -114,28 +111,24 @@ export class Stargate {
 		const expectedAmountOut = Stargate.getExpectedAmountOut(quote, amount)
 
 		if (simulateOnly) {
-			return {
-				bridgeTx: new StargateBridgeTx(
-					zeroHash,
-					tokenIn.chainId,
-					tokenIn,
-					amount,
-				),
-				expectedAmountOut: amount,
-			}
+			return new StargateBridgeTx(
+				zeroHash,
+				tokenIn.chainId,
+				tokenIn,
+				tokenIn,
+				amount,
+			)
 		}
 
 		const txHash = await wallet.writeContract(request)
 
-		return {
-			bridgeTx: new StargateBridgeTx(
-				txHash,
-				tokenIn.chainId,
-				tokenIn,
-				amount,
-			),
-			expectedAmountOut,
-		}
+		return new StargateBridgeTx(
+			txHash,
+			tokenIn.chainId,
+			tokenIn,
+			tokenIn,
+			amount,
+		)
 	}
 
 	static async getBridgeAddress(
@@ -409,12 +402,13 @@ export class Stargate {
 		return chain.chainKey
 	}
 
-	static getExpectedAmountOut(quote: QuoteResult, amountIn: bigint): bigint {
-		if (quote.oftFees) {
-			return quote.oftFees.oftReceipt.amountReceivedLD
-		} else {
-			// TODO: WILL BREAK IN CASE OF DIFFERENT DECIMALS
-			return amountIn
-		}
+	static async getDstToken(
+		srcToken: Token | NativeCurrency,
+		toChainId: number,
+	): Promise<Token | NativeCurrency> {
+		const tokenMetadata = await StargateAPI.getTokenMetadata(srcToken)
+		const assetId = tokenMetadata.assetId
+
+		return tokenMetadata.token
 	}
 }
