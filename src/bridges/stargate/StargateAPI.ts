@@ -4,6 +4,7 @@ import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { isValidUrl } from '../../utils/validation'
 import { STARGATE_CHAINS } from './dumped/chains'
+import { Stargate } from './Stargate'
 
 export class StargateAPIError extends Error {
 	constructor(message: string) {
@@ -27,12 +28,7 @@ export class StargateAPI {
 		return apiUrl
 	}
 
-	// Function to fetch tokens from the API
-	static async getTokensMetadata(
-		chainKey: string = '',
-	): Promise<StargateTokenMetadata[]> {
-		this.validateChainKey(chainKey)
-
+	static async getAllTokensMetadata(): Promise<StargateTokenMetadata[]> {
 		try {
 			const apiUrl = this.getApiUrl()
 
@@ -40,13 +36,7 @@ export class StargateAPI {
 				`${apiUrl}/metadata?version=v2`,
 			)
 
-			let metadata = response.data.data.v2
-
-			if (chainKey) {
-				metadata = metadata.filter(
-					(metadata) => metadata.chainKey === chainKey,
-				)
-			}
+			const metadata = response.data.data.v2
 
 			return metadata
 		} catch (error) {
@@ -55,13 +45,22 @@ export class StargateAPI {
 		}
 	}
 
+	// Function to fetch tokens from the API
+	static async getTokensMetadataOnChain(
+		chainId: number,
+	): Promise<StargateTokenMetadata[]> {
+		const chainKey = Stargate.getChainKey(chainId)
+
+		const metadata = await this.getAllTokensMetadata()
+
+		return metadata.filter((metadata) => metadata.chainKey === chainKey)
+	}
+
 	static async getTokenMetadata(
 		token: Token | NativeCurrency,
-		chainKey: string,
 	): Promise<StargateTokenMetadata> {
-		this.validateChainKey(chainKey)
-
-		const metadata = await this.getTokensMetadata(chainKey)
+		const metadata = await this.getTokensMetadataOnChain(token.chainId)
+		const chainKey = Stargate.getChainKey(token.chainId)
 
 		const tokenMetadata = metadata.find(
 			(metadata) =>
@@ -76,6 +75,22 @@ export class StargateAPI {
 		}
 
 		return tokenMetadata
+	}
+
+	static async getSameAssetMetadataAcrossChains(
+		token: Token | NativeCurrency,
+	): Promise<StargateTokenMetadata[]> {
+		const metadata = await this.getAllTokensMetadata()
+
+		const asset = metadata.find(
+			(metadata) => metadata.assetId === token.address,
+		)
+
+		if (!asset) {
+			throw new Error(
+				`Token ${token.address} not found in Stargate metadata`,
+			)
+		}
 	}
 
 	static async getChains() {
