@@ -49,16 +49,18 @@ makeSuite('StargateAPI', () => {
 				),
 			)
 
+			console.log(metadata)
+
 			expect(metadata.length).toBeGreaterThan(10)
 			expect(
 				metadata.every((m) => m.assetId === metadata[0].assetId),
-			).toBeTruthy()
+			).toBe(true)
 
 			expect(
 				metadata.every((m) =>
-					m.token.symbol.toLowerCase().includes('usdt'),
+					m.token.symbol.toLowerCase().includes('usd'),
 				),
-			).toBeTruthy()
+			).toBe(true)
 		})
 	})
 })

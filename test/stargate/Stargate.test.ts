@@ -38,7 +38,7 @@ makeSuite('Stargate', () => {
 		const bridgeAddr = await Stargate.getBridgeAddress(USDT0)
 		await USDT0.approve(bridgeAddr, amount)
 
-		const bridgeTx = await Stargate.bridge(
+		const result = await Stargate.bridge(
 			USDT0,
 			fuse.id,
 			recipient,
@@ -46,9 +46,9 @@ makeSuite('Stargate', () => {
 			true,
 		)
 
-		expect(bridgeTx).toBeDefined()
-		expect(bridgeTx.hash).toBeDefined()
-		expect(bridgeTx.chainId).toBe(arbitrum.id)
+		expect(result).toBeDefined()
+		expect(result.bridgeTx.srcTx.hash).toBeDefined()
+		expect(result.bridgeTx.srcTx.chainId).toBe(arbitrum.id)
 	})
 
 	it('MUST simulate sending Native', async () => {
@@ -61,7 +61,7 @@ makeSuite('Stargate', () => {
 
 		await setNativeBalance(wallet, recipient, amount * 2n)
 
-		const bridgeTx = await Stargate.bridge(
+		const result = await Stargate.bridge(
 			native,
 			fuse.id,
 			recipient,
@@ -69,8 +69,8 @@ makeSuite('Stargate', () => {
 			true,
 		)
 
-		expect(bridgeTx).toBeDefined()
-		expect(bridgeTx.hash).toBeDefined()
-		expect(bridgeTx.chainId).toBe(arbitrum.id)
+		expect(result).toBeDefined()
+		expect(result.bridgeTx.srcTx.hash).toBeDefined()
+		expect(result.bridgeTx.srcTx.chainId).toBe(arbitrum.id)
 	})
 })
