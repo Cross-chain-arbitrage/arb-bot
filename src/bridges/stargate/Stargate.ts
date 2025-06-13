@@ -1,3 +1,4 @@
+import TTLCache from '@isaacs/ttlcache'
 import { formatEther, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
@@ -21,7 +22,15 @@ export class StargateError extends Error {
 	}
 }
 
+const QUOTE_CACHE_TTL = 1000 * 60 * 1 // 1 minute
+
+type RequestId = string
+
 export class Stargate {
+	static quoteCache = new TTLCache<RequestId, QuoteResult>({
+		ttl: QUOTE_CACHE_TTL,
+	})
+
 	static async bridge(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
@@ -240,6 +249,19 @@ export class Stargate {
 		toChainId: number,
 		fromChainId: number,
 	): Promise<QuoteResult> {
+		const cacheKey = this.getCacheKey(
+			await TokenUtils.fromAddress(metadata.token.address, fromChainId),
+			toChainId,
+			amount,
+		)
+
+		const cachedQuote = this.quoteCache.get(cacheKey)
+
+		if (cachedQuote) {
+			console.log('~ Stargate ~ _quote ~ Used cached quote', cacheKey)
+			return cachedQuote
+		}
+
 		const messagingFee = await Stargate.quoteSend(
 			metadata.address,
 			amount,
@@ -248,52 +270,44 @@ export class Stargate {
 			fromChainId,
 		)
 
-		switch (metadata.stargateType) {
-			case 'POOL':
-				return {
-					isOFT: false,
-					messagingFee,
-				}
-			case 'OFT': {
-				const [oftLimit, oftFeeDetails, oftReceipt] =
-					await Stargate.quoteOFT(
-						metadata.address,
-						amount,
-						recipient,
-						toChainId,
-						fromChainId,
-					)
-
-				if (oftLimit.minAmountLD > amount) {
-					throw new StargateError(
-						`Bridging min amount is greater than the amount, needed ${oftLimit.minAmountLD}, has ${amount}`,
-					)
-				}
-
-				if (oftLimit.maxAmountLD < amount) {
-					throw new StargateError(
-						`Bridging max amount is less than the amount, needed ${oftLimit.maxAmountLD}, has ${amount}`,
-					)
-				}
-
-				return {
-					isOFT: true,
-					messagingFee,
-					oftFees: {
-						oftLimit,
-						oftFeeDetails,
-						oftReceipt,
-					},
-				}
-			}
-			case 'NATIVE':
-				return {
-					isOFT: false,
-					messagingFee,
-				}
-			default:
-				throw new StargateError('Invalid stargate type')
+		const result: QuoteResult = {
+			isOFT: false,
+			messagingFee,
 		}
+
+		if (metadata.stargateType === 'OFT') {
+			const [oftLimit, oftFeeDetails, oftReceipt] =
+				await Stargate.quoteOFT(
+					metadata.address,
+					amount,
+					recipient,
+					toChainId,
+					fromChainId,
+				)
+
+			if (oftLimit.minAmountLD > amount) {
+				throw new StargateError(
+					`Bridging min amount is greater than the amount, needed ${oftLimit.minAmountLD}, has ${amount}`,
+				)
+			}
+
+			if (oftLimit.maxAmountLD < amount) {
+				throw new StargateError(
+					`Bridging max amount is less than the amount, needed ${oftLimit.maxAmountLD}, has ${amount}`,
+				)
+			}
+
+			result.isOFT = true
+			result.oftFees = {
+				oftLimit,
+				oftFeeDetails,
+				oftReceipt,
+			}
+		}
+
+		this.quoteCache.set(cacheKey, result)
+
+		return result
 	}
 
 	static async quoteSend(
@@ -432,5 +446,13 @@ export class Stargate {
 			// TODO: WILL BREAK IN CASE OF DIFFERENT DECIMALS
 			return amountIn
 		}
+	}
+
+	private static getCacheKey(
+		token: Token | NativeCurrency,
+		toChainId: number,
+		amount: bigint,
+	): string {
+		return `${token.chainId}:${token.address}:${toChainId}:${amount}`
 	}
 }

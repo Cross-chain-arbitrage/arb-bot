@@ -138,24 +138,11 @@ export class Graph {
 
 	addStargateBridgeEdge(from: GraphNode, to: GraphNode) {
 		const getRate = async (amountIn: bigint) => {
-			const cacheKey = this.getCacheKey(
-				{ from, to, type: ActionType.STARGATE_BRIDGE },
-				amountIn,
-			)
-			const cachedResult = this.getRateCache.get(cacheKey)
-
-			if (cachedResult) return cachedResult
-
 			const quote = await Stargate.quote(from, to.chainId, amountIn)
 
 			const amountOut = Stargate.getExpectedAmountOut(quote, amountIn)
 
 			const rate = this.calcRate(amountIn, amountOut)
-
-			this.getRateCache.set(cacheKey, {
-				rate,
-				amountOut,
-			})
 
 			return {
 				rate,
