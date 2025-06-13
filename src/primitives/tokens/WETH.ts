@@ -27,13 +27,20 @@ export class WETH extends Token {
 			throw new WethError('Insufficient balance')
 		}
 
-		return this.wallet.writeContract({
+		const hash = await this.wallet.writeContract({
 			address: this.address,
 			abi: WETH_ABI,
 			functionName: 'deposit',
 			account: this.wallet.account!,
 			chain: this.wallet.chain,
 		})
+
+		const receipt = await this.client.waitForTransactionReceipt({ hash })
+
+		if (receipt.status !== 'success')
+			throw new WethError(`Deposit failed, tx: ${hash}`)
+
+		return receipt
 	}
 
 	async withdraw(amount: bigint) {
@@ -43,7 +50,7 @@ export class WETH extends Token {
 			throw new WethError('Insufficient balance')
 		}
 
-		return this.wallet.writeContract({
+		const hash = await this.wallet.writeContract({
 			address: this.address,
 			abi: WETH_ABI,
 			functionName: 'withdraw',
@@ -51,5 +58,12 @@ export class WETH extends Token {
 			chain: this.wallet.chain,
 			args: [amount],
 		})
+
+		const receipt = await this.client.waitForTransactionReceipt({ hash })
+
+		if (receipt.status !== 'success')
+			throw new WethError(`Withdraw failed, tx: ${hash}`)
+
+		return receipt
 	}
 }
