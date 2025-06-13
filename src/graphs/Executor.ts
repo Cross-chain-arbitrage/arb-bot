@@ -45,14 +45,21 @@ export class Executor {
 		return amountIn //actual end amount
 	}
 
-	static async executeEdge(edge: GraphEdge, amountIn: bigint) {
+	static async executeEdge(
+		edge: GraphEdge,
+		amountIn: bigint,
+	): Promise<{
+		amountOut: bigint
+		srcTxHash: string
+		dstTxHash: string
+	}> {
 		switch (edge.type) {
 			case ActionType.SWAP:
 				return await this.executeSwap(edge, amountIn)
 
-			// case ActionType.STARGATE_BRIDGE:
-			// 	await this.executeStargateBridge(edge, amountIn)
-			// 	break
+			case ActionType.STARGATE_BRIDGE:
+				return await this.executeStargateBridge(edge, amountIn)
+
 			case ActionType.FUSE_BRIDGE:
 				return await this.executeFuseBridge(edge, amountIn)
 
@@ -61,9 +68,6 @@ export class Executor {
 
 			case ActionType.UNWRAP:
 				return await this.executeUnwrap(edge, amountIn)
-
-			default:
-				throw new Error(`Unknown edge type: ${edge.type}`)
 		}
 	}
 
