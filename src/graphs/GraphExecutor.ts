@@ -8,7 +8,7 @@ import { shortenAddress } from '../utils/common'
 import logger from '../utils/logger'
 import { ActionType, GraphEdge } from './Graph'
 import { ArbitragePath } from './path'
-export class Executor {
+export class GraphExecutor {
 	/**
 	 * Execute the arbitrage path
 	 * @returns actual end amount

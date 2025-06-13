@@ -8,8 +8,8 @@ import { StargateBridgeTx } from '../../src/bridges/stargate/StargateBridgeTx'
 import { Pool } from '../../src/dex/Pool'
 import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { UniV3Pool } from '../../src/dex/uniswapV3/Pool'
-import { Executor } from '../../src/graphs/Executor'
 import { ActionType, GraphEdge } from '../../src/graphs/Graph'
+import { GraphExecutor } from '../../src/graphs/GraphExecutor'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
@@ -41,7 +41,7 @@ let walletClient: WalletClient
 let botAddress: Address
 const getRate = () => Promise.resolve({ rate: 1, amountOut: 0n })
 
-makeSuite('Executor', () => {
+makeSuite('GraphExecutor', () => {
 	useAnvil({
 		chainId: arbitrum.id,
 		rpcUrl: getAlchemyRpcUrl(arbitrum.id),
@@ -116,7 +116,7 @@ makeSuite('Executor', () => {
 
 			const usdtBalanceBefore = await usdtToken.balanceOf(botAddress)
 
-			const result = await Executor.executeSwap(edge, inputAmount)
+			const result = await GraphExecutor.executeSwap(edge, inputAmount)
 
 			const usdtBalanceAfter = await usdtToken.balanceOf(botAddress)
 
@@ -130,7 +130,7 @@ makeSuite('Executor', () => {
 			const inputAmount = wethToken.parseUnits('1000000') // Very large amount
 
 			await expect(
-				Executor.executeSwap(edge, inputAmount),
+				GraphExecutor.executeSwap(edge, inputAmount),
 			).rejects.toThrow()
 		})
 
@@ -146,14 +146,14 @@ makeSuite('Executor', () => {
 			}
 
 			await expect(
-				Executor.executeSwap(edge, inputAmount),
+				GraphExecutor.executeSwap(edge, inputAmount),
 			).rejects.toThrow('Cannot swap from native currency')
 
 			edge.from = wethToken
 			edge.to = nativeCurrency
 
 			await expect(
-				Executor.executeSwap(edge, inputAmount),
+				GraphExecutor.executeSwap(edge, inputAmount),
 			).rejects.toThrow('Cannot swap to native currency')
 		})
 	})
@@ -176,7 +176,7 @@ makeSuite('Executor', () => {
 				getRate,
 			}
 
-			const result = await Executor.executeWrap(edge, inputAmount)
+			const result = await GraphExecutor.executeWrap(edge, inputAmount)
 
 			expect(result.amountOut).toBe(inputAmount)
 			expect(result.srcTxHash).toBeDefined()
@@ -198,7 +198,7 @@ makeSuite('Executor', () => {
 			}
 
 			await expect(
-				Executor.executeWrap(edge, parseEther('0.1')),
+				GraphExecutor.executeWrap(edge, parseEther('0.1')),
 			).rejects.toThrow('Cannot wrap non-WETH token')
 		})
 	})
@@ -223,7 +223,7 @@ makeSuite('Executor', () => {
 					Promise.resolve({ rate: 1, amountOut: inputAmount }),
 			}
 
-			const result = await Executor.executeUnwrap(edge, inputAmount)
+			const result = await GraphExecutor.executeUnwrap(edge, inputAmount)
 
 			expect(result.amountOut).toBe(inputAmount)
 			expect(result.srcTxHash).toBeDefined()
@@ -245,7 +245,7 @@ makeSuite('Executor', () => {
 			}
 
 			await expect(
-				Executor.executeUnwrap(edge, parseEther('0.1')),
+				GraphExecutor.executeUnwrap(edge, parseEther('0.1')),
 			).rejects.toThrow('Cannot unwrap non-WETH token')
 		})
 	})
@@ -283,7 +283,10 @@ makeSuite('Executor', () => {
 				getRate,
 			}
 
-			const result = await Executor.executeFuseBridge(edge, inputAmount)
+			const result = await GraphExecutor.executeFuseBridge(
+				edge,
+				inputAmount,
+			)
 
 			expect(result.amountOut).toBe(inputAmount)
 			expect(result.srcTxHash).toBe(
@@ -325,7 +328,7 @@ makeSuite('Executor', () => {
 				getRate,
 			}
 
-			const result = await Executor.executeStargateBridge(
+			const result = await GraphExecutor.executeStargateBridge(
 				edge,
 				inputAmount,
 			)
