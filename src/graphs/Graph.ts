@@ -28,7 +28,7 @@ export type GraphEdgeAction = (
 			pool: Pool
 	  }
 	| {
-			type: ActionType
+			type: Exclude<ActionType, ActionType.SWAP>
 	  }
 ) & {
 	getRate: GetRate
