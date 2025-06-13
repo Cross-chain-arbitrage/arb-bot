@@ -1,13 +1,12 @@
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Pool } from '../dex/Pool'
 import { Token } from '../primitives/tokens/Token'
-import { WETH } from '../primitives/tokens/WETH'
+import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import { ClientManager } from '../utils/ClientManager'
 import { shortenAddress } from '../utils/common'
 import logger from '../utils/logger'
 import { ActionType, GraphEdge } from './Graph'
 import { ArbitragePath } from './path'
-
 export class Executor {
 	/**
 	 * Execute the arbitrage path
@@ -76,6 +75,18 @@ export class Executor {
 	) {
 		const { pool, from, to } = edge
 
+		if (from.isNative()) {
+			throw new Error(
+				`Cannot swap from native currency: ${from.symbol} ${from.chainId} ${shortenAddress(from.address)}`,
+			)
+		}
+
+		if (to.isNative()) {
+			throw new Error(
+				`Cannot swap to native currency: ${to.symbol} ${to.chainId} ${shortenAddress(to.address)}`,
+			)
+		}
+
 		const { amountOut, receipt } = await pool.swap({
 			amountIn: inputAmount,
 			tokenIn: from,
@@ -92,7 +103,7 @@ export class Executor {
 	static async executeWrap(edge: GraphEdge, inputAmount: bigint) {
 		const { to } = edge
 
-		if (!(to instanceof WETH)) {
+		if (!(to instanceof WrappedNative)) {
 			throw new Error(
 				`Cannot wrap non-WETH token: ${to.symbol} ${to.chainId} ${shortenAddress(to.address)}`,
 			)
@@ -111,7 +122,7 @@ export class Executor {
 	static async executeUnwrap(edge: GraphEdge, inputAmount: bigint) {
 		const { from } = edge
 
-		if (!(from instanceof WETH)) {
+		if (!(from instanceof WrappedNative)) {
 			throw new Error(
 				`Cannot unwrap non-WETH token: ${from.symbol} ${from.chainId} ${shortenAddress(from.address)}`,
 			)

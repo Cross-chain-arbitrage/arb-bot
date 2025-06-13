@@ -1,3 +1,4 @@
+import { arbitrum } from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
 import { getAccountAddress } from '../../utils/getAccount'
 import { NativeCurrency } from './NativeCurrency'
@@ -12,11 +13,26 @@ export class WethError extends Error {
 	}
 }
 
-export class WETH extends Token {
+export const wrappedTokens: Record<number, Address | undefined> = {
+	[arbitrum.id]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
+}
+
+export class WrappedNative extends Token {
 	private readonly native: NativeCurrency
 
-	constructor(address: Address, chainId: number) {
-		super(address, chainId, 'WETH', 18, 'Wrapped Ether')
+	constructor(
+		chainId: number,
+		symbol: string,
+		decimals: number,
+		name: string,
+	) {
+		const address = wrappedTokens[chainId]
+
+		if (!address) {
+			throw new Error(`Wrapped token not found for chain ${chainId}`)
+		}
+
+		super(address, chainId, symbol, decimals, name)
 		this.native = TokenUtils.getNative(chainId)
 	}
 
