@@ -1,5 +1,5 @@
 import TTLCache from '@isaacs/ttlcache'
-import { formatEther, zeroHash } from 'viem'
+import { formatEther, zeroAddress, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
 import { STARGATE_POOL_ABI } from '../../abi/stargate/stgPool'
@@ -49,6 +49,8 @@ export class Stargate {
 		if (tokenIn.chainId === toChainId) {
 			throw new StargateError('Cannot send to the same chain')
 		}
+
+		this.validateRecipient(tokenIn.chainId, recipient)
 
 		const tokenMetadata = await StargateAPI.getTokenMetadata(tokenIn)
 
@@ -471,5 +473,19 @@ export class Stargate {
 		amount: bigint,
 	): string {
 		return `${token.chainId}:${token.address}:${toChainId}:${amount}`
+	}
+
+	static validateRecipient(chainId: number, recipient: Address) {
+		if (recipient === zeroAddress) {
+			throw new StargateError('Recipient cannot be the zero address')
+		}
+
+		const wallet = ClientManager.getWalletClient(chainId)
+
+		if (wallet.account!.address !== recipient) {
+			throw new StargateError(
+				'Recipient is not the same as the wallet address',
+			)
+		}
 	}
 }
