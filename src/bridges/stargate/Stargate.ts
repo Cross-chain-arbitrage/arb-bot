@@ -242,6 +242,26 @@ export class Stargate {
 		)
 	}
 
+	static async approveToBridge(
+		tokenIn: Token | NativeCurrency,
+		amount: bigint,
+	) {
+		if (tokenIn instanceof NativeCurrency) return
+
+		const poolOrOFT = await Stargate.getBridgeAddress(tokenIn)
+
+		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+		const userAddr = wallet.account!.address
+
+		const allowance = await tokenIn.allowance(userAddr, poolOrOFT)
+
+		if (allowance >= amount) return
+
+		const tx = await tokenIn.approve(poolOrOFT, amount)
+
+		return tx
+	}
+
 	private static async _quote(
 		metadata: StargateTokenMetadata,
 		amount: bigint,
