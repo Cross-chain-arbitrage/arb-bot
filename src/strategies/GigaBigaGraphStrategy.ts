@@ -113,11 +113,9 @@ export class GigaBigaGraphStrategy {
 
 			try {
 				metadata = await StargateAPI.getTokenMetadata(token)
-				console.log('Found Stargate token', token.symbol, token.chainId)
+				console.log('Found Stargate token', token.toString())
 			} catch (error) {
-				console.log(
-					`${token.symbol} ${token.chainId} ${token.address} is not a stargate token`,
-				)
+				console.log(`${token.toString()} is not a stargate token`)
 				continue
 			}
 

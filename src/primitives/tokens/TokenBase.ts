@@ -1,4 +1,5 @@
 import { Address, formatUnits, parseUnits } from 'viem'
+import { shortenAddress } from '../../utils/common'
 import { BaseContract } from '../contracts/BaseContract'
 export class TokenBaseError extends Error {
 	constructor(message: string) {
@@ -39,5 +40,13 @@ export abstract class TokenBase extends BaseContract {
 
 	get id(): string {
 		return `${this.chainId}:${this.address.toLowerCase()}`
+	}
+
+	toString(): string {
+		return `${this.symbol} ${this.chainId}`
+	}
+
+	toStringFull(): string {
+		return `${this.symbol} ${this.chainId} ${shortenAddress(this.address)}`
 	}
 }

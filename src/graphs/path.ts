@@ -63,7 +63,7 @@ export async function findArbitragePath(
 
 			const { rate, amountOut } = await quote
 
-			const fromTo = `${from.chainId}:${from.address} -> ${to.chainId}:${to.address}`
+			const fromTo = `${from.toString()} -> ${to.toString()}`
 
 			edgesWithRate.set(fromTo, {
 				rate,
