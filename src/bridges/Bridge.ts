@@ -6,7 +6,8 @@ import { Tx } from '../primitives/transactions/Tx'
 export interface BridgeTx {
 	srcTx: Tx
 	dstTx?: Tx
-	token: Token | NativeCurrency
+	srcToken: Token | NativeCurrency
+	dstToken: Token | NativeCurrency
 	amount: bigint
 	waitForBridgeToFinish(): Promise<unknown>
 }

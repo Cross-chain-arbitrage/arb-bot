@@ -18,12 +18,11 @@ export class StargateBridgeTxError extends Error {
 export class StargateBridgeTx extends LZBridgeTx {
 	constructor(
 		srcTxHash: Hash,
-		srcChainId: number,
 		srcToken: Token | NativeCurrency,
 		public readonly dstToken: Token | NativeCurrency,
 		amount: bigint,
 	) {
-		super(srcTxHash, srcChainId, srcToken, amount)
+		super(srcTxHash, srcToken.chainId, srcToken, dstToken, amount)
 	}
 
 	async getAmountOut(): Promise<{
@@ -31,7 +30,7 @@ export class StargateBridgeTx extends LZBridgeTx {
 		amountOut: bigint
 	}> {
 		const message = await LayerZeroScanAPI.waitForDeliveryStatus(
-			this.hash as Hash,
+			this.srcTx.hash as Hash,
 		)
 
 		if (!message.dstTxHash) {
@@ -41,7 +40,7 @@ export class StargateBridgeTx extends LZBridgeTx {
 		}
 
 		const hash = message.dstTxHash as Hash
-		const client = ClientManager.getClient(this.chainId)
+		const client = ClientManager.getClient(this.srcTx.chainId)
 
 		const receipt = await client.waitForTransactionReceipt({ hash })
 
@@ -52,7 +51,8 @@ export class StargateBridgeTx extends LZBridgeTx {
 
 		const transferEvent = receipt.logs
 			.map((log) => {
-				if (!isSameAddress(log.address, this.token.address)) return null
+				if (!isSameAddress(log.address, this.dstToken.address))
+					return null
 
 				const event = decodeEventLog({
 					abi: ERC20_ABI,

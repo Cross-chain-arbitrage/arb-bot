@@ -5,6 +5,7 @@ import { STARGATE_POOL_ABI } from '../../abi/stargate/stgPool'
 import { getChainEIdByNativeChainId } from '../../data-apis/layerzeroscan/utils'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
 import logger from '../../utils/logger'
 import { padAddressToBytes32 } from '../../utils/types'
@@ -109,14 +110,14 @@ export class Stargate {
 		Stargate.logTransactionDetails(tokenIn, quote)
 
 		const expectedAmountOut = Stargate.getExpectedAmountOut(quote, amount)
+		const dstToken = await Stargate.getDstToken(tokenIn, toChainId)
 
 		if (simulateOnly) {
 			return {
 				bridgeTx: new StargateBridgeTx(
 					zeroHash,
-					tokenIn.chainId,
 					tokenIn,
-					tokenIn,
+					dstToken,
 					amount,
 				),
 				expectedAmountOut: amount,
@@ -126,13 +127,7 @@ export class Stargate {
 		const txHash = await wallet.writeContract(request)
 
 		return {
-			bridgeTx: new StargateBridgeTx(
-				txHash,
-				tokenIn.chainId,
-				tokenIn,
-				tokenIn,
-				amount,
-			),
+			bridgeTx: new StargateBridgeTx(txHash, tokenIn, dstToken, amount),
 			expectedAmountOut,
 		}
 	}
@@ -402,15 +397,33 @@ export class Stargate {
 		return chain.chainKey
 	}
 
-	// static async getDstToken(
-	// 	srcToken: Token | NativeCurrency,
-	// 	toChainId: number,
-	// ): Promise<Token | NativeCurrency> {
-	// 	const tokenMetadata = await StargateAPI.getTokenMetadata(srcToken)
-	// 	const assetId = tokenMetadata.assetId
+	static async getDstToken(
+		srcToken: Token | NativeCurrency,
+		toChainId: number,
+	): Promise<Token | NativeCurrency> {
+		const assetMetadata =
+			await StargateAPI.getSameAssetMetadataAcrossChains(srcToken)
 
-	// 	return tokenMetadata.token
-	// }
+		const dstTokens = assetMetadata.filter(
+			(token) => token.chainKey === Stargate.getChainKey(toChainId),
+		)
+
+		if (dstTokens.length > 1) {
+			throw new StargateError(
+				`Multiple tokens found for ${srcToken.symbol} on chain ${toChainId}`,
+			)
+		}
+
+		if (dstTokens.length === 0) {
+			throw new StargateError(
+				`No token found for ${srcToken.symbol} on chain ${toChainId}`,
+			)
+		}
+
+		const dstToken = dstTokens[0].token
+
+		return TokenUtils.fromAddress(dstToken.address, toChainId)
+	}
 
 	static getExpectedAmountOut(quote: QuoteResult, amountIn: bigint): bigint {
 		if (quote.oftFees) {
