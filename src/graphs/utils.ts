@@ -1,5 +1,6 @@
+import { Stargate } from '../bridges/stargate/Stargate'
 import { GeckoTerminalAPI } from '../data-apis/geckoterminal/GeckoTerminalAPI'
-import { GraphNode } from './Graph'
+import { Graph, GraphNode } from './Graph'
 import { ArbitragePath } from './path'
 import { EdgeWithRate, getMermaidGraph } from './visualization'
 
@@ -49,4 +50,49 @@ export async function prettyPrintPath(
 		`($${(priceETH * Number(startToken.formatUnits(path.profitAmount))).toFixed(2)})`,
 	)
 	console.log('Profit percentage', `${path.profitPercentage.toFixed(2)}%`)
+}
+
+export function printGraph(graph: Graph) {
+	let str = `flowchart TB`
+	const nodesBySubgraph = new Map<number, GraphNode[]>()
+
+	for (const node of graph.nodes) {
+		const subgraph = nodesBySubgraph.get(node.chainId)
+
+		if (!subgraph) {
+			nodesBySubgraph.set(node.chainId, [node])
+			continue
+		}
+
+		subgraph.push(node)
+	}
+
+	for (const [chainId, nodes] of nodesBySubgraph) {
+		const subgraph = `\tsubgraph ${getChainId(chainId)}["${getChainName(chainId)}"]`
+		str += `\n${subgraph}`
+
+		for (const node of nodes) {
+			str += `\n\t\t${getNodeId(node)}[${node.symbol}]`
+		}
+
+		str += `\n\tend`
+	}
+
+	for (const edge of graph.edges) {
+		str += `\n\t${getNodeId(edge.from)} --> |"${edge.type}"| ${getNodeId(edge.to)}`
+	}
+
+	console.log(str)
+}
+
+function getNodeId(node: GraphNode) {
+	return `Node_${node.id.split(':').join('_')}`
+}
+
+function getChainId(chainId: number) {
+	return `Chain_${chainId}`
+}
+
+function getChainName(chainId: number) {
+	return Stargate.getChainKey(chainId) + ` (${chainId})`
 }

@@ -4,7 +4,7 @@ import { Pool } from '../dex/Pool'
 import { PoolUtils } from '../dex/PoolUtils'
 import { ActionType, Graph, GraphNode } from '../graphs/Graph'
 import { findArbitragePath } from '../graphs/path'
-import { prettyPrintPath } from '../graphs/utils'
+import { prettyPrintPath, printGraph } from '../graphs/utils'
 import { poolsByChain } from '../pools'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
@@ -128,17 +128,28 @@ export class GigaBigaGraphStrategy {
 			assetGroups.get(assetId)?.add(token)
 		}
 
+		console.log('assetGroups', assetGroups)
+
 		const pairs: [GraphNode, GraphNode][] = []
 
 		for (const assets of assetGroups.values()) {
 			const tokens = Array.from(assets)
 
 			for (let i = 0; i < tokens.length; i++) {
-				for (let j = i + 1; j < tokens.length; j++) {
+				for (let j = 0; j < tokens.length; j++) {
+					if (tokens[i].id === tokens[j].id) continue
+
 					pairs.push([tokens[i], tokens[j]])
 				}
 			}
 		}
+
+		console.log(
+			'pairs',
+			pairs.map(
+				([from, to]) => `${from.toString()} --> ${to.toString()}`,
+			),
+		)
 
 		console.log('pairs.length', pairs.length)
 
@@ -256,6 +267,8 @@ async function main() {
 
 	console.log('Nodes:', strategy.graph.nodes.size)
 	console.log('Edges:', strategy.graph.edges.size)
+
+	printGraph(strategy.graph)
 
 	await prettyPrintPath(
 		ETH_ARB,

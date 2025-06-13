@@ -58,7 +58,7 @@ export const poolsByChain: Record<number, Pool[]> = {
 	[chains.arbitrum.id]: [
 		{
 			type: PoolType.UNIV3,
-			address: '0xbE3aD6a5669Dc0B8b12FeBC03608860C31E2eef6', // WETH/USDC
+			address: '0xbE3aD6a5669Dc0B8b12FeBC03608860C31E2eef6', // USDT/USDC
 		},
 		{
 			type: PoolType.UNIV3,
@@ -67,6 +67,10 @@ export const poolsByChain: Record<number, Pool[]> = {
 		{
 			type: PoolType.UNIV3,
 			address: '0x2f5e87C9312fa29aed5c179E456625D79015299c', // WETH/WBTC
+		},
+		{
+			type: PoolType.UNIV3,
+			address: '0xC6962004f452bE9203591991D15f6b388e09E8D0', // WETH/USDC
 		},
 	],
 	// [mainnet.id]: [

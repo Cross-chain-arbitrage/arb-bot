@@ -54,7 +54,8 @@ const CHAINID_TO_EID = {
 	8453: 30184, // Base
 	122: 30138, // Fuse
 	43111: 30329, // Hemi
-	1890: 30309,
+	1890: 30309, // Lightlink
+	1514: 30364, // Story
 }
 
 export function getChainEIdByNativeChainId(chainId: number) {
