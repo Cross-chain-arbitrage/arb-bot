@@ -1,4 +1,5 @@
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
+import { Stargate } from '../bridges/stargate/Stargate'
 import { Pool } from '../dex/Pool'
 import { Token } from '../primitives/tokens/Token'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
@@ -21,18 +22,18 @@ export class Executor {
 			profitPercentage,
 		} = arbitragePath
 
-		let inputAmount = startAmount
+		let amountIn = startAmount
 
 		for (const edge of edges) {
 			const { from, to } = edge
 			const { amountOut, dstTxHash, srcTxHash } = await this.executeEdge(
 				edge,
-				inputAmount,
+				amountIn,
 			)
 
-			inputAmount = amountOut
+			amountIn = amountOut
 
-			const baseLogMsg = `${edge.type} from: ${from.symbol}-${from.chainId} to:${to.symbol}-${to.chainId} input:${from.formatUnits(inputAmount)} output:${to.formatUnits(amountOut)}`
+			const baseLogMsg = `${edge.type} from: ${from.symbol}-${from.chainId} to:${to.symbol}-${to.chainId} input:${from.formatUnits(amountIn)} output:${to.formatUnits(amountOut)}`
 			const logMsg =
 				srcTxHash === dstTxHash
 					? `${baseLogMsg} tx:${dstTxHash}`
@@ -41,25 +42,25 @@ export class Executor {
 			logger.info(logMsg)
 		}
 
-		return inputAmount //actual end amount
+		return amountIn //actual end amount
 	}
 
-	static async executeEdge(edge: GraphEdge, inputAmount: bigint) {
+	static async executeEdge(edge: GraphEdge, amountIn: bigint) {
 		switch (edge.type) {
 			case ActionType.SWAP:
-				return await this.executeSwap(edge, inputAmount)
+				return await this.executeSwap(edge, amountIn)
 
 			// case ActionType.STARGATE_BRIDGE:
-			// 	await this.executeStargateBridge(edge, inputAmount)
+			// 	await this.executeStargateBridge(edge, amountIn)
 			// 	break
 			case ActionType.FUSE_BRIDGE:
-				return await this.executeFuseBridge(edge, inputAmount)
+				return await this.executeFuseBridge(edge, amountIn)
 
 			case ActionType.WRAP:
-				return await this.executeWrap(edge, inputAmount)
+				return await this.executeWrap(edge, amountIn)
 
 			case ActionType.UNWRAP:
-				return await this.executeUnwrap(edge, inputAmount)
+				return await this.executeUnwrap(edge, amountIn)
 
 			default:
 				throw new Error(`Unknown edge type: ${edge.type}`)
@@ -71,7 +72,7 @@ export class Executor {
 			type: ActionType.SWAP
 			pool: Pool
 		},
-		inputAmount: bigint,
+		amountIn: bigint,
 	) {
 		const { pool, from, to } = edge
 
@@ -88,7 +89,7 @@ export class Executor {
 		}
 
 		const { amountOut, receipt } = await pool.swap({
-			amountIn: inputAmount,
+			amountIn: amountIn,
 			tokenIn: from,
 			tokenOut: to,
 		})
@@ -100,7 +101,7 @@ export class Executor {
 		}
 	}
 
-	static async executeWrap(edge: GraphEdge, inputAmount: bigint) {
+	static async executeWrap(edge: GraphEdge, amountIn: bigint) {
 		const { to } = edge
 
 		if (!(to instanceof WrappedNative)) {
@@ -109,17 +110,17 @@ export class Executor {
 			)
 		}
 
-		const receipt = await to.deposit(inputAmount)
+		const receipt = await to.deposit(amountIn)
 
 		// output amount is the same as input amount
 		return {
-			amountOut: inputAmount,
+			amountOut: amountIn,
 			srcTxHash: receipt.transactionHash,
 			dstTxHash: receipt.transactionHash,
 		}
 	}
 
-	static async executeUnwrap(edge: GraphEdge, inputAmount: bigint) {
+	static async executeUnwrap(edge: GraphEdge, amountIn: bigint) {
 		const { from } = edge
 
 		if (!(from instanceof WrappedNative)) {
@@ -128,24 +129,24 @@ export class Executor {
 			)
 		}
 
-		const receipt = await from.withdraw(inputAmount)
+		const receipt = await from.withdraw(amountIn)
 
 		// output amount is the same as input amount
 		return {
-			amountOut: inputAmount,
+			amountOut: amountIn,
 			srcTxHash: receipt.transactionHash,
 			dstTxHash: receipt.transactionHash,
 		}
 	}
 
-	static async executeFuseBridge(edge: GraphEdge, inputAmount: bigint) {
+	static async executeFuseBridge(edge: GraphEdge, amountIn: bigint) {
 		const { from, to } = edge
 
 		const tx = await FuseBridge.bridge(
 			from as Token,
 			to.chainId,
 			ClientManager.getWalletClient(to.chainId).account!.address,
-			inputAmount,
+			amountIn,
 		)
 
 		const message = await tx.waitForBridgeToFinish()
@@ -153,29 +154,28 @@ export class Executor {
 		// output amount is the same as input amount
 		// TODO: retrieve amount out from dst tx, because decimals could be different
 		return {
-			amountOut: inputAmount,
+			amountOut: amountIn,
 			srcTxHash: message.srcTxHash!,
 			dstTxHash: message.dstTxHash!,
 		}
 	}
 
-	// static async executeStargateBridge(
-	// 	edge: GraphEdge & {
-	// 		type: ActionType.STARGATE_BRIDGE
-	// 	},
-	// 	inputAmount: bigint,
-	// ) {
-	// 	const { from, to } = edge
+	static async executeStargateBridge(edge: GraphEdge, amountIn: bigint) {
+		const { from, to } = edge
 
-	// 	const tx = await Stargate.bridge(
-	// 		from,
-	// 		to.chainId,
-	// 		to.address,
-	// 		inputAmount,
-	// 	)
+		const result = await Stargate.bridge(
+			from,
+			to.chainId,
+			ClientManager.getWalletClient(to.chainId).account!.address,
+			amountIn,
+		)
 
-	// 	await tx.waitForBridgeToFinish()
+		const message = await result.bridgeTx.waitForBridgeToFinish()
 
-	// 	return tx.amount
-	// }
+		return {
+			amountOut: result.expectedAmountOut,
+			srcTxHash: message.srcTxHash!,
+			dstTxHash: message.dstTxHash!,
+		}
+	}
 }

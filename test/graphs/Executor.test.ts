@@ -1,5 +1,10 @@
 import { parseEther, WalletClient } from 'viem'
-import { arbitrum } from 'viem/chains'
+import { arbitrum, fuse } from 'viem/chains'
+
+import { Message } from '@layerzerolabs/scan-client'
+import { FuseBridge } from '../../src/bridges/FuseBridge/FuseBridge'
+import { FuseBridgeTx } from '../../src/bridges/FuseBridge/FuseBridgeTx'
+import { StargateBridgeTx } from '../../src/bridges/stargate/StargateBridgeTx'
 import { Pool } from '../../src/dex/Pool'
 import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { UniV3Pool } from '../../src/dex/uniswapV3/Pool'
@@ -16,10 +21,12 @@ import { makeSuite } from '../utils/makeSuite'
 
 /* ======== Constants arbitrum ======== */
 
-const wethAddress = '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
+const wethArbAddress = '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
 const usdtAddress = '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
-const wbtcAddress = '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f'
+const wbtcArbAddress = '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f'
+const wbtcFuseAddress = '0x34009565bfEeFded0F7e774629a745636Bf35E82'
 const poolWethUsdtAddress = '0x641C00A822e8b671738d32a431a4Fb6074E5c79d'
+const wethFuseAddress = '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590'
 
 /* ======== Variables ======== */
 
@@ -27,6 +34,9 @@ let pool: Pool
 let wethToken: WrappedNative
 let nativeCurrency: NativeCurrency
 let usdtToken: Token
+let wbtcArbToken: Token
+let wbtcFuseToken: Token
+let wethFuseToken: Token
 let walletClient: WalletClient
 let botAddress: Address
 const getRate = () => Promise.resolve({ rate: 1, amountOut: 0n })
@@ -46,12 +56,29 @@ makeSuite('Executor', () => {
 			arbitrum.id,
 			PoolType.UNIV3,
 		)
+
 		nativeCurrency = TokenUtils.getNative(arbitrum.id)
-		wethToken = await TokenUtils.fromAddress(wethAddress, arbitrum.id)
-		usdtToken = await TokenUtils.fromAddress<Token>(
-			usdtAddress,
-			arbitrum.id,
-		)
+
+		// Use Promise.all to load all tokens concurrently
+		const [
+			wethResult,
+			usdtResult,
+			wbtcArbResult,
+			wbtcFuseResult,
+			wethFuseResult,
+		] = await Promise.all([
+			TokenUtils.fromAddress(wethArbAddress, arbitrum.id),
+			TokenUtils.fromAddress(usdtAddress, arbitrum.id),
+			TokenUtils.fromAddress(wbtcArbAddress, arbitrum.id),
+			TokenUtils.fromAddress(wbtcFuseAddress, fuse.id),
+			TokenUtils.fromAddress(wethFuseAddress, fuse.id),
+		])
+
+		wethToken = wethResult as WrappedNative
+		usdtToken = usdtResult as Token
+		wbtcArbToken = wbtcArbResult as Token
+		wbtcFuseToken = wbtcFuseResult as Token
+		wethFuseToken = wethFuseResult as Token
 	})
 
 	describe('executeSwap', () => {
@@ -146,8 +173,7 @@ makeSuite('Executor', () => {
 				from: nativeCurrency,
 				to: wethToken,
 				type: ActionType.WRAP,
-				getRate: () =>
-					Promise.resolve({ rate: 1, amountOut: inputAmount }),
+				getRate,
 			}
 
 			const result = await Executor.executeWrap(edge, inputAmount)
@@ -168,7 +194,7 @@ makeSuite('Executor', () => {
 				from: nativeCurrency,
 				to: regularToken,
 				type: ActionType.WRAP,
-				getRate: () => Promise.resolve({ rate: 1, amountOut: 0n }),
+				getRate,
 			}
 
 			await expect(
@@ -177,15 +203,14 @@ makeSuite('Executor', () => {
 		})
 	})
 
-	describe.skip('executeUnwrap', () => {
+	describe('executeUnwrap', () => {
 		it('should unwrap WETH to ETH successfully', async () => {
 			const inputAmount = parseEther('0.1')
 
-			// Set WETH balance
 			await setTokenBalance(
 				botAddress,
 				wethToken.address,
-				1n,
+				51n,
 				inputAmount,
 				ClientManager.getClient(arbitrum.id),
 			)
@@ -216,7 +241,7 @@ makeSuite('Executor', () => {
 				from: regularToken,
 				to: nativeCurrency,
 				type: ActionType.UNWRAP,
-				getRate: () => Promise.resolve({ rate: 1, amountOut: 0n }),
+				getRate,
 			}
 
 			await expect(
@@ -225,124 +250,101 @@ makeSuite('Executor', () => {
 		})
 	})
 
-	describe.skip('executeFuseBridge', () => {
-		describe('From Arbitrum to Fuse', () => {
-			useAnvil({
-				chainId: arbitrum.id,
-				rpcUrl: getAlchemyRpcUrl(arbitrum.id),
-			})
-
-			let wbtcArbToken: Token
-			let wbtcFuseToken: Token
-			let walletClient: WalletClient
-			let botAddress: Address
-
-			beforeAll(async () => {
-				walletClient = ClientManager.getWalletClient(arbitrum.id)
-				botAddress = walletClient.account!.address
-
-				wbtcArbToken = await TokenUtils.fromAddress<Token>(
-					'0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
-					arbitrum.id,
-				)
-
-				// Create token representation for Fuse chain
-				wbtcFuseToken = await TokenUtils.fromAddress<Token>(
-					'0x34009565bfEeFded0F7e774629a745636Bf35E82',
-					arbitrum.id,
-				)
-			})
-
-			it('should execute Fuse bridge from Arbitrum to Fuse', async () => {
-				const inputAmount = wbtcArbToken.parseUnits('0.001')
-
-				// Set WBTC balance on Arbitrum (slot 51 for WBTC on Arbitrum)
-				await setTokenBalance(
-					botAddress,
-					wbtcArbToken.address,
-					51n, // WBTC balance slot on Arbitrum
-					inputAmount,
-					ClientManager.getClient(arbitrum.id),
-				)
-
-				const edge: GraphEdge = {
-					from: wbtcArbToken,
-					to: wbtcFuseToken,
-					type: ActionType.FUSE_BRIDGE,
-					getRate: () =>
-						Promise.resolve({ rate: 1, amountOut: inputAmount }),
-				}
-
-				const result = await Executor.executeFuseBridge(
-					edge,
-					inputAmount,
-				)
-
-				expect(result.amountOut).toBe(inputAmount)
-				expect(result.srcTxHash).toBeDefined()
-				expect(result.dstTxHash).toBeDefined()
-				// For cross-chain bridges, srcTxHash and dstTxHash are different
-				expect(result.srcTxHash).not.toBe(result.dstTxHash)
-			})
+	describe('executeFuseBridge', () => {
+		beforeEach(() => {
+			jest.spyOn(
+				FuseBridgeTx.prototype,
+				'waitForBridgeToFinish',
+			).mockImplementation(mockWaitForBridgeToFinish)
 		})
 
-		describe('From Fuse to Arbitrum', () => {
-			useAnvil({
-				chainId: arbitrum.id,
-			})
+		afterEach(() => {
+			jest.restoreAllMocks()
+		})
 
-			let wbtcFuseToken: Token
-			let wbtcArbToken: Token
-			let walletClient: WalletClient
-			let botAddress: Address
+		it('should execute Fuse bridge from Arbitrum to Fuse', async () => {
+			const inputAmount = wbtcArbToken.parseUnits('0.001')
 
-			beforeAll(async () => {
-				walletClient = ClientManager.getWalletClient(arbitrum.id)
-				botAddress = walletClient.account!.address
+			// Set WBTC balance on Arbitrum (slot 51 for WBTC on Arbitrum)
+			await setTokenBalance(
+				botAddress,
+				wbtcArbToken.address,
+				51n, // WBTC balance slot on Arbitrum
+				inputAmount,
+				ClientManager.getClient(arbitrum.id),
+			)
 
-				wbtcFuseToken = await TokenUtils.fromAddress<Token>(
-					'0x34009565bfEeFded0F7e774629a745636Bf35E82',
-					arbitrum.id,
-				)
+			await FuseBridge.approveToBridge(wbtcArbToken, inputAmount)
 
-				// Create token representation for Arbitrum chain
-				wbtcArbToken = await TokenUtils.fromAddress<Token>(
-					'0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
-					arbitrum.id,
-				)
-			})
+			const edge: GraphEdge = {
+				from: wbtcArbToken,
+				to: wbtcFuseToken,
+				type: ActionType.FUSE_BRIDGE,
+				getRate,
+			}
 
-			it('should execute Fuse bridge from Fuse to Arbitrum', async () => {
-				const inputAmount = wbtcFuseToken.parseUnits('0.001')
+			const result = await Executor.executeFuseBridge(edge, inputAmount)
 
-				// Set WBTC balance on Fuse
-				await setTokenBalance(
-					botAddress,
-					wbtcFuseToken.address,
-					0n, // Standard ERC20 balance slot
-					inputAmount,
-					ClientManager.getClient(arbitrum.id),
-				)
+			expect(result.amountOut).toBe(inputAmount)
+			expect(result.srcTxHash).toBe(
+				'0x1234567890abcdef1234567890abcdef12345678',
+			)
+			expect(result.dstTxHash).toBe(
+				'0xabcdef1234567890abcdef1234567890abcdef12',
+			)
+			// For cross-chain bridges, srcTxHash and dstTxHash are different
+			expect(result.srcTxHash).not.toBe(result.dstTxHash)
+		})
+	})
 
-				const edge: GraphEdge = {
-					from: wbtcFuseToken,
-					to: wbtcArbToken,
-					type: ActionType.FUSE_BRIDGE,
-					getRate: () =>
-						Promise.resolve({ rate: 1, amountOut: inputAmount }),
-				}
+	describe('executeStargateBridge', () => {
+		beforeEach(() => {
+			jest.spyOn(
+				StargateBridgeTx.prototype,
+				'waitForBridgeToFinish',
+			).mockImplementation(mockWaitForBridgeToFinish)
+		})
 
-				const result = await Executor.executeFuseBridge(
-					edge,
-					inputAmount,
-				)
+		afterEach(() => {
+			jest.restoreAllMocks()
+		})
 
-				expect(result.amountOut).toBe(inputAmount)
-				expect(result.srcTxHash).toBeDefined()
-				expect(result.dstTxHash).toBeDefined()
-				// For cross-chain bridges, srcTxHash and dstTxHash are different
-				expect(result.srcTxHash).not.toBe(result.dstTxHash)
-			})
+		it('should execute Stargate bridge from Arbitrum to Fuse', async () => {
+			const inputAmount = nativeCurrency.parseUnits('0.001')
+
+			await setNativeBalance(
+				ClientManager.getClient(arbitrum.id),
+				botAddress,
+				nativeCurrency.parseUnits('1'),
+			)
+
+			const edge: GraphEdge = {
+				from: nativeCurrency,
+				to: wethFuseToken,
+				type: ActionType.STARGATE_BRIDGE,
+				getRate,
+			}
+
+			const result = await Executor.executeStargateBridge(
+				edge,
+				inputAmount,
+			)
+
+			expect(result.amountOut).toBe(inputAmount)
+			expect(result.srcTxHash).toBe(
+				'0x1234567890abcdef1234567890abcdef12345678',
+			)
+			expect(result.dstTxHash).toBe(
+				'0xabcdef1234567890abcdef1234567890abcdef12',
+			)
+			expect(result.srcTxHash).not.toBe(result.dstTxHash)
 		})
 	})
 })
+
+function mockWaitForBridgeToFinish() {
+	return Promise.resolve({
+		srcTxHash: '0x1234567890abcdef1234567890abcdef12345678',
+		dstTxHash: '0xabcdef1234567890abcdef1234567890abcdef12',
+	} as Message)
+}
