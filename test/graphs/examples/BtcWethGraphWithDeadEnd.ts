@@ -1,4 +1,5 @@
 import { arbitrum, fuse } from 'viem/chains'
+import { Pool } from '../../../src/dex/Pool'
 import { ActionType, Graph, GraphEdgeAction } from '../../../src/graphs/Graph'
 import { TokenUtils } from '../../../src/primitives/tokens/TokenUtils'
 import { safeMultiply } from '../../../src/utils/math'
@@ -13,8 +14,8 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 
 	const graph = new Graph()
 
-	const ETH_ARB = await TokenUtils.getNative(arbitrum.id)
-	const FUSE_FUSE = await TokenUtils.getNative(fuse.id)
+	const ETH_ARB = TokenUtils.getNative(arbitrum.id)
+	const FUSE_FUSE = TokenUtils.getNative(fuse.id)
 
 	const WBTC_ARB = await TokenUtils.fromAddress(WBTC_ARB_ADDR, arbitrum.id)
 	const WETH_FUSE = await TokenUtils.fromAddress(WETH_FUSE_ADDR, fuse.id)
@@ -40,6 +41,7 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 		from: ETH_ARB,
 		to: WBTC_ARB,
 		type: ActionType.SWAP,
+		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
 			const price = ETH_PRICE / BTC_PRICE
 			const rate = -Math.log(price)
@@ -53,6 +55,7 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 		from: WBTC_ARB,
 		to: ETH_ARB,
 		type: ActionType.SWAP,
+		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
 			const price = BTC_PRICE / ETH_PRICE
 			const rate = -Math.log(price)
@@ -68,6 +71,7 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 		from: WBTC_FUSE,
 		to: WETH_FUSE,
 		type: ActionType.SWAP,
+		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
 			const price = BTC_PRICE / ETH_PRICE / ethPoolPriceMultiplier
 			const rate = -Math.log(price)
@@ -81,6 +85,7 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 		from: WETH_FUSE,
 		to: WBTC_FUSE,
 		type: ActionType.SWAP,
+		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
 			const price = (ETH_PRICE * ethPoolPriceMultiplier) / BTC_PRICE
 			const rate = -Math.log(price)
@@ -144,6 +149,7 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 		from: ETH_ARB,
 		to: USDT_ARB,
 		type: ActionType.SWAP,
+		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
 			const price = ETH_PRICE
 			return {
@@ -157,6 +163,7 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 		from: USDT_ARB,
 		to: ETH_ARB,
 		type: ActionType.SWAP,
+		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
 			const price = 1 / ETH_PRICE
 			return {

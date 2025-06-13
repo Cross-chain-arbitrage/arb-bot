@@ -1,4 +1,5 @@
 import { arbitrum, fuse } from 'viem/chains'
+import { Pool } from '../../src/dex/Pool'
 import {
 	ActionType,
 	Graph,
@@ -41,11 +42,11 @@ makeSuite('Graph', () => {
 			expect(graph.nodes.has(WETH_FUSE)).toBe(true)
 		})
 
-		it('MUST be able to add `NativeCurrency`s as nodes', async () => {
+		it('MUST be able to add `NativeCurrency`s as nodes', () => {
 			const graph = new Graph()
 
-			const ETH_ARB = await TokenUtils.getNative(arbitrum.id)
-			const FUSE_FUSE = await TokenUtils.getNative(fuse.id)
+			const ETH_ARB = TokenUtils.getNative(arbitrum.id)
+			const FUSE_FUSE = TokenUtils.getNative(fuse.id)
 
 			graph.addNode(ETH_ARB)
 			graph.addNode(FUSE_FUSE)
@@ -67,8 +68,8 @@ makeSuite('Graph', () => {
 		beforeEach(async () => {
 			graph = new Graph()
 
-			ETH_ARB = await TokenUtils.getNative(arbitrum.id)
-			FUSE_FUSE = await TokenUtils.getNative(fuse.id)
+			ETH_ARB = TokenUtils.getNative(arbitrum.id)
+			FUSE_FUSE = TokenUtils.getNative(fuse.id)
 
 			WBTC_ARB = await TokenUtils.fromAddress(WBTC_ARB_ADDR, arbitrum.id)
 			WETH_FUSE = await TokenUtils.fromAddress(WETH_FUSE_ADDR, fuse.id)
@@ -90,6 +91,7 @@ makeSuite('Graph', () => {
 				from: WBTC_ARB, // $110k
 				to: ETH_ARB, // $2.7k,
 				type: ActionType.SWAP,
+				pool: {} as Pool,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: BTC_PRICE / ETH_PRICE,
@@ -102,6 +104,7 @@ makeSuite('Graph', () => {
 				from: ETH_ARB,
 				to: WBTC_ARB,
 				type: ActionType.SWAP,
+				pool: {} as Pool,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: ETH_PRICE / BTC_PRICE,
@@ -190,7 +193,7 @@ makeSuite('Graph', () => {
 		let ETH_ARB: NativeCurrency
 
 		beforeEach(async () => {
-			ETH_ARB = await TokenUtils.getNative(arbitrum.id)
+			ETH_ARB = TokenUtils.getNative(arbitrum.id)
 
 			WBTC_ARB = await TokenUtils.fromAddress(WBTC_ARB_ADDR, arbitrum.id)
 			WETH_FUSE = await TokenUtils.fromAddress(WETH_FUSE_ADDR, fuse.id)
@@ -202,6 +205,7 @@ makeSuite('Graph', () => {
 				from: WBTC_ARB,
 				to: WETH_FUSE,
 				type: ActionType.SWAP,
+				pool: {} as Pool,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: 1,
@@ -231,6 +235,7 @@ makeSuite('Graph', () => {
 				from: WBTC_ARB,
 				to: WETH_FUSE,
 				type: ActionType.SWAP,
+				pool: {} as Pool,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
 						rate: 1,

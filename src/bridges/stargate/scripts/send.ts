@@ -91,16 +91,11 @@ async function send() {
 		`Sending ${tokenIn.formatUnits(amountIn)} of ${tokenIn.symbol} to ${toChain.id}`,
 	)
 
-	const bridgeTx = await Stargate.bridge(
-		tokenIn,
-		toChain.id,
-		recipient,
-		amountIn,
-	)
+	const res = await Stargate.bridge(tokenIn, toChain.id, recipient, amountIn)
 
-	logger.info(`TxHash: ${bridgeTx.hash}`)
-	await bridgeTx.waitForBridgeToFinish()
-	logger.info(`DstTxHash: ${bridgeTx.dstTx?.hash}`)
+	logger.info(`TxHash: ${res.bridgeTx.srcTxHash}`)
+	await res.bridgeTx.waitForBridgeToFinish()
+	logger.info(`DstTxHash: ${res.bridgeTx.srcTxHash}`)
 }
 
 send().catch(console.error)

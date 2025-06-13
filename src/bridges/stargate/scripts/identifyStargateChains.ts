@@ -31,7 +31,7 @@ async function main() {
 	console.time('getPools')
 
 	// 1. Get all tokens from Stargate API
-	const tokens = await StargateAPI.getTokensMetadata()
+	const tokens = await StargateAPI.getAllTokensMetadata()
 	logger.info(`Found ${tokens.length} tokens`)
 
 	const chainKeys: Map<string, StargateAPIChain | Chain> = new Map()

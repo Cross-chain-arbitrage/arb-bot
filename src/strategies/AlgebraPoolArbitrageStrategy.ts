@@ -277,19 +277,21 @@ export class AlgebraPoolArbitrageStrategy {
 				amountIn,
 			)
 		} else {
-			bridgeTx = await Stargate.bridge(
+			const res = await Stargate.bridge(
 				tokenInArb,
 				this.pool.chainId,
 				account,
 				amountIn,
 			)
+
+			bridgeTx = res.bridgeTx
 		}
 		logger.info(
-			`Bridged ${tokenInArb.symbol} from ${this.baseChain.name} to ${this.pool.chainId}: ${bridgeTx.hash}`,
+			`Bridged ${tokenInArb.symbol} from ${this.baseChain.name} to ${this.pool.chainId}: ${bridgeTx.srcTxHash}`,
 		)
 		await bridgeTx.waitForBridgeToFinish()
 		logger.info(
-			`Bridge ${tokenInArb.symbol} to ${this.pool.chainId} finished: ${bridgeTx.hash}`,
+			`Bridge ${tokenInArb.symbol} to ${this.pool.chainId} finished: ${bridgeTx.srcTxHash}`,
 		)
 
 		// 1.5. Check that arbitrage opportunity is still valid
@@ -333,20 +335,22 @@ export class AlgebraPoolArbitrageStrategy {
 				amountOut,
 			)
 		} else {
-			bridgeBackTx = await Stargate.bridge(
+			const res = await Stargate.bridge(
 				tokenOut,
 				this.baseChain.id,
 				account,
 				amountOut,
 			)
+
+			bridgeBackTx = res.bridgeTx
 		}
 
 		logger.info(
-			`Bridged ${tokenOut.symbol} back to ${this.baseChain.name}: ${bridgeBackTx.hash}`,
+			`Bridged ${tokenOut.symbol} back to ${this.baseChain.name}: ${bridgeBackTx.srcTxHash}`,
 		)
 		await bridgeBackTx.waitForBridgeToFinish()
 		logger.info(
-			`Bridge ${tokenOut.symbol} to ${this.baseChain.name}: ${bridgeBackTx.hash} finished`,
+			`Bridge ${tokenOut.symbol} to ${this.baseChain.name}: ${bridgeBackTx.srcTxHash} finished`,
 		)
 
 		// 4. Sell tokenOutArb for baseToken, if needed
