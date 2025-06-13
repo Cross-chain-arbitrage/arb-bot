@@ -9,16 +9,16 @@ async function main() {
 
 	const strategy = await FuseWbtcGraphStrategy.setup()
 
-	const ethPrice = 2700
+	const ethPrice = 2550
 	const ethNative = TokenUtils.getNative(arbitrum.id)
 
 	logger.info('Starting searching for arbitrage')
 
-	const minProfitUsd = 0
+	const minProfitUsd = 1
 	const bot = new GraphArbitrageBot(
 		ethNative,
 		strategy.graph,
-		{ initialValueUSD: 1, stepUSD: 1, stepsAmount: 5 },
+		{ initialValueUSD: 50, stepUSD: 50, stepsAmount: 5 },
 		ethPrice,
 		minProfitUsd,
 	)

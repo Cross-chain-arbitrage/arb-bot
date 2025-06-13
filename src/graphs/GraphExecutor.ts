@@ -26,18 +26,19 @@ export class GraphExecutor {
 
 		for (const edge of edges) {
 			const { from, to } = edge
+			const beforeExecuteLogMsg = `Start ${edge.type} from: ${from.symbol}-${from.chainId} to:${to.symbol}-${to.chainId} input:${from.formatUnits(amountIn)}}`
+			logger.info(beforeExecuteLogMsg)
 			const { amountOut, dstTxHash, srcTxHash } = await this.executeEdge(
 				edge,
 				amountIn,
 			)
 
-			const baseLogMsg = `${edge.type} from: ${from.symbol}-${from.chainId} to:${to.symbol}-${to.chainId} input:${from.formatUnits(amountIn)} output:${to.formatUnits(amountOut)}`
-			const logMsg =
+			const afterExecuteLogMsg =
 				srcTxHash === dstTxHash
-					? `${baseLogMsg} tx:${dstTxHash}`
-					: `${baseLogMsg} srcTxHash:${srcTxHash} dstTxHash:${dstTxHash} `
+					? `End ${edge.type} amountOut:${to.formatUnits(amountOut)} ${beforeExecuteLogMsg} tx:${dstTxHash}`
+					: `End ${edge.type} amountOut:${to.formatUnits(amountOut)} ${beforeExecuteLogMsg} srcTxHash:${srcTxHash} dstTxHash:${dstTxHash} `
 
-			logger.info(logMsg)
+			logger.info(afterExecuteLogMsg)
 
 			amountIn = amountOut
 		}

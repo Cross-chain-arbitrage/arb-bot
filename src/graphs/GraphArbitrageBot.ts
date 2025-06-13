@@ -43,15 +43,22 @@ export class GraphArbitrageBot {
 	async findAndExecuteArbitrage() {
 		if (this.isArbitrageExecuting) return
 
-		const findOpportunityRes = await GraphOptimizer.findOpportunity(
-			this.startToken,
-			this.startTokenPrice,
-			this.graph,
-			this.graphOptimizerOptions,
-		)
+		let path
 
-		if (findOpportunityRes.path) {
-			const { path } = findOpportunityRes
+		try {
+			const findOpportunityRes = await GraphOptimizer.findOpportunity(
+				this.startToken,
+				this.startTokenPrice,
+				this.graph,
+				this.graphOptimizerOptions,
+			)
+
+			path = findOpportunityRes.path
+		} catch (err) {
+			logger.error(err, 'Error finding arbitrage')
+		}
+
+		if (path) {
 			const expectedProfitUsd =
 				Number(this.startToken.formatUnits(path.profitAmount)) *
 				this.startTokenPrice
@@ -63,7 +70,11 @@ export class GraphArbitrageBot {
 				return
 			}
 
-			await this.execute(path, expectedProfitUsd)
+			try {
+				await this.execute(path, expectedProfitUsd)
+			} catch (err) {
+				logger.error(err, 'Error executing arbitrage')
+			}
 		} else {
 			logger.info('No arbitrage found')
 		}
