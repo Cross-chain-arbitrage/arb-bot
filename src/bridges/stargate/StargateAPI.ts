@@ -22,7 +22,7 @@ type RequestId = string
 
 export class StargateAPI {
 	private static cache = new TTLCache<RequestId, StargateTokenMetadata[]>({
-		ttl: 1000 * 60 * 60 * 1, // 1 hour
+		ttl: 1000 * 60 * 60 * 24, // 24 hours
 	})
 
 	static async getAllTokensMetadata(): Promise<StargateTokenMetadata[]> {
@@ -64,7 +64,8 @@ export class StargateAPI {
 	static async getTokenMetadata(
 		token: Token | NativeCurrency,
 	): Promise<StargateTokenMetadata> {
-		const metadata = await this.getTokensMetadataOnChain(token.chainId)
+		const metadata = await this.getAllTokensMetadata()
+
 		const chainKey = Stargate.getChainKey(token.chainId)
 
 		const tokenMetadata = metadata.find(
@@ -106,6 +107,7 @@ export class StargateAPI {
 
 	static async getChains() {
 		try {
+			console.log('~ StargateAPI ~ getChains')
 			const response = await axios.get<{ chains: StargateAPIChain[] }>(
 				`${STARGATE_OLD_API_URL}/chains`,
 			)
