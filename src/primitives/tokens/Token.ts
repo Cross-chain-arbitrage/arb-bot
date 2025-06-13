@@ -95,8 +95,4 @@ export class Token extends TokenBase {
 
 		return receipt
 	}
-
-	get id(): string {
-		return `${this.chainId}:${this.address}`
-	}
 }

@@ -7,6 +7,7 @@ import { findArbitragePath } from '../graphs/path'
 import { prettyPrintPath, printGraph } from '../graphs/utils'
 import { poolsByChain } from '../pools'
 import { Token } from '../primitives/tokens/Token'
+import { TokenId } from '../primitives/tokens/TokenBase'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 
 /* ============ Tokens ============ */
@@ -48,7 +49,7 @@ export class GigaBigaGraphStrategy {
 
 		console.log('pools', pools.length)
 
-		const tokens: Map<string, Token> = new Map()
+		const tokens: Map<TokenId, Token> = new Map()
 
 		for (const pool of pools) {
 			if (!tokens.has(pool.token0.id)) {
@@ -70,7 +71,7 @@ export class GigaBigaGraphStrategy {
 		/* =============== NODES =============== */
 
 		for (const token of tokensArray) {
-			console.log('adding token', token.id)
+			console.log('adding token', token.toString())
 			graph.addNode(token)
 		}
 
@@ -94,7 +95,7 @@ export class GigaBigaGraphStrategy {
 			const token1 = tokens.get(pool.token1.id)
 
 			if (token0 && token1) {
-				graph.addSwapEdge(token0, token1, pool, SLIPPAGE)
+				graph.addSwapEdge(token0.id, token1.id, pool, SLIPPAGE)
 			} else {
 				throw new Error(
 					`one of tokens doesn't exist in graph: ${pool.token0.id} or ${pool.token1.id}`,
@@ -173,14 +174,14 @@ export class GigaBigaGraphStrategy {
 		)
 
 		graph.addEdge({
-			from: WBTC_FUSE,
-			to: WBTC_ARB,
+			from: WBTC_FUSE.id,
+			to: WBTC_ARB.id,
 			type: ActionType.FUSE_BRIDGE,
 			getRate: getFuseBridgeRate,
 		})
 		graph.addEdge({
-			from: WBTC_ARB,
-			to: WBTC_FUSE,
+			from: WBTC_ARB.id,
+			to: WBTC_FUSE.id,
 			type: ActionType.FUSE_BRIDGE,
 			getRate: getFuseBridgeRate,
 		})
@@ -199,43 +200,43 @@ export class GigaBigaGraphStrategy {
 		const WETH_HEMI = TokenUtils.getWrappedNative(hemi.id)
 
 		graph.addEdge({
-			from: WETH_ARB,
-			to: ETH_ARB,
+			from: WETH_ARB.id,
+			to: ETH_ARB.id,
 			type: ActionType.UNWRAP,
 			getRate: getWrapRate,
 		})
 
 		graph.addEdge({
-			from: ETH_ARB,
-			to: WETH_ARB,
+			from: ETH_ARB.id,
+			to: WETH_ARB.id,
 			type: ActionType.WRAP,
 			getRate: getWrapRate,
 		})
 
 		graph.addEdge({
-			from: WETH_LIGHTLINK,
-			to: ETH_LIGHTLINK,
+			from: WETH_LIGHTLINK.id,
+			to: ETH_LIGHTLINK.id,
 			type: ActionType.UNWRAP,
 			getRate: getWrapRate,
 		})
 
 		graph.addEdge({
-			from: ETH_LIGHTLINK,
-			to: WETH_LIGHTLINK,
+			from: ETH_LIGHTLINK.id,
+			to: WETH_LIGHTLINK.id,
 			type: ActionType.WRAP,
 			getRate: getWrapRate,
 		})
 
 		graph.addEdge({
-			from: WETH_HEMI,
-			to: ETH_HEMI,
+			from: WETH_HEMI.id,
+			to: ETH_HEMI.id,
 			type: ActionType.UNWRAP,
 			getRate: getWrapRate,
 		})
 
 		graph.addEdge({
-			from: ETH_HEMI,
-			to: WETH_HEMI,
+			from: ETH_HEMI.id,
+			to: WETH_HEMI.id,
 			type: ActionType.WRAP,
 			getRate: getWrapRate,
 		})

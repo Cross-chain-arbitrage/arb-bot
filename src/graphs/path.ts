@@ -1,5 +1,5 @@
 import { parseUnits } from 'viem'
-import { GetRate, Graph, GraphEdge, GraphNode } from './Graph'
+import { GetRate, Graph, GraphEdge, GraphNode, GraphNodeId } from './Graph'
 import { EdgeWithRate } from './visualization'
 
 export interface ArbitragePath {
@@ -21,13 +21,13 @@ export async function findArbitragePath(
 }> {
 	// console.time('Bellman-Ford Algorithm')
 
-	const distances = new Map<GraphNode, number>()
-	const predecessors = new Map<GraphNode, GraphEdge>()
-	const amounts = new Map<GraphNode, bigint>()
+	const distances = new Map<GraphNodeId, number>()
+	const predecessors = new Map<GraphNodeId, GraphEdge>()
+	const amounts = new Map<GraphNodeId, bigint>()
 
 	// Initialize
-	distances.set(startToken, 0)
-	amounts.set(startToken, startAmount)
+	distances.set(startToken.id, 0)
+	amounts.set(startToken.id, startAmount)
 
 	const edgesWithRate = new Map<string, EdgeWithRate>()
 
@@ -67,8 +67,8 @@ export async function findArbitragePath(
 
 			edgesWithRate.set(fromTo, {
 				rate,
-				from,
-				to,
+				from: graph.getToken(from),
+				to: graph.getToken(to),
 			})
 
 			const fromDistance = distances.get(from)
@@ -86,7 +86,7 @@ export async function findArbitragePath(
 				amounts.set(to, amountOut)
 
 				// Check for negative cycle
-				if (to === startToken && newDist < 0) {
+				if (to === startToken.id && newDist < 0) {
 					const path = await reconstructCycle(
 						predecessors,
 						startToken,
@@ -113,19 +113,19 @@ export async function findArbitragePath(
 }
 
 async function reconstructCycle(
-	predecessors: Map<GraphNode, GraphEdge>,
+	predecessors: Map<GraphNodeId, GraphEdge>,
 	startToken: GraphNode,
 	startAmount: bigint,
 ): Promise<ArbitragePath> {
 	const edges: GraphEdge[] = []
-	let currentToken = startToken
+	let currentToken: GraphNodeId = startToken.id
 
 	// Reconstruct the cycle by following predecessors
 	do {
 		const edge = predecessors.get(currentToken)!
 		edges.push(edge)
 		currentToken = edge.from
-	} while (currentToken !== startToken)
+	} while (currentToken !== startToken.id)
 
 	// Reverse the edges to get the correct order
 	edges.reverse()

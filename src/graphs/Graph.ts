@@ -3,6 +3,7 @@ import { Stargate } from '../bridges/stargate/Stargate'
 import { Pool } from '../dex/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
+import { TokenId } from '../primitives/tokens/TokenBase'
 
 export type GraphNode = Token | NativeCurrency
 
@@ -35,9 +36,11 @@ export type GraphEdgeAction = (
 	getRate: GetRate
 }
 
+export type GraphNodeId = TokenId
+
 export type GraphEdge = {
-	from: GraphNode
-	to: GraphNode
+	from: GraphNodeId
+	to: GraphNodeId
 } & GraphEdgeAction
 
 export class GraphError extends Error {
@@ -50,7 +53,7 @@ export class GraphError extends Error {
 
 export class Graph {
 	edges: Set<GraphEdge> = new Set()
-	nodes: Set<GraphNode> = new Set()
+	nodes: Map<GraphNodeId, GraphNode> = new Map()
 
 	private swapCache: TTLCache<string, GetRateResult>
 
@@ -61,28 +64,30 @@ export class Graph {
 	}
 
 	addEdge(edge: GraphEdge) {
+		const from = this.nodes.get(edge.from)
+		const to = this.nodes.get(edge.to)
+
+		if (!from) {
+			throw new GraphError(`Node ${edge.from} does not exist`)
+		}
+
+		if (!to) {
+			throw new GraphError(`Node ${edge.to} does not exist`)
+		}
+
 		if (this.edges.has(edge)) {
 			throw new GraphError(
-				`Edge ${edge.from.chainId}:${edge.from.address} -> ${edge.to.chainId}:${edge.to.address} already exists`,
-			)
-		}
-
-		if (!this.nodes.has(edge.from)) {
-			throw new GraphError(
-				`Node ${edge.from.chainId}:${edge.from.address} does not exist`,
-			)
-		}
-
-		if (!this.nodes.has(edge.to)) {
-			throw new GraphError(
-				`Node ${edge.to.chainId}:${edge.to.address} does not exist`,
+				`Edge ${from.toString()} -> ${to.toString()} already exists`,
 			)
 		}
 
 		this.edges.add(edge)
 	}
 
-	addSwapEdge(from: GraphNode, to: GraphNode, pool: Pool, slippage: number) {
+	addSwapEdge(fromId: TokenId, toId: TokenId, pool: Pool, slippage: number) {
+		const from = this.getToken(fromId)
+		const to = this.getToken(toId)
+
 		if (from.isNative()) {
 			throw new GraphError('Cannot add swap edge with native token')
 		}
@@ -125,13 +130,11 @@ export class Graph {
 	}
 
 	addNode(node: GraphNode) {
-		if (this.nodes.has(node)) {
-			throw new GraphError(
-				`Node ${node.chainId}:${node.address} already exists`,
-			)
+		if (this.nodes.has(node.id)) {
+			throw new GraphError(`Node ${node.id} already exists`)
 		}
 
-		this.nodes.add(node)
+		this.nodes.set(node.id, node)
 	}
 
 	addStargateBridgeEdge(from: GraphNode, to: GraphNode) {
@@ -149,8 +152,8 @@ export class Graph {
 		}
 
 		this.addEdge({
-			from,
-			to,
+			from: from.id,
+			to: to.id,
 			type: ActionType.STARGATE_BRIDGE,
 			getRate,
 		})
@@ -167,5 +170,15 @@ export class Graph {
 
 	private calcRate(amountIn: bigint, amountOut: bigint) {
 		return -Math.log(Number(amountOut) / Number(amountIn))
+	}
+
+	getToken(tokenId: TokenId): GraphNode {
+		const token = this.nodes.get(tokenId)
+
+		if (!token) {
+			throw new GraphError(`Token ${tokenId} does not exist`)
+		}
+
+		return token
 	}
 }

@@ -9,6 +9,9 @@ export class TokenBaseError extends Error {
 	}
 }
 
+type ChainId = number
+export type TokenId = `${ChainId}:${Address}`
+
 export abstract class TokenBase extends BaseContract {
 	constructor(
 		address: Address,
@@ -38,8 +41,8 @@ export abstract class TokenBase extends BaseContract {
 		return balance >= amount
 	}
 
-	get id(): string {
-		return `${this.chainId}:${this.address.toLowerCase()}`
+	get id(): TokenId {
+		return `${this.chainId}:${this.address.toLowerCase() as Address}`
 	}
 
 	toString(): string {
