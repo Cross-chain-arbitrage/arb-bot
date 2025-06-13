@@ -85,6 +85,14 @@ export class Graph {
 	}
 
 	addSwapEdge(from: GraphNode, to: GraphNode, pool: Pool, slippage: number) {
+		if (from.isNative()) {
+			throw new GraphError('Cannot add swap edge with native token')
+		}
+
+		if (to.isNative()) {
+			throw new GraphError('Cannot add swap edge with native token')
+		}
+
 		this.addEdge({
 			from,
 			to,

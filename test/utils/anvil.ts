@@ -107,7 +107,7 @@ class Anvil {
 		if (typeof this.config.blockNumber === 'number') {
 			command += ` --fork-block-number ${this.config.blockNumber}`
 		}
-		console.log(command)
+		// console.log(command)
 		return command
 	}
 

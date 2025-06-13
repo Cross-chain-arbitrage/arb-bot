@@ -30,12 +30,6 @@ export class ClientManager {
 
 		const chain = this.findChainById(chainId)
 
-		const rpc = this.getCustomRpcUrl(chainId)
-
-		if (rpc) {
-			chain.rpcUrls.default.http = [rpc]
-		}
-
 		const client = createWalletClient({
 			account: privateKeyToAccount(getPrivateKey()),
 			chain,
@@ -63,14 +57,6 @@ export class ClientManager {
 
 		// Find chain config
 		const chain = this.findChainById(chainId)
-
-		const rpc = this.getCustomRpcUrl(chainId)
-
-		if (rpc) {
-			// console.log('Using Alchemys RPC for chain', chainId)
-			// console.log('RPC', rpc)
-			chain.rpcUrls.default.http = [rpc]
-		}
 
 		// Create new client
 		const client = createPublicClient({
