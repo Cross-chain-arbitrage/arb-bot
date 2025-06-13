@@ -83,7 +83,9 @@ export class StargateAPI {
 		const metadata = await this.getAllTokensMetadata()
 
 		const asset = metadata.find(
-			(metadata) => metadata.assetId === token.address,
+			(metadata) =>
+				metadata.token.address === token.address &&
+				metadata.chainKey === Stargate.getChainKey(token.chainId),
 		)
 
 		if (!asset) {
@@ -91,6 +93,10 @@ export class StargateAPI {
 				`Token ${token.address} not found in Stargate metadata`,
 			)
 		}
+
+		const assetId = asset.assetId
+
+		return metadata.filter((metadata) => metadata.assetId === assetId)
 	}
 
 	static async getChains() {

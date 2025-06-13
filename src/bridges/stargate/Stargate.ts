@@ -140,10 +140,7 @@ export class Stargate {
 	static async getBridgeAddress(
 		token: Token | NativeCurrency,
 	): Promise<Address> {
-		const tokenMetadata = await StargateAPI.getTokenMetadata(
-			token,
-			Stargate.getChainKey(token.chainId),
-		)
+		const tokenMetadata = await StargateAPI.getTokenMetadata(token)
 
 		return tokenMetadata.address
 	}
@@ -230,10 +227,7 @@ export class Stargate {
 		recipient: Address,
 		amount: bigint,
 	): Promise<QuoteResult> {
-		const tokenMetadata = await StargateAPI.getTokenMetadata(
-			tokenIn,
-			Stargate.getChainKey(tokenIn.chainId),
-		)
+		const tokenMetadata = await StargateAPI.getTokenMetadata(tokenIn)
 
 		return await Stargate._quote(
 			tokenMetadata,

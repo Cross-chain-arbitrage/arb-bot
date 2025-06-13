@@ -1,4 +1,5 @@
-import { Hash } from 'viem'
+import { decodeEventLog, Hash, TransactionReceipt } from 'viem'
+import { ERC20_ABI } from '../../abi/erc20'
 import { LayerZeroScanAPI } from '../../data-apis/layerzeroscan/LayerZeroScanAPI'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
@@ -25,7 +26,10 @@ export class StargateBridgeTx extends LZBridgeTx {
 		super(srcTxHash, srcChainId, srcToken, amount)
 	}
 
-	async getAmountOut() {
+	async getAmountOut(): Promise<{
+		receipt: TransactionReceipt
+		amountOut: bigint
+	}> {
 		const message = await LayerZeroScanAPI.waitForDeliveryStatus(
 			this.hash as Hash,
 		)
@@ -51,21 +55,22 @@ export class StargateBridgeTx extends LZBridgeTx {
 				if (!isSameAddress(log.address, this.token.address)) return null
 
 				const event = decodeEventLog({
-					abi: UNIV3_POOL_ABI,
+					abi: ERC20_ABI,
 					data: log.data,
 					topics: log.topics,
 				})
 
 				return event
 			})
-			.find((event) => event?.eventName === 'Swap')
+			.find((event) => event?.eventName === 'Transfer')
 
-		if (!swapEvent) throw new UniV3PoolError('Swap event not found')
+		if (!transferEvent)
+			throw new StargateBridgeTxError('Transfer event not found')
 
-		const amountOut =
-			swapEvent.args.amount0 < 0n
-				? -swapEvent.args.amount0
-				: -swapEvent.args.amount1
+		const amountOut = 0n
+		// transferEvent.args < 0n
+		// 	? -transferEvent.args.amount0
+		// 	: -transferEvent.args.amount1
 
 		return { receipt, amountOut }
 	}
