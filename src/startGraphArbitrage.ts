@@ -14,11 +14,13 @@ async function main() {
 
 	logger.info('Starting searching for arbitrage')
 
+	const minProfitUsd = 0
 	const bot = new GraphArbitrageBot(
 		ethNative,
 		strategy.graph,
-		{ initialValueUSD: 10, stepUSD: 20, stepsAmount: 5 },
+		{ initialValueUSD: 1, stepUSD: 1, stepsAmount: 5 },
 		ethPrice,
+		minProfitUsd,
 	)
 
 	bot.start()

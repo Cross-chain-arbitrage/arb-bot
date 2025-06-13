@@ -51,6 +51,7 @@ export class WrappedNative extends Token {
 			functionName: 'deposit',
 			account: this.wallet.account!,
 			chain: this.wallet.chain,
+			value: amount,
 		})
 
 		const receipt = await this.client.waitForTransactionReceipt({ hash })

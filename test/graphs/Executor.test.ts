@@ -98,25 +98,22 @@ makeSuite('GraphExecutor', () => {
 		})
 
 		it('should execute a swap and return correct transaction data', async () => {
-			const inputAmount = wethToken.parseUnits('0.01')
+			const amountIn = wethToken.parseUnits('0.01')
 
 			// Set up token balance and approval
 			await setTokenBalance(
 				botAddress,
 				wethToken.address,
 				51n,
-				inputAmount,
+				amountIn,
 				ClientManager.getClient(arbitrum.id),
 			)
 
-			await wethToken.approve(
-				(pool as UniV3Pool).routerAddress,
-				inputAmount,
-			)
+			await wethToken.approve((pool as UniV3Pool).routerAddress, amountIn)
 
 			const usdtBalanceBefore = await usdtToken.balanceOf(botAddress)
 
-			const result = await GraphExecutor.executeSwap(edge, inputAmount)
+			const result = await GraphExecutor.executeSwap(edge, amountIn)
 
 			const usdtBalanceAfter = await usdtToken.balanceOf(botAddress)
 
@@ -127,15 +124,15 @@ makeSuite('GraphExecutor', () => {
 		})
 
 		it('should throw error if swap fails', async () => {
-			const inputAmount = wethToken.parseUnits('1000000') // Very large amount
+			const amountIn = wethToken.parseUnits('1000000') // Very large amount
 
 			await expect(
-				GraphExecutor.executeSwap(edge, inputAmount),
+				GraphExecutor.executeSwap(edge, amountIn),
 			).rejects.toThrow()
 		})
 
 		it('should throw error if token is native', async () => {
-			const inputAmount = parseEther('0.1')
+			const amountIn = parseEther('0.1')
 
 			const edge: GraphEdge = {
 				from: nativeCurrency,
@@ -146,21 +143,21 @@ makeSuite('GraphExecutor', () => {
 			}
 
 			await expect(
-				GraphExecutor.executeSwap(edge, inputAmount),
+				GraphExecutor.executeSwap(edge, amountIn),
 			).rejects.toThrow('Cannot swap from native currency')
 
 			edge.from = wethToken
 			edge.to = nativeCurrency
 
 			await expect(
-				GraphExecutor.executeSwap(edge, inputAmount),
+				GraphExecutor.executeSwap(edge, amountIn),
 			).rejects.toThrow('Cannot swap to native currency')
 		})
 	})
 
 	describe('executeWrap', () => {
 		it('should wrap ETH to WETH successfully', async () => {
-			const inputAmount = parseEther('0.1')
+			const amountIn = parseEther('0.1')
 
 			// Set native balance
 			await setNativeBalance(
@@ -176,9 +173,14 @@ makeSuite('GraphExecutor', () => {
 				getRate,
 			}
 
-			const result = await GraphExecutor.executeWrap(edge, inputAmount)
+			const balanceBefore = await wethToken.balanceOf(botAddress)
 
-			expect(result.amountOut).toBe(inputAmount)
+			const result = await GraphExecutor.executeWrap(edge, amountIn)
+
+			const balanceAfter = await wethToken.balanceOf(botAddress)
+
+			expect(balanceAfter).toBe(balanceBefore + amountIn)
+			expect(result.amountOut).toBe(amountIn)
 			expect(result.srcTxHash).toBeDefined()
 			expect(result.dstTxHash).toBeDefined()
 			expect(result.srcTxHash).toBe(result.dstTxHash)
@@ -205,13 +207,13 @@ makeSuite('GraphExecutor', () => {
 
 	describe('executeUnwrap', () => {
 		it('should unwrap WETH to ETH successfully', async () => {
-			const inputAmount = parseEther('0.1')
+			const amountIn = parseEther('0.1')
 
 			await setTokenBalance(
 				botAddress,
 				wethToken.address,
 				51n,
-				inputAmount,
+				amountIn,
 				ClientManager.getClient(arbitrum.id),
 			)
 
@@ -220,12 +222,26 @@ makeSuite('GraphExecutor', () => {
 				to: nativeCurrency,
 				type: ActionType.UNWRAP,
 				getRate: () =>
-					Promise.resolve({ rate: 1, amountOut: inputAmount }),
+					Promise.resolve({ rate: 1, amountOut: amountIn }),
 			}
 
-			const result = await GraphExecutor.executeUnwrap(edge, inputAmount)
+			const balanceBefore = await nativeCurrency.balanceOf(botAddress)
 
-			expect(result.amountOut).toBe(inputAmount)
+			const result = await GraphExecutor.executeUnwrap(edge, amountIn)
+			const receipt = await ClientManager.getClient(
+				arbitrum.id,
+			).getTransactionReceipt({
+				hash: result.srcTxHash,
+			})
+
+			const balanceAfter = await nativeCurrency.balanceOf(botAddress)
+
+			expect(balanceAfter).toBe(
+				balanceBefore +
+					amountIn -
+					receipt.gasUsed * receipt.effectiveGasPrice,
+			)
+			expect(result.amountOut).toBe(amountIn)
 			expect(result.srcTxHash).toBeDefined()
 			expect(result.dstTxHash).toBeDefined()
 			expect(result.srcTxHash).toBe(result.dstTxHash)
@@ -263,18 +279,18 @@ makeSuite('GraphExecutor', () => {
 		})
 
 		it('should execute Fuse bridge from Arbitrum to Fuse', async () => {
-			const inputAmount = wbtcArbToken.parseUnits('0.001')
+			const amountIn = wbtcArbToken.parseUnits('0.001')
 
 			// Set WBTC balance on Arbitrum (slot 51 for WBTC on Arbitrum)
 			await setTokenBalance(
 				botAddress,
 				wbtcArbToken.address,
 				51n, // WBTC balance slot on Arbitrum
-				inputAmount,
+				amountIn,
 				ClientManager.getClient(arbitrum.id),
 			)
 
-			await FuseBridge.approveToBridge(wbtcArbToken, inputAmount)
+			await FuseBridge.approveToBridge(wbtcArbToken, amountIn)
 
 			const edge: GraphEdge = {
 				from: wbtcArbToken,
@@ -283,12 +299,9 @@ makeSuite('GraphExecutor', () => {
 				getRate,
 			}
 
-			const result = await GraphExecutor.executeFuseBridge(
-				edge,
-				inputAmount,
-			)
+			const result = await GraphExecutor.executeFuseBridge(edge, amountIn)
 
-			expect(result.amountOut).toBe(inputAmount)
+			expect(result.amountOut).toBe(amountIn)
 			expect(result.srcTxHash).toBe(
 				'0x1234567890abcdef1234567890abcdef12345678',
 			)
@@ -313,7 +326,7 @@ makeSuite('GraphExecutor', () => {
 		})
 
 		it('should execute Stargate bridge from Arbitrum to Fuse', async () => {
-			const inputAmount = nativeCurrency.parseUnits('0.001')
+			const amountIn = nativeCurrency.parseUnits('0.001')
 
 			await setNativeBalance(
 				ClientManager.getClient(arbitrum.id),
@@ -330,10 +343,10 @@ makeSuite('GraphExecutor', () => {
 
 			const result = await GraphExecutor.executeStargateBridge(
 				edge,
-				inputAmount,
+				amountIn,
 			)
 
-			expect(result.amountOut).toBe(inputAmount)
+			expect(result.amountOut).toBe(amountIn)
 			expect(result.srcTxHash).toBe(
 				'0x1234567890abcdef1234567890abcdef12345678',
 			)
