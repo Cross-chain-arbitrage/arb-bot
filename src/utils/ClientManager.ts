@@ -1,14 +1,22 @@
 import {
+	Chain,
 	createPublicClient,
+	createWalletClient,
 	http,
 	PublicClient,
 	WalletClient,
-	createWalletClient,
-	Chain,
 } from 'viem'
-import * as chains from 'viem/chains'
-import { getPrivateKey } from './getAccount'
 import { privateKeyToAccount } from 'viem/accounts'
+import * as chains from 'viem/chains'
+
+import { arbitrum, mainnet } from 'viem/chains'
+import { getAlchemyRpcUrl } from './alchemy'
+import { getPrivateKey } from './getAccount'
+
+const CUSTOM_RPC_URLS = {
+	[mainnet.id]: getAlchemyRpcUrl(mainnet.id),
+	[arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
+} as const
 
 export class ClientManager {
 	private static clients: Map<number, PublicClient> = new Map()
@@ -21,6 +29,12 @@ export class ClientManager {
 		}
 
 		const chain = this.findChainById(chainId)
+
+		const rpc = this.getCustomRpcUrl(chainId)
+
+		if (rpc) {
+			chain.rpcUrls.default.http = [rpc]
+		}
 
 		const client = createWalletClient({
 			account: privateKeyToAccount(getPrivateKey()),
@@ -35,7 +49,7 @@ export class ClientManager {
 
 	static getClient(chainId: number): PublicClient {
 		const batch = {
-			multicall: true,
+			multicall: false,
 		}
 
 		const cacheTime = 4000
@@ -50,6 +64,14 @@ export class ClientManager {
 		// Find chain config
 		const chain = this.findChainById(chainId)
 
+		const rpc = this.getCustomRpcUrl(chainId)
+
+		if (rpc) {
+			console.log('Using Alchemy RPC for chain', chainId)
+			console.log('RPC', rpc)
+			chain.rpcUrls.default.http = [rpc]
+		}
+
 		// Create new client
 		const client = createPublicClient({
 			chain,
@@ -63,6 +85,10 @@ export class ClientManager {
 		this.clients.set(chainId, client as PublicClient)
 
 		return client as PublicClient
+	}
+
+	static getCustomRpcUrl(chainId: number): string | undefined {
+		return CUSTOM_RPC_URLS[chainId as keyof typeof CUSTOM_RPC_URLS]
 	}
 
 	static findChainById(chainId: number): Chain {
