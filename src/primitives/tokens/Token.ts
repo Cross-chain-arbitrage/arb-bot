@@ -1,8 +1,8 @@
 import { Address, erc20Abi, isAddress, TransactionReceipt } from 'viem'
-import { TokenError } from './TokenErrors'
+import { isSameAddress } from '../../utils/common'
 import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from './NativeCurrency'
 import { TokenBase } from './TokenBase'
-import { isSameAddress } from '../../utils/common'
+import { TokenError } from './TokenErrors'
 
 export class Token extends TokenBase {
 	constructor(
@@ -94,5 +94,9 @@ export class Token extends TokenBase {
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
 		return receipt
+	}
+
+	get id(): string {
+		return `${this.chainId}:${this.address}`
 	}
 }

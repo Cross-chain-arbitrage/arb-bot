@@ -36,4 +36,8 @@ export abstract class TokenBase extends BaseContract {
 
 		return balance >= amount
 	}
+
+	get id(): string {
+		return `${this.chainId}:${this.address.toLowerCase()}`
+	}
 }

@@ -53,6 +53,8 @@ const CHAINID_TO_EID = {
 	10: 30111, // Optimism
 	8453: 30184, // Base
 	122: 30138, // Fuse
+	43111: 30329, // Hemi
+	1890: 30309,
 }
 
 export function getChainEIdByNativeChainId(chainId: number) {
