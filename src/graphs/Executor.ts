@@ -31,8 +31,6 @@ export class Executor {
 				amountIn,
 			)
 
-			amountIn = amountOut
-
 			const baseLogMsg = `${edge.type} from: ${from.symbol}-${from.chainId} to:${to.symbol}-${to.chainId} input:${from.formatUnits(amountIn)} output:${to.formatUnits(amountOut)}`
 			const logMsg =
 				srcTxHash === dstTxHash
@@ -40,6 +38,8 @@ export class Executor {
 					: `${baseLogMsg} srcTxHash:${srcTxHash} dstTxHash:${dstTxHash} `
 
 			logger.info(logMsg)
+
+			amountIn = amountOut
 		}
 
 		return amountIn //actual end amount
