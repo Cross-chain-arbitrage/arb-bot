@@ -34,8 +34,6 @@ export class GraphOptimizer {
 
 			valueUSD += stepUSD
 
-			console.log('tokenAmount', startToken.formatUnits(tokenAmount))
-
 			algorithmResultsPromises.push(
 				findArbitragePath(
 					startToken,
