@@ -1,3 +1,4 @@
+import TTLCache from '@isaacs/ttlcache'
 import axios from 'axios'
 import { zeroAddress } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
@@ -17,18 +18,20 @@ export class StargateAPIError extends Error {
 const STARGATE_API_URL = 'https://mainnet.stargate-api.com/v1'
 const STARGATE_OLD_API_URL = 'https://stargate.finance/api/v1'
 
+type RequestId = string
+
 export class StargateAPI {
-	private static getApiUrl(): string {
-		const apiUrl = STARGATE_API_URL
-
-		if (!apiUrl || !isValidUrl(apiUrl)) {
-			throw new StargateAPIError('STARGATE_API_URL is not a valid URL')
-		}
-
-		return apiUrl
-	}
+	private static cache = new TTLCache<RequestId, StargateTokenMetadata[]>({
+		ttl: 1000 * 60 * 60 * 1, // 1 hour
+	})
 
 	static async getAllTokensMetadata(): Promise<StargateTokenMetadata[]> {
+		const REQUEST_ID = 'metadata-v2'
+
+		const cachedMetadata = this.cache.get(REQUEST_ID)
+
+		if (cachedMetadata) return cachedMetadata
+
 		try {
 			const apiUrl = this.getApiUrl()
 
@@ -37,6 +40,8 @@ export class StargateAPI {
 			)
 
 			const metadata = response.data.data.v2
+
+			this.cache.set(REQUEST_ID, metadata)
 
 			return metadata
 		} catch (error) {
@@ -236,5 +241,15 @@ export class StargateAPI {
 		) {
 			throw new StargateAPIError(`Invalid Stargate chainKey: ${chainKey}`)
 		}
+	}
+
+	private static getApiUrl(): string {
+		const apiUrl = STARGATE_API_URL
+
+		if (!apiUrl || !isValidUrl(apiUrl)) {
+			throw new StargateAPIError('STARGATE_API_URL is not a valid URL')
+		}
+
+		return apiUrl
 	}
 }
