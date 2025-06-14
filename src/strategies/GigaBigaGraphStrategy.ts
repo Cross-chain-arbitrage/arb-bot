@@ -95,6 +95,9 @@ export class GigaBigaGraphStrategy {
 			const token1 = tokens.get(pool.token1.id)
 
 			if (token0 && token1) {
+				console.log('token0', token0?.toString(), token0.id)
+				console.log('token1', token1?.toString(), token1.id)
+
 				graph.addSwapEdge(token0.id, token1.id, pool, SLIPPAGE)
 			} else {
 				throw new Error(

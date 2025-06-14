@@ -4,6 +4,7 @@ import { Pool } from '../dex/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { TokenId } from '../primitives/tokens/TokenBase'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
 
 export type GraphNode = Token | NativeCurrency
 
@@ -67,6 +68,14 @@ export class Graph {
 		const from = this.nodes.get(edge.from)
 		const to = this.nodes.get(edge.to)
 
+		if (!TokenUtils.isValidTokenId(edge.from)) {
+			throw new GraphError(`Invalid token id: ${edge.from}`)
+		}
+
+		if (!TokenUtils.isValidTokenId(edge.to)) {
+			throw new GraphError(`Invalid token id: ${edge.to}`)
+		}
+
 		if (!from) {
 			throw new GraphError(`Node ${edge.from} does not exist`)
 		}
@@ -97,8 +106,8 @@ export class Graph {
 		}
 
 		this.addEdge({
-			from,
-			to,
+			from: fromId,
+			to: toId,
 			type: ActionType.SWAP,
 			pool,
 			getRate: async (amountIn: bigint) => {

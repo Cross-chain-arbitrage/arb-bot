@@ -1,4 +1,4 @@
-import { Address } from 'viem'
+import { Address, isAddress } from 'viem'
 import { ERC20_ABI } from '../../abi/erc20'
 import { ClientManager } from '../../utils/ClientManager'
 import { isSameAddress } from '../../utils/common'
@@ -146,5 +146,27 @@ export class TokenUtils {
 		const token = this._createNative(chainId)
 		this.tokenCache.set(cacheKey, token)
 		return token
+	}
+
+	static isValidTokenId(id: string) {
+		try {
+			const [chainId, addr] = id.split(':')
+
+			if (!chainId || !addr) {
+				return false
+			}
+
+			if (!isAddress(addr)) {
+				return false
+			}
+
+			if (Number(chainId) <= 0) {
+				return false
+			}
+
+			return true
+		} catch (error) {
+			return false
+		}
 	}
 }
