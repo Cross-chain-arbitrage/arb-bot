@@ -1,4 +1,5 @@
 import { Address, formatUnits, parseUnits } from 'viem'
+import { Stargate } from '../../bridges/stargate/Stargate'
 import { shortenAddress } from '../../utils/common'
 import { BaseContract } from '../contracts/BaseContract'
 export class TokenBaseError extends Error {
@@ -46,7 +47,12 @@ export abstract class TokenBase extends BaseContract {
 	}
 
 	toString(): string {
-		return `${this.symbol} ${this.chainId}`
+		try {
+			const chainKey = Stargate.getChainKey(this.chainId)
+			return `${this.symbol} ${chainKey}`
+		} catch (error) {
+			return `${this.symbol} ${this.chainId}`
+		}
 	}
 
 	toStringFull(): string {

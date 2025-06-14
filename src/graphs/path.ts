@@ -19,7 +19,7 @@ export async function findArbitragePath(
 	path: ArbitragePath | null
 	edgesWithRate: Map<string, EdgeWithRate>
 }> {
-	// console.time('Bellman-Ford Algorithm')
+	console.time('Bellman-Ford Algorithm')
 
 	const distances = new Map<GraphNodeId, number>()
 	const predecessors = new Map<GraphNodeId, GraphEdge>()
@@ -86,15 +86,18 @@ export async function findArbitragePath(
 				amounts.set(to, amountOut)
 
 				// Check for negative cycle
-				if (to === startToken.id && newDist < 0) {
+				const isCyclic = to === startToken.id // It means we've came back to the start token
+				const isNegative = newDist < 0 // It means we're in profit!
+
+				if (isCyclic && isNegative) {
 					const path = await reconstructCycle(
+						graph,
 						predecessors,
 						startToken,
 						startAmount,
 					)
 
-					// console.log('\nNegative cycle found!\n')
-					// console.timeEnd('Bellman-Ford Algorithm')
+					console.timeEnd('Bellman-Ford Algorithm')
 
 					return {
 						path,
@@ -105,26 +108,45 @@ export async function findArbitragePath(
 		}
 	}
 
-	// console.log('\n')
-	// console.timeEnd('Bellman-Ford Algorithm')
-	// console.log('\n')
+	console.log('\n')
+	console.timeEnd('Bellman-Ford Algorithm')
+	console.log('\n')
 
 	return { path: null, edgesWithRate }
 }
 
 async function reconstructCycle(
+	graph: Graph,
 	predecessors: Map<GraphNodeId, GraphEdge>,
 	startToken: GraphNode,
 	startAmount: bigint,
 ): Promise<ArbitragePath> {
 	const edges: GraphEdge[] = []
 	let currentToken: GraphNodeId = startToken.id
+	console.log('\nstartToken', startToken.toString())
+	const maxEdges = 10 // Safety limit to prevent infinite loops
 
 	// Reconstruct the cycle by following predecessors
 	do {
-		const edge = predecessors.get(currentToken)!
+		const edge = predecessors.get(currentToken)
+
+		if (!edge) {
+			throw new Error('Invalid cycle: missing edge in predecessors map')
+		}
+
+		const from = graph.getToken(edge.from)
+		const to = graph.getToken(edge.to)
+
+		console.log(`${from.toString()} -- ${edge.type} --> ${to.toString()}`)
+		// const { rate } = await edge.getRate(startAmount)
+		// console.log('Rate: ', rate.toFixed(3))
+
 		edges.push(edge)
 		currentToken = edge.from
+
+		if (edges.length > maxEdges) {
+			throw new Error('Invalid cycle: too many edges')
+		}
 	} while (currentToken !== startToken.id)
 
 	// Reverse the edges to get the correct order

@@ -20,7 +20,7 @@ const WBTC_FUSE_ADDR = '0x34009565bfEeFded0F7e774629a745636Bf35E82'
 /* ============ Constants ============ */
 
 const SLIPPAGE = 50
-const MAX_PATH_LENGTH = 7
+const MAX_PATH_LENGTH = 5
 
 /* ============ Strategy ============ */
 export class GigaBigaGraphStrategy {
@@ -60,23 +60,13 @@ export class GigaBigaGraphStrategy {
 			}
 		}
 
-		console.log('tokens', tokens.size)
-		// console.log('tokens', tokens)
-
 		const tokensArray = Array.from(tokens.values())
-
-		// console.log('tokensArray', tokensArray)
-		// console.log('tokensArray', tokensArray.length)
 
 		/* =============== NODES =============== */
 
 		for (const token of tokensArray) {
-			console.log('adding token', token.toString())
 			graph.addNode(token)
 		}
-
-		console.log('nodes', graph.nodes.size)
-		console.log('nodes', graph.nodes)
 
 		/* =============== NATIVE TOKENS =============== */
 
@@ -91,19 +81,7 @@ export class GigaBigaGraphStrategy {
 		/* =============== SWAPS =============== */
 
 		for (const pool of pools) {
-			const token0 = tokens.get(pool.token0.id)
-			const token1 = tokens.get(pool.token1.id)
-
-			if (token0 && token1) {
-				console.log('token0', token0?.toString(), token0.id)
-				console.log('token1', token1?.toString(), token1.id)
-
-				graph.addSwapEdge(token0.id, token1.id, pool, SLIPPAGE)
-			} else {
-				throw new Error(
-					`one of tokens doesn't exist in graph: ${pool.token0.id} or ${pool.token1.id}`,
-				)
-			}
+			graph.addDexPoolEdge(pool, SLIPPAGE)
 		}
 
 		/* =============== STARGATE BRIDGES =============== */
@@ -117,9 +95,7 @@ export class GigaBigaGraphStrategy {
 
 			try {
 				metadata = await StargateAPI.getTokenMetadata(token)
-				console.log('Found Stargate token', token.toString())
 			} catch (error) {
-				console.log(`${token.toString()} is not a stargate token`)
 				continue
 			}
 
@@ -131,8 +107,6 @@ export class GigaBigaGraphStrategy {
 
 			assetGroups.get(assetId)?.add(token)
 		}
-
-		console.log('assetGroups', assetGroups)
 
 		const pairs: [GraphNode, GraphNode][] = []
 
@@ -147,15 +121,6 @@ export class GigaBigaGraphStrategy {
 				}
 			}
 		}
-
-		console.log(
-			'pairs',
-			pairs.map(
-				([from, to]) => `${from.toString()} --> ${to.toString()}`,
-			),
-		)
-
-		console.log('pairs.length', pairs.length)
 
 		for (const pair of pairs) {
 			graph.addStargateBridgeEdge(pair[0], pair[1])

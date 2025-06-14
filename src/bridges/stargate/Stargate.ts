@@ -284,13 +284,13 @@ export class Stargate {
 
 			if (oftLimit.minAmountLD > amount) {
 				throw new StargateError(
-					`Bridging min amount is greater than the amount, needed ${oftLimit.minAmountLD}, has ${amount}`,
+					`Bridging min amount is greater than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
 				)
 			}
 
 			if (oftLimit.maxAmountLD < amount) {
 				throw new StargateError(
-					`Bridging max amount is less than the amount, needed ${oftLimit.maxAmountLD}, has ${amount}`,
+					`Bridging max amount is less than the amount, has ${oftLimit.maxAmountLD}, needed ${amount}`,
 				)
 			}
 

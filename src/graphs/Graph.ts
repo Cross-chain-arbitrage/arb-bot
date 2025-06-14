@@ -93,48 +93,52 @@ export class Graph {
 		this.edges.add(edge)
 	}
 
-	addSwapEdge(fromId: TokenId, toId: TokenId, pool: Pool, slippage: number) {
-		const from = this.getToken(fromId)
-		const to = this.getToken(toId)
+	addPool() {}
 
-		if (from.isNative()) {
-			throw new GraphError('Cannot add swap edge with native token')
-		}
+	addDexPoolEdge(pool: Pool, slippage: number) {
+		const from = pool.token0
+		const to = pool.token1
 
-		if (to.isNative()) {
-			throw new GraphError('Cannot add swap edge with native token')
+		const getRate = async (amountIn: bigint) => {
+			const cacheKey = this.getSwapCacheKey(from, to, pool, amountIn)
+			const cachedResult = this.swapCache.get(cacheKey)
+
+			if (cachedResult) return cachedResult
+
+			const { amountOut } = await pool.quoteSwap({
+				tokenIn: from,
+				tokenOut: to,
+				amountIn,
+				slippage,
+			})
+			const rate = this.calcRate(amountIn, amountOut)
+
+			// Cache the result
+			this.swapCache.set(cacheKey, {
+				rate,
+				amountOut,
+			})
+
+			return {
+				rate,
+				amountOut,
+			}
 		}
 
 		this.addEdge({
-			from: fromId,
-			to: toId,
+			from: from.id,
+			to: to.id,
 			type: ActionType.SWAP,
 			pool,
-			getRate: async (amountIn: bigint) => {
-				const cacheKey = this.getSwapCacheKey(from, to, pool, amountIn)
-				const cachedResult = this.swapCache.get(cacheKey)
+			getRate,
+		})
 
-				if (cachedResult) return cachedResult
-
-				const { amountOut } = await pool.quoteSwap({
-					tokenIn: from,
-					tokenOut: to,
-					amountIn,
-					slippage,
-				})
-				const rate = this.calcRate(amountIn, amountOut)
-
-				// Cache the result
-				this.swapCache.set(cacheKey, {
-					rate,
-					amountOut,
-				})
-
-				return {
-					rate,
-					amountOut,
-				}
-			},
+		this.addEdge({
+			from: to.id,
+			to: from.id,
+			type: ActionType.SWAP,
+			pool,
+			getRate,
 		})
 	}
 
