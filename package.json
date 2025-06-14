@@ -22,7 +22,8 @@
 		"arbitrage": "npx tsx src/arbitrage.ts",
 		"arbitrage:sim": "npx tsx src/arbitrage.ts --simulate",
 		"monitor": "npx tsx src/monitor.ts",
-		"run-bot": "npx tsx src/startGraphArbitrage.ts"
+		"run-bot": "npx tsx src/startGraphArbitrage.ts",
+		"approve-all": "npx tsx src/approveAll.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.26.0",
