@@ -121,9 +121,7 @@ export class GraphBuilder {
 				logger.info(`Added Wrapped Native: ${wrapped.toString()}`)
 			} catch (error) {
 				if (error instanceof GraphError) {
-					logger.warn(
-						`Wrapped Native: ${wrapped.toString()} already exists`,
-					)
+					continue
 				} else {
 					throw error
 				}

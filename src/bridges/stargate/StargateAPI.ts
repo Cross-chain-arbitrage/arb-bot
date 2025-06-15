@@ -75,7 +75,7 @@ export class StargateAPI {
 		)
 
 		if (!tokenMetadata) {
-			throw new Error(
+			throw new StargateAPIError(
 				`Token ${token.address} not found in Stargate metadata for chain ${chainKey}`,
 			)
 		}
