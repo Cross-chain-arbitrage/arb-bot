@@ -27,9 +27,7 @@ async function main() {
 	console.log('\n=================== Path ===================\n')
 
 	path.edges.forEach((edge) => {
-		console.log(
-			`${edge.from.symbol} (${edge.from.chainId}) -- ${edge.type} --> ${edge.to.symbol} (${edge.to.chainId})`,
-		)
+		console.log(`${edge.from} -- ${edge.type} --> ${edge.to}`)
 	})
 
 	console.log('\n=================== Values ===================\n')
