@@ -160,9 +160,11 @@ export class GigaBigaGraphStrategy {
 			}
 		}
 
-		const WETH_ARB = TokenUtils.getWrappedNative(arbitrum.id)
-		const WETH_LIGHTLINK = TokenUtils.getWrappedNative(lightlinkPhoenix.id)
-		const WETH_HEMI = TokenUtils.getWrappedNative(hemi.id)
+		const WETH_ARB = await TokenUtils.getWrappedNative(arbitrum.id)
+		const WETH_LIGHTLINK = await TokenUtils.getWrappedNative(
+			lightlinkPhoenix.id,
+		)
+		const WETH_HEMI = await TokenUtils.getWrappedNative(hemi.id)
 
 		graph.addEdge({
 			from: WETH_ARB.id,
