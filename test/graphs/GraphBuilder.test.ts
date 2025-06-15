@@ -141,4 +141,106 @@ makeSuite('GraphBuilder', () => {
 			}
 		})
 	})
+
+	describe('Adding Stargate Bridges', () => {
+		it('MUST add Stargate Bridges for 2 Chains', async () => {
+			const arbPool = pools.find((pool) => pool.chainId === arbitrum.id)
+			const fusePool = pools.find((pool) => pool.chainId === fuse.id)
+
+			expect(arbPool).toBeDefined()
+			expect(fusePool).toBeDefined()
+
+			const graph = await GraphBuilder.buildFromPools([
+				arbPool!,
+				fusePool!,
+			])
+
+			const stargateBridges = Array.from(graph.edges.values()).filter(
+				(edge) => edge.type === ActionType.STARGATE_BRIDGE,
+			)
+
+			expect(stargateBridges.length).toBe(2)
+
+			const bridge = stargateBridges[0]
+			const reverseBridge = stargateBridges[1]
+
+			expect(bridge.from).toBe(reverseBridge.to)
+			expect(bridge.to).toBe(reverseBridge.from)
+		})
+
+		it('MUST add Stargate Bridges for Multiple Chains', async () => {
+			const arbUsdcPool = await PoolUtils.createPool(
+				'0xC6962004f452bE9203591991D15f6b388e09E8D0',
+				arbitrum.id,
+				PoolType.UNIV3,
+			)
+
+			const graph = await GraphBuilder.buildFromPools([
+				arbUsdcPool,
+				...pools,
+			])
+
+			const stargateBridges = Array.from(graph.edges.values()).filter(
+				(edge) => edge.type === ActionType.STARGATE_BRIDGE,
+			)
+
+			expect(stargateBridges.length).toBe(8)
+
+			const usdcBridges = stargateBridges.filter((bridge) =>
+				graph.getToken(bridge.from).symbol.includes('USDC'),
+			)
+
+			expect(usdcBridges.length).toBe(2)
+
+			const usdcBridge = usdcBridges[0]
+			const reverseUsdcBridge = usdcBridges[1]
+
+			expect(usdcBridge.from).toBe(reverseUsdcBridge.to)
+			expect(usdcBridge.to).toBe(reverseUsdcBridge.from)
+
+			const ethBridges = stargateBridges.filter((bridge) =>
+				graph.getToken(bridge.from).symbol.includes('ETH'),
+			)
+
+			expect(ethBridges.length).toBe(6)
+
+			for (const bridge of ethBridges) {
+				const from = graph.getToken(bridge.from)
+				const to = graph.getToken(bridge.to)
+
+				expect(from.symbol.includes('ETH')).toBe(true)
+				expect(to.symbol.includes('ETH')).toBe(true)
+			}
+		})
+	})
+
+	describe('Adding Fuse Bridges', () => {
+		it('MUST add 2 Fuse Bridges for Fuse Chain', async () => {
+			const graph = await GraphBuilder.buildFromPools(pools)
+			const fuseBridges = Array.from(graph.edges.values()).filter(
+				(edge) => edge.type === ActionType.FUSE_BRIDGE,
+			)
+
+			expect(fuseBridges.length).toBe(2)
+
+			const bridge = fuseBridges[0]
+			const reverseBridge = fuseBridges[1]
+
+			// Check that the bridges are reversible
+
+			const from = graph.getToken(bridge.from)
+			const to = graph.getToken(bridge.to)
+
+			const reverseFrom = graph.getToken(reverseBridge.from)
+			const reverseTo = graph.getToken(reverseBridge.to)
+
+			expect(from.symbol.includes('WBTC')).toBe(true)
+			expect(to.symbol.includes('WBTC')).toBe(true)
+			expect(reverseFrom.symbol.includes('WBTC')).toBe(true)
+			expect(reverseTo.symbol.includes('WBTC')).toBe(true)
+
+			expect(bridge.from).toBe(reverseBridge.to)
+			expect(bridge.to).toBe(reverseBridge.from)
+		})
+	})
 })

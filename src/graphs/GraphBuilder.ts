@@ -1,3 +1,5 @@
+import { fuse } from 'viem/chains'
+import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { StargateAPI, StargateAPIError } from '../bridges/stargate/StargateAPI'
 import { Pool } from '../dex/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
@@ -14,6 +16,13 @@ export class GraphBuilderError extends Error {
 	}
 }
 
+const constantGetRateWithoutDecimalsChange = (amountIn: bigint) => {
+	return {
+		rate: -Math.log(1),
+		amountOut: amountIn,
+	}
+}
+
 /**
  * @dev Has overhead of adding all Native Currencies to the graph, even if they are not supposed to be used
  */
@@ -22,9 +31,9 @@ export class GraphBuilder {
 		pools: Pool[],
 		slippage: number = 30,
 	): Promise<Graph> {
-		logger.info('--------------------------------')
+		logger.info('============================')
 		logger.info('Building Graph from Pools')
-		logger.info('--------------------------------')
+		logger.info('============================')
 
 		if (!pools || pools.length === 0) {
 			throw new GraphBuilderError('No pools provided')
@@ -48,26 +57,26 @@ export class GraphBuilder {
 
 		/* ================ Setup Stargate Bridges ================ */
 
-		// Identify Stargate Tokens and connect them in graph
+		await this.setupStargateBridges(graph)
 
 		/* ================ Setup Fuse Bridges ================ */
 
-		// this.setupFuseBridges(graph)
+		this.setupFuseBridges(graph)
 
 		/* ================ Report Result ================ */
 
 		const uniqueChains = this.getAllUniqueChainIdsFromPools(pools)
 
-		logger.info('--------------------------------')
+		logger.info('============================')
 		logger.info('Graph Built Successfully')
-		logger.info('--------------------------------')
+		logger.info('============================')
 
 		logger.info(`Graph has ${graph.nodes.size} nodes`)
 		logger.info(`Graph has ${graph.edges.size} edges`)
 		logger.info(
 			`Graph contains ${uniqueChains.length} (${uniqueChains.join(', ')}) chains`,
 		)
-		logger.info('--------------------------------')
+		logger.info('============================')
 
 		return graph
 	}
@@ -76,6 +85,8 @@ export class GraphBuilder {
 		graph: Graph,
 		pools: Pool[],
 	): NativeCurrency[] {
+		logger.info('------ Setting up Native Currencies ------')
+
 		const uniqueChains = this.getAllUniqueChainIdsFromPools(pools)
 
 		const nativeCurrencies: NativeCurrency[] = []
@@ -95,6 +106,8 @@ export class GraphBuilder {
 		graph: Graph,
 		nativeCurrencies: NativeCurrency[],
 	) {
+		logger.info('------ Setting up Wrapped Native Currencies ------')
+
 		const wrappedNativeCurrencies: WrappedNative[] = await Promise.all(
 			nativeCurrencies.map((native) =>
 				TokenUtils.getWrappedNative(native.chainId),
@@ -142,7 +155,7 @@ export class GraphBuilder {
 	}
 
 	static async setupStargateBridges(graph: Graph) {
-		logger.info('Setting up Stargate Bridges')
+		logger.info('------ Setting up Stargate Bridges ------')
 
 		type AssetId = number
 
@@ -160,13 +173,10 @@ export class GraphBuilder {
 					error instanceof StargateAPIError &&
 					error.message.includes('not found')
 				) {
-					logger.warn(
-						`Stargate Token: ${token.toString()} not found in Stargate metadata`,
-					)
+					continue
 				} else {
 					throw error
 				}
-				continue
 			}
 
 			const assetId = Number(metadata.assetId)
@@ -178,7 +188,7 @@ export class GraphBuilder {
 			assetGroups.get(assetId)?.add(token)
 		}
 
-		logger.info(`Found ${assetGroups.size} asset groups`)
+		logger.info(`Found ${assetGroups.size} asset group(s)`)
 
 		const pairs: [GraphNode, GraphNode][] = []
 
@@ -205,18 +215,68 @@ export class GraphBuilder {
 		}
 	}
 
+	static setupFuseBridges(graph: Graph) {
+		type AssetId = string
+
+		const assetGroups: Map<AssetId, Set<GraphNode>> = new Map()
+
+		for (const node of graph.nodes.values()) {
+			const supportedTokens = FuseBridge.SUPPORTED_TOKENS.map(
+				(token) => `${token.chainId}:${token.address.toLowerCase()}`,
+			)
+
+			if (supportedTokens.includes(node.id)) {
+				const assetId = node.symbol
+
+				if (!assetGroups.has(assetId)) {
+					assetGroups.set(assetId, new Set())
+				}
+
+				assetGroups.get(assetId)?.add(node)
+			}
+		}
+
+		logger.info(`Found ${assetGroups.size} asset group(s)`)
+
+		for (const assets of assetGroups.values()) {
+			const tokens = Array.from(assets)
+
+			const tokenOnFuse = tokens.find(
+				(token) => token.chainId === fuse.id,
+			)
+
+			// If there is no Token on Fuse, skip
+			if (!tokenOnFuse) {
+				continue
+			}
+
+			for (const token of tokens) {
+				if (token.chainId === fuse.id) continue
+
+				graph.addEdge({
+					from: token.id,
+					to: tokenOnFuse.id,
+					type: ActionType.FUSE_BRIDGE,
+					getRate: constantGetRateWithoutDecimalsChange,
+				})
+
+				graph.addEdge({
+					from: tokenOnFuse.id,
+					to: token.id,
+					type: ActionType.FUSE_BRIDGE,
+					getRate: constantGetRateWithoutDecimalsChange,
+				})
+			}
+
+			const assetGroupString = tokens
+				.map((asset) => asset.toString())
+				.join(' <--> ')
+
+			logger.info(`Added ${assetGroupString} bridges`)
+		}
+	}
+
 	static getAllUniqueChainIdsFromPools(pools: Pool[]): number[] {
 		return [...new Set(pools.map((pool) => pool.chainId))]
 	}
-
-	// static setupFuseBridges(graph: Graph) {
-	// 	const fuseBridges: FuseBridge[] = []
-
-	// 	const assetGroups
-
-	// 	for (const node of graph.nodes) {
-	// 		const bridge = new FuseBridge(chainId)
-	// 		graph.addNode(bridge)
-	// 	}
-	// }
 }
