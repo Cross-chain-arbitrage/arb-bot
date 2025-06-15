@@ -19,6 +19,7 @@ const ARB_POOL = '0x2f5e87C9312fa29aed5c179E456625D79015299c'
 const ARB_POOL_TYPE = PoolType.UNIV3
 
 /* ============ Constants ============ */
+
 const SLIPPAGE = 50
 const MAX_PATH_LENGTH = 5
 
@@ -62,17 +63,13 @@ export class FuseWbtcGraphStrategy {
 			FUSE_POOL_TYPE,
 		)
 
-		/* ============ SWAP: WETH (ARB) <-> WBTC (ARB) ============ */
+		/* ============ POOL: WETH/WBTC (ARB) ============ */
 
-		graph.addSwapEdge(WETH_ARB, WBTC_ARB, arbPool, SLIPPAGE)
+		graph.addDexPool(arbPool, SLIPPAGE)
 
-		graph.addSwapEdge(WBTC_ARB, WETH_ARB, arbPool, SLIPPAGE)
+		/* ============ POOL: WBTC/WETH (FUSE) ============ */
 
-		/* ============ SWAP: WBTC (FUSE) <-> WETH (FUSE) ============ */
-
-		graph.addSwapEdge(WBTC_FUSE, WETH_FUSE, fusePool, SLIPPAGE)
-
-		graph.addSwapEdge(WETH_FUSE, WBTC_FUSE, fusePool, SLIPPAGE)
+		graph.addDexPool(fusePool, SLIPPAGE)
 
 		/* ============ STARGATE BRIDGE: ETH (ARB) <-> WETH (FUSE) ============ */
 
@@ -90,14 +87,14 @@ export class FuseWbtcGraphStrategy {
 		}
 
 		graph.addEdge({
-			from: WBTC_FUSE,
-			to: WBTC_ARB,
+			from: WBTC_FUSE.id,
+			to: WBTC_ARB.id,
 			type: ActionType.FUSE_BRIDGE,
 			getRate: getFuseBridgeRate,
 		})
 		graph.addEdge({
-			from: WBTC_ARB,
-			to: WBTC_FUSE,
+			from: WBTC_ARB.id,
+			to: WBTC_FUSE.id,
 			type: ActionType.FUSE_BRIDGE,
 			getRate: getFuseBridgeRate,
 		})
@@ -112,15 +109,15 @@ export class FuseWbtcGraphStrategy {
 		}
 
 		graph.addEdge({
-			from: WETH_ARB,
-			to: ETH_ARB,
+			from: WETH_ARB.id,
+			to: ETH_ARB.id,
 			type: ActionType.UNWRAP,
 			getRate: getWrapRate,
 		})
 
 		graph.addEdge({
-			from: ETH_ARB,
-			to: WETH_ARB,
+			from: ETH_ARB.id,
+			to: WETH_ARB.id,
 			type: ActionType.WRAP,
 			getRate: getWrapRate,
 		})
