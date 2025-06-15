@@ -1,5 +1,5 @@
 import TTLCache from '@isaacs/ttlcache'
-import { formatEther, zeroAddress, zeroHash } from 'viem'
+import { zeroAddress, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
 import { STARGATE_POOL_ABI } from '../../abi/stargate/stgPool'
@@ -8,7 +8,6 @@ import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
-import logger from '../../utils/logger'
 import { padAddressToBytes32 } from '../../utils/types'
 import { StargateAPI } from './StargateAPI'
 import { StargateBridgeTx } from './StargateBridgeTx'
@@ -118,8 +117,6 @@ export class Stargate {
 			],
 		})
 
-		Stargate.logTransactionDetails(tokenIn, quote)
-
 		const expectedAmountOut = Stargate.getExpectedAmountOut(quote, amount)
 		const dstToken = await Stargate.getDstToken(tokenIn, toChainId)
 
@@ -191,25 +188,6 @@ export class Stargate {
 		throw new StargateError(
 			`Insufficient allowance, needed ${amount}, has ${allowance}`,
 		)
-	}
-
-	private static logTransactionDetails(
-		token: Token | NativeCurrency,
-		quote: QuoteResult,
-	): void {
-		logger.info(
-			`Messaging fee: ${formatEther(quote.messagingFee.nativeFee)}`,
-		)
-
-		if (quote.isOFT) {
-			logger.info(
-				`OFT limits: ${token.formatUnits(quote.oftFees?.oftLimit.minAmountLD ?? 0n)} - ${token.formatUnits(quote.oftFees?.oftLimit.maxAmountLD ?? 0n)}`,
-			)
-			// logger.info(`OFT fee details: ${quote.oftFees?.oftFeeDetails}`)
-			// logger.info(
-			// 	`OFT receipt: ${JSON.stringify(quote.oftFees?.oftReceipt)}`,
-			// )
-		}
 	}
 
 	static async quote(
