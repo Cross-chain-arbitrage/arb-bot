@@ -9,6 +9,7 @@ import {
 } from './NativeCurrency'
 import { Token } from './Token'
 import { WrappedNative, wrappedTokens } from './WrappedNative'
+import { NATIVE_CURRENCIES } from './nativeCurrencies'
 
 type TokenCacheKey = `${number}:${Address}`
 
@@ -48,31 +49,14 @@ export class TokenUtils {
 		return !this.isNative(address)
 	}
 
-	static getWrappedNative(chainId: number): WrappedNative {
+	static async getWrappedNative(chainId: number): Promise<WrappedNative> {
 		const wrappedToken = wrappedTokens[chainId]
 
 		if (!wrappedToken) {
 			throw new Error(`Wrapped Native not found for chain ${chainId}`)
 		}
 
-		const cachedToken = this.tokenCache.get(
-			this.getCacheKey(wrappedToken, chainId),
-		)
-
-		if (cachedToken) {
-			return cachedToken as WrappedNative
-		}
-
-		const token = new WrappedNative(
-			chainId,
-			wrappedToken,
-			18,
-			'Wrapped Native',
-		)
-
-		this.tokenCache.set(this.getCacheKey(wrappedToken, chainId), token)
-
-		return token
+		return this.fromAddress<WrappedNative>(wrappedToken, chainId)
 	}
 
 	static async fromAddress<T extends Token | NativeCurrency | WrappedNative>(
@@ -132,7 +116,10 @@ export class TokenUtils {
 	}
 
 	private static _createNative(chainId: number): NativeCurrency {
-		return new NativeCurrency(chainId, 'ETH', 'ETH')
+		return (
+			NATIVE_CURRENCIES[chainId] ??
+			new NativeCurrency(chainId, 'ETH', 'ETH')
+		)
 	}
 
 	static getNative(chainId: number): NativeCurrency {
@@ -144,7 +131,9 @@ export class TokenUtils {
 		}
 
 		const token = this._createNative(chainId)
+
 		this.tokenCache.set(cacheKey, token)
+
 		return token
 	}
 
