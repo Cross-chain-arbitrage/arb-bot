@@ -1,5 +1,6 @@
 import { arbitrum, fuse } from 'viem/chains'
 import { Pool } from '../../src/dex/Pool'
+import { UniV3Pool } from '../../src/dex/uniswapV3/Pool'
 import {
 	ActionType,
 	Graph,
@@ -184,6 +185,56 @@ makeSuite('Graph', () => {
 			expect(graph.edges.size).toBe(2)
 			expect(graph.edges.has(stargateBridgeEdge)).toBe(true)
 			expect(graph.edges.has(reverseStargateBridgeEdge)).toBe(true)
+		})
+	})
+
+	describe.only('MUST be able to add `DexPool`s as an edge', () => {
+		let graph: Graph
+
+		beforeEach(() => {
+			graph = new Graph()
+		})
+
+		it('MUST be able to add `DexPool`s as an edge', async () => {
+			const pool = await UniV3Pool.create(
+				'0x2f5e87C9312fa29aed5c179E456625D79015299c',
+				arbitrum.id,
+			)
+
+			graph.addDexPool(pool, 50)
+
+			// Check adding nodes
+			expect(graph.nodes.size).toBe(2)
+			expect(graph.nodes.has(pool.token0.id)).toBe(true)
+			expect(graph.nodes.has(pool.token1.id)).toBe(true)
+
+			// Check adding edges
+			expect(graph.edges.size).toBe(2)
+
+			const edges = Array.from(graph.edges)
+			const edge = edges[0]
+			const reverseEdge = edges[1]
+
+			// Check that edges are reversed
+			expect(edge.from).toBe(reverseEdge.to)
+			expect(edge.to).toBe(reverseEdge.from)
+
+			// Check that edges are of type `SWAP`
+			expect(edge.type).toBe(ActionType.SWAP)
+			expect(reverseEdge.type).toBe(ActionType.SWAP)
+
+			// Check that getRate is working and different directions return different rates
+			const getRate = await edge.getRate(pool.token0.parseUnits('0.001'))
+			expect(getRate.rate).not.toEqual(0)
+			expect(getRate.amountOut).toBeGreaterThan(0n)
+
+			const getReverseRate = await reverseEdge.getRate(
+				pool.token1.parseUnits('0.001'),
+			)
+			expect(getReverseRate.rate).not.toEqual(0)
+			expect(getReverseRate.amountOut).toBeGreaterThan(0n)
+
+			expect(getRate.rate).not.toEqual(getReverseRate.rate)
 		})
 	})
 

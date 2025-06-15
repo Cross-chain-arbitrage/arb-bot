@@ -3,7 +3,6 @@ import { Stargate } from '../bridges/stargate/Stargate'
 import { Pool } from '../dex/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
-import { TokenId } from '../primitives/tokens/TokenBase'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 
 export type GraphNode = Token | NativeCurrency
@@ -125,15 +124,24 @@ export class Graph {
 		const from = pool.token0
 		const to = pool.token1
 
-		const getRate = async (amountIn: bigint) => {
-			const cacheKey = this.getSwapCacheKey(from, to, pool, amountIn)
+		const getRate = async (
+			tokenIn: Token,
+			tokenOut: Token,
+			amountIn: bigint,
+		) => {
+			const cacheKey = this.getSwapCacheKey(
+				tokenIn,
+				tokenOut,
+				pool,
+				amountIn,
+			)
 			const cachedResult = this.swapCache.get(cacheKey)
 
 			if (cachedResult) return cachedResult
 
 			const { amountOut } = await pool.quoteSwap({
-				tokenIn: from,
-				tokenOut: to,
+				tokenIn,
+				tokenOut,
 				amountIn,
 				slippage,
 			})
@@ -156,7 +164,7 @@ export class Graph {
 			to: to.id,
 			type: ActionType.SWAP,
 			pool,
-			getRate,
+			getRate: (amountIn: bigint) => getRate(from, to, amountIn),
 		})
 
 		this.addEdge({
@@ -164,7 +172,7 @@ export class Graph {
 			to: from.id,
 			type: ActionType.SWAP,
 			pool,
-			getRate,
+			getRate: (amountIn: bigint) => getRate(to, from, amountIn),
 		})
 	}
 
