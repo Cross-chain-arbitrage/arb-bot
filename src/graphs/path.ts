@@ -100,7 +100,6 @@ export async function findArbitragePath(
 
 				if (isCyclic && isNegative) {
 					const path = await reconstructCycle(
-						graph,
 						predecessors,
 						startToken,
 						startAmount,
@@ -127,14 +126,12 @@ export async function findArbitragePath(
  * @returns The reconstructed arbitrage path with profit calculations
  */
 async function reconstructCycle(
-	graph: Graph,
 	predecessors: Map<GraphNodeId, GraphEdge>,
 	startToken: GraphNode,
 	startAmount: bigint,
 ): Promise<ArbitragePath> {
 	const edges: GraphEdge[] = []
 	let currentToken: GraphNodeId = startToken.id
-	console.log('\nstartToken', startToken.toString())
 	const maxEdges = 10 // Safety limit to prevent infinite loops
 
 	// Reconstruct the cycle by following predecessors
@@ -145,10 +142,10 @@ async function reconstructCycle(
 			throw new Error('Invalid cycle: missing edge in predecessors map')
 		}
 
-		const from = graph.getToken(edge.from)
-		const to = graph.getToken(edge.to)
+		// const from = graph.getToken(edge.from)
+		// const to = graph.getToken(edge.to)
 
-		console.log(`${from.toString()} -- ${edge.type} --> ${to.toString()}`)
+		// console.log(`${from.toString()} -- ${edge.type} --> ${to.toString()}`)
 		// const { rate } = await edge.getRate(startAmount)
 		// console.log('Rate: ', rate.toFixed(3))
 
