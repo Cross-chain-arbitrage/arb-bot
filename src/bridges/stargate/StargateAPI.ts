@@ -95,7 +95,7 @@ export class StargateAPI {
 		)
 
 		if (!asset) {
-			throw new Error(
+			throw new StargateAPIError(
 				`Token ${token.address} not found in Stargate metadata`,
 			)
 		}

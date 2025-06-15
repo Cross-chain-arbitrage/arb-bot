@@ -97,7 +97,7 @@ export class Graph {
 	 * @param pool - The pool to add
 	 * @param slippage - The slippage tolerance for the pool
 	 * @dev Adds two edges for the pool, one for each direction
-	 * @dev Adds tokens to the graph if they are not already present
+	 * @dev Adds Nodes for tokens if they are not present
 	 */
 	addDexPool(pool: Pool, slippage: number) {
 		const from = pool.token0

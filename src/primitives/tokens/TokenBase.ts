@@ -43,12 +43,13 @@ export abstract class TokenBase extends BaseContract {
 		return `${this.chainId}:${this.address.toLowerCase() as Address}`
 	}
 
+	// TODO: output chainKey instead of chainId (requires Chain Class abstraction)
 	toString(): string {
 		// try {
 		// const chainKey = Stargate.getChainKey(this.chainId)
 		// return `${this.symbol} ${chainKey}`
 		// } catch (error) {
-		return `${this.symbol} ${this.chainId}`
+		return `${this.symbol} (${this.chainId})`
 		// }
 	}
 

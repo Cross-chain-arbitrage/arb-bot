@@ -1,4 +1,4 @@
-import { arbitrum, hemi, lightlinkPhoenix } from 'viem/chains'
+import { arbitrum, fuse, hemi, lightlinkPhoenix } from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
 import { getAccountAddress } from '../../utils/getAccount'
 import { NativeCurrency } from './NativeCurrency'
@@ -17,10 +17,11 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[arbitrum.id]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
 	[lightlinkPhoenix.id]: '0x7EbeF2A4b1B09381Ec5B9dF8C5c6f2dBECA59c73',
 	[hemi.id]: '0x4200000000000000000000000000000000000006',
+	[fuse.id]: '0x0BE9e53fd7EDaC9F859882AfdDa116645287C629',
 }
 
 export class WrappedNative extends Token {
-	private readonly native: NativeCurrency
+	readonly native: NativeCurrency
 
 	constructor(
 		chainId: number,
