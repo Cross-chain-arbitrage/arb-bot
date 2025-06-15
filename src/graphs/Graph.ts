@@ -93,9 +93,35 @@ export class Graph {
 		this.edges.add(edge)
 	}
 
-	addPool() {}
+	/**
+	 * Add a pool to the graph
+	 * @param pool - The pool to add
+	 * @param slippage - The slippage tolerance for the pool
+	 * @dev Adds two edges for the pool, one for each direction
+	 * @dev Adds tokens to the graph if they are not already present
+	 */
+	addDexPool(pool: Pool, slippage: number) {
+		const from = pool.token0
+		const to = pool.token1
 
-	addDexPoolEdge(pool: Pool, slippage: number) {
+		if (!this.isNodeAdded(from.id)) {
+			this.addNode(from)
+		}
+		if (!this.isNodeAdded(to.id)) {
+			this.addNode(to)
+		}
+
+		this._addDexPoolEdge(pool, slippage)
+	}
+
+	/**
+	 * Add a pool to the graph
+	 * @dev Adds two edges for the pool, one for each direction
+	 * @param pool - The Pool to add
+	 * @param slippage - The slippage tolerance for the pool (50 = 0.5%)
+	 * @throws GraphError if tokens from pool are not present in the graph
+	 */
+	private _addDexPoolEdge(pool: Pool, slippage: number) {
 		const from = pool.token0
 		const to = pool.token1
 
@@ -193,5 +219,9 @@ export class Graph {
 		}
 
 		return token
+	}
+
+	isNodeAdded(tokenId: TokenId): boolean {
+		return this.nodes.has(tokenId)
 	}
 }
