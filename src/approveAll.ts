@@ -7,7 +7,7 @@ import logger from './utils/logger'
 async function main() {
 	logger.info('Starting FuseWbtcGraphStrategy')
 
-	const strategy = await FuseWbtcGraphStrategy.setup()
+	const { graph } = await FuseWbtcGraphStrategy.setup()
 
 	const ethPrice = 2700
 	const ethNative = TokenUtils.getNative(arbitrum.id)
@@ -16,7 +16,7 @@ async function main() {
 
 	const bot = new GraphArbitrageBot(
 		ethNative,
-		strategy.graph,
+		graph,
 		{ initialValueUSD: 10, stepUSD: 20, stepsAmount: 5 },
 		ethPrice,
 	)
