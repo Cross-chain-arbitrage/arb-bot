@@ -18,8 +18,17 @@ const CUSTOM_RPC_URLS = {
 	[arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
 } as const
 
+export class ClientManagerError extends Error {
+	constructor(message: string) {
+		super(message)
+		Object.setPrototypeOf(this, ClientManagerError.prototype)
+		this.name = 'ClientManagerError'
+	}
+}
+
 export class ClientManager {
 	private static clients: Map<number, PublicClient> = new Map()
+	private static _customRpcUrls: Map<number, URL> = new Map()
 
 	private static _walletClients: Map<number, WalletClient> = new Map()
 
@@ -41,6 +50,12 @@ export class ClientManager {
 		return client as WalletClient
 	}
 
+	/**
+	 * Creates new client for passed chainId, or retrieves instance if it already exists
+	 * @param chainId
+	 * @returns PublicClient
+	 * @dev If custom rpc url is set, it will be used ONCE the client is created
+	 */
 	static getClient(chainId: number): PublicClient {
 		const batch = {
 			multicall: true,
@@ -58,12 +73,15 @@ export class ClientManager {
 		// Find chain config
 		const chain = this.findChainById(chainId)
 
+		// Use custom rpc url if set
+		const rpcUrl = this._customRpcUrls.get(chainId)?.toString()
+
 		// Create new client
 		const client = createPublicClient({
 			chain,
 			batch,
 			cacheTime,
-			transport: http(),
+			transport: http(rpcUrl),
 		})
 
 		//TODO: check why use type assertion
@@ -71,6 +89,25 @@ export class ClientManager {
 		this.clients.set(chainId, client as PublicClient)
 
 		return client as PublicClient
+	}
+
+	/**
+	 * MUST be called before client creation in `getClient()` call
+	 * Otherwise, the client will not use the custom rpc url
+	 * @param chainId
+	 * @param rpcUrl
+	 */
+	static useCustomRpcUrl(chainId: number): void {
+		const rpcUrl = this.getCustomRpcUrl(chainId) as string
+
+		if (!rpcUrl) {
+			throw new ClientManagerError(
+				`Custom rpc url not found for chain ${chainId}`,
+			)
+		}
+
+		const url = new URL(rpcUrl)
+		this._customRpcUrls.set(chainId, url)
 	}
 
 	static getCustomRpcUrl(chainId: number): string | undefined {
@@ -83,7 +120,9 @@ export class ClientManager {
 		)
 
 		if (!chain) {
-			throw new Error(`Chain with id ${chainId} not found in viem chains`)
+			throw new ClientManagerError(
+				`Chain with id ${chainId} not found in viem chains`,
+			)
 		}
 
 		return chain
