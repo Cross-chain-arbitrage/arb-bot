@@ -30,8 +30,6 @@ export async function findArbitragePath(
 	path: ArbitragePath | null
 	edgesWithRate: Map<string, EdgeWithRate>
 }> {
-	console.time('Bellman-Ford Algorithm')
-
 	const distances = new Map<GraphNodeId, number>()
 	const predecessors = new Map<GraphNodeId, GraphEdge>()
 	const amounts = new Map<GraphNodeId, bigint>()
@@ -108,8 +106,6 @@ export async function findArbitragePath(
 						startAmount,
 					)
 
-					console.timeEnd('Bellman-Ford Algorithm')
-
 					return {
 						path,
 						edgesWithRate,
@@ -118,10 +114,6 @@ export async function findArbitragePath(
 			}
 		}
 	}
-
-	console.log('\n')
-	console.timeEnd('Bellman-Ford Algorithm')
-	console.log('\n')
 
 	return { path: null, edgesWithRate }
 }
