@@ -15,7 +15,7 @@ interface PoolPriceData {
 	reserve1: bigint
 }
 
-export interface Pool {
+interface Pool {
 	type: PoolType
 	address: Address
 	chainName?: string

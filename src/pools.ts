@@ -1,8 +1,10 @@
 import * as chains from 'viem/chains'
 import { PoolType } from './dex/PoolUtils'
-import { Pool } from './getArbitrageOpportunities'
 
-export const poolsByChain: Record<number, Pool[]> = {
+export const poolsByChain: Record<
+	number,
+	{ type: PoolType; address: Address }[]
+> = {
 	// [apeChain.id]: [
 	// 	// {
 	// 	// 	type: PoolType.UNKNOWN,
