@@ -126,15 +126,11 @@ export class GraphBuilder {
 					throw error
 				}
 			}
+		}
 
-			// ADD WRAP / UNWRAP
-
-			const getWrapRate = (amountIn: bigint) => {
-				return {
-					rate: -Math.log(1),
-					amountOut: amountIn,
-				}
-			}
+		// ADD WRAP / UNWRAP
+		for (const wrapped of wrappedNativeCurrencies) {
+			const getWrapRate = constantGetRateWithoutDecimalsChange
 
 			graph.addEdge({
 				from: wrapped.native.id,

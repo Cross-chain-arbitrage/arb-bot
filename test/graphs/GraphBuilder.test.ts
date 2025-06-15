@@ -108,7 +108,7 @@ makeSuite('GraphBuilder', () => {
 	})
 
 	describe('Adding Wrapped Native Currencies', () => {
-		it('MUST add Wrapped Native Currencies for Chain', async () => {
+		it('MUST add Wrapped Native Currencies for Fuse', async () => {
 			const fusePool = pools.find((pool) => pool.chainId === fuse.id)
 
 			const graph = await GraphBuilder.buildFromPools([fusePool!])
@@ -119,6 +119,53 @@ makeSuite('GraphBuilder', () => {
 
 			expect(wrappedNativeCurrencies.length).toBe(1)
 			expect(wrappedNativeCurrencies[0].chainId).toBe(fuse.id)
+		})
+
+		it('MUST add Wrapped Native Currencies for Arbitrum', async () => {
+			const arbPool = pools.find((pool) => pool.chainId === arbitrum.id)
+
+			const graph = await GraphBuilder.buildFromPools([arbPool!])
+
+			const wrappedNativeCurrencies = Array.from(
+				graph.nodes.values(),
+			).filter((node) => node instanceof WrappedNative)
+
+			console.log(wrappedNativeCurrencies)
+
+			expect(wrappedNativeCurrencies.length).toBe(1)
+			expect(wrappedNativeCurrencies[0].chainId).toBe(arbitrum.id)
+		})
+
+		it('MUST add WRAP/UNWRAP Edges for Arbitrum', async () => {
+			const arbPool = pools.find((pool) => pool.chainId === arbitrum.id)
+
+			const graph = await GraphBuilder.buildFromPools([arbPool!])
+
+			const wrappedNativeCurrencies = Array.from(
+				graph.nodes.values(),
+			).filter((node) => node instanceof WrappedNative)
+
+			console.log(wrappedNativeCurrencies)
+
+			expect(wrappedNativeCurrencies.length).toBe(1)
+			expect(wrappedNativeCurrencies[0].chainId).toBe(arbitrum.id)
+
+			const wrapEdges = Array.from(graph.edges.values()).filter(
+				(edge) => edge.type === ActionType.WRAP,
+			)
+
+			const unwrapEdges = Array.from(graph.edges.values()).filter(
+				(edge) => edge.type === ActionType.UNWRAP,
+			)
+
+			expect(wrapEdges.length).toBe(1)
+			expect(unwrapEdges.length).toBe(1)
+
+			expect(wrapEdges[0].from).toBe(wrappedNativeCurrencies[0].native.id)
+			expect(wrapEdges[0].to).toBe(wrappedNativeCurrencies[0].id)
+
+			expect(unwrapEdges[0].from).toBe(wrappedNativeCurrencies[0].id)
+			expect(unwrapEdges[0].to).toBe(wrappedNativeCurrencies[0].native.id)
 		})
 
 		it('MUST add Wrapped Native Currencies for Multiple Chain', async () => {
