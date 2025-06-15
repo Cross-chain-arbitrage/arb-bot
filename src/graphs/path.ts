@@ -2,6 +2,9 @@ import { parseUnits } from 'viem'
 import { GetRate, Graph, GraphEdge, GraphNode, GraphNodeId } from './Graph'
 import { EdgeWithRate } from './visualization'
 
+/**
+ * Represents an arbitrage path with its edges and profit metrics
+ */
 export interface ArbitragePath {
 	edges: GraphEdge[]
 	startAmount: bigint
@@ -10,6 +13,14 @@ export interface ArbitragePath {
 	profitPercentage: number
 }
 
+/**
+ * Finds an arbitrage path using the Bellman-Ford algorithm
+ * @param startToken - The token to start the arbitrage from
+ * @param startAmount - The amount of tokens to start with
+ * @param graph - The graph containing all possible trading paths
+ * @param maxDepth - Maximum number of edges to traverse (default: 7)
+ * @returns Object containing the arbitrage path and edge rates
+ */
 export async function findArbitragePath(
 	startToken: GraphNode,
 	startAmount: bigint,
@@ -115,6 +126,14 @@ export async function findArbitragePath(
 	return { path: null, edgesWithRate }
 }
 
+/**
+ * Reconstructs a profitable trading cycle from the predecessors map
+ * @param graph - The graph containing all possible trading paths
+ * @param predecessors - Map of token IDs to their predecessor edges
+ * @param startToken - The token where the cycle starts and ends
+ * @param startAmount - The initial amount of tokens
+ * @returns The reconstructed arbitrage path with profit calculations
+ */
 async function reconstructCycle(
 	graph: Graph,
 	predecessors: Map<GraphNodeId, GraphEdge>,
@@ -172,6 +191,13 @@ async function reconstructCycle(
 	}
 }
 
+/**
+ * Finds the optimal arbitrage path by trying different starting amounts
+ * @param startToken - The token to start the arbitrage from
+ * @param graph - The graph containing all possible trading paths
+ * @param maxDepth - Maximum number of edges to traverse (default: 4)
+ * @returns The most profitable arbitrage path found, or null if none exists
+ */
 export async function findOptimalArbitrage(
 	startToken: GraphNode,
 	graph: Graph,
