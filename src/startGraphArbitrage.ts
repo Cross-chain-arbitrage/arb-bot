@@ -15,7 +15,7 @@ async function main() {
 
 	logger.info('Starting searching for arbitrage')
 
-	const minProfitUsd = 0.75
+	const minProfitUsd = 1
 	const bot = new GraphArbitrageBot(
 		ethNative,
 		strategy.graph,
