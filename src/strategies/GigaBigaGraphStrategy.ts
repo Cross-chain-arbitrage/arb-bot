@@ -7,7 +7,6 @@ import { findArbitragePath } from '../graphs/path'
 import { prettyPrintPath, printGraph } from '../graphs/utils'
 import { poolsByChain } from '../pools'
 import { Token } from '../primitives/tokens/Token'
-import { TokenId } from '../primitives/tokens/TokenBase'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 
 /* ============ Tokens ============ */
