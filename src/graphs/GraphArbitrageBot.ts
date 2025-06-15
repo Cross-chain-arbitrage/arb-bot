@@ -35,6 +35,8 @@ export class GraphArbitrageBot {
 	}
 
 	start() {
+		logger.warn('Check that you gave all required token approvals')
+
 		void runFuncWithDelay(
 			this.findAndExecuteArbitrage.bind(this),
 			this.pollingInterval,
