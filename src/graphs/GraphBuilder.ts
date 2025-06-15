@@ -46,7 +46,7 @@ export class GraphBuilder {
 		for (const pool of pools) {
 			graph.addDexPool(pool, slippage)
 			logger.info(
-				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${pool.chainId}) to Graph`,
+				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${pool.chainId})`,
 			)
 		}
 
@@ -210,6 +210,8 @@ export class GraphBuilder {
 	}
 
 	static setupFuseBridges(graph: Graph) {
+		logger.info('------ Setting up Fuse Bridges ------')
+
 		type AssetId = string
 
 		const assetGroups: Map<AssetId, Set<GraphNode>> = new Map()
