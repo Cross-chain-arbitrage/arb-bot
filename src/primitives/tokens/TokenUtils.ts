@@ -8,6 +8,7 @@ import {
 	STARGATE_NATIVE_ADDRESS,
 } from './NativeCurrency'
 import { Token } from './Token'
+import { TokenId } from './TokenBase'
 import { WrappedNative, wrappedTokens } from './WrappedNative'
 
 type TokenCacheKey = `${number}:${Address}`
@@ -168,5 +169,19 @@ export class TokenUtils {
 		} catch (error) {
 			return false
 		}
+	}
+
+	static async fromId(
+		id: TokenId,
+	): Promise<Token | NativeCurrency | WrappedNative> {
+		const isValid = this.isValidTokenId(id)
+
+		if (!isValid) {
+			throw new Error('Invalid token id')
+		}
+
+		const [chainId, addr] = id.split(':')
+
+		return await this.fromAddress(addr as Address, Number(chainId))
 	}
 }

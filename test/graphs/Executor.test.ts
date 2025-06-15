@@ -89,8 +89,8 @@ makeSuite('GraphExecutor', () => {
 
 		beforeAll(() => {
 			edge = {
-				from: wethToken,
-				to: usdtToken,
+				from: wethToken.id,
+				to: usdtToken.id,
 				type: ActionType.SWAP,
 				pool,
 				getRate,
@@ -135,8 +135,8 @@ makeSuite('GraphExecutor', () => {
 			const amountIn = parseEther('0.1')
 
 			const edge: GraphEdge = {
-				from: nativeCurrency,
-				to: wethToken,
+				from: nativeCurrency.id,
+				to: wethToken.id,
 				type: ActionType.SWAP,
 				pool,
 				getRate,
@@ -146,8 +146,8 @@ makeSuite('GraphExecutor', () => {
 				GraphExecutor.executeSwap(edge, amountIn),
 			).rejects.toThrow('Cannot swap from native currency')
 
-			edge.from = wethToken
-			edge.to = nativeCurrency
+			edge.from = wethToken.id
+			edge.to = nativeCurrency.id
 
 			await expect(
 				GraphExecutor.executeSwap(edge, amountIn),
@@ -167,8 +167,8 @@ makeSuite('GraphExecutor', () => {
 			)
 
 			const edge: GraphEdge = {
-				from: nativeCurrency,
-				to: wethToken,
+				from: nativeCurrency.id,
+				to: wethToken.id,
 				type: ActionType.WRAP,
 				getRate,
 			}
@@ -193,8 +193,8 @@ makeSuite('GraphExecutor', () => {
 			)
 
 			const edge: GraphEdge = {
-				from: nativeCurrency,
-				to: regularToken,
+				from: nativeCurrency.id,
+				to: regularToken.id,
 				type: ActionType.WRAP,
 				getRate,
 			}
@@ -218,8 +218,8 @@ makeSuite('GraphExecutor', () => {
 			)
 
 			const edge: GraphEdge = {
-				from: wethToken,
-				to: nativeCurrency,
+				from: wethToken.id,
+				to: nativeCurrency.id,
 				type: ActionType.UNWRAP,
 				getRate: () =>
 					Promise.resolve({ rate: 1, amountOut: amountIn }),
@@ -254,8 +254,8 @@ makeSuite('GraphExecutor', () => {
 			)
 
 			const edge: GraphEdge = {
-				from: regularToken,
-				to: nativeCurrency,
+				from: regularToken.id,
+				to: nativeCurrency.id,
 				type: ActionType.UNWRAP,
 				getRate,
 			}
@@ -293,8 +293,8 @@ makeSuite('GraphExecutor', () => {
 			await FuseBridge.approveToBridge(wbtcArbToken, amountIn)
 
 			const edge: GraphEdge = {
-				from: wbtcArbToken,
-				to: wbtcFuseToken,
+				from: wbtcArbToken.id,
+				to: wbtcFuseToken.id,
 				type: ActionType.FUSE_BRIDGE,
 				getRate,
 			}
@@ -335,8 +335,8 @@ makeSuite('GraphExecutor', () => {
 			)
 
 			const edge: GraphEdge = {
-				from: nativeCurrency,
-				to: wethFuseToken,
+				from: nativeCurrency.id,
+				to: wethFuseToken.id,
 				type: ActionType.STARGATE_BRIDGE,
 				getRate,
 			}

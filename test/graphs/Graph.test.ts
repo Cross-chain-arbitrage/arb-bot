@@ -38,8 +38,8 @@ makeSuite('Graph', () => {
 			graph.addNode(WETH_FUSE)
 
 			expect(graph.nodes.size).toBe(2)
-			expect(graph.nodes.has(WBTC_ARB)).toBe(true)
-			expect(graph.nodes.has(WETH_FUSE)).toBe(true)
+			expect(graph.nodes.has(WBTC_ARB.id)).toBe(true)
+			expect(graph.nodes.has(WETH_FUSE.id)).toBe(true)
 		})
 
 		it('MUST be able to add `NativeCurrency`s as nodes', () => {
@@ -52,8 +52,8 @@ makeSuite('Graph', () => {
 			graph.addNode(FUSE_FUSE)
 
 			expect(graph.nodes.size).toBe(2)
-			expect(graph.nodes.has(ETH_ARB)).toBe(true)
-			expect(graph.nodes.has(FUSE_FUSE)).toBe(true)
+			expect(graph.nodes.has(ETH_ARB.id)).toBe(true)
+			expect(graph.nodes.has(FUSE_FUSE.id)).toBe(true)
 		})
 	})
 
@@ -88,8 +88,8 @@ makeSuite('Graph', () => {
 			const ETH_PRICE = 2_700
 
 			const swapEdge: GraphEdge = {
-				from: WBTC_ARB, // $110k
-				to: ETH_ARB, // $2.7k,
+				from: WBTC_ARB.id, // $110k
+				to: ETH_ARB.id, // $2.7k,
 				type: ActionType.SWAP,
 				pool: {} as Pool,
 				getRate: (amountIn: bigint) => {
@@ -101,8 +101,8 @@ makeSuite('Graph', () => {
 			}
 
 			const reverseSwapEdge: GraphEdge = {
-				from: ETH_ARB,
-				to: WBTC_ARB,
+				from: ETH_ARB.id,
+				to: WBTC_ARB.id,
 				type: ActionType.SWAP,
 				pool: {} as Pool,
 				getRate: (amountIn: bigint) => {
@@ -122,8 +122,8 @@ makeSuite('Graph', () => {
 
 		it('MUST be able to add `Stargate Bridge`s as edges', () => {
 			const stargateBridgeEdge: GraphEdge = {
-				from: ETH_ARB,
-				to: WETH_FUSE,
+				from: ETH_ARB.id,
+				to: WETH_FUSE.id,
 				type: ActionType.STARGATE_BRIDGE,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
@@ -134,8 +134,8 @@ makeSuite('Graph', () => {
 			}
 
 			const reverseStargateBridgeEdge: GraphEdge = {
-				from: WETH_FUSE,
-				to: ETH_ARB,
+				from: WETH_FUSE.id,
+				to: ETH_ARB.id,
 				type: ActionType.STARGATE_BRIDGE,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
@@ -155,8 +155,8 @@ makeSuite('Graph', () => {
 
 		it('MUST be able to add `Fuse Bridge`s as edges', () => {
 			const stargateBridgeEdge: GraphEdge = {
-				from: WBTC_ARB,
-				to: WBTC_FUSE,
+				from: WBTC_ARB.id,
+				to: WBTC_FUSE.id,
 				type: ActionType.FUSE_BRIDGE,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
@@ -167,8 +167,8 @@ makeSuite('Graph', () => {
 			}
 
 			const reverseStargateBridgeEdge: GraphEdge = {
-				from: WBTC_FUSE,
-				to: WBTC_ARB,
+				from: WBTC_FUSE.id,
+				to: WBTC_ARB.id,
 				type: ActionType.FUSE_BRIDGE,
 				getRate: (amountIn: bigint) => {
 					return Promise.resolve({
@@ -202,8 +202,8 @@ makeSuite('Graph', () => {
 		it('MUST throw an error if an edge is added with a node that does not exist', () => {
 			const graph = new Graph()
 			const edge: GraphEdge = {
-				from: WBTC_ARB,
-				to: WETH_FUSE,
+				from: WBTC_ARB.id,
+				to: WETH_FUSE.id,
 				type: ActionType.SWAP,
 				pool: {} as Pool,
 				getRate: (amountIn: bigint) => {
@@ -232,8 +232,8 @@ makeSuite('Graph', () => {
 			graph.addNode(WETH_FUSE)
 
 			const edge: GraphEdge = {
-				from: WBTC_ARB,
-				to: WETH_FUSE,
+				from: WBTC_ARB.id,
+				to: WETH_FUSE.id,
 				type: ActionType.SWAP,
 				pool: {} as Pool,
 				getRate: (amountIn: bigint) => {

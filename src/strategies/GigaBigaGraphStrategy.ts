@@ -13,8 +13,6 @@ import { TokenUtils } from '../primitives/tokens/TokenUtils'
 /* ============ Tokens ============ */
 
 const WBTC_ARB_ADDR = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
-const WETH_ARB_ADDR = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
-const WETH_FUSE_ADDR = '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590'
 const WBTC_FUSE_ADDR = '0x34009565bfEeFded0F7e774629a745636Bf35E82'
 
 /* ============ Constants ============ */
@@ -81,7 +79,7 @@ export class GigaBigaGraphStrategy {
 		/* =============== SWAPS =============== */
 
 		for (const pool of pools) {
-			graph.addDexPoolEdge(pool, SLIPPAGE)
+			graph.addDexPool(pool, SLIPPAGE)
 		}
 
 		/* =============== STARGATE BRIDGES =============== */

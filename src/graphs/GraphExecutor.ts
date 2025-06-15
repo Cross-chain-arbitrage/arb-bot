@@ -2,12 +2,15 @@ import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Stargate } from '../bridges/stargate/Stargate'
 import { Pool } from '../dex/Pool'
 import { Token } from '../primitives/tokens/Token'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import { ClientManager } from '../utils/ClientManager'
 import { shortenAddress } from '../utils/common'
 import logger from '../utils/logger'
 import { ActionType, GraphEdge } from './Graph'
 import { ArbitragePath } from './path'
+import { getEdgeNodes } from './utils'
+
 export class GraphExecutor {
 	/**
 	 * Execute the arbitrage path
@@ -25,7 +28,8 @@ export class GraphExecutor {
 		let amountIn = startAmount
 
 		for (const edge of edges) {
-			const { from, to } = edge
+			const { from, to } = await getEdgeNodes(edge)
+
 			const beforeExecuteLogMsg = `Start ${edge.type} from: ${from.symbol}-${from.chainId} to:${to.symbol}-${to.chainId} input:${from.formatUnits(amountIn)}}`
 			logger.info(beforeExecuteLogMsg)
 			const { amountOut, dstTxHash, srcTxHash } = await this.executeEdge(
@@ -79,7 +83,8 @@ export class GraphExecutor {
 		},
 		amountIn: bigint,
 	) {
-		const { pool, from, to } = edge
+		const { from, to } = await getEdgeNodes(edge)
+		const { pool } = edge
 
 		if (from.isNative()) {
 			throw new Error(
@@ -107,7 +112,7 @@ export class GraphExecutor {
 	}
 
 	static async executeWrap(edge: GraphEdge, amountIn: bigint) {
-		const { to } = edge
+		const { to } = await getEdgeNodes(edge)
 
 		if (!(to instanceof WrappedNative)) {
 			throw new Error(
@@ -126,7 +131,7 @@ export class GraphExecutor {
 	}
 
 	static async executeUnwrap(edge: GraphEdge, amountIn: bigint) {
-		const { from } = edge
+		const { from } = await getEdgeNodes(edge)
 
 		if (!(from instanceof WrappedNative)) {
 			throw new Error(
@@ -145,7 +150,7 @@ export class GraphExecutor {
 	}
 
 	static async executeFuseBridge(edge: GraphEdge, amountIn: bigint) {
-		const { from, to } = edge
+		const { from, to } = await getEdgeNodes(edge)
 
 		const tx = await FuseBridge.bridge(
 			from as Token,
@@ -168,10 +173,16 @@ export class GraphExecutor {
 	static async executeStargateBridge(edge: GraphEdge, amountIn: bigint) {
 		const { from, to } = edge
 
+		const fromChainId = Number(from.split(':')[0])
+		const fromAddress = from.split(':')[1] as Address
+		const toChainId = Number(to.split(':')[0])
+
+		const fromToken = await TokenUtils.fromAddress(fromAddress, fromChainId)
+
 		const result = await Stargate.bridge(
-			from,
-			to.chainId,
-			ClientManager.getWalletClient(to.chainId).account!.address,
+			fromToken,
+			toChainId,
+			ClientManager.getWalletClient(fromChainId).account!.address,
 			amountIn,
 		)
 

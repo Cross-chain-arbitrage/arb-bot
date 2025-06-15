@@ -38,8 +38,8 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 
 	// SWAP: ETH (ARB) <-> WBTC (ARB)
 	graph.addEdge({
-		from: ETH_ARB,
-		to: WBTC_ARB,
+		from: ETH_ARB.id,
+		to: WBTC_ARB.id,
 		type: ActionType.SWAP,
 		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
@@ -52,8 +52,8 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 		},
 	})
 	graph.addEdge({
-		from: WBTC_ARB,
-		to: ETH_ARB,
+		from: WBTC_ARB.id,
+		to: ETH_ARB.id,
 		type: ActionType.SWAP,
 		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
@@ -68,8 +68,8 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 
 	// SWAP: WBTC (FUSE) -> WETH (FUSE)
 	graph.addEdge({
-		from: WBTC_FUSE,
-		to: WETH_FUSE,
+		from: WBTC_FUSE.id,
+		to: WETH_FUSE.id,
 		type: ActionType.SWAP,
 		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
@@ -82,8 +82,8 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 		},
 	})
 	graph.addEdge({
-		from: WETH_FUSE,
-		to: WBTC_FUSE,
+		from: WETH_FUSE.id,
+		to: WBTC_FUSE.id,
 		type: ActionType.SWAP,
 		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
@@ -108,14 +108,14 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 	}
 
 	graph.addEdge({
-		from: ETH_ARB,
-		to: WETH_FUSE,
+		from: ETH_ARB.id,
+		to: WETH_FUSE.id,
 		type: ActionType.STARGATE_BRIDGE,
 		getRate: stargateBridgeAction.getRate,
 	})
 	graph.addEdge({
-		from: WETH_FUSE,
-		to: ETH_ARB,
+		from: WETH_FUSE.id,
+		to: ETH_ARB.id,
 		type: ActionType.STARGATE_BRIDGE,
 		getRate: stargateBridgeAction.getRate,
 	})
@@ -132,22 +132,22 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 	}
 
 	graph.addEdge({
-		from: WBTC_FUSE,
-		to: WBTC_ARB,
+		from: WBTC_FUSE.id,
+		to: WBTC_ARB.id,
 		type: ActionType.FUSE_BRIDGE,
 		getRate: fuseBridgeAction.getRate,
 	})
 	graph.addEdge({
-		from: WBTC_ARB,
-		to: WBTC_FUSE,
+		from: WBTC_ARB.id,
+		to: WBTC_FUSE.id,
 		type: ActionType.FUSE_BRIDGE,
 		getRate: fuseBridgeAction.getRate,
 	})
 
 	// Swap to USDT
 	graph.addEdge({
-		from: ETH_ARB,
-		to: USDT_ARB,
+		from: ETH_ARB.id,
+		to: USDT_ARB.id,
 		type: ActionType.SWAP,
 		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {
@@ -160,8 +160,8 @@ export async function getWethWbtcFuseGraphWithDeadEnd(
 	})
 
 	graph.addEdge({
-		from: USDT_ARB,
-		to: ETH_ARB,
+		from: USDT_ARB.id,
+		to: ETH_ARB.id,
 		type: ActionType.SWAP,
 		pool: {} as Pool,
 		getRate: (amountIn: bigint) => {

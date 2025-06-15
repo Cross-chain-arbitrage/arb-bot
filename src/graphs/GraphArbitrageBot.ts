@@ -8,6 +8,7 @@ import { runFuncWithDelay } from '../utils/polling'
 import { ActionType, Graph, GraphEdge, GraphNode } from './Graph'
 import { GraphExecutor } from './GraphExecutor'
 import { ArbitragePath } from './path'
+import { getEdgeNodes } from './utils'
 
 export class GraphArbitrageBot {
 	private _startTokenPrice: number
@@ -110,8 +111,10 @@ export class GraphArbitrageBot {
 
 	async approveAll() {
 		for (const edge of this.graph.edges) {
+			const { from, to } = await getEdgeNodes(edge)
+
 			console.log(
-				`approving for edge ${edge.type} ${edge.from.chainId}:${edge.from.symbol} - ${edge.to.chainId}:${edge.to.symbol}`,
+				`approving for edge ${edge.type} ${from.chainId}:${from.symbol} - ${to.chainId}:${to.symbol}`,
 			)
 			const tx = await this.approveForEdge(edge)
 			console.log(tx?.transactionHash)
@@ -121,11 +124,11 @@ export class GraphArbitrageBot {
 	private async approveForEdge(
 		edge: GraphEdge,
 	): Promise<TransactionReceipt | undefined> {
-		const { from } = edge
+		const { from } = await getEdgeNodes(edge)
 
 		switch (edge.type) {
 			case ActionType.SWAP:
-				return await (edge.from as Token).approve(
+				return await (from as Token).approve(
 					edge.pool.routerAddress,
 					maxUint256,
 				)
