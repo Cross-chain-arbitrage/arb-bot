@@ -1,4 +1,5 @@
 import { arbitrum } from 'viem/chains'
+import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { GraphArbitrageBot } from './graphs/GraphArbitrageBot'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { FuseWbtcGraphStrategy } from './strategies/FuseWbtcGraphStrategy'
@@ -9,12 +10,12 @@ async function main() {
 
 	const strategy = await FuseWbtcGraphStrategy.setup()
 
-	const ethPrice = 2550
+	const ethPrice = await GeckoTerminalAPI.getTokenPriceETH()
 	const ethNative = TokenUtils.getNative(arbitrum.id)
 
 	logger.info('Starting searching for arbitrage')
 
-	const minProfitUsd = 1
+	const minProfitUsd = 0.75
 	const bot = new GraphArbitrageBot(
 		ethNative,
 		strategy.graph,
