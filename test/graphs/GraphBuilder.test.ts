@@ -130,8 +130,6 @@ makeSuite('GraphBuilder', () => {
 				graph.nodes.values(),
 			).filter((node) => node instanceof WrappedNative)
 
-			console.log(wrappedNativeCurrencies)
-
 			expect(wrappedNativeCurrencies.length).toBe(1)
 			expect(wrappedNativeCurrencies[0].chainId).toBe(arbitrum.id)
 		})
@@ -144,8 +142,6 @@ makeSuite('GraphBuilder', () => {
 			const wrappedNativeCurrencies = Array.from(
 				graph.nodes.values(),
 			).filter((node) => node instanceof WrappedNative)
-
-			console.log(wrappedNativeCurrencies)
 
 			expect(wrappedNativeCurrencies.length).toBe(1)
 			expect(wrappedNativeCurrencies[0].chainId).toBe(arbitrum.id)
