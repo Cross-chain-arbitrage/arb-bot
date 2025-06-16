@@ -8,4 +8,5 @@ export const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
 	[chains.fuse.id]: new NativeCurrency(chains.fuse.id, 'FUSE', 'FUSE'),
 	[chains.hemi.id]: ETH(chains.hemi.id),
 	[chains.lightlinkPhoenix.id]: ETH(chains.lightlinkPhoenix.id),
+	[chains.story.id]: new NativeCurrency(chains.story.id, 'IP', 'IP'),
 } as const
