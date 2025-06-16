@@ -20,7 +20,7 @@ export class GraphArbitrageBot {
 		readonly graphOptimizerOptions: GraphOptimizerOptions,
 		startTokenPrice: number,
 		readonly minProfitUsd = 3,
-		readonly pollingInterval = 10000,
+		readonly pollingInterval = 10_000,
 		readonly arbitrageTimeout = 5 * 60 * 1000,
 	) {
 		this._startTokenPrice = startTokenPrice

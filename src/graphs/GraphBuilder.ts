@@ -24,7 +24,10 @@ const constantGetRateWithoutDecimalsChange = (amountIn: bigint) => {
 }
 
 /**
- * @dev Has overhead of adding all Native Currencies to the graph, even if they are not supposed to be used
+ * Builds `Graph` from provided array of `Pool`s
+ * @dev Finds all possible bridging opportunities by itself (Stargate and Fuse)
+ * @dev Automatically adds all Native Currencies and their Wrapped Versions for all chains featured in provided `Pool`s
+ * @returns Graph with all required Nodes and Edges, which is not supposed to be modified manually
  */
 export class GraphBuilder {
 	static async buildFromPools(
@@ -102,7 +105,7 @@ export class GraphBuilder {
 		return nativeCurrencies
 	}
 
-	static async setupWrappedNativeCurrencies(
+	private static async setupWrappedNativeCurrencies(
 		graph: Graph,
 		nativeCurrencies: NativeCurrency[],
 	) {
@@ -148,7 +151,7 @@ export class GraphBuilder {
 		}
 	}
 
-	static async setupStargateBridges(graph: Graph) {
+	private static async setupStargateBridges(graph: Graph) {
 		logger.info('------ Setting up Stargate Bridges ------')
 
 		type AssetId = number
@@ -209,7 +212,7 @@ export class GraphBuilder {
 		}
 	}
 
-	static setupFuseBridges(graph: Graph) {
+	private static setupFuseBridges(graph: Graph) {
 		logger.info('------ Setting up Fuse Bridges ------')
 
 		type AssetId = string
@@ -272,7 +275,7 @@ export class GraphBuilder {
 		}
 	}
 
-	static getAllUniqueChainIdsFromPools(pools: Pool[]): number[] {
+	private static getAllUniqueChainIdsFromPools(pools: Pool[]): number[] {
 		return [...new Set(pools.map((pool) => pool.chainId))]
 	}
 }

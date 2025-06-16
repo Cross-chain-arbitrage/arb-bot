@@ -15,7 +15,10 @@ export class GraphOptimizer {
 		startTokenUSDPrice: number,
 		graph: Graph,
 		options: GraphOptimizerOptions = {},
-	) {
+	): Promise<{
+		path: ArbitragePath | null
+		edgesWithRate: Map<string, EdgeWithRate>
+	}> {
 		const { initialValueUSD, stepUSD, stepsAmount, maxPathLength } = {
 			...DEFAULT_OPTIONS,
 			...options,
