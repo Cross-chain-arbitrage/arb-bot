@@ -3,13 +3,11 @@ import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
-import { GraphEdge, GraphNode } from './Graph'
+import { GraphEdge } from './Graph'
 import { ArbitragePath } from './path'
 import { EdgeWithRate, getMermaidGraph } from './visualization'
 
 export async function prettyPrintPath(
-	startToken: GraphNode,
-	startAmount: bigint,
 	path: ArbitragePath | null,
 	edgesWithRate: Map<string, EdgeWithRate>,
 ) {
@@ -24,9 +22,12 @@ export async function prettyPrintPath(
 
 	console.log('\n=================== Path ===================\n')
 
-	path.edges.forEach((edge) => {
-		console.log(`${edge.from} -- ${edge.type} --> ${edge.to}`)
-	})
+	const startToken = await TokenUtils.fromId(path.edges[0].from)
+
+	for (const edge of path.edges) {
+		const { from, to } = await getEdgeNodes(edge)
+		console.log(`${from.toString()} -- ${edge.type} --> ${to.toString()}`)
+	}
 
 	console.log('\n=================== Values ===================\n')
 
@@ -34,14 +35,15 @@ export async function prettyPrintPath(
 
 	console.log(
 		'Start amount',
-		Number(startToken.formatUnits(startAmount)).toFixed(4),
+		Number(startToken.formatUnits(path.startAmount)).toFixed(4),
 		startToken.symbol,
-		`($${(priceETH * Number(startToken.formatUnits(startAmount))).toFixed(2)})`,
+		`($${(priceETH * Number(startToken.formatUnits(path.startAmount))).toFixed(2)})`,
 	)
 
 	console.log(
 		'End amount',
 		Number(startToken.formatUnits(path.endAmount)).toFixed(4),
+		startToken.symbol,
 		`($${(priceETH * Number(startToken.formatUnits(path.endAmount))).toFixed(2)})`,
 	)
 
