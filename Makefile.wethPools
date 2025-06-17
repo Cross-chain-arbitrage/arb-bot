@@ -1,5 +1,4 @@
-APP_NAME = weth-pools-arbitrage-bot
-IMAGE_REPO = europe-north2-docker.pkg.dev/crypto-galaxy-385309/docker-registry/$(APP_NAME)
+IMAGE_REPO = europe-north2-docker.pkg.dev/crypto-galaxy-385309/docker-registry/weth-pools-arbitrage-bot
 
 # Git settings
 MANIFEST_PATH = infra/manifests/weth-pools-arbitrage-bot/values.yaml

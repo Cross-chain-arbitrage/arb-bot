@@ -14,7 +14,8 @@
 		"monitor": "npx tsx src/monitor.ts",
 		"run-bot": "npx tsx src/startGraphArbitrage.ts",
 		"approve-all": "npx tsx src/approveAll.ts",
-		"arbitrage:weth-pools": "npx tsx src/strategies/WethPoolsStrategy/WethPoolsStrategy.ts"
+		"arbitrage:weth-pools": "npx tsx src/strategies/WethPoolsStrategy/WethPoolsStrategy.ts",
+		"deploy:weth-pools": "make -f Makefile.wethPools deploy"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.26.0",
