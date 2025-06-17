@@ -61,8 +61,6 @@ export class ClientManager {
 			multicall: true,
 		}
 
-		const cacheTime = 4000
-
 		// Check if client already exists
 		const existingClient = this.clients.get(chainId)
 
@@ -80,7 +78,6 @@ export class ClientManager {
 		const client = createPublicClient({
 			chain,
 			batch,
-			cacheTime,
 			transport: http(rpcUrl),
 		})
 
