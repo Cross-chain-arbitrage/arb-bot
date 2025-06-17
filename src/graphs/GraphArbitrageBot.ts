@@ -1,6 +1,8 @@
 import { maxUint256, TransactionReceipt } from 'viem'
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Stargate } from '../bridges/stargate/Stargate'
+import { TgArbitrage } from '../modules/notification/TgArbitrage'
+import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
 import logger from '../utils/logger'
@@ -9,29 +11,50 @@ import { ActionType, Graph, GraphEdge, GraphNode } from './Graph'
 import { GraphExecutor } from './GraphExecutor'
 import { ArbitragePath } from './path'
 import { getEdgeNodes } from './utils'
+import { EdgeWithRate } from './visualization'
+
+const DEFAULT_OPTIONS = {
+	minProfitUsd: 3,
+	pollingInterval: 10_000,
+	arbitrageTimeout: 5 * 60 * 1000,
+}
+
+interface GraphArbitrageBotParams {
+	graph: Graph
+	priceOracle: PriceOracle
+	tgArbitrage: TgArbitrage
+	startToken: GraphNode
+	options?: Partial<{
+		graphOptimizerOptions: GraphOptimizerOptions
+		minProfitUsd: number
+		pollingInterval: number
+		arbitrageTimeout: number
+	}>
+}
 
 export class GraphArbitrageBot {
-	private _startTokenPrice: number
 	private isArbitrageExecuting = false
+	private tgArbitrage: TgArbitrage
+	private priceOracle: PriceOracle
+	private startToken: GraphNode
+	private graph: Graph
+	private graphOptimizerOptions: GraphOptimizerOptions
+	private minProfitUsd: number
+	private pollingInterval: number
+	private arbitrageTimeout: number
 
-	constructor(
-		readonly startToken: GraphNode,
-		readonly graph: Graph,
-		readonly graphOptimizerOptions: GraphOptimizerOptions,
-		startTokenPrice: number,
-		readonly minProfitUsd = 3,
-		readonly pollingInterval = 10_000,
-		readonly arbitrageTimeout = 5 * 60 * 1000,
-	) {
-		this._startTokenPrice = startTokenPrice
-	}
-
-	updateStartTokenPrice(startTokenPrice: number) {
-		this._startTokenPrice = startTokenPrice
-	}
-
-	get startTokenPrice() {
-		return this._startTokenPrice
+	constructor(params: GraphArbitrageBotParams) {
+		this.tgArbitrage = params.tgArbitrage
+		this.priceOracle = params.priceOracle
+		this.startToken = params.startToken
+		this.graph = params.graph
+		this.graphOptimizerOptions = params.options?.graphOptimizerOptions || {}
+		this.minProfitUsd =
+			params.options?.minProfitUsd || DEFAULT_OPTIONS.minProfitUsd
+		this.pollingInterval =
+			params.options?.pollingInterval || DEFAULT_OPTIONS.pollingInterval
+		this.arbitrageTimeout =
+			params.options?.arbitrageTimeout || DEFAULT_OPTIONS.arbitrageTimeout
 	}
 
 	start() {
@@ -47,16 +70,18 @@ export class GraphArbitrageBot {
 		if (this.isArbitrageExecuting) return
 
 		let path
+		let edgesWithRate: Map<string, EdgeWithRate>
 
 		try {
 			const findOpportunityRes = await GraphOptimizer.findOpportunity(
 				this.startToken,
-				this.startTokenPrice,
+				this.startTokenPrice(),
 				this.graph,
 				this.graphOptimizerOptions,
 			)
 
 			path = findOpportunityRes.path
+			edgesWithRate = findOpportunityRes.edgesWithRate
 		} catch (err) {
 			logger.error(err, 'Error finding arbitrage')
 		}
@@ -64,7 +89,7 @@ export class GraphArbitrageBot {
 		if (path) {
 			const expectedProfitUsd =
 				Number(this.startToken.formatUnits(path.profitAmount)) *
-				this.startTokenPrice
+				this.startTokenPrice()
 
 			if (expectedProfitUsd < this.minProfitUsd) {
 				logger.info(
@@ -74,20 +99,62 @@ export class GraphArbitrageBot {
 			}
 
 			try {
-				await this.execute(path, expectedProfitUsd)
+				logger.info(
+					`Starting arbitrage, start amount: ${this.startToken.formatUnits(path.startAmount)}, expected profit: $${expectedProfitUsd}, expected amountOut: ${this.startToken.formatUnits(path.endAmount)}`,
+				)
+				this.notifyAboutArbStart(path, edgesWithRate!)
+
+				const { actualAmountOut, actualProfitUsd } =
+					await this.execute(path)
+
+				const readableActualAmountOut =
+					this.startToken.formatUnits(actualAmountOut)
+
+				logger.info(
+					`Arbitrage is finished, amount out: ${readableActualAmountOut}, profit: $${actualProfitUsd}`,
+				)
+				this.notifyAboutArbEnd(readableActualAmountOut, actualProfitUsd)
 			} catch (err) {
 				logger.error(err, 'Error executing arbitrage')
+				this.notifyAboutArbError(err)
 			}
 		} else {
 			logger.info('No arbitrage found')
 		}
 	}
 
-	private async execute(path: ArbitragePath, expectedProfitUsd: number) {
-		logger.info(
-			`Starting arbitrage, start amount: ${this.startToken.formatUnits(path.startAmount)}, expected profit: $${expectedProfitUsd}, expected amountOut: ${this.startToken.formatUnits(path.endAmount)}`,
-		)
+	private notifyAboutArbError(error: unknown) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'Unknown error'
 
+		this.tgArbitrage.sendArbitrageError(errorMessage).catch((err) => {
+			logger.error(err, 'Error sending error to telegram')
+		})
+	}
+
+	private notifyAboutArbEnd(
+		actualAmountOut: string,
+		actualProfitUsd: number,
+	) {
+		this.tgArbitrage
+			.sendArbitrageEnd(actualAmountOut, actualProfitUsd)
+			.catch((err) => {
+				logger.error(err, 'Error sending path to telegram')
+			})
+	}
+
+	private notifyAboutArbStart(
+		path: ArbitragePath,
+		edgesWithRate: Map<string, EdgeWithRate>,
+	) {
+		this.tgArbitrage
+			.sendArbitrageStart(path, edgesWithRate, this.startTokenPrice())
+			.catch((err) => {
+				logger.error(err, 'Error sending path to telegram')
+			})
+	}
+
+	private async execute(path: ArbitragePath) {
 		this.setArbitrageExecutingTrue()
 
 		const actualAmountOut = await GraphExecutor.execute(path)
@@ -95,13 +162,11 @@ export class GraphArbitrageBot {
 		const actualProfitUsd =
 			(Number(this.startToken.formatUnits(path.startAmount)) -
 				Number(this.startToken.formatUnits(actualAmountOut))) *
-			this.startTokenPrice
-
-		logger.info(
-			`Arbitrage is finished, amount out: ${this.startToken.formatUnits(actualAmountOut)}, profit: $${actualProfitUsd}`,
-		)
+			this.startTokenPrice()
 
 		this.isArbitrageExecuting = false
+
+		return { actualAmountOut, actualProfitUsd }
 	}
 
 	private setArbitrageExecutingTrue() {
@@ -141,5 +206,12 @@ export class GraphArbitrageBot {
 			case ActionType.FUSE_BRIDGE:
 				return await FuseBridge.approveToBridge(from, maxUint256)
 		}
+	}
+
+	private startTokenPrice() {
+		return this.priceOracle.getPrice(
+			this.startToken
+				.symbol as keyof typeof this.priceOracle.currencyToUCID,
+		)
 	}
 }

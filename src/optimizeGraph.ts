@@ -1,6 +1,6 @@
 import { arbitrum } from 'viem/chains'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
-import { prettyPrintPath } from './graphs/utils'
+import { getPrettyPath } from './graphs/visualization'
 import { GraphOptimizer } from './optimizers/GraphOptimizer'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { GigaBigaStrategySetup } from './strategies/GigaBigaGraphStrategy'
@@ -33,7 +33,13 @@ async function main() {
 		return
 	}
 
-	await prettyPrintPath(opportunity.path, opportunity.edgesWithRate)
+	const prettyPath = await getPrettyPath(
+		opportunity.path,
+		opportunity.edgesWithRate,
+		ethUsd,
+	)
+
+	console.log(prettyPath)
 }
 
 void main()

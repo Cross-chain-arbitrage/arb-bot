@@ -1,6 +1,8 @@
 import { arbitrum } from 'viem/chains'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { GraphArbitrageBot } from './graphs/GraphArbitrageBot'
+import { TgArbitrage } from './modules/notification/TgArbitrage'
+import { PriceOracle } from './modules/PriceOracle/PriceOracle'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { GigaBigaStrategySetup } from './strategies/GigaBigaGraphStrategy'
 import { ClientManager } from './utils/ClientManager'
@@ -28,16 +30,21 @@ async function main() {
 	const ethPrice = await GeckoTerminalAPI.getTokenPriceETH()
 	const ethNative = TokenUtils.getNative(arbitrum.id)
 
+	const priceOracle = await PriceOracle.create()
+
 	logger.info('Starting searching for arbitrage')
 
-	const bot = new GraphArbitrageBot(
-		ethNative,
+	const bot = new GraphArbitrageBot({
 		graph,
-		OPTIMIZATION_CONFIG,
-		ethPrice,
-		MIN_PROFIT_USD,
-		POLLING_INTERVAL,
-	)
+		priceOracle,
+		tgArbitrage: new TgArbitrage(),
+		startToken: ethNative,
+		options: {
+			graphOptimizerOptions: OPTIMIZATION_CONFIG,
+			minProfitUsd: MIN_PROFIT_USD,
+			pollingInterval: POLLING_INTERVAL,
+		},
+	})
 
 	bot.start()
 }

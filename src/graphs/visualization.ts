@@ -1,5 +1,8 @@
 import { Stargate } from '../bridges/stargate/Stargate'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { Graph, GraphNode, GraphNodeId } from './Graph'
+import { ArbitragePath } from './path'
+import { getEdgeNodes } from './utils'
 
 export interface EdgeWithRate {
 	rate: number
@@ -72,4 +75,42 @@ function getChainName(chainId: number) {
 	} catch (error) {
 		return `Unnamed Chain (${chainId})`
 	}
+}
+
+export async function getPrettyPath(
+	path: ArbitragePath | null,
+	edgesWithRate: Map<string, EdgeWithRate>,
+	startTokenPrice: number,
+) {
+	let prettyPath = ''
+
+	if (!path) {
+		prettyPath += 'No arbitrage path found'
+
+		const mermaidGraph = getMermaidGraph(edgesWithRate)
+
+		prettyPath += `\n\n${mermaidGraph}`
+
+		return prettyPath
+	}
+
+	prettyPath += '\n=================== Path ===================\n'
+
+	const startToken = await TokenUtils.fromId(path.edges[0].from)
+
+	for (const edge of path.edges) {
+		const { from, to } = await getEdgeNodes(edge)
+		prettyPath += `${from.toString()} -- ${edge.type} --> ${to.toString()}\n`
+	}
+
+	prettyPath += '\n=================== Values ===================\n'
+
+	prettyPath += `Start amount ${Number(startToken.formatUnits(path.startAmount)).toFixed(4)} ${startToken.symbol} ($${(startTokenPrice * Number(startToken.formatUnits(path.startAmount))).toFixed(2)})\n`
+
+	prettyPath += `End amount ${Number(startToken.formatUnits(path.endAmount)).toFixed(4)} ${startToken.symbol} ($${(startTokenPrice * Number(startToken.formatUnits(path.endAmount))).toFixed(2)})\n`
+
+	prettyPath += `Profit amount ${startToken.formatUnits(path.profitAmount)} ($${(startTokenPrice * Number(startToken.formatUnits(path.profitAmount))).toFixed(2)})\n`
+	prettyPath += `Profit percentage ${path.profitPercentage.toFixed(2)}%\n`
+
+	return prettyPath
 }

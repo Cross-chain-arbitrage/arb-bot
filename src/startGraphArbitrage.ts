@@ -1,8 +1,9 @@
 import { arbitrum, fuse } from 'viem/chains'
-import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { GraphArbitrageBot } from './graphs/GraphArbitrageBot'
 import { GraphBuilder } from './graphs/GraphBuilder'
+import { TgArbitrage } from './modules/notification/TgArbitrage'
+import { PriceOracle } from './modules/PriceOracle/PriceOracle'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { ClientManager } from './utils/ClientManager'
 import logger from './utils/logger'
@@ -37,18 +38,22 @@ async function main() {
 
 	const graph = await GraphBuilder.buildFromPools(pools)
 
-	const ethPrice = await GeckoTerminalAPI.getTokenPriceETH()
 	const ethNative = TokenUtils.getNative(arbitrum.id)
+
+	const priceOracle = await PriceOracle.create()
 
 	logger.info('Starting searching for arbitrage')
 
-	const bot = new GraphArbitrageBot(
-		ethNative,
+	const bot = new GraphArbitrageBot({
 		graph,
-		OPTIMIZATION_CONFIG,
-		ethPrice,
-		MIN_PROFIT_USD,
-	)
+		priceOracle: priceOracle,
+		tgArbitrage: new TgArbitrage(),
+		startToken: ethNative,
+		options: {
+			graphOptimizerOptions: OPTIMIZATION_CONFIG,
+			minProfitUsd: MIN_PROFIT_USD,
+		},
+	})
 
 	bot.start()
 }
