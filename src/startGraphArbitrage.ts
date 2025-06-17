@@ -4,6 +4,7 @@ import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { GraphArbitrageBot } from './graphs/GraphArbitrageBot'
 import { GraphBuilder } from './graphs/GraphBuilder'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
+import { ClientManager } from './utils/ClientManager'
 import logger from './utils/logger'
 
 /* ============ Pools ============ */
@@ -26,6 +27,7 @@ const OPTIMIZATION_CONFIG = {
 /* ============ Strategy ============ */
 
 async function main() {
+	ClientManager.useCustomRpcUrl(arbitrum.id)
 	logger.info('Starting Graph Arbitrage Bot')
 
 	const pools = await Promise.all([
