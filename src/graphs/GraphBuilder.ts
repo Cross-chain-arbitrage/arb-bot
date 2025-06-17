@@ -23,6 +23,17 @@ const constantGetRateWithoutDecimalsChange = (amountIn: bigint) => {
 	}
 }
 
+interface StargateConfig {
+	connectHydraChains: boolean
+	baseChainId: number
+}
+
+export interface GraphBuildConfig {
+	pools: Pool[]
+	stargateConfig: StargateConfig
+	slippage: number
+}
+
 /**
  * Builds `Graph` from provided array of `Pool`s
  * @dev Finds all possible bridging opportunities by itself (Stargate and Fuse)
@@ -30,10 +41,9 @@ const constantGetRateWithoutDecimalsChange = (amountIn: bigint) => {
  * @returns Graph with all required Nodes and Edges, which is not supposed to be modified manually
  */
 export class GraphBuilder {
-	static async buildFromPools(
-		pools: Pool[],
-		slippage: number = 30,
-	): Promise<Graph> {
+	static async build(buildConfig: GraphBuildConfig): Promise<Graph> {
+		const { pools, stargateConfig, slippage } = buildConfig
+
 		logger.info('============================')
 		logger.info('Building Graph from Pools')
 		logger.info('============================')
@@ -60,7 +70,7 @@ export class GraphBuilder {
 
 		/* ================ Setup Stargate Bridges ================ */
 
-		await this.setupStargateBridges(graph)
+		await this.setupStargateBridges(graph, stargateConfig)
 
 		/* ================ Setup Fuse Bridges ================ */
 
@@ -151,7 +161,11 @@ export class GraphBuilder {
 		}
 	}
 
-	private static async setupStargateBridges(graph: Graph) {
+	private static async setupStargateBridges(
+		graph: Graph,
+		stargateConfig: StargateConfig,
+	) {
+		const { connectHydraChains, baseChainId } = stargateConfig
 		logger.info('------ Setting up Stargate Bridges ------')
 
 		type AssetId = number
@@ -195,6 +209,14 @@ export class GraphBuilder {
 			for (let i = 0; i < tokens.length; i++) {
 				for (let j = 0; j < tokens.length; j++) {
 					if (tokens[i].id === tokens[j].id) continue
+
+					// Skip pair if there's no token on the base chain
+					if (
+						!connectHydraChains &&
+						tokens[i].chainId !== baseChainId &&
+						tokens[j].chainId !== baseChainId
+					)
+						continue
 
 					pairs.push([tokens[i], tokens[j]])
 				}
