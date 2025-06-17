@@ -13,7 +13,8 @@
 		"getPoolStats": "npx tsx src/getPoolStats.ts",
 		"monitor": "npx tsx src/monitor.ts",
 		"run-bot": "npx tsx src/startGraphArbitrage.ts",
-		"approve-all": "npx tsx src/approveAll.ts"
+		"approve-all": "npx tsx src/approveAll.ts",
+		"arbitrage:weth-pools": "npx tsx src/strategies/WethPoolsStrategy/WethPoolsStrategy.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.26.0",

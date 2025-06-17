@@ -1,8 +1,9 @@
 import { arbitrum } from 'viem/chains'
-import { GeckoTerminalAPI } from '../../data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolUtils } from '../../dex/PoolUtils'
 import { GraphArbitrageBot } from '../../graphs/GraphArbitrageBot'
 import { GraphBuilder } from '../../graphs/GraphBuilder'
+import { TgArbitrageNotifier } from '../../modules/notification/TgArbitrageNotifier'
+import { PriceOracle } from '../../modules/PriceOracle/PriceOracle'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
 import logger from '../../utils/logger'
@@ -10,7 +11,7 @@ import { WETH_POOLS } from './wethPools'
 
 /* ============ Economic Constants ============ */
 
-const MIN_PROFIT_USD = 1
+const MIN_PROFIT_USD = 0.4
 const GIVE_APPROVES = false // Mark 'false' to skip approval step
 
 const OPTIMIZATION_CONFIG: GraphOptimizerOptions = {
@@ -21,6 +22,8 @@ const OPTIMIZATION_CONFIG: GraphOptimizerOptions = {
 }
 
 const SLIPPAGE = 30
+const POLLING_INTERVAL = 10_000
+const ARBITRAGE_TIMEOUT = 5 * 60 * 1000
 
 /* ============ Strategy ============ */
 
@@ -49,39 +52,37 @@ class WethPoolsStrategy {
 			await this.prepare()
 		}
 
-		const graph = await this.buildGraph()
-
 		logger.info('Starting Graph Arbitrage Bot')
-		const ethPrice = await GeckoTerminalAPI.getTokenPriceETH()
-		const ethNative = TokenUtils.getNative(arbitrum.id)
 
 		logger.info('Starting searching for arbitrage')
 
-		const bot = new GraphArbitrageBot(
-			ethNative,
-			graph,
-			OPTIMIZATION_CONFIG,
-			ethPrice,
-			MIN_PROFIT_USD,
-		)
+		const bot = await this.buildBot()
 
 		bot.start()
+	}
+
+	static async buildBot(): Promise<GraphArbitrageBot> {
+		const priceOracle = await PriceOracle.create()
+		const ethNative = TokenUtils.getNative(arbitrum.id)
+
+		return new GraphArbitrageBot({
+			graph: await this.buildGraph(),
+			priceOracle,
+			TgArbitrageNotifier: new TgArbitrageNotifier(),
+			startToken: ethNative,
+			options: {
+				graphOptimizerOptions: OPTIMIZATION_CONFIG,
+				minProfitUsd: MIN_PROFIT_USD,
+				pollingInterval: 10_000,
+				arbitrageTimeout: 5 * 60 * 1000,
+			},
+		})
 	}
 
 	static async prepare() {
 		logger.info('Starting WethPoolsStrategy')
 
-		const ethPrice = await GeckoTerminalAPI.getTokenPriceETH()
-		const ethNative = TokenUtils.getNative(arbitrum.id)
-
-		logger.info('Starting approve all')
-
-		const bot = new GraphArbitrageBot(
-			ethNative,
-			await this.buildGraph(),
-			OPTIMIZATION_CONFIG,
-			ethPrice,
-		)
+		const bot = await this.buildBot()
 
 		await bot.approveAll()
 	}
