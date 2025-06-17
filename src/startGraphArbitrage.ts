@@ -36,7 +36,14 @@ async function main() {
 		PoolUtils.createPool(ARB_POOL, arbitrum.id, ARB_POOL_TYPE),
 	])
 
-	const graph = await GraphBuilder.buildFromPools(pools)
+	const graph = await GraphBuilder.build({
+		pools,
+		stargateConfig: {
+			connectHydraChains: false,
+			baseChainId: arbitrum.id,
+		},
+		slippage: 30,
+	})
 
 	const ethNative = TokenUtils.getNative(arbitrum.id)
 
