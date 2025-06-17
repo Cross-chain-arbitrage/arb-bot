@@ -5,10 +5,9 @@ import { TgBaseNotifier } from './TgBaseNotifier'
 
 export class TgArbitrageNotifier extends TgBaseNotifier {
 	constructor() {
-		const botToken = getEnvSafe('TG_ARBITRAGE_BOT_TOKEN')
-		const userIdsToNotify = getEnvSafe('TG_ARBITRAGE_USER_IDS_TO_NOTIFY')
+		const messageThreadId = getEnvSafe('TG_BOT_MESSAGE_THREAD_ID')
 
-		super(botToken, userIdsToNotify)
+		super(messageThreadId)
 	}
 
 	async sendArbitrageStart(
@@ -21,16 +20,16 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 			edgesWithRate,
 			startTokenPrice,
 		)
-		await this.sendMessageToAll(prettyPath)
+		await this.sendMessage(prettyPath)
 	}
 
 	async sendArbitrageEnd(actualAmountOut: string, actualProfitUsd: number) {
-		await this.sendMessageToAll(
+		await this.sendMessage(
 			`Arbitrage is finished, amount out: ${actualAmountOut}, profit: $${actualProfitUsd}`,
 		)
 	}
 
 	async sendArbitrageError(error: string) {
-		await this.sendMessageToAll(`Arbitrage error: ${error}`)
+		await this.sendMessage(`Arbitrage error: ${error}`)
 	}
 }

@@ -1,4 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api'
+import { getEnvSafe } from '../../utils/common'
 
 export class TgBaseNotifierError extends Error {
 	constructor(
@@ -13,27 +14,19 @@ export class TgBaseNotifierError extends Error {
 
 export class TgBaseNotifier {
 	protected BOT_TOKEN: string
-	protected TG_USER_IDS_TO_NOTIFY: number[]
+	protected TG_USER_ID: string
+	protected TG_MESSAGE_THREAD_ID: string
 	protected bot: TelegramBot
 
-	constructor(botToken: string, userIdsToNotify: string) {
-		this.BOT_TOKEN = botToken
-
-		this.TG_USER_IDS_TO_NOTIFY = userIdsToNotify.split(',').map(Number)
+	constructor(messageThreadId: string) {
+		this.BOT_TOKEN = getEnvSafe('TG_BOT_TOKEN')
+		this.TG_USER_ID = getEnvSafe('TG_USER_ID')
+		this.TG_MESSAGE_THREAD_ID = messageThreadId
 
 		this.bot = new TelegramBot(this.BOT_TOKEN)
 	}
 
-	async sendMessageToAll(message: string) {
-		for (const userId of this.TG_USER_IDS_TO_NOTIFY) {
-			await this.sendMessage(userId, message)
-		}
-	}
-
-	async sendMessage(
-		userId: number,
-		message: string,
-	): Promise<MessageResponse | undefined> {
+	async sendMessage(message: string): Promise<MessageResponse | undefined> {
 		try {
 			const response = await fetch(
 				`https://api.telegram.org/bot${this.BOT_TOKEN}/sendMessage`,
@@ -43,7 +36,8 @@ export class TgBaseNotifier {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						chat_id: userId,
+						chat_id: this.TG_USER_ID,
+						message_thread_id: this.TG_MESSAGE_THREAD_ID,
 						text: message,
 						parse_mode: 'HTML',
 					}),
@@ -60,7 +54,10 @@ export class TgBaseNotifier {
 			const responseJson = await response.json()
 			return responseJson as MessageResponse
 		} catch (error) {
-			console.error(`Failed to send message to user ${userId}:`, error)
+			console.error(
+				`Failed to send message to user ${this.TG_USER_ID}:`,
+				error,
+			)
 		}
 	}
 

@@ -80,7 +80,7 @@ async function processOpportunities(opportunities: ArbitrageOpportunity[]) {
 				opportunity,
 				inception: new Date(),
 				isSubjectToDeletion: false,
-				messages: messages.filter((message) => message !== undefined),
+				messages: messages ? [messages] : [],
 			})
 		} else {
 			// Update existing opportunity

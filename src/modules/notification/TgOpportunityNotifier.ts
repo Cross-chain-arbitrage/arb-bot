@@ -6,23 +6,18 @@ import { TgBaseNotifier } from './TgBaseNotifier'
 
 export class TgOpportunityNotifier extends TgBaseNotifier {
 	constructor() {
-		const botToken = getEnvSafe('TG_BOT_TOKEN')
-		const userIdsToNotify = getEnvSafe('TG_USER_IDS_TO_NOTIFY')
+		const messageThreadId = getEnvSafe('TG_OPPORTUNITY_MESSAGE_THREAD_ID')
 
-		super(botToken, userIdsToNotify)
+		super(messageThreadId)
 	}
 
 	async sendNotificationsOnOpportunity(
 		opportunity: ArbitrageOpportunity,
 		inception: Date,
-	): Promise<(MessageResponse | undefined)[]> {
+	): Promise<MessageResponse | undefined> {
 		const message = this.getMessage(opportunity, inception)
 
-		return Promise.all(
-			this.TG_USER_IDS_TO_NOTIFY.map((userId) =>
-				this.sendMessage(userId, message),
-			),
-		)
+		return this.sendMessage(message)
 	}
 
 	async editNotificationsOnOpportunity(
