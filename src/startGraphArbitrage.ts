@@ -39,7 +39,7 @@ async function main() {
 	const graph = await GraphBuilder.build({
 		pools,
 		stargateConfig: {
-			connectHydraChains: false,
+			connectSecondaryChains: false,
 			baseChainId: arbitrum.id,
 		},
 		slippage: 30,
