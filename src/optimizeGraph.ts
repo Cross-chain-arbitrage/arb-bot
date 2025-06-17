@@ -1,33 +1,39 @@
-import { arbitrum, fuse } from 'viem/chains'
-import { getMermaidGraph } from './graphs/visualization'
+import { arbitrum } from 'viem/chains'
+import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
+import { prettyPrintPath } from './graphs/utils'
 import { GraphOptimizer } from './optimizers/GraphOptimizer'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
-import { FuseWbtcGraphStrategy } from './strategies/FuseWbtcGraphStrategy'
+import { GigaBigaStrategySetup } from './strategies/GigaBigaGraphStrategy'
+import { ClientManager } from './utils/ClientManager'
 
 async function main() {
-	//@ts-expect-error override readonly property
-	fuse.rpcUrls.default.http[0] = 'http://localhost:8545'
+	ClientManager.useCustomRpcUrl(arbitrum.id)
 
-	const strategy = await FuseWbtcGraphStrategy.setup()
+	const graph = await GigaBigaStrategySetup.setup()
 
 	const startToken = TokenUtils.getNative(arbitrum.id)
-	const ethUsd = 2700
+	const ethUsd = await GeckoTerminalAPI.getTokenPriceETH()
 
 	const options: GraphOptimizerOptions = {
 		initialValueUSD: 100,
-		stepUSD: 100,
-		stepsAmount: 3,
+		stepUSD: 200,
+		stepsAmount: 5,
+		maxPathLength: 5,
 	}
 
 	const opportunity = await GraphOptimizer.findOpportunity(
 		startToken,
 		ethUsd,
-		strategy.graph,
+		graph,
 		options,
 	)
 
-	console.log('path', opportunity.path)
-	console.log('mermaid\n', getMermaidGraph(opportunity.edgesWithRate))
+	if (!opportunity.path) {
+		console.log('No arbitrage path found')
+		return
+	}
+
+	await prettyPrintPath(opportunity.path, opportunity.edgesWithRate)
 }
 
 void main()
