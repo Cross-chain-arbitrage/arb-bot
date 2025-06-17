@@ -44,7 +44,7 @@ makeSuite('GraphBuilder', () => {
 
 		expect(pools.length).toBe(0)
 
-		await expect(GraphBuilder.buildFromPools(pools)).rejects.toThrow(
+		await expect(GraphBuilder.build({ pools })).rejects.toThrow(
 			new GraphBuilderError('No pools provided'),
 		)
 	})
@@ -52,7 +52,7 @@ makeSuite('GraphBuilder', () => {
 	describe('Adding Pools', () => {
 		it('MUST add 2 SwapEdges for each Pool', async () => {
 			const singlePool = [pools[0]]
-			const graph = await GraphBuilder.buildFromPools(singlePool)
+			const graph = await GraphBuilder.build({ pools: singlePool })
 
 			const swapEdges = Array.from(graph.edges.values()).filter(
 				(edge) => edge.type === ActionType.SWAP,
@@ -62,7 +62,7 @@ makeSuite('GraphBuilder', () => {
 		})
 		it('MUST add Nodes for each Pool', async () => {
 			const singlePool = [pools[0]]
-			const graph = await GraphBuilder.buildFromPools(singlePool)
+			const graph = await GraphBuilder.build({ pools: singlePool })
 
 			const swapEdges = Array.from(graph.edges.values()).filter(
 				(edge) => edge.type === ActionType.SWAP,
@@ -76,7 +76,7 @@ makeSuite('GraphBuilder', () => {
 		it('MUST add Native Currencies for Chain', async () => {
 			const arbPool = pools.find((pool) => pool.chainId === arbitrum.id)
 
-			const graph = await GraphBuilder.buildFromPools([arbPool!])
+			const graph = await GraphBuilder.build({ pools: [arbPool!] })
 
 			const nativeCurrencies = Array.from(graph.nodes.values()).filter(
 				(node) => node.isNative(),
@@ -87,7 +87,7 @@ makeSuite('GraphBuilder', () => {
 		})
 
 		it('MUST add Native Currencies for Multiple Chain', async () => {
-			const graph = await GraphBuilder.buildFromPools(pools)
+			const graph = await GraphBuilder.build({ pools })
 
 			const nativeCurrencies = Array.from(graph.nodes.values()).filter(
 				(node) => node.isNative(),
@@ -111,7 +111,7 @@ makeSuite('GraphBuilder', () => {
 		it('MUST add Wrapped Native Currencies for Fuse', async () => {
 			const fusePool = pools.find((pool) => pool.chainId === fuse.id)
 
-			const graph = await GraphBuilder.buildFromPools([fusePool!])
+			const graph = await GraphBuilder.build({ pools: [fusePool!] })
 
 			const wrappedNativeCurrencies = Array.from(
 				graph.nodes.values(),
@@ -124,7 +124,7 @@ makeSuite('GraphBuilder', () => {
 		it('MUST add Wrapped Native Currencies for Arbitrum', async () => {
 			const arbPool = pools.find((pool) => pool.chainId === arbitrum.id)
 
-			const graph = await GraphBuilder.buildFromPools([arbPool!])
+			const graph = await GraphBuilder.build({ pools: [arbPool!] })
 
 			const wrappedNativeCurrencies = Array.from(
 				graph.nodes.values(),
@@ -137,7 +137,7 @@ makeSuite('GraphBuilder', () => {
 		it('MUST add WRAP/UNWRAP Edges for Arbitrum', async () => {
 			const arbPool = pools.find((pool) => pool.chainId === arbitrum.id)
 
-			const graph = await GraphBuilder.buildFromPools([arbPool!])
+			const graph = await GraphBuilder.build({ pools: [arbPool!] })
 
 			const wrappedNativeCurrencies = Array.from(
 				graph.nodes.values(),
@@ -165,7 +165,7 @@ makeSuite('GraphBuilder', () => {
 		})
 
 		it('MUST add Wrapped Native Currencies for Multiple Chain', async () => {
-			const graph = await GraphBuilder.buildFromPools(pools)
+			const graph = await GraphBuilder.build({ pools })
 
 			const wrappedNativeCurrencies = Array.from(
 				graph.nodes.values(),
@@ -193,10 +193,9 @@ makeSuite('GraphBuilder', () => {
 			expect(arbPool).toBeDefined()
 			expect(fusePool).toBeDefined()
 
-			const graph = await GraphBuilder.buildFromPools([
-				arbPool!,
-				fusePool!,
-			])
+			const graph = await GraphBuilder.build({
+				pools: [arbPool!, fusePool!],
+			})
 
 			const stargateBridges = Array.from(graph.edges.values()).filter(
 				(edge) => edge.type === ActionType.STARGATE_BRIDGE,
@@ -218,10 +217,9 @@ makeSuite('GraphBuilder', () => {
 				PoolType.UNIV3,
 			)
 
-			const graph = await GraphBuilder.buildFromPools([
-				arbUsdcPool,
-				...pools,
-			])
+			const graph = await GraphBuilder.build({
+				pools: [arbUsdcPool, ...pools],
+			})
 
 			const stargateBridges = Array.from(graph.edges.values()).filter(
 				(edge) => edge.type === ActionType.STARGATE_BRIDGE,
@@ -255,11 +253,64 @@ makeSuite('GraphBuilder', () => {
 				expect(to.symbol.includes('ETH')).toBe(true)
 			}
 		})
+
+		describe('Stargate Config', () => {
+			it('MUST NOT connect Hydra Chains if connectHydraChains is false', async () => {
+				const graph = await GraphBuilder.build({
+					pools,
+					stargateConfig: {
+						connectSecondaryChains: false,
+						baseChainId: arbitrum.id,
+					},
+				})
+
+				const stargateBridges = Array.from(graph.edges.values()).filter(
+					(edge) => edge.type === ActionType.STARGATE_BRIDGE,
+				)
+
+				expect(stargateBridges.length).toBe(4)
+
+				for (const bridge of stargateBridges) {
+					const from = graph.getToken(bridge.from)
+					const to = graph.getToken(bridge.to)
+
+					expect(
+						[from.chainId, to.chainId].includes(arbitrum.id),
+					).toBe(true)
+				}
+			})
+
+			it('All bridging edges MUST include base chain, if connectSecondaryChains is false', async () => {
+				const graph = await GraphBuilder.build({
+					pools,
+					stargateConfig: {
+						connectSecondaryChains: false,
+						baseChainId: fuse.id,
+					},
+				})
+
+				const stargateBridges = Array.from(graph.edges.values()).filter(
+					(edge) => edge.type === ActionType.STARGATE_BRIDGE,
+				)
+
+				expect(stargateBridges.length).toBe(4)
+
+				for (const bridge of stargateBridges) {
+					const from = graph.getToken(bridge.from)
+					const to = graph.getToken(bridge.to)
+
+					// All pairs must include base chain
+					expect([from.chainId, to.chainId].includes(fuse.id)).toBe(
+						true,
+					)
+				}
+			})
+		})
 	})
 
 	describe('Adding Fuse Bridges', () => {
 		it('MUST add 2 Fuse Bridges for Fuse Chain', async () => {
-			const graph = await GraphBuilder.buildFromPools(pools)
+			const graph = await GraphBuilder.build({ pools })
 			const fuseBridges = Array.from(graph.edges.values()).filter(
 				(edge) => edge.type === ActionType.FUSE_BRIDGE,
 			)

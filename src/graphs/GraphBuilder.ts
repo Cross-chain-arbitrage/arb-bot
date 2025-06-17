@@ -1,4 +1,4 @@
-import { fuse } from 'viem/chains'
+import { arbitrum, fuse } from 'viem/chains'
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { StargateAPI, StargateAPIError } from '../bridges/stargate/StargateAPI'
 import { Pool } from '../dex/Pool'
@@ -23,15 +23,29 @@ const constantGetRateWithoutDecimalsChange = (amountIn: bigint) => {
 	}
 }
 
+/**
+ * Configuration for Stargate bridge connections
+ * @interface
+ */
 interface StargateConfig {
-	connectHydraChains: boolean
+	/** If true, will connect all possible pairs of chains. Otherwise, will only connect base chain with all other chains */
+	connectSecondaryChains: boolean
+	/** The chain to connect to all other chains. Used only if `connectSecondaryChains` is false */
 	baseChainId: number
 }
 
+/**
+ * Configuration for building a graph
+ * @interface
+ * @extends {StargateConfig}
+ */
 export interface GraphBuildConfig {
+	/** The pools to build the graph from */
 	pools: Pool[]
-	stargateConfig: StargateConfig
-	slippage: number
+	/** The configuration for the Stargate bridges */
+	stargateConfig?: StargateConfig
+	/** The slippage tolerance for the swaps */
+	slippage?: number
 }
 
 /**
@@ -41,8 +55,21 @@ export interface GraphBuildConfig {
  * @returns Graph with all required Nodes and Edges, which is not supposed to be modified manually
  */
 export class GraphBuilder {
+	/**
+	 * Builds `Graph` from provided `GraphBuildConfig`
+	 * @dev Finds all possible bridging opportunities by itself (Stargate and Fuse)
+	 * @dev Automatically adds all Native Currencies and their Wrapped Versions for all chains featured in provided `Pool`s
+	 * @returns Graph with all required Nodes and Edges, which is not supposed to be modified manually
+	 */
 	static async build(buildConfig: GraphBuildConfig): Promise<Graph> {
-		const { pools, stargateConfig, slippage } = buildConfig
+		const {
+			pools,
+			stargateConfig = {
+				connectSecondaryChains: true,
+				baseChainId: arbitrum.id,
+			},
+			slippage = 30,
+		} = buildConfig
 
 		logger.info('============================')
 		logger.info('Building Graph from Pools')
@@ -165,7 +192,7 @@ export class GraphBuilder {
 		graph: Graph,
 		stargateConfig: StargateConfig,
 	) {
-		const { connectHydraChains, baseChainId } = stargateConfig
+		const { connectSecondaryChains, baseChainId } = stargateConfig
 		logger.info('------ Setting up Stargate Bridges ------')
 
 		type AssetId = number
@@ -212,7 +239,7 @@ export class GraphBuilder {
 
 					// Skip pair if there's no token on the base chain
 					if (
-						!connectHydraChains &&
+						!connectSecondaryChains &&
 						tokens[i].chainId !== baseChainId &&
 						tokens[j].chainId !== baseChainId
 					)
