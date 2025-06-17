@@ -185,11 +185,16 @@ export class GraphArbitrageBot {
 		for (const edge of this.graph.edges) {
 			const { from, to } = await getEdgeNodes(edge)
 
-			console.log(
+			logger.info(
 				`approving for edge ${edge.type} ${from.chainId}:${from.symbol} - ${to.chainId}:${to.symbol}`,
 			)
 			const tx = await this.approveForEdge(edge)
-			console.log(tx?.transactionHash)
+
+			if (!tx) {
+				logger.info('Approve already done')
+			} else {
+				logger.info(tx?.transactionHash)
+			}
 		}
 	}
 
