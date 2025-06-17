@@ -1,7 +1,7 @@
 import { maxUint256, TransactionReceipt } from 'viem'
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Stargate } from '../bridges/stargate/Stargate'
-import { TgArbitrage } from '../modules/notification/TgArbitrage'
+import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
@@ -22,7 +22,7 @@ const DEFAULT_OPTIONS = {
 interface GraphArbitrageBotParams {
 	graph: Graph
 	priceOracle: PriceOracle
-	tgArbitrage: TgArbitrage
+	TgArbitrageNotifier: TgArbitrageNotifier
 	startToken: GraphNode
 	options?: Partial<{
 		graphOptimizerOptions: GraphOptimizerOptions
@@ -34,7 +34,7 @@ interface GraphArbitrageBotParams {
 
 export class GraphArbitrageBot {
 	private isArbitrageExecuting = false
-	private tgArbitrage: TgArbitrage
+	private TgArbitrageNotifier: TgArbitrageNotifier
 	private priceOracle: PriceOracle
 	private startToken: GraphNode
 	private graph: Graph
@@ -44,7 +44,7 @@ export class GraphArbitrageBot {
 	private arbitrageTimeout: number
 
 	constructor(params: GraphArbitrageBotParams) {
-		this.tgArbitrage = params.tgArbitrage
+		this.TgArbitrageNotifier = params.TgArbitrageNotifier
 		this.priceOracle = params.priceOracle
 		this.startToken = params.startToken
 		this.graph = params.graph
@@ -127,31 +127,36 @@ export class GraphArbitrageBot {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error'
 
-		this.tgArbitrage.sendArbitrageError(errorMessage).catch((err) => {
-			logger.error(err, 'Error sending error to telegram')
-		})
+		this.TgArbitrageNotifier.sendArbitrageError(errorMessage).catch(
+			(err) => {
+				logger.error(err, 'Error sending error to telegram')
+			},
+		)
 	}
 
 	private notifyAboutArbEnd(
 		actualAmountOut: string,
 		actualProfitUsd: number,
 	) {
-		this.tgArbitrage
-			.sendArbitrageEnd(actualAmountOut, actualProfitUsd)
-			.catch((err) => {
-				logger.error(err, 'Error sending path to telegram')
-			})
+		this.TgArbitrageNotifier.sendArbitrageEnd(
+			actualAmountOut,
+			actualProfitUsd,
+		).catch((err) => {
+			logger.error(err, 'Error sending path to telegram')
+		})
 	}
 
 	private notifyAboutArbStart(
 		path: ArbitragePath,
 		edgesWithRate: Map<string, EdgeWithRate>,
 	) {
-		this.tgArbitrage
-			.sendArbitrageStart(path, edgesWithRate, this.startTokenPrice())
-			.catch((err) => {
-				logger.error(err, 'Error sending path to telegram')
-			})
+		this.TgArbitrageNotifier.sendArbitrageStart(
+			path,
+			edgesWithRate,
+			this.startTokenPrice(),
+		).catch((err) => {
+			logger.error(err, 'Error sending path to telegram')
+		})
 	}
 
 	private async execute(path: ArbitragePath) {

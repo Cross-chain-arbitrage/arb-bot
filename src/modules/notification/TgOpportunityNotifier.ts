@@ -2,9 +2,9 @@ import TelegramBot from 'node-telegram-bot-api'
 import { ArbitrageOpportunity } from '../../getArbitrageOpportunities'
 import { getEnvSafe } from '../../utils/common'
 import { msToTimeIntervalString } from '../../utils/time'
-import { TgBase } from './TgBase'
+import { TgBaseNotifier } from './TgBaseNotifier'
 
-export class TgOpportunity extends TgBase {
+export class TgOpportunityNotifier extends TgBaseNotifier {
 	constructor() {
 		const botToken = getEnvSafe('TG_BOT_TOKEN')
 		const userIdsToNotify = getEnvSafe('TG_USER_IDS_TO_NOTIFY')

@@ -2,7 +2,7 @@ import { arbitrum, fuse } from 'viem/chains'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { GraphArbitrageBot } from './graphs/GraphArbitrageBot'
 import { GraphBuilder } from './graphs/GraphBuilder'
-import { TgArbitrage } from './modules/notification/TgArbitrage'
+import { TgArbitrageNotifier } from './modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from './modules/PriceOracle/PriceOracle'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { ClientManager } from './utils/ClientManager'
@@ -47,7 +47,7 @@ async function main() {
 	const bot = new GraphArbitrageBot({
 		graph,
 		priceOracle: priceOracle,
-		tgArbitrage: new TgArbitrage(),
+		TgArbitrageNotifier: new TgArbitrageNotifier(),
 		startToken: ethNative,
 		options: {
 			graphOptimizerOptions: OPTIMIZATION_CONFIG,

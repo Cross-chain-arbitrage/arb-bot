@@ -1,7 +1,7 @@
 import { arbitrum } from 'viem/chains'
 import { GraphArbitrageBot } from './graphs/GraphArbitrageBot'
 import { PriceOracle } from './modules/PriceOracle/PriceOracle'
-import { TgArbitrage } from './modules/notification/TgArbitrage'
+import { TgArbitrageNotifier } from './modules/notification/TgArbitrageNotifier'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { FuseWbtcGraphStrategy } from './strategies/FuseWbtcGraphStrategy'
 import logger from './utils/logger'
@@ -20,7 +20,7 @@ async function main() {
 	const bot = new GraphArbitrageBot({
 		graph,
 		priceOracle: priceOracle,
-		tgArbitrage: new TgArbitrage(),
+		TgArbitrageNotifier: new TgArbitrageNotifier(),
 		startToken: ethNative,
 	})
 

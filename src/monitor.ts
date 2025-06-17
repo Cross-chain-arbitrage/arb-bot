@@ -2,7 +2,7 @@ import {
 	ArbitrageOpportunity,
 	getArbitrageOpportunities,
 } from './getArbitrageOpportunities'
-import { TgOpportunity } from './modules/notification/TgOpportunity'
+import { TgOpportunityNotifier } from './modules/notification/TgOpportunityNotifier'
 import { runFuncWithDelay } from './utils/polling'
 
 const MIN_DIFFERENCE_TO_NOTIFY = 2
@@ -10,7 +10,7 @@ const MIN_PROFIT_TO_NOTIFY = 5
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000
 
-const NotificationService = new TgOpportunity()
+const NotificationService = new TgOpportunityNotifier()
 
 interface ArbitrageOpportunityRecord {
 	opportunity: ArbitrageOpportunity

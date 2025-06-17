@@ -1,17 +1,17 @@
 import TelegramBot from 'node-telegram-bot-api'
 
-export class TgBaseError extends Error {
+export class TgBaseNotifierError extends Error {
 	constructor(
 		message: string,
 		public readonly response: Response,
 	) {
 		super(message)
-		Object.setPrototypeOf(this, TgBaseError.prototype)
+		Object.setPrototypeOf(this, TgBaseNotifierError.prototype)
 		this.name = 'TelegramAPIError'
 	}
 }
 
-export class TgBase {
+export class TgBaseNotifier {
 	protected BOT_TOKEN: string
 	protected TG_USER_IDS_TO_NOTIFY: number[]
 	protected bot: TelegramBot
@@ -51,7 +51,7 @@ export class TgBase {
 			)
 
 			if (!response.ok) {
-				throw new TgBaseError(
+				throw new TgBaseNotifierError(
 					`HTTP error! status: ${response.status}`,
 					response,
 				)
@@ -77,7 +77,7 @@ export class TgBase {
 
 			return response as TelegramBot.Message
 		} catch (error) {
-			if (error instanceof TgBaseError) {
+			if (error instanceof TgBaseNotifierError) {
 				console.error(
 					`Failed to edit message ${message.result.message_id}:`,
 					error.response.status,

@@ -1,9 +1,9 @@
 import { ArbitragePath } from '../../graphs/path'
 import { EdgeWithRate, getPrettyPath } from '../../graphs/visualization'
 import { getEnvSafe } from '../../utils/common'
-import { TgBase } from './TgBase'
+import { TgBaseNotifier } from './TgBaseNotifier'
 
-export class TgArbitrage extends TgBase {
+export class TgArbitrageNotifier extends TgBaseNotifier {
 	constructor() {
 		const botToken = getEnvSafe('TG_ARBITRAGE_BOT_TOKEN')
 		const userIdsToNotify = getEnvSafe('TG_ARBITRAGE_USER_IDS_TO_NOTIFY')

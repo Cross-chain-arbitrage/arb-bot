@@ -1,7 +1,7 @@
 import { arbitrum } from 'viem/chains'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { GraphArbitrageBot } from './graphs/GraphArbitrageBot'
-import { TgArbitrage } from './modules/notification/TgArbitrage'
+import { TgArbitrageNotifier } from './modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from './modules/PriceOracle/PriceOracle'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { GigaBigaStrategySetup } from './strategies/GigaBigaGraphStrategy'
@@ -37,7 +37,7 @@ async function main() {
 	const bot = new GraphArbitrageBot({
 		graph,
 		priceOracle,
-		tgArbitrage: new TgArbitrage(),
+		TgArbitrageNotifier: new TgArbitrageNotifier(),
 		startToken: ethNative,
 		options: {
 			graphOptimizerOptions: OPTIMIZATION_CONFIG,
