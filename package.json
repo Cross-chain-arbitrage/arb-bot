@@ -33,7 +33,7 @@
 		"@layerzerolabs/scan-client": "^0.0.8",
 		"@lifi/sdk": "^3.7.0",
 		"@types/node": "^22.15.3",
-		"axios": "^1.7.7",
+		"axios": "^1.10.0",
 		"dotenv": "^16.4.5",
 		"eslint-plugin-unused-imports": "^4.1.4",
 		"get-port": "5",
