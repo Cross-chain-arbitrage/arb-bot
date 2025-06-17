@@ -2,7 +2,7 @@ import {
 	ArbitrageOpportunity,
 	getArbitrageOpportunities,
 } from './getArbitrageOpportunities'
-import { TgNotificationService } from './notification/TgNotificationService'
+import { TgNotificationService } from './modules/notification/TgNotificationService'
 import { runFuncWithDelay } from './utils/polling'
 
 const MIN_DIFFERENCE_TO_NOTIFY = 2

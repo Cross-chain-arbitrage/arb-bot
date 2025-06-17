@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api'
-import { ArbitrageOpportunity } from '../getArbitrageOpportunities'
-import { msToTimeIntervalString } from '../utils/time'
+import { ArbitrageOpportunity } from '../../getArbitrageOpportunities'
+import { msToTimeIntervalString } from '../../utils/time'
 
 export class TgNotificationServiceError extends Error {
 	constructor(
