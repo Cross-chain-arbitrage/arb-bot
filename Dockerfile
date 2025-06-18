@@ -13,8 +13,11 @@ RUN yarn install --frozen-lockfile
 # Copy source code
 COPY . .
 
+# Compile TypeScript to JavaScript
+RUN yarn build
+
 # Set environment variables
 ENV NODE_ENV=production
 
 # Run monitor
-CMD ["yarn", "monitor"]
+CMD ["node", "dist/monitor.js"]
