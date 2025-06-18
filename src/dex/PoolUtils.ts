@@ -2,6 +2,7 @@ import { Address, zeroAddress } from 'viem'
 import { ALGEBRA_FACTORY_ABI } from '../abi/algebra/algebraFactory'
 import { ClientManager } from '../utils/ClientManager'
 import { AlgebraPool } from './algebra/Pool'
+import { PancakeV2Pool } from './pancakeV2/Pool'
 import { Pool } from './Pool'
 import { UniV2Pool } from './uniswapV2/Pool'
 import { UniV3Pool } from './uniswapV3/Pool'
@@ -9,6 +10,7 @@ import { UniV3Pool } from './uniswapV3/Pool'
 export enum PoolType {
 	UNIV3 = 'uniV3',
 	UNIV2 = 'uniV2',
+	PANCAKEV2 = 'pancakeV2',
 	ALGEBRA = 'algebra',
 	UNKNOWN = 'unknown',
 }
@@ -26,6 +28,8 @@ export class PoolUtils {
 				return UniV3Pool.create(poolAddress, chainId)
 			case PoolType.UNIV2:
 				return UniV2Pool.create(poolAddress, chainId)
+			case PoolType.PANCAKEV2:
+				return PancakeV2Pool.create(poolAddress, chainId)
 			default:
 				throw new Error('Unknown pool type')
 		}

@@ -129,6 +129,12 @@ makeSuite('Uniswap V2 Pool', () => {
 
 			const balanceBefore = await FUSE.read.balanceOf([botAddress])
 
+			const { amountOut: amountOutQuote, fee } = await pool.quoteSwap({
+				tokenIn: pool.token1,
+				tokenOut: pool.token0,
+				amountIn,
+			})
+
 			const { amountOut: simulated } = await pool.simulateSwap({
 				tokenIn: pool.token1,
 				tokenOut: pool.token0,
@@ -147,6 +153,7 @@ makeSuite('Uniswap V2 Pool', () => {
 
 			expect(fuseBalanceAfter - balanceBefore).toBe(amountOut)
 			expect(amountOut).toBe(simulated)
+			expect(amountOut).toBe(amountOutQuote)
 		})
 
 		it('should swap FUSE to WETH', async () => {

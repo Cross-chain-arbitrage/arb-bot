@@ -1,4 +1,4 @@
-import { arbitrum, mainnet } from 'viem/chains'
+import { arbitrum, bsc, mainnet } from 'viem/chains'
 
 export function getAlchemyApiKey() {
 	const apiKey = process.env.ALCHEMY_API_KEY
@@ -17,6 +17,9 @@ export function getAlchemyRpcUrl(chainId: number) {
 			break
 		case mainnet.id:
 			chainKey = 'eth-mainnet'
+			break
+		case bsc.id:
+			chainKey = 'bnb-mainnet'
 			break
 	}
 
