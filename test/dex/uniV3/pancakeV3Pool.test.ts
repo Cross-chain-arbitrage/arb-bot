@@ -6,8 +6,8 @@ import {
 	WalletClient,
 } from 'viem'
 import { bsc } from 'viem/chains'
+import { PancakeV3Pool } from '../../../src/dex/pancakeV3/Pool'
 import { PoolType, PoolUtils } from '../../../src/dex/PoolUtils'
-import { UniV3Pool } from '../../../src/dex/uniswapV3/Pool'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
@@ -22,7 +22,7 @@ let walletClient: WalletClient
 let botAddress: Address
 let wethContract: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
 let usdcContract: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
-let pool: UniV3Pool
+let pool: PancakeV3Pool
 
 makeSuite('Pancake V3 pool test', () => {
 	useAnvil({
@@ -39,8 +39,8 @@ makeSuite('Pancake V3 pool test', () => {
 		pool = (await PoolUtils.createPool(
 			poolAddress,
 			bsc.id,
-			PoolType.UNIV3,
-		)) as unknown as UniV3Pool
+			PoolType.PANCAKEV3,
+		)) as unknown as PancakeV3Pool
 
 		usdcContract = getContract({
 			address: pool.token1.address,

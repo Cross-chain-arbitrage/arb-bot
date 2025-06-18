@@ -1,11 +1,4 @@
-import {
-	arbitrum,
-	bsc,
-	hemi,
-	lightlinkPhoenix,
-	rootstock,
-	story,
-} from 'viem/chains'
+import { arbitrum, hemi, lightlinkPhoenix, rootstock, story } from 'viem/chains'
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 /*                                  USE QUOTER V2                                   */
@@ -30,9 +23,5 @@ export const peripheryAddresses: Record<number, PoolPeriphery | undefined> = {
 	[lightlinkPhoenix.id]: {
 		quoter: '0x5911cB3633e764939edc2d92b7e1ad375Bb57649',
 		router: '0xaa52bB8110fE38D0d2d2AF0B85C3A3eE622CA455',
-	},
-	[bsc.id]: {
-		quoter: '0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997',
-		router: '0x1b81D678ffb9C0263b24A97847620C99d213eB14',
 	},
 }
