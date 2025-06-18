@@ -436,6 +436,12 @@ export class Stargate {
 		return TokenUtils.fromAddress(dstToken.address, toChainId)
 	}
 
+	/**
+	 * Calculates the expected amount out for a given quote and amount in
+	 * @param quote
+	 * @param amountIn
+	 * @returns expectedAmountOut
+	 */
 	static getExpectedAmountOut(quote: QuoteResult, amountIn: bigint): bigint {
 		if (quote.oftFees) {
 			return quote.oftFees.oftReceipt.amountReceivedLD
