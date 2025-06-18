@@ -6,3 +6,4 @@ playground
 .VSCodeCounter
 **/.DS_Store
 terraform.json
+dist

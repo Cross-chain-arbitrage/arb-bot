@@ -10,6 +10,7 @@
 		"lint": "npx eslint src",
 		"lint:fix": "npx eslint src --fix",
 		"check-types": "npx tsc --noEmit",
+		"build": "npx tsc",
 		"getPoolStats": "npx tsx src/getPoolStats.ts",
 		"monitor": "npx tsx src/monitor.ts",
 		"run-bot": "npx tsx src/startGraphArbitrage.ts",

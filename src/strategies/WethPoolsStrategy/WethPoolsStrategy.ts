@@ -54,9 +54,9 @@ class WethPoolsStrategy {
 
 		logger.info('Starting Graph Arbitrage Bot')
 
-		logger.info('Starting searching for arbitrage')
-
 		const bot = await this.buildBot()
+
+		logger.info('Starting searching for arbitrage')
 
 		bot.start()
 	}

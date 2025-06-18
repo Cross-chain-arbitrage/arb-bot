@@ -29,6 +29,6 @@ export class GigaBigaStrategySetup {
 
 		const pools = await Promise.all(poolPromises)
 
-		return await GraphBuilder.buildFromPools(pools, SLIPPAGE)
+		return await GraphBuilder.build({ pools, slippage: SLIPPAGE })
 	}
 }
