@@ -180,46 +180,11 @@ export abstract class TickPool extends Pool {
 		return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
 	}
 
-	// calcMinAmountOutAndSqrtLimit(params: SwapParams, price: number) {
-	// 	const {
-	// 		tokenIn,
-	// 		tokenOut,
-	// 		amountIn,
-	// 		slippage = this.defaultSlippage,
-	// 	} = params
-
-	// 	const zeroToOne = this.zeroToOne(tokenIn)
-
-	// 	const formattedAmountIn = divideByDecimals(amountIn, tokenIn.decimals)
-
-	// 	const formattedAmountOutByPrice = zeroToOne
-	// 		? formattedAmountIn * price
-	// 		: formattedAmountIn / price
-
-	// 	const amountOutByPrice = multiplyByDecimals(
-	// 		formattedAmountOutByPrice,
-	// 		tokenOut.decimals,
-	// 	)
-
-	// 	const amountOutMinimum = this.calcMinAmountOut(
-	// 		amountOutByPrice,
-	// 		slippage,
-	// 	)
-
-	// 	const sqrtMaxLimit = this.calcSqrtLimit(price, slippage, zeroToOne)
-
-	// 	return { amountOutMinimum, sqrtMaxLimit }
-	// }
-
-	private zeroToOne(tokenIn: Token) {
-		return isSameAddress(tokenIn.address, this.token0.address)
-	}
-
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
 	abstract simulateSwap(
 		params: SwapParams, //TODO: remove any
-	) // eslint-disable-next-line @typescript-eslint/no-explicit-any
-	: Promise<{ amountOut: bigint; args: any }>
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	): Promise<{ amountOut: bigint; args: any }>
 	abstract swap(params: SwapParams): Promise<{
 		receipt: TransactionReceipt
 		amountOut: bigint
