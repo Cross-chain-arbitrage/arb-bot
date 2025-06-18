@@ -11,12 +11,12 @@ import { WETH_POOLS } from './wethPools'
 
 /* ============ Economic Constants ============ */
 
-const MIN_PROFIT_USD = 2
+const MIN_PROFIT_USD = 2.5
 const GIVE_APPROVES = false // Mark 'false' to skip approval step
 
 const OPTIMIZATION_CONFIG: GraphOptimizerOptions = {
-	initialValueUSD: 100,
-	stepUSD: 100,
+	initialValueUSD: 250,
+	stepUSD: 250,
 	stepsAmount: 5,
 	maxPathLength: 6,
 }
@@ -73,8 +73,8 @@ class WethPoolsStrategy {
 			options: {
 				graphOptimizerOptions: OPTIMIZATION_CONFIG,
 				minProfitUsd: MIN_PROFIT_USD,
-				pollingInterval: 10_000,
-				arbitrageTimeout: 5 * 60 * 1000,
+				pollingInterval: POLLING_INTERVAL,
+				arbitrageTimeout: ARBITRAGE_TIMEOUT,
 			},
 		})
 	}
