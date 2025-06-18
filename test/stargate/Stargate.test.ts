@@ -73,4 +73,41 @@ makeSuite('Stargate', () => {
 		expect(result.bridgeTx.srcTx.hash).toBeDefined()
 		expect(result.bridgeTx.srcTx.chainId).toBe(arbitrum.id)
 	})
+
+	describe.only('getExpectedAmountOut', () => {
+		it('MUST return same amount for USDT', async () => {
+			const USDT0 = await TokenUtils.fromAddress<Token>(
+				'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
+				arbitrum.id,
+			)
+
+			const amount = USDT0.parseUnits('1')
+
+			const { expectedAmountOut, tokenOut, quote } =
+				await Stargate.getExpectedAmountOut(USDT0, amount, fuse.id)
+
+			expect(tokenOut.address).toBe(
+				'0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7',
+			)
+			expect(tokenOut.chainId).toBe(fuse.id)
+			expect(expectedAmountOut).toBe(amount)
+
+			expect(quote).toBeDefined()
+			expect(quote.oftFees).toBeUndefined()
+		})
+
+		it('MUST return amount with loss precision for ETH', async () => {
+			// Real life example:
+			// https://layerzeroscan.com/tx/0x758ac28e912dff96b8ad5e27a631b23e28861757d09b384d515f64f9fd59bf87
+			const ETH = TokenUtils.getNative(arbitrum.id)
+
+			const amount = 199559617334342520n
+			const realAmountOut = 199559000000000000n
+
+			const { expectedAmountOut: calculatedAmountOut } =
+				await Stargate.getExpectedAmountOut(ETH, amount, fuse.id)
+
+			expect(calculatedAmountOut).toBe(realAmountOut)
+		})
+	})
 })
