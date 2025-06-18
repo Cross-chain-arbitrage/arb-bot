@@ -9,6 +9,7 @@ const CURRENCY_TO_UCID = {
 	ETH: '1027',
 	BTC: '1',
 	FUSE: '5634',
+	USDT: '825',
 }
 
 export class PriceOracle<

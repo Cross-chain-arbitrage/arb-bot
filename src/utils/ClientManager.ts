@@ -9,13 +9,14 @@ import {
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
 
-import { arbitrum, mainnet } from 'viem/chains'
+import { arbitrum, bsc, mainnet } from 'viem/chains'
 import { getAlchemyRpcUrl } from './alchemy'
 import { getPrivateKey } from './getAccount'
 
 const CUSTOM_RPC_URLS = {
 	[mainnet.id]: getAlchemyRpcUrl(mainnet.id),
 	[arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
+	[bsc.id]: getAlchemyRpcUrl(bsc.id),
 } as const
 
 export class ClientManagerError extends Error {

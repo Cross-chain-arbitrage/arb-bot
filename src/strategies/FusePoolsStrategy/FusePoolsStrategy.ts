@@ -1,4 +1,4 @@
-import { arbitrum } from 'viem/chains'
+import { bsc } from 'viem/chains'
 import { PoolUtils } from '../../dex/PoolUtils'
 import { GraphArbitrageBot } from '../../graphs/GraphArbitrageBot'
 import { GraphBuilder } from '../../graphs/GraphBuilder'
@@ -7,7 +7,9 @@ import { PriceOracle } from '../../modules/PriceOracle/PriceOracle'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
 import logger from '../../utils/logger'
-import { WETH_POOLS } from './fusePools'
+import { FUSE_POOLS } from './fusePools'
+
+const USDT_ADDRESS = '0x55d398326f99059ff775485246999027b3197955'
 
 /* ============ Economic Constants ============ */
 
@@ -27,9 +29,9 @@ const ARBITRAGE_TIMEOUT = 5 * 60 * 1000
 
 /* ============ Strategy ============ */
 
-class WethPoolsStrategy {
+class FusePoolsStrategy {
 	static async buildGraph() {
-		const poolPromises = Object.values(WETH_POOLS).map((pool) =>
+		const poolPromises = Object.values(FUSE_POOLS).map((pool) =>
 			PoolUtils.createPool(pool.address, pool.chainId, pool.type),
 		)
 
@@ -39,14 +41,14 @@ class WethPoolsStrategy {
 			pools,
 			stargateConfig: {
 				connectSecondaryChains: false,
-				baseChainId: arbitrum.id,
+				baseChainId: bsc.id,
 			},
 			slippage: SLIPPAGE,
 		})
 	}
 
 	static async run(giveApprovals: boolean = false) {
-		ClientManager.useCustomRpcUrl(arbitrum.id)
+		ClientManager.useCustomRpcUrl(bsc.id)
 
 		if (giveApprovals) {
 			await this.prepare()
@@ -55,6 +57,7 @@ class WethPoolsStrategy {
 		logger.info('Starting Graph Arbitrage Bot')
 
 		const bot = await this.buildBot()
+		// logger.info(graphToMermaid(bot.graph))
 
 		logger.info('Starting searching for arbitrage')
 
@@ -63,13 +66,13 @@ class WethPoolsStrategy {
 
 	static async buildBot(): Promise<GraphArbitrageBot> {
 		const priceOracle = await PriceOracle.create()
-		const ethNative = TokenUtils.getNative(arbitrum.id)
+		const usdt = await TokenUtils.fromAddress(USDT_ADDRESS, bsc.id)
 
 		return new GraphArbitrageBot({
 			graph: await this.buildGraph(),
 			priceOracle,
 			TgArbitrageNotifier: new TgArbitrageNotifier(),
-			startToken: ethNative,
+			startToken: usdt,
 			options: {
 				graphOptimizerOptions: OPTIMIZATION_CONFIG,
 				minProfitUsd: MIN_PROFIT_USD,
@@ -80,7 +83,7 @@ class WethPoolsStrategy {
 	}
 
 	static async prepare() {
-		logger.info('Starting WethPoolsStrategy')
+		logger.info('Starting FusePoolsStrategy')
 
 		const bot = await this.buildBot()
 
@@ -89,7 +92,7 @@ class WethPoolsStrategy {
 }
 
 async function main() {
-	await WethPoolsStrategy.run(GIVE_APPROVES)
+	await FusePoolsStrategy.run(GIVE_APPROVES)
 }
 
 if (require.main === module) {

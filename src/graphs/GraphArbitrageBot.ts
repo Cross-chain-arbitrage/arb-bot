@@ -34,14 +34,14 @@ interface GraphArbitrageBotParams {
 
 export class GraphArbitrageBot {
 	private isArbitrageExecuting = false
-	private TgArbitrageNotifier: TgArbitrageNotifier
-	private priceOracle: PriceOracle
-	private startToken: GraphNode
-	private graph: Graph
-	private graphOptimizerOptions: GraphOptimizerOptions
-	private minProfitUsd: number
-	private pollingInterval: number
-	private arbitrageTimeout: number
+	readonly TgArbitrageNotifier: TgArbitrageNotifier
+	readonly priceOracle: PriceOracle
+	readonly startToken: GraphNode
+	readonly graph: Graph
+	readonly graphOptimizerOptions: GraphOptimizerOptions
+	readonly minProfitUsd: number
+	readonly pollingInterval: number
+	readonly arbitrageTimeout: number
 
 	constructor(params: GraphArbitrageBotParams) {
 		this.TgArbitrageNotifier = params.TgArbitrageNotifier

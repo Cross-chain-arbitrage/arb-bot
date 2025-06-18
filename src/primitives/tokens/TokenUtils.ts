@@ -1,4 +1,4 @@
-import { Address, isAddress } from 'viem'
+import { Address, getAddress, isAddress } from 'viem'
 import { ERC20_ABI } from '../../abi/erc20'
 import { ClientManager } from '../../utils/ClientManager'
 import { isSameAddress } from '../../utils/common'
@@ -63,7 +63,8 @@ export class TokenUtils {
 		address: Address,
 		chainId: number,
 	): Promise<T> {
-		const cacheKey = this.getCacheKey(address, chainId)
+		const checksumAddress = getAddress(address)
+		const cacheKey = this.getCacheKey(checksumAddress, chainId)
 		const cachedToken = this.tokenCache.get(cacheKey)
 
 		if (cachedToken) {
@@ -73,7 +74,7 @@ export class TokenUtils {
 		const client = ClientManager.getClient(chainId)
 		const abi = ERC20_ABI
 
-		if (this.isNative(address)) {
+		if (this.isNative(checksumAddress)) {
 			const token = this._createNative(chainId)
 
 			this.tokenCache.set(
@@ -86,17 +87,17 @@ export class TokenUtils {
 
 		const [decimals, name, symbol] = await Promise.all([
 			client.readContract({
-				address,
+				address: checksumAddress,
 				abi,
 				functionName: 'decimals',
 			}),
 			client.readContract({
-				address,
+				address: checksumAddress,
 				abi,
 				functionName: 'name',
 			}),
 			client.readContract({
-				address,
+				address: checksumAddress,
 				abi,
 				functionName: 'symbol',
 			}),
@@ -104,10 +105,16 @@ export class TokenUtils {
 
 		let token: T
 
-		if (this.isWrappedNative(address, chainId)) {
+		if (this.isWrappedNative(checksumAddress, chainId)) {
 			token = new WrappedNative(chainId, symbol, decimals, name) as T
 		} else {
-			token = new Token(address, chainId, symbol, decimals, name) as T
+			token = new Token(
+				checksumAddress,
+				chainId,
+				symbol,
+				decimals,
+				name,
+			) as T
 		}
 
 		this.tokenCache.set(cacheKey, token)
