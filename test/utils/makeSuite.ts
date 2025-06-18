@@ -1,3 +1,5 @@
+import logger from '../../src/utils/logger'
+
 function makeSuite(name: string, test: () => void) {
 	describe(name, () => beforeAndTest(test))
 }
@@ -17,6 +19,11 @@ function beforeAndTest(test: () => void) {
 		global.console = require('console')
 
 		const isLogs = process.env.ENABLE_LOGS === 'true'
+
+		if (!isLogs) {
+			logger.info = () => {}
+			logger.warn = () => {}
+		}
 
 		if (!isLogs) {
 			jest.spyOn(console, 'log').mockImplementation(() => {})
