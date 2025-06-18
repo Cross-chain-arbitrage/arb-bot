@@ -5,6 +5,7 @@ import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import logger from '../utils/logger'
 import { runFuncWithDelay } from '../utils/polling'
 import { ActionType, EdgeWithRate, Graph, GraphEdge, GraphNode } from './Graph'
@@ -65,12 +66,7 @@ export class GraphArbitrageBot {
 		)
 	}
 
-	async findAndExecuteArbitrage() {
-		if (this.isArbitrageExecuting) return
-
-		let path
-		let edgesWithRate: Map<string, EdgeWithRate>
-
+	async findArbitrage() {
 		try {
 			const findOpportunityRes = await GraphOptimizer.findOpportunity(
 				this.startToken,
@@ -79,47 +75,68 @@ export class GraphArbitrageBot {
 				this.graphOptimizerOptions,
 			)
 
-			path = findOpportunityRes.path
-			edgesWithRate = findOpportunityRes.edgesWithRate
+			return findOpportunityRes
 		} catch (err) {
+			// console.log(err)
 			logger.error(err, 'Error finding arbitrage')
 		}
+	}
 
-		if (path) {
-			const expectedProfitUsd =
-				Number(this.startToken.formatUnits(path.profitAmount)) *
-				this.startTokenPrice()
+	async executeArbitrage(
+		path: ArbitragePath,
+		edgesWithRate: Map<string, EdgeWithRate>,
+	) {
+		const expectedProfitUsd =
+			Number(this.startToken.formatUnits(path.profitAmount)) *
+			this.startTokenPrice()
 
-			if (expectedProfitUsd < this.minProfitUsd) {
-				logger.info(
-					`Profit is too low, expectedProfitUsd: $${expectedProfitUsd.toFixed(2)}, minProfitUsd: $${this.minProfitUsd}`,
-				)
-				return
-			}
+		try {
+			logger.info(
+				`Starting arbitrage, start amount: ${this.startToken.formatUnits(path.startAmount)}, expected profit: $${expectedProfitUsd}, expected amountOut: ${this.startToken.formatUnits(path.endAmount)}`,
+			)
+			this.notifyAboutArbStart(path, edgesWithRate)
 
-			try {
-				logger.info(
-					`Starting arbitrage, start amount: ${this.startToken.formatUnits(path.startAmount)}, expected profit: $${expectedProfitUsd}, expected amountOut: ${this.startToken.formatUnits(path.endAmount)}`,
-				)
-				this.notifyAboutArbStart(path, edgesWithRate!)
+			const { actualAmountOut, actualProfitUsd } =
+				await this.execute(path)
 
-				const { actualAmountOut, actualProfitUsd } =
-					await this.execute(path)
+			const readableActualAmountOut =
+				this.startToken.formatUnits(actualAmountOut)
 
-				const readableActualAmountOut =
-					this.startToken.formatUnits(actualAmountOut)
-
-				logger.info(
-					`Arbitrage is finished, amount out: ${readableActualAmountOut}, profit: $${actualProfitUsd}`,
-				)
-				this.notifyAboutArbEnd(readableActualAmountOut, actualProfitUsd)
-			} catch (err) {
-				logger.error(err, 'Error executing arbitrage')
-				this.notifyAboutArbError(err)
-			}
-		} else {
-			logger.info('No arbitrage found')
+			logger.info(
+				`Arbitrage is finished, amount out: ${readableActualAmountOut}, profit: $${actualProfitUsd}`,
+			)
+			this.notifyAboutArbEnd(readableActualAmountOut, actualProfitUsd)
+		} catch (err) {
+			logger.error(err, 'Error executing arbitrage')
+			this.notifyAboutArbError(err)
 		}
+	}
+
+	async findAndExecuteArbitrage() {
+		if (this.isArbitrageExecuting) return
+
+		const arbitrageOpportunity = await this.findArbitrage()
+
+		if (!arbitrageOpportunity || !arbitrageOpportunity.path) {
+			logger.info('No arbitrage found')
+			return
+		}
+
+		const { path, edgesWithRate } = arbitrageOpportunity
+
+		const expectedProfitUsd =
+			Number(this.startToken.formatUnits(path.profitAmount)) *
+			this.startTokenPrice()
+
+		if (expectedProfitUsd < this.minProfitUsd) {
+			console.log(expectedProfitUsd, this.minProfitUsd)
+			logger.info(
+				`Profit is too low, expectedProfitUsd: $${expectedProfitUsd.toFixed(2)}, minProfitUsd: $${this.minProfitUsd}`,
+			)
+			return
+		}
+
+		await this.executeArbitrage(path, edgesWithRate)
 	}
 
 	private notifyAboutArbError(error: unknown) {
@@ -158,10 +175,13 @@ export class GraphArbitrageBot {
 		})
 	}
 
-	private async execute(path: ArbitragePath) {
+	async execute(path: ArbitragePath) {
 		this.setArbitrageExecutingTrue()
 
-		const actualAmountOut = await GraphExecutor.execute(path)
+		const actualAmountOut = await GraphExecutor.execute(
+			path,
+			this.checkEdgeProfitability.bind(this),
+		)
 
 		const actualProfitUsd =
 			(Number(this.startToken.formatUnits(path.startAmount)) -
@@ -171,6 +191,37 @@ export class GraphArbitrageBot {
 		this.isArbitrageExecuting = false
 
 		return { actualAmountOut, actualProfitUsd }
+	}
+
+	/**
+	 * Throw error if distance becomes non-negative after receiving new rate for swap on non-start token chain
+	 */
+	private async checkEdgeProfitability(
+		path: ArbitragePath,
+		currentEdge: EdgeWithRate,
+		amountIn: bigint,
+	) {
+		if (currentEdge.type !== ActionType.SWAP) return
+
+		const fromToken = await TokenUtils.fromId(currentEdge.from)
+
+		if (fromToken.chainId === this.startToken.chainId) return
+
+		const currentRate = await currentEdge.getRate(amountIn)
+
+		let distance = 0
+
+		for (const edge of path.edges) {
+			if (edge.from === currentEdge.from && edge.to === currentEdge.to) {
+				distance += currentRate.rate
+			} else {
+				distance += edge.rate
+			}
+		}
+
+		if (distance < 0) return
+
+		throw new Error(`Profitability check failed, distance: ${distance}`)
 	}
 
 	private setArbitrageExecutingTrue() {

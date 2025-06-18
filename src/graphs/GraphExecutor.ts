@@ -7,7 +7,7 @@ import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import { ClientManager } from '../utils/ClientManager'
 import { shortenAddress } from '../utils/common'
 import logger from '../utils/logger'
-import { ActionType, GraphEdge } from './Graph'
+import { ActionType, EdgeWithRate, GraphEdge } from './Graph'
 import { ArbitragePath } from './path'
 import { getEdgeNodes } from './utils'
 
@@ -16,21 +16,29 @@ export class GraphExecutor {
 	 * Execute the arbitrage path
 	 * @returns actual end amount
 	 */
-	static async execute(arbitragePath: ArbitragePath) {
-		const {
-			edges,
-			startAmount,
-			endAmount,
-			profitAmount,
-			profitPercentage,
-		} = arbitragePath
+	static async execute(
+		arbitragePath: ArbitragePath,
+		beforeExecuteEdgeHook?: (
+			path: ArbitragePath,
+			currentEdge: EdgeWithRate,
+			amountIn: bigint,
+		) => unknown,
+		afterExecuteEdgeHook?: (
+			path: ArbitragePath,
+			currentEdge: EdgeWithRate,
+			amountOut: bigint,
+		) => unknown,
+	) {
+		const { edges, startAmount } = arbitragePath
 
 		let amountIn = startAmount
 
 		for (const edge of edges) {
 			const { from, to } = await getEdgeNodes(edge)
 
-			const beforeExecuteLogMsg = `Start ${edge.type} from: ${from.symbol}-${from.chainId} to:${to.symbol}-${to.chainId} input:${from.formatUnits(amountIn)}}`
+			await beforeExecuteEdgeHook?.(arbitragePath, edge, amountIn)
+
+			const beforeExecuteLogMsg = `Start ${edge.type} from: ${from.toString()} to:${to.toString()} input:${from.formatUnits(amountIn)}}`
 			logger.info(beforeExecuteLogMsg)
 			const { amountOut, dstTxHash, srcTxHash } = await this.executeEdge(
 				edge,
@@ -44,6 +52,8 @@ export class GraphExecutor {
 
 			logger.info(afterExecuteLogMsg)
 
+			await afterExecuteEdgeHook?.(arbitragePath, edge, amountOut)
+
 			amountIn = amountOut
 		}
 
@@ -51,7 +61,7 @@ export class GraphExecutor {
 	}
 
 	static async executeEdge(
-		edge: GraphEdge,
+		edge: EdgeWithRate,
 		amountIn: bigint,
 	): Promise<{
 		amountOut: bigint

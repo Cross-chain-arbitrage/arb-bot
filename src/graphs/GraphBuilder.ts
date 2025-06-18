@@ -47,6 +47,8 @@ export interface GraphBuildConfig {
 	stargateConfig?: StargateConfig
 	/** The slippage tolerance for the swaps */
 	slippage?: number
+	/** cache for calling getRate on swap edges */
+	swapCacheTTL?: number
 }
 
 /**
