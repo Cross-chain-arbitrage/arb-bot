@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
 import dotenv from 'dotenv'
 import { getEnvSafe } from '../../utils/common'
+import logger from '../../utils/logger'
 
 dotenv.config()
 
@@ -53,7 +54,9 @@ export class PriceOracle<
 		await priceOracle.updatePrices()
 
 		priceOracle.updateIntervalId = setInterval(() => {
-			void priceOracle.updatePrices()
+			priceOracle.updatePrices().catch((error) => {
+				logger.error(error)
+			})
 		}, priceOracle.updateInterval)
 
 		return priceOracle
