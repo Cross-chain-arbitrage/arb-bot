@@ -1,12 +1,18 @@
 import { parseUnits } from 'viem'
-import { GetRate, Graph, GraphEdge, GraphNode, GraphNodeId } from './Graph'
-import { EdgeWithRate } from './visualization'
+import {
+	EdgeWithRate,
+	GetRate,
+	Graph,
+	GraphEdge,
+	GraphNode,
+	GraphNodeId,
+} from './Graph'
 
 /**
  * Represents an arbitrage path with its edges and profit metrics
  */
 export interface ArbitragePath {
-	edges: GraphEdge[]
+	edges: EdgeWithRate[]
 	startAmount: bigint
 	endAmount: bigint
 	profitAmount: bigint
@@ -75,9 +81,8 @@ export async function findArbitragePath(
 			const fromTo = `${from.toString()} -> ${to.toString()}`
 
 			edgesWithRate.set(fromTo, {
+				...edge,
 				rate,
-				from: graph.getToken(from),
-				to: graph.getToken(to),
 			})
 
 			const fromDistance = distances.get(from)
@@ -130,7 +135,7 @@ async function reconstructCycle(
 	startToken: GraphNode,
 	startAmount: bigint,
 ): Promise<ArbitragePath> {
-	const edges: GraphEdge[] = []
+	const edges: EdgeWithRate[] = []
 	let currentToken: GraphNodeId = startToken.id
 	const maxEdges = 10 // Safety limit to prevent infinite loops
 
@@ -148,8 +153,11 @@ async function reconstructCycle(
 		// console.log(`${from.toString()} -- ${edge.type} --> ${to.toString()}`)
 		// const { rate } = await edge.getRate(startAmount)
 		// console.log('Rate: ', rate.toFixed(3))
-
-		edges.push(edge)
+		const edgeWithRate: EdgeWithRate = {
+			...edge,
+			rate: 0,
+		}
+		edges.push(edgeWithRate)
 		currentToken = edge.from
 
 		if (edges.length > maxEdges) {
@@ -164,8 +172,9 @@ async function reconstructCycle(
 
 	let amount = startAmount
 	for (const edge of edges) {
-		const { amountOut } = await edge.getRate(amount)
+		const { amountOut, rate } = await edge.getRate(amount)
 		amount = amountOut
+		edge.rate = rate
 	}
 
 	const profitAmount = amount - startAmount

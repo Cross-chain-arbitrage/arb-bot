@@ -36,6 +36,10 @@ export type GraphEdgeAction = (
 	getRate: GetRate
 }
 
+export type EdgeWithRate = GraphEdge & {
+	rate: number
+}
+
 export type GraphNodeId = TokenId
 
 export type GraphEdge = {

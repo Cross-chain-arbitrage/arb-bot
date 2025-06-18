@@ -1,6 +1,5 @@
-import { Graph, GraphNode } from '../graphs/Graph'
+import { EdgeWithRate, Graph, GraphNode } from '../graphs/Graph'
 import { ArbitragePath, findArbitragePath } from '../graphs/path'
-import { EdgeWithRate } from '../graphs/visualization'
 
 const DEFAULT_OPTIONS = {
 	initialValueUSD: 15,

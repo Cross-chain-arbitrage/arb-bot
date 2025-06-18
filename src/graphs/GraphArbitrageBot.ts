@@ -7,11 +7,10 @@ import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
 import logger from '../utils/logger'
 import { runFuncWithDelay } from '../utils/polling'
-import { ActionType, Graph, GraphEdge, GraphNode } from './Graph'
+import { ActionType, EdgeWithRate, Graph, GraphEdge, GraphNode } from './Graph'
 import { GraphExecutor } from './GraphExecutor'
 import { ArbitragePath } from './path'
 import { getEdgeNodes } from './utils'
-import { EdgeWithRate } from './visualization'
 
 const DEFAULT_OPTIONS = {
 	minProfitUsd: 3,

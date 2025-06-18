@@ -1,5 +1,6 @@
+import { EdgeWithRate } from '../../graphs/Graph'
 import { ArbitragePath } from '../../graphs/path'
-import { EdgeWithRate, getPrettyPath } from '../../graphs/visualization'
+import { getPrettyPath } from '../../graphs/visualization'
 import { getEnvSafe } from '../../utils/common'
 import { TgBaseNotifier } from './TgBaseNotifier'
 

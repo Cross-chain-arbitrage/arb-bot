@@ -1,24 +1,21 @@
 import { Stargate } from '../bridges/stargate/Stargate'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { Graph, GraphNode, GraphNodeId } from './Graph'
+import { EdgeWithRate, Graph, GraphNode, GraphNodeId } from './Graph'
 import { ArbitragePath } from './path'
 import { getEdgeNodes } from './utils'
-
-export interface EdgeWithRate {
-	rate: number
-	from: GraphNode
-	to: GraphNode
-}
 
 /**
  * Returns a Mermaid graph string with edges and rates
  * @param edgesWithRate - Map of edges with rates, returned by `findArbitragePath()`
  */
-export function getMermaidGraph(edgesWithRate: Map<string, EdgeWithRate>) {
+export async function getMermaidGraph(
+	edgesWithRate: Map<string, EdgeWithRate>,
+) {
 	let mermaidGraph = 'graph TD\n'
 
 	for (const edge of edgesWithRate.values()) {
-		mermaidGraph += `${edge.from.chainId}:${edge.from.symbol} -- ${edge.rate.toFixed(3)} --> ${edge.to.chainId}:${edge.to.symbol}\n`
+		const { from, to } = await getEdgeNodes(edge)
+		mermaidGraph += `${from.chainId}:${from.symbol} -- ${edge.rate.toFixed(3)} --> ${to.chainId}:${to.symbol}\n`
 	}
 
 	return mermaidGraph
@@ -87,7 +84,7 @@ export async function getPrettyPath(
 	if (!path) {
 		prettyPath += 'No arbitrage path found'
 
-		const mermaidGraph = getMermaidGraph(edgesWithRate)
+		const mermaidGraph = await getMermaidGraph(edgesWithRate)
 
 		prettyPath += `\n\n${mermaidGraph}`
 
