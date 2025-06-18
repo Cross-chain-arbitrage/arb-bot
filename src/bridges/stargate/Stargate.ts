@@ -7,6 +7,7 @@ import { getChainEIdByNativeChainId } from '../../data-apis/layerzeroscan/utils'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { WrappedNative } from '../../primitives/tokens/WrappedNative'
 import { ClientManager } from '../../utils/ClientManager'
 import { padAddressToBytes32 } from '../../utils/types'
 import { StargateAPI } from './StargateAPI'
@@ -30,8 +31,18 @@ export class Stargate {
 		ttl: QUOTE_CACHE_TTL,
 	})
 
+	/**
+	 * Bridges `tokenIn` to `recipient` on `toChainId`
+	 * @param tokenIn - Token or NativeCurrency to bridge
+	 * @param toChainId - Destination chain ID
+	 * @param recipient - Recipient address
+	 * @param amount - Amount to bridge
+	 * @param simulateOnly - If true, only simulate the bridge and return the expected amount out and txHash = bytes32(0)
+	 * @returns {bridgeTx: StargateBridgeTx, expectedAmountOut: bigint}
+	 * @dev Bridging amount is affected by following factors: bridge fee, src vs dst token decimals diff, etc.
+	 */
 	static async bridge(
-		tokenIn: Token | NativeCurrency,
+		tokenIn: Token | NativeCurrency | WrappedNative,
 		toChainId: number,
 		recipient: Address,
 		amount: bigint,
@@ -39,6 +50,7 @@ export class Stargate {
 	): Promise<{
 		bridgeTx: StargateBridgeTx
 		expectedAmountOut: bigint
+		tokenOut: Token | NativeCurrency
 	}> {
 		if (amount <= 0n)
 			throw new StargateError('Amount must be greater than 0')
@@ -74,13 +86,8 @@ export class Stargate {
 			await this.validateAllowance(recipient, poolOrOFT, amount, tokenIn)
 		}
 
-		const quote = await Stargate._quote(
-			tokenMetadata,
-			amount,
-			recipient,
-			toChainId,
-			tokenIn.chainId,
-		)
+		const { quote, expectedAmountOut, tokenOut } =
+			await Stargate.getExpectedAmountOut(tokenIn, amount, toChainId)
 
 		const toChainEId = getChainEIdByNativeChainId(toChainId)
 		const recipientBytes32 = padAddressToBytes32(recipient)
@@ -117,26 +124,25 @@ export class Stargate {
 			],
 		})
 
-		const expectedAmountOut = Stargate.getExpectedAmountOut(quote, amount)
-		const dstToken = await Stargate.getDstToken(tokenIn, toChainId)
-
 		if (simulateOnly) {
 			return {
 				bridgeTx: new StargateBridgeTx(
 					zeroHash,
 					tokenIn,
-					dstToken,
+					tokenOut,
 					amount,
 				),
-				expectedAmountOut: amount,
+				expectedAmountOut,
+				tokenOut,
 			}
 		}
 
 		const txHash = await wallet.writeContract(request)
 
 		return {
-			bridgeTx: new StargateBridgeTx(txHash, tokenIn, dstToken, amount),
+			bridgeTx: new StargateBridgeTx(txHash, tokenIn, tokenOut, amount),
 			expectedAmountOut,
+			tokenOut,
 		}
 	}
 
@@ -442,12 +448,33 @@ export class Stargate {
 	 * @param amountIn
 	 * @returns expectedAmountOut
 	 */
-	static getExpectedAmountOut(quote: QuoteResult, amountIn: bigint): bigint {
+	static async getExpectedAmountOut(
+		tokenIn: Token | NativeCurrency,
+		amountIn: bigint,
+		toChainId: number,
+	): Promise<{
+		quote: QuoteResult
+		expectedAmountOut: bigint
+		tokenOut: Token | NativeCurrency
+	}> {
+		const quote = await this.quote(tokenIn, toChainId, amountIn)
+		const tokenOut = await Stargate.getDstToken(tokenIn, toChainId)
+
 		if (quote.oftFees) {
-			return quote.oftFees.oftReceipt.amountReceivedLD
+			return {
+				quote,
+				expectedAmountOut: quote.oftFees.oftReceipt.amountReceivedLD,
+				tokenOut,
+			}
 		} else {
-			// TODO: WILL BREAK IN CASE OF DIFFERENT DECIMALS
-			return amountIn
+			const sharedDecimals = 6
+			const amountSD =
+				amountIn / 10n ** BigInt(tokenIn.decimals - sharedDecimals)
+
+			const amountOutOnDst =
+				amountSD * 10n ** BigInt(tokenOut.decimals - sharedDecimals)
+
+			return { quote, expectedAmountOut: amountOutOnDst, tokenOut }
 		}
 	}
 
