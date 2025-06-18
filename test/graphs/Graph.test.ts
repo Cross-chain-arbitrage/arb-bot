@@ -188,7 +188,7 @@ makeSuite('Graph', () => {
 		})
 	})
 
-	describe.only('MUST be able to add `DexPool`s as an edge', () => {
+	describe('MUST be able to add `DexPool`s as an edge', () => {
 		let graph: Graph
 
 		beforeEach(() => {
