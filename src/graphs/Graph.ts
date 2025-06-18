@@ -190,9 +190,8 @@ export class Graph {
 
 	addStargateBridgeEdge(from: GraphNode, to: GraphNode) {
 		const getRate = async (amountIn: bigint) => {
-			const quote = await Stargate.quote(from, to.chainId, amountIn)
-
-			const amountOut = Stargate.getExpectedAmountOut(quote, amountIn)
+			const { expectedAmountOut: amountOut } =
+				await Stargate.getExpectedAmountOut(from, amountIn, to.chainId)
 
 			const rate = this.calcRate(amountIn, amountOut)
 
