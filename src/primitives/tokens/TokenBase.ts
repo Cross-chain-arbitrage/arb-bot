@@ -1,5 +1,6 @@
 import { Address, formatUnits, parseUnits } from 'viem'
 import { shortenAddress } from '../../utils/common'
+import { ChainUtils } from '../chains/ChainUtils'
 import { BaseContract } from '../contracts/BaseContract'
 
 export class TokenBaseError extends Error {
@@ -43,14 +44,10 @@ export abstract class TokenBase extends BaseContract {
 		return `${this.chainId}:${this.address.toLowerCase() as Address}`
 	}
 
-	// TODO: output chainKey instead of chainId (requires Chain Class abstraction)
 	toString(): string {
-		// try {
-		// const chainKey = Stargate.getChainKey(this.chainId)
-		// return `${this.symbol} ${chainKey}`
-		// } catch (error) {
-		return `${this.symbol} (${this.chainId})`
-		// }
+		const chainName = ChainUtils.getChainNameById(this.chainId)
+
+		return `${this.symbol} (${chainName ?? this.chainId})`
 	}
 
 	toStringFull(): string {
