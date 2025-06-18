@@ -74,7 +74,7 @@ makeSuite('Stargate', () => {
 		expect(result.bridgeTx.srcTx.chainId).toBe(arbitrum.id)
 	})
 
-	describe.only('getExpectedAmountOut', () => {
+	describe('getExpectedAmountOut', () => {
 		it('MUST return same amount for USDT', async () => {
 			const USDT0 = await TokenUtils.fromAddress<Token>(
 				'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
