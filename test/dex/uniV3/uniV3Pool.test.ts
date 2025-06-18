@@ -78,6 +78,13 @@ makeSuite('Uniswap V3 pool test', () => {
 			chain: walletClient.chain,
 		})
 		const balanceBefore = await usdcContract.read.balanceOf([botAddress])
+
+		const { amountOut: quoteAmountOut } = await pool.quoteSwap({
+			tokenIn: pool.token0,
+			tokenOut: pool.token1,
+			amountIn,
+		})
+
 		const { amountOut: simulated } = await pool.simulateSwap({
 			tokenIn: pool.token0,
 			tokenOut: pool.token1,
@@ -95,6 +102,7 @@ makeSuite('Uniswap V3 pool test', () => {
 		const balanceAfter = await usdcContract.read.balanceOf([botAddress])
 		expect(balanceAfter - balanceBefore).toBe(amountOut)
 		expect(amountOut).toBe(simulated)
+		expect(amountOut).toBe(quoteAmountOut)
 	})
 
 	it('should swap USDC to WETH', async () => {
