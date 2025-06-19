@@ -1,11 +1,11 @@
 import { Address, decodeEventLog } from 'viem'
-import { TickPool } from '../TickPool'
 import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
-import { getPoolImmutables } from './helpers'
-import { peripheryAddresses } from './data'
 import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
 import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
 import { isSameAddress } from '../../utils/common'
+import { TickPool } from '../TickPool'
+import { peripheryAddresses } from './data'
+import { getPoolImmutables } from './helpers'
 
 export class UniV3PoolError extends Error {
 	constructor(message: string) {
@@ -117,6 +117,14 @@ export class UniV3Pool extends TickPool {
 	async swap(params: SwapParams) {
 		const { args } = await this.simulateSwap(params)
 
+		const gas = await this.client.estimateContractGas({
+			address: this.routerAddress,
+			abi: UNIV3_ROUTER_ABI,
+			functionName: 'exactInputSingle',
+			args: [args],
+			account: this.account,
+		})
+
 		const hash = await this.wallet.writeContract({
 			address: this.routerAddress,
 			abi: UNIV3_ROUTER_ABI,
@@ -124,6 +132,7 @@ export class UniV3Pool extends TickPool {
 			chain: this.wallet.chain,
 			functionName: 'exactInputSingle',
 			args: [args],
+			gas: this.multiplyGas(gas),
 		})
 
 		const receipt = await this.client.waitForTransactionReceipt({ hash })

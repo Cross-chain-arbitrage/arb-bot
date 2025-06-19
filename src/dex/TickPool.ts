@@ -180,6 +180,11 @@ export abstract class TickPool extends Pool {
 		return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
 	}
 
+	multiplyGas(gas: bigint) {
+		//TODO: remove magic number
+		return (gas * 15n) / 10n
+	}
+
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
 	abstract simulateSwap(
 		params: SwapParams, //TODO: remove any

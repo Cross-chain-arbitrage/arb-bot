@@ -1,11 +1,11 @@
 import { Address, decodeEventLog, zeroAddress } from 'viem'
 import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
-import { TickPool } from '../TickPool'
-import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
-import { peripheryAddresses } from './data'
-import { isSameAddress } from '../../utils/common'
-import { getPoolImmutables } from './helpers'
 import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
+import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
+import { isSameAddress } from '../../utils/common'
+import { TickPool } from '../TickPool'
+import { peripheryAddresses } from './data'
+import { getPoolImmutables } from './helpers'
 
 export class AlgebraPoolError extends Error {
 	constructor(message: string) {
@@ -110,6 +110,14 @@ export class AlgebraPool extends TickPool {
 	async swap(params: SwapParams) {
 		const { args } = await this.simulateSwap(params)
 
+		const gas = await this.client.estimateContractGas({
+			address: this.routerAddress,
+			abi: ALGEBRA_ROUTER_ABI,
+			functionName: 'exactInputSingle',
+			args: [args],
+			account: this.account,
+		})
+
 		const hash = await this.wallet.writeContract({
 			address: this.routerAddress,
 			abi: ALGEBRA_ROUTER_ABI,
@@ -117,6 +125,7 @@ export class AlgebraPool extends TickPool {
 			chain: this.wallet.chain,
 			functionName: 'exactInputSingle',
 			args: [args],
+			gas: this.multiplyGas(gas),
 		})
 
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
