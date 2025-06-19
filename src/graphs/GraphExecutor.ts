@@ -5,44 +5,54 @@ import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import { ClientManager } from '../utils/ClientManager'
-import { shortenAddress } from '../utils/common'
+import { runFnWithRetry, shortenAddress } from '../utils/common'
 import logger from '../utils/logger'
 import { ActionType, EdgeWithRate, GraphEdge } from './Graph'
-import { ArbitragePath } from './path'
 import { getEdgeNodes } from './utils'
+
+export interface GraphExecutorConfig {
+	path: EdgeWithRate[]
+	startAmount: bigint
+	retryExecuteEdgeCount?: number
+	beforeExecuteEdgeHook?: (
+		path: EdgeWithRate[],
+		currentEdge: EdgeWithRate,
+		amountIn: bigint,
+	) => unknown
+	afterExecuteEdgeHook?: (
+		path: EdgeWithRate[],
+		currentEdge: EdgeWithRate,
+		amountOut: bigint,
+	) => unknown
+}
 
 export class GraphExecutor {
 	/**
 	 * Execute the arbitrage path
 	 * @returns actual end amount
 	 */
-	static async execute(
-		arbitragePath: ArbitragePath,
-		beforeExecuteEdgeHook?: (
-			path: ArbitragePath,
-			currentEdge: EdgeWithRate,
-			amountIn: bigint,
-		) => unknown,
-		afterExecuteEdgeHook?: (
-			path: ArbitragePath,
-			currentEdge: EdgeWithRate,
-			amountOut: bigint,
-		) => unknown,
-	) {
-		const { edges, startAmount } = arbitragePath
+	static async execute(config: GraphExecutorConfig) {
+		const {
+			path,
+			startAmount,
+			retryExecuteEdgeCount = 1,
+			beforeExecuteEdgeHook,
+			afterExecuteEdgeHook,
+		} = config
 
 		let amountIn = startAmount
 
-		for (const edge of edges) {
+		for (const edge of path) {
 			const { from, to } = await getEdgeNodes(edge)
 
-			await beforeExecuteEdgeHook?.(arbitragePath, edge, amountIn)
+			await beforeExecuteEdgeHook?.(path, edge, amountIn)
 
 			const beforeExecuteLogMsg = `Start ${edge.type} from: ${from.toString()} to:${to.toString()} input:${from.formatUnits(amountIn)}}`
 			logger.info(beforeExecuteLogMsg)
-			const { amountOut, dstTxHash, srcTxHash } = await this.executeEdge(
-				edge,
-				amountIn,
+
+			const { amountOut, dstTxHash, srcTxHash } = await runFnWithRetry(
+				() => this.executeEdge(edge, amountIn),
+				retryExecuteEdgeCount,
 			)
 
 			const afterExecuteLogMsg =
@@ -52,7 +62,7 @@ export class GraphExecutor {
 
 			logger.info(afterExecuteLogMsg)
 
-			await afterExecuteEdgeHook?.(arbitragePath, edge, amountOut)
+			await afterExecuteEdgeHook?.(path, edge, amountOut)
 
 			amountIn = amountOut
 		}

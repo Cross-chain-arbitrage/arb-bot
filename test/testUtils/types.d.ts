@@ -6,4 +6,8 @@ interface AnvilConfig {
 	rpcUrl?: string
 	/** timeout in milliseconds for starting Anvil, default is 5000 */
 	timeoutStartAnvil?: number
+	/** block time in seconds, default is mine block for each transaction */
+	blockTime?: number
+	/** port for anvil, default is random */
+	port?: number
 }

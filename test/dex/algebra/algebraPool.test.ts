@@ -8,8 +8,12 @@ import {
 import { fuse } from 'viem/chains'
 import { AlgebraPool } from '../../../src/dex/algebra/Pool'
 import { ClientManager } from '../../../src/utils/ClientManager'
-import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
-import { makeSuite } from '../../utils/makeSuite'
+import {
+	setNativeBalance,
+	setTokenBalance,
+	useAnvil,
+} from '../../testUtils/anvil'
+import { makeSuite } from '../../testUtils/makeSuite'
 
 /* ======== Constants ======== */
 

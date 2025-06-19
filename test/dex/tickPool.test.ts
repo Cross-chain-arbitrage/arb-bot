@@ -11,8 +11,8 @@ import { TickPool } from '../../src/dex/TickPool'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { ClientManager } from '../../src/utils/ClientManager'
-import { setTokenBalance, useAnvil } from '../utils/anvil'
-import { makeSuite } from '../utils/makeSuite'
+import { setTokenBalance, useAnvil } from '../testUtils/anvil'
+import { makeSuite } from '../testUtils/makeSuite'
 
 /* ======== Constants ======== */
 

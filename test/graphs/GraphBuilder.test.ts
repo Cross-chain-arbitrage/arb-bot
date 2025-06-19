@@ -4,7 +4,7 @@ import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { ActionType } from '../../src/graphs/Graph'
 import { GraphBuilder, GraphBuilderError } from '../../src/graphs/GraphBuilder'
 import { WrappedNative } from '../../src/primitives/tokens/WrappedNative'
-import { makeSuite } from '../utils/makeSuite'
+import { makeSuite } from '../testUtils/makeSuite'
 
 const POOLS: {
 	address: Address

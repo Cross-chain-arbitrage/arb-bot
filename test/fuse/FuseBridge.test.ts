@@ -6,8 +6,8 @@ import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { getAlchemyRpcUrl } from '../../src/utils/alchemy'
 import { ClientManager } from '../../src/utils/ClientManager'
 import { getAccountAddress } from '../../src/utils/getAccount'
-import { setTokenBalance, useAnvil } from '../utils/anvil'
-import { makeSuite } from '../utils/makeSuite'
+import { setTokenBalance, useAnvil } from '../testUtils/anvil'
+import { makeSuite } from '../testUtils/makeSuite'
 
 makeSuite('FuseBridge', () => {
 	const WBTC_ARB_ADDRESS = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'

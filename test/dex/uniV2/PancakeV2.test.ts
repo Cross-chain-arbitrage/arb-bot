@@ -8,8 +8,12 @@ import { bsc } from 'viem/chains'
 import { PancakeV2Pool } from '../../../src/dex/pancakeV2/Pool'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { ClientManager } from '../../../src/utils/ClientManager'
-import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
-import { makeSuite } from '../../utils/makeSuite'
+import {
+	setNativeBalance,
+	setTokenBalance,
+	useAnvil,
+} from '../../testUtils/anvil'
+import { makeSuite } from '../../testUtils/makeSuite'
 /* ======== Constants ======== */
 
 const poolAddress = '0x6483F166b9E4310A165a55FEa04F867499aded06' // WBNB/FUSE pool

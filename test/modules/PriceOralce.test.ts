@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
 import { wait } from '../../src/utils/common'
-import { makeSuite } from '../utils/makeSuite'
+import { makeSuite } from '../testUtils/makeSuite'
 
 function buildPriceData(price: number): CMCQuotesResponse {
 	return {

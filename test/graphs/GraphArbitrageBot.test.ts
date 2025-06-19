@@ -10,7 +10,7 @@ import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageN
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { wait } from '../../src/utils/common'
 import logger from '../../src/utils/logger'
-import { makeSuite } from '../utils/makeSuite'
+import { makeSuite } from '../testUtils/makeSuite'
 
 makeSuite('GraphArbitrageBot', () => {
 	const priceOracle = { getPrice: (currency: string) => 1 } as PriceOracle

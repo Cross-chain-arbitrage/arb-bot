@@ -1,6 +1,6 @@
 import { RoutesRequest } from '@lifi/sdk'
 import { LiFi } from '../../src/lifi/LiFi'
-import { makeSuite } from '../utils/makeSuite'
+import { makeSuite } from '../testUtils/makeSuite'
 
 makeSuite('LiFi', () => {
 	it('MUST get routes', async () => {

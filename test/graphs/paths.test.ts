@@ -1,7 +1,7 @@
 import { arbitrum } from 'viem/chains'
 import { Graph } from '../../src/graphs/Graph'
 import { findArbitragePath } from '../../src/graphs/path'
-import { makeSuite } from '../utils/makeSuite'
+import { makeSuite } from '../testUtils/makeSuite'
 import { getWethWbtcFuseGraph } from './examples/BtcWethGraph'
 import { getWethWbtcFuseGraphWithDeadEnd } from './examples/BtcWethGraphWithDeadEnd'
 

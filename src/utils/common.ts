@@ -1,4 +1,5 @@
 import { isAddress } from 'viem'
+import logger from './logger'
 
 export const wait = (ms: number): Promise<void> =>
 	new Promise((resolve) => setTimeout(resolve, ms))
@@ -42,4 +43,25 @@ export function getEnvSafe(key: string): string {
 	}
 
 	return value
+}
+
+export async function runFnWithRetry<T>(
+	fn: () => Promise<T>,
+	maxRetries: number,
+): Promise<T> {
+	let lastError: Error
+
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			return await fn()
+		} catch (error) {
+			lastError = error as Error
+
+			logger.warn(
+				`Attempt ${fn.name} ${attempt}/${maxRetries} failed, error message: ${lastError.message}`,
+			)
+		}
+	}
+
+	throw lastError!
 }

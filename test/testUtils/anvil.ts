@@ -28,6 +28,8 @@ export function useAnvil(anvilConfig: AnvilConfig) {
 	afterAll(() => {
 		killAnvilAndRestoreEnv(anvil, chain, defaultRpcUrl, realPk)
 	})
+
+	return anvil
 }
 
 async function startAnvilAndSetTestEnv(
@@ -84,7 +86,7 @@ class Anvil {
 	}
 
 	public async start(fallbackRpcUrl: string) {
-		this._port = await getPort()
+		this._port = this.config.port ?? (await getPort())
 
 		const command = this.buildCommand(fallbackRpcUrl)
 
@@ -107,6 +109,11 @@ class Anvil {
 		if (typeof this.config.blockNumber === 'number') {
 			command += ` --fork-block-number ${this.config.blockNumber}`
 		}
+
+		if (typeof this.config.blockTime === 'number') {
+			command += ` --block-time ${this.config.blockTime}`
+		}
+
 		// console.log(command)
 		return command
 	}

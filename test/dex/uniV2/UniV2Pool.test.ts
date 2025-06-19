@@ -8,8 +8,12 @@ import { mainnet } from 'viem/chains'
 import { UniV2Pool } from '../../../src/dex/uniswapV2/Pool'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { ClientManager } from '../../../src/utils/ClientManager'
-import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
-import { makeSuite } from '../../utils/makeSuite'
+import {
+	setNativeBalance,
+	setTokenBalance,
+	useAnvil,
+} from '../../testUtils/anvil'
+import { makeSuite } from '../../testUtils/makeSuite'
 
 /* ======== Constants ======== */
 

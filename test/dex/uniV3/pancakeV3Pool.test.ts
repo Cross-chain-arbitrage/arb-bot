@@ -10,8 +10,12 @@ import { PancakeV3Pool } from '../../../src/dex/pancakeV3/Pool'
 import { PoolType, PoolUtils } from '../../../src/dex/PoolUtils'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { ClientManager } from '../../../src/utils/ClientManager'
-import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
-import { makeSuite } from '../../utils/makeSuite'
+import {
+	setNativeBalance,
+	setTokenBalance,
+	useAnvil,
+} from '../../testUtils/anvil'
+import { makeSuite } from '../../testUtils/makeSuite'
 
 const poolAddress = '0x172fcd41e0913e95784454622d1c3724f546f849'
 const wbnbAddress = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c'

@@ -11,12 +11,12 @@ import { WETH_POOLS } from './wethPools'
 
 /* ============ Economic Constants ============ */
 
-const MIN_PROFIT_USD = 2.5
+const MIN_PROFIT_USD = 1
 const GIVE_APPROVES = false // Mark 'false' to skip approval step
 
 const OPTIMIZATION_CONFIG: GraphOptimizerOptions = {
-	initialValueUSD: 250,
-	stepUSD: 250,
+	initialValueUSD: 100,
+	stepUSD: 50,
 	stepsAmount: 5,
 	maxPathLength: 6,
 }

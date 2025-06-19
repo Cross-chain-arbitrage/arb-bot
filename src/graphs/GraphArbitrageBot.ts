@@ -17,6 +17,7 @@ const DEFAULT_OPTIONS = {
 	minProfitUsd: 3,
 	pollingInterval: 10_000,
 	arbitrageTimeout: 5 * 60 * 1000,
+	retryExecuteEdgeCount: 2,
 }
 
 interface GraphArbitrageBotParams {
@@ -29,6 +30,7 @@ interface GraphArbitrageBotParams {
 		minProfitUsd: number
 		pollingInterval: number
 		arbitrageTimeout: number
+		retryExecuteEdgeCount: number
 	}>
 }
 
@@ -42,6 +44,7 @@ export class GraphArbitrageBot {
 	readonly minProfitUsd: number
 	readonly pollingInterval: number
 	readonly arbitrageTimeout: number
+	readonly retryExecuteEdgeCount: number
 
 	constructor(params: GraphArbitrageBotParams) {
 		this.TgArbitrageNotifier = params.TgArbitrageNotifier
@@ -55,6 +58,9 @@ export class GraphArbitrageBot {
 			params.options?.pollingInterval || DEFAULT_OPTIONS.pollingInterval
 		this.arbitrageTimeout =
 			params.options?.arbitrageTimeout || DEFAULT_OPTIONS.arbitrageTimeout
+		this.retryExecuteEdgeCount =
+			params.options?.retryExecuteEdgeCount ||
+			DEFAULT_OPTIONS.retryExecuteEdgeCount
 	}
 
 	start() {
@@ -81,7 +87,6 @@ export class GraphArbitrageBot {
 
 			return findOpportunityRes
 		} catch (err) {
-			// console.log(err)
 			logger.error(err, 'Error finding arbitrage')
 		}
 	}
@@ -181,10 +186,12 @@ export class GraphArbitrageBot {
 	async execute(path: ArbitragePath) {
 		this.setArbitrageExecutingTrue()
 
-		const actualAmountOut = await GraphExecutor.execute(
-			path,
-			this.checkEdgeProfitability.bind(this),
-		)
+		const actualAmountOut = await GraphExecutor.execute({
+			path: path.edges,
+			startAmount: path.startAmount,
+			beforeExecuteEdgeHook: this.checkEdgeProfitability.bind(this),
+			retryExecuteEdgeCount: this.retryExecuteEdgeCount,
+		})
 
 		const actualProfitUsd =
 			(Number(this.startToken.formatUnits(path.startAmount)) -
@@ -200,7 +207,7 @@ export class GraphArbitrageBot {
 	 * Throw error if distance becomes non-negative after receiving new rate for swap on non-start token chain
 	 */
 	private async checkEdgeProfitability(
-		path: ArbitragePath,
+		path: EdgeWithRate[],
 		currentEdge: EdgeWithRate,
 		amountIn: bigint,
 	) {
@@ -214,7 +221,7 @@ export class GraphArbitrageBot {
 
 		let distance = 0
 
-		for (const edge of path.edges) {
+		for (const edge of path) {
 			if (edge.from === currentEdge.from && edge.to === currentEdge.to) {
 				distance += currentRate.rate
 			} else {

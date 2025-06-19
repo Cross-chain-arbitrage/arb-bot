@@ -3,7 +3,7 @@ import { arbitrum, base, fuse } from 'viem/chains'
 import { StargateAPI } from '../../src/bridges/stargate/StargateAPI'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
-import { makeSuite } from '../utils/makeSuite'
+import { makeSuite } from '../testUtils/makeSuite'
 
 makeSuite('StargateAPI', () => {
 	it('should get tokens metadata', async () => {

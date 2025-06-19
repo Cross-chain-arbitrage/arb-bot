@@ -9,8 +9,12 @@ import { hemi } from 'viem/chains'
 import { PoolType, PoolUtils } from '../../../src/dex/PoolUtils'
 import { UniV3Pool } from '../../../src/dex/uniswapV3/Pool'
 import { ClientManager } from '../../../src/utils/ClientManager'
-import { setNativeBalance, setTokenBalance, useAnvil } from '../../utils/anvil'
-import { makeSuite } from '../../utils/makeSuite'
+import {
+	setNativeBalance,
+	setTokenBalance,
+	useAnvil,
+} from '../../testUtils/anvil'
+import { makeSuite } from '../../testUtils/makeSuite'
 
 const poolAddress = '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0'
 const wethAddress = '0x4200000000000000000000000000000000000006'

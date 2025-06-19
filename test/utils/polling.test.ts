@@ -1,5 +1,5 @@
 import { poll } from '../../src/utils/polling'
-import { makeSuite } from './makeSuite'
+import { makeSuite } from '../testUtils/makeSuite'
 
 makeSuite('polling', () => {
 	// Mock function that returns incrementing numbers
