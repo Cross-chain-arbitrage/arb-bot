@@ -14,13 +14,13 @@ export class TgBaseNotifierError extends Error {
 
 export class TgBaseNotifier {
 	protected BOT_TOKEN: string
-	protected TG_USER_ID: string
+	protected TG_CHAT_ID: string
 	protected TG_MESSAGE_THREAD_ID: string
 	protected bot: TelegramBot
 
 	constructor(messageThreadId: string) {
 		this.BOT_TOKEN = getEnvSafe('TG_BOT_TOKEN')
-		this.TG_USER_ID = getEnvSafe('TG_USER_ID')
+		this.TG_CHAT_ID = getEnvSafe('TG_CHAT_ID')
 		this.TG_MESSAGE_THREAD_ID = messageThreadId
 
 		this.bot = new TelegramBot(this.BOT_TOKEN)
@@ -36,7 +36,7 @@ export class TgBaseNotifier {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						chat_id: this.TG_USER_ID,
+						chat_id: this.TG_CHAT_ID,
 						message_thread_id: this.TG_MESSAGE_THREAD_ID,
 						text: message,
 						parse_mode: 'HTML',
@@ -55,7 +55,7 @@ export class TgBaseNotifier {
 			return responseJson as MessageResponse
 		} catch (error) {
 			console.error(
-				`Failed to send message to user ${this.TG_USER_ID}:`,
+				`Failed to send message to user ${this.TG_CHAT_ID}:`,
 				error,
 			)
 		}
