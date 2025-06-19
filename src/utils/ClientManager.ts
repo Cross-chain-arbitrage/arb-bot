@@ -93,18 +93,24 @@ export class ClientManager {
 	 * MUST be called before client creation in `getClient()` call
 	 * Otherwise, the client will not use the custom rpc url
 	 * @param chainId
-	 * @param rpcUrl
+	 * @param rpcUrl - optional, if not provided, the custom rpc url will be fetched from the `CUSTOM_RPC_URLS` map
 	 */
-	static useCustomRpcUrl(chainId: number): void {
-		const rpcUrl = this.getCustomRpcUrl(chainId) as string
+	static useCustomRpcUrl(chainId: number, rpcUrl?: string): void {
+		if (rpcUrl) {
+			const url = new URL(rpcUrl)
+			this._customRpcUrls.set(chainId, url)
+			return
+		}
 
-		if (!rpcUrl) {
+		const customRpcUrl = this.getCustomRpcUrl(chainId) as string
+
+		if (!customRpcUrl) {
 			throw new ClientManagerError(
 				`Custom rpc url not found for chain ${chainId}`,
 			)
 		}
 
-		const url = new URL(rpcUrl)
+		const url = new URL(customRpcUrl)
 		this._customRpcUrls.set(chainId, url)
 	}
 
