@@ -133,7 +133,6 @@ export class GraphArbitrageBot {
 			this.startTokenPrice()
 
 		if (expectedProfitUsd < this.minProfitUsd) {
-			console.log(expectedProfitUsd, this.minProfitUsd)
 			logger.info(
 				`Profit is too low, expectedProfitUsd: $${expectedProfitUsd.toFixed(2)}, minProfitUsd: $${this.minProfitUsd}`,
 			)
