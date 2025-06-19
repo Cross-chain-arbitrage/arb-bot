@@ -6,6 +6,7 @@ import { FUSE_BRIDGE_HOME_ABI } from '../../abi/fuse/fuseBridgeHome'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
+import { isSameAddress } from '../../utils/common'
 import { FuseBridgeTx } from './FuseBridgeTx'
 
 const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
@@ -15,7 +16,7 @@ const FUSE_TOKEN_BRIDGE_ADDRESSES: Record<number, Record<number, Address>> = {
 	[fuse.id]: {
 		[arbitrum.id]: '0x56dF61E9f39C75e2d84C05753557bEBB9841Eb5B',
 		[bsc.id]: '0x6bd341B6C7d6123D28d3DDee6A65d441DbAC1E90',
-		[mainnet.id]: zeroAddress,
+		[mainnet.id]: '0x6fA258e755A20e46c28239c40125e2847c3eE5E8',
 		[base.id]: '0x691118FBDa4B78747B4C1B883ae4396Dac885651',
 	},
 	[bsc.id]: {
@@ -25,8 +26,16 @@ const FUSE_TOKEN_BRIDGE_ADDRESSES: Record<number, Record<number, Address>> = {
 		[fuse.id]: '0x6041d22c7458A974Cb6E752D75D03D74dcCFf522',
 	},
 	[mainnet.id]: {
-		[fuse.id]: zeroAddress,
+		[fuse.id]: '0x0A40e573C72EFd75933C7a18a42155132122Bc86',
 	},
+}
+
+const FUSE_ADDRESSES: Record<number, Address> = {
+	[fuse.id]: zeroAddress,
+	[arbitrum.id]: '0x6b021b3f68491974bE6D4009fEe61a4e3C708fD6',
+	[bsc.id]: '0x5857c96dae9cf8511b08cb07f85753c472d36ea3',
+	[mainnet.id]: '0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
+	[base.id]: '0x01facc69ec7360640aa5898e852326752801674a',
 }
 
 export class FuseBridgeError extends Error {
@@ -38,6 +47,7 @@ export class FuseBridgeError extends Error {
 }
 
 export const LZ_V1_CHAIN_EIDS: Record<number, number> = {
+	[mainnet.id]: 101,
 	[arbitrum.id]: 110,
 	[optimism.id]: 111,
 	[bsc.id]: 102,
@@ -347,6 +357,21 @@ export class FuseBridge {
 			] as FuseHomeBridgeFunctionArgs
 		}
 
+		if (this.isFuse(tokenIn)) {
+			return [
+				tokenIn.address,
+				this.getLzV1ChainEid(toChainId),
+				amount,
+				recipient,
+				unwrapWeth,
+				{
+					refundAddress: recipient,
+					zroPaymentAddress: recipient,
+				},
+				this.adapterParams,
+			] as FuseHomeBridgeFunctionArgs
+		}
+
 		return [
 			tokenIn.address,
 			amount,
@@ -364,21 +389,28 @@ export class FuseBridge {
 		toChainId: number,
 		// amountIn: bigint,
 		useZro: boolean = false,
-	) {
+	): Promise<[bigint, bigint]> {
 		const client = ClientManager.getClient(tokenIn.chainId)
 
 		const { address, abi } = this.getBridge(tokenIn, toChainId)
 
 		const args = this.getEstimateArgs(tokenIn, toChainId, useZro)
 
-		const result = await client.readContract({
-			address,
-			abi,
-			functionName: 'estimateBridgeFee',
-			args: args as [boolean, Hex],
-		})
-
-		return result as [bigint, bigint]
+		if (this.isFuse(tokenIn) && tokenIn.chainId === fuse.id) {
+			return client.readContract({
+				address,
+				abi: FUSE_BRIDGE_HOME_ABI,
+				functionName: 'estimateBridgeFee',
+				args: args as [boolean, Hex],
+			}) as Promise<[bigint, bigint]>
+		} else {
+			return client.readContract({
+				address,
+				abi,
+				functionName: 'estimateBridgeFee',
+				args: args as [boolean, Hex],
+			}) as Promise<[bigint, bigint]>
+		}
 	}
 
 	private static getEstimateArgs(
@@ -386,7 +418,11 @@ export class FuseBridge {
 		toChainId: number,
 		useZro: boolean = false,
 	): [number, boolean, Hex] | [boolean, Hex] {
-		if (tokenIn.chainId === fuse.id) {
+		if (tokenIn instanceof Token && tokenIn.chainId === fuse.id) {
+			return [this.getLzV1ChainEid(toChainId), useZro, this.adapterParams]
+		}
+
+		if (this.isFuse(tokenIn) && tokenIn.chainId !== fuse.id) {
 			return [this.getLzV1ChainEid(toChainId), useZro, this.adapterParams]
 		}
 
@@ -450,6 +486,14 @@ export class FuseBridge {
 			}
 		}
 
+		if (this.isFuse(tokenIn)) {
+			return {
+				address:
+					FUSE_TOKEN_BRIDGE_ADDRESSES[tokenIn.chainId][toChainId],
+				abi: FUSE_ERC20_BRIDGE_ABI_ON_FUSE,
+			}
+		}
+
 		return {
 			address: ERC20_BRIDGE_ETH_CHAINS,
 			abi: FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN,
@@ -476,5 +520,9 @@ export class FuseBridge {
 				'Recipient is not the same as the wallet address',
 			)
 		}
+	}
+
+	private static isFuse(token: Token | NativeCurrency) {
+		return isSameAddress(token.address, FUSE_ADDRESSES[token.chainId])
 	}
 }

@@ -18,12 +18,13 @@ import { setTokenBalance, useAnvil } from '../utils/anvil'
 import { makeSuite } from '../utils/makeSuite'
 
 makeSuite('FuseBridge', () => {
-	const WBTC_ARB_ADDRESS = '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'
-	const WBTC_FUSE_ADDRESS = '0x34009565bfEeFded0F7e774629a745636Bf35E82'
+	const WBTC_ARB_ADDRESS = '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f'
+	const WBTC_FUSE_ADDRESS = '0x34009565bfeefded0f7e774629a745636bf35e82'
 
 	describe('Fuse Chain', () => {
 		useAnvil({
 			chainId: fuse.id,
+			// rpcUrl: ClientManager.getCustomRpcUrl(fuse.id),
 		})
 
 		it('MUST quote bridge fees from Fuse to Arbitrum', async () => {
@@ -136,10 +137,21 @@ makeSuite('FuseBridge', () => {
 
 	describe('Bridging Fuse Token', () => {
 		describe('From Fuse Chain', () => {
+			const FUSE = TokenUtils.getNative(fuse.id)
+
 			useAnvil({
 				chainId: fuse.id,
-				rpcUrl: ClientManager.getCustomRpcUrl(fuse.id),
+				// rpcUrl: ClientManager.getCustomRpcUrl(fuse.id),
+				timeoutStartAnvil: 15000,
 			})
+
+			// beforeEach(async () => {
+			// 	await setNativeBalance(
+			// 		ClientManager.getWalletClient(fuse.id),
+			// 		getAccountAddress(),
+			// 		FUSE.parseUnits('100'),
+			// 	)
+			// })
 
 			it('MUST bridge FUSE to BSC', async () => {
 				const FUSE = TokenUtils.getNative(fuse.id)
@@ -173,17 +185,90 @@ makeSuite('FuseBridge', () => {
 		describe('From Ethereum Chain', () => {
 			useAnvil({
 				chainId: mainnet.id,
+				rpcUrl: getAlchemyRpcUrl(mainnet.id),
 			})
 
-			it('MUST bridge FUSE', async () => {})
+			it('MUST bridge FUSE', async () => {
+				const wallet = ClientManager.getWalletClient(mainnet.id)
+
+				const FUSE = await TokenUtils.fromAddress<Token>(
+					'0x970B9bB2C0444F5E81e9d0eFb84C8ccdcdcAf84d',
+					mainnet.id,
+				)
+
+				const amount = FUSE.parseUnits('100')
+
+				await setTokenBalance(
+					wallet.account!.address,
+					FUSE.address,
+					0n,
+					amount,
+					wallet,
+				)
+
+				const { address: bridgeAddr } = FuseBridge.getBridge(
+					FUSE,
+					fuse.id,
+				)
+
+				await FUSE.approve(bridgeAddr, amount)
+
+				const bridgeTx = await FuseBridge.bridge(
+					FUSE,
+					fuse.id,
+					getAccountAddress(),
+					FUSE.parseUnits('100'),
+					true,
+				)
+
+				expect(bridgeTx.hash).toBe(zeroHash)
+			})
 		})
 
 		describe('From BSC Chain', () => {
 			useAnvil({
 				chainId: bsc.id,
+				rpcUrl: getAlchemyRpcUrl(bsc.id),
+				timeoutStartAnvil: 10000,
 			})
 
-			it('MUST bridge FUSE', async () => {})
+			it('MUST bridge FUSE', async () => {
+				const wallet = ClientManager.getWalletClient(bsc.id)
+
+				const FUSE = await TokenUtils.fromAddress<Token>(
+					'0x5857c96dae9cf8511b08cb07f85753c472d36ea3',
+					bsc.id,
+				)
+
+				const amount = FUSE.parseUnits('100')
+
+				for (let i = 0; i < 100; i++) {
+					await setTokenBalance(
+						wallet.account!.address,
+						FUSE.address,
+						BigInt(i),
+						amount,
+						wallet,
+					)
+				}
+
+				const { address: bridgeAddr } = FuseBridge.getBridge(
+					FUSE,
+					fuse.id,
+				)
+
+				await FUSE.approve(bridgeAddr, amount)
+
+				const bridgeTx = await FuseBridge.bridge(
+					FUSE,
+					fuse.id,
+					getAccountAddress(),
+					amount,
+					true,
+				)
+
+				expect(bridgeTx.hash).toBe(zeroHash)
+			})
 		})
 	})
 
