@@ -99,15 +99,20 @@ export class GraphArbitrageBot {
 			return findOpportunityRes
 		} catch (err) {
 			if (err instanceof ContractFunctionExecutionError) {
-				throw new ContractFunctionExecutionError(err.cause, {
-					abi: [],
-					args: err.args,
-					functionName: err.functionName,
-					contractAddress: err.contractAddress,
-					sender: err.sender,
-				})
+				const shortenedError = new ContractFunctionExecutionError(
+					err.cause,
+					{
+						abi: [],
+						args: err.args,
+						functionName: err.functionName,
+						contractAddress: err.contractAddress,
+						sender: err.sender,
+					},
+				)
+				logger.error(shortenedError, 'Error finding arbitrage')
+			} else {
+				logger.error(err, 'Error finding arbitrage')
 			}
-			logger.error(err, 'Error finding arbitrage')
 		}
 	}
 
@@ -136,7 +141,21 @@ export class GraphArbitrageBot {
 			)
 			this.notifyAboutArbEnd(readableActualAmountOut, actualProfitUsd)
 		} catch (err) {
-			logger.error(err, 'Error executing arbitrage')
+			if (err instanceof ContractFunctionExecutionError) {
+				const shortenedError = new ContractFunctionExecutionError(
+					err.cause,
+					{
+						abi: [],
+						args: err.args,
+						functionName: err.functionName,
+						contractAddress: err.contractAddress,
+						sender: err.sender,
+					},
+				)
+				logger.error(shortenedError, 'Error finding arbitrage')
+			} else {
+				logger.error(err, 'Error finding arbitrage')
+			}
 			this.notifyAboutArbError(err)
 		}
 	}
