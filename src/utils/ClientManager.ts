@@ -9,14 +9,16 @@ import {
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
 
-import { arbitrum, bsc, mainnet } from 'viem/chains'
+import { arbitrum, bsc, fuse, mainnet } from 'viem/chains'
 import { getAlchemyRpcUrl } from './alchemy'
+import { getEnvSafe } from './common'
 import { getPrivateKey } from './getAccount'
 
 const CUSTOM_RPC_URLS = {
 	[mainnet.id]: getAlchemyRpcUrl(mainnet.id),
 	[arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
 	[bsc.id]: getAlchemyRpcUrl(bsc.id),
+	[fuse.id]: `https://lb.drpc.org/ogrpc?network=fuse&dkey=${getEnvSafe('DRPC_API_KEY')}`,
 } as const
 
 export class ClientManagerError extends Error {

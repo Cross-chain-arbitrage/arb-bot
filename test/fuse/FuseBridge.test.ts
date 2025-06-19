@@ -1,5 +1,13 @@
 import { zeroHash } from 'viem'
-import { arbitrum, bsc, fuse, optimism } from 'viem/chains'
+import {
+	arbitrum,
+	bsc,
+	fuse,
+	hemi,
+	mainnet,
+	optimism,
+	sepolia,
+} from 'viem/chains'
 import { FuseBridge } from '../../src/bridges/FuseBridge/FuseBridge'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
@@ -49,7 +57,10 @@ makeSuite('FuseBridge', () => {
 				wallet,
 			)
 
-			const { address: bridgeAddr } = FuseBridge.getBridge(fuse.id)
+			const { address: bridgeAddr } = FuseBridge.getBridge(
+				WBTC,
+				arbitrum.id,
+			)
 
 			await WBTC.approve(bridgeAddr, amount)
 
@@ -105,7 +116,7 @@ makeSuite('FuseBridge', () => {
 				wallet,
 			)
 
-			const { address: bridgeAddr } = FuseBridge.getBridge(arbitrum.id)
+			const { address: bridgeAddr } = FuseBridge.getBridge(WBTC, fuse.id)
 
 			await WBTC.approve(bridgeAddr, amount)
 
@@ -123,9 +134,62 @@ makeSuite('FuseBridge', () => {
 		})
 	})
 
+	describe('Bridging Fuse Token', () => {
+		describe('From Fuse Chain', () => {
+			useAnvil({
+				chainId: fuse.id,
+				rpcUrl: ClientManager.getCustomRpcUrl(fuse.id),
+			})
+
+			it('MUST bridge FUSE to BSC', async () => {
+				const FUSE = TokenUtils.getNative(fuse.id)
+
+				const bridgeTx = await FuseBridge.bridge(
+					FUSE,
+					bsc.id,
+					getAccountAddress(),
+					FUSE.parseUnits('100'),
+					true,
+				)
+
+				expect(bridgeTx.hash).toBe(zeroHash)
+			})
+
+			it('MUST bridge FUSE to Ethereum', async () => {
+				const FUSE = TokenUtils.getNative(fuse.id)
+
+				const bridgeTx = await FuseBridge.bridge(
+					FUSE,
+					mainnet.id,
+					getAccountAddress(),
+					FUSE.parseUnits('100'),
+					true,
+				)
+
+				expect(bridgeTx.hash).toBe(zeroHash)
+			})
+		})
+
+		describe('From Ethereum Chain', () => {
+			useAnvil({
+				chainId: mainnet.id,
+			})
+
+			it('MUST bridge FUSE', async () => {})
+		})
+
+		describe('From BSC Chain', () => {
+			useAnvil({
+				chainId: bsc.id,
+			})
+
+			it('MUST bridge FUSE', async () => {})
+		})
+	})
+
 	it('validateChain() MUST throw if an unsupported chain is provided', () => {
-		expect(() => FuseBridge.validateChain(1)).toThrow()
-		expect(() => FuseBridge.validateChain(1111111)).toThrow()
+		expect(() => FuseBridge.validateChain(hemi.id)).toThrow()
+		expect(() => FuseBridge.validateChain(sepolia.id)).toThrow()
 	})
 
 	it('validateChain() MUST NOT throw if a supported chain is provided', () => {
