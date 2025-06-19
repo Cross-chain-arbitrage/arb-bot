@@ -1,4 +1,8 @@
-import { maxUint256, TransactionReceipt } from 'viem'
+import {
+	ContractFunctionExecutionError,
+	maxUint256,
+	TransactionReceipt,
+} from 'viem'
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Stargate } from '../bridges/stargate/Stargate'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
@@ -94,6 +98,15 @@ export class GraphArbitrageBot {
 
 			return findOpportunityRes
 		} catch (err) {
+			if (err instanceof ContractFunctionExecutionError) {
+				throw new ContractFunctionExecutionError(err.cause, {
+					abi: [],
+					args: err.args,
+					functionName: err.functionName,
+					contractAddress: err.contractAddress,
+					sender: err.sender,
+				})
+			}
 			logger.error(err, 'Error finding arbitrage')
 		}
 	}
@@ -268,7 +281,7 @@ export class GraphArbitrageBot {
 	private async approveForEdge(
 		edge: GraphEdge,
 	): Promise<TransactionReceipt | undefined> {
-		const { from } = await getEdgeNodes(edge)
+		const { from, to } = await getEdgeNodes(edge)
 
 		switch (edge.type) {
 			case ActionType.SWAP:
@@ -281,7 +294,11 @@ export class GraphArbitrageBot {
 				return await Stargate.approveToBridge(from, maxUint256)
 
 			case ActionType.FUSE_BRIDGE:
-				return await FuseBridge.approveToBridge(from, maxUint256)
+				return await FuseBridge.approveToBridge(
+					from,
+					maxUint256,
+					to.chainId,
+				)
 		}
 	}
 
