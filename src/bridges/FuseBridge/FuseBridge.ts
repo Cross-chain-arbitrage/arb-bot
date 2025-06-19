@@ -1,7 +1,8 @@
 import { zeroAddress, zeroHash } from 'viem'
-import { arbitrum, bsc, fuse, optimism } from 'viem/chains'
+import { arbitrum, base, bsc, fuse, mainnet, optimism } from 'viem/chains'
 import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20BridgeForeign'
 import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
+import { FUSE_BRIDGE_HOME_ABI } from '../../abi/fuse/fuseBridgeHome'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
@@ -9,6 +10,24 @@ import { FuseBridgeTx } from './FuseBridgeTx'
 
 const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
 const ERC20_BRIDGE_FUSE = '0x353af4878d7452e974538706273887F7ED90Da47'
+
+const FUSE_TOKEN_BRIDGE_ADDRESSES: Record<number, Record<number, Address>> = {
+	[fuse.id]: {
+		[arbitrum.id]: '0x56dF61E9f39C75e2d84C05753557bEBB9841Eb5B',
+		[bsc.id]: '0x6bd341B6C7d6123D28d3DDee6A65d441DbAC1E90',
+		[mainnet.id]: zeroAddress,
+		[base.id]: '0x691118FBDa4B78747B4C1B883ae4396Dac885651',
+	},
+	[bsc.id]: {
+		[fuse.id]: '0xADef29442A11ad9308aC5D012965c887Cf2A53D3',
+	},
+	[base.id]: {
+		[fuse.id]: '0x6041d22c7458A974Cb6E752D75D03D74dcCFf522',
+	},
+	[mainnet.id]: {
+		[fuse.id]: zeroAddress,
+	},
+}
 
 export class FuseBridgeError extends Error {
 	constructor(message: string) {
@@ -23,6 +42,7 @@ export const LZ_V1_CHAIN_EIDS: Record<number, number> = {
 	[optimism.id]: 111,
 	[bsc.id]: 102,
 	[fuse.id]: 138,
+	[base.id]: 184,
 }
 
 type FuseHomeBridgeFunctionArgs = [
@@ -31,6 +51,13 @@ type FuseHomeBridgeFunctionArgs = [
 	bigint, // amount
 	Address, // recipient
 	boolean, // unwrapWeth
+	{ refundAddress: Address; zroPaymentAddress: Address }, // callParams
+	Hex, // adapterParams
+]
+
+type HomeFuseBridgeFunctionArgs = [
+	bigint, // amount
+	Address, // recipient
 	{ refundAddress: Address; zroPaymentAddress: Address }, // callParams
 	Hex, // adapterParams
 ]
@@ -65,6 +92,26 @@ export class FuseBridge {
 			address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c',
 			symbol: 'WBTC',
 		},
+		{
+			chainId: fuse.id,
+			symbol: 'FUSE',
+			address: zeroAddress,
+		},
+		{
+			chainId: bsc.id,
+			symbol: 'FUSE',
+			address: '0x5857c96dae9cf8511b08cb07f85753c472d36ea3',
+		},
+		{
+			chainId: base.id,
+			symbol: 'FUSE',
+			address: '0x01facc69ec7360640aa5898e852326752801674a',
+		},
+		{
+			chainId: mainnet.id,
+			symbol: 'FUSE',
+			address: '0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
+		},
 	]
 
 	public static readonly SUPPORTED_CHAINS: number[] = [
@@ -72,6 +119,8 @@ export class FuseBridge {
 		optimism.id,
 		bsc.id,
 		fuse.id,
+		base.id,
+		mainnet.id,
 	]
 
 	// private static readonly DEFAULT_DST_GAS_LIMIT = 300000
@@ -81,7 +130,7 @@ export class FuseBridge {
 		'0x000100000000000000000000000000000000000000000000000000000000000493e0' as Hex
 
 	static async bridge(
-		tokenIn: Token,
+		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		recipient: Address,
 		amount: bigint,
@@ -93,11 +142,11 @@ export class FuseBridge {
 		this.validateChain(tokenIn.chainId)
 		this.validateChain(toChainId)
 
-		if (tokenIn.chainId === fuse.id) {
-			const tvl = await this.getTvlOnRemoteChain(
-				toChainId,
-				tokenIn.address,
-			)
+		if (
+			!(tokenIn instanceof NativeCurrency) &&
+			tokenIn.chainId === fuse.id
+		) {
+			const tvl = await this.getTvlOnRemoteChain(tokenIn, toChainId)
 
 			if (amount < tvl) {
 				throw new FuseBridgeError('Insufficient TVL on remote chain')
@@ -108,15 +157,16 @@ export class FuseBridge {
 
 		await this.validateBalance(tokenIn, wallet.account!.address, amount)
 
-		const client = ClientManager.getClient(tokenIn.chainId)
-
 		const localToken = tokenIn
 
 		const quote = await this.quote(tokenIn, toChainId, false)
 
-		const { address, abi } = this.getBridge(tokenIn.chainId)
+		const { address, abi } = this.getBridge(tokenIn, toChainId)
 
-		if (tokenIn.chainId !== fuse.id) {
+		if (
+			!(tokenIn instanceof NativeCurrency) &&
+			tokenIn.chainId !== fuse.id
+		) {
 			await this.validateAllowance(
 				wallet.account!.address,
 				address,
@@ -133,13 +183,45 @@ export class FuseBridge {
 			unwrapWeth,
 		)
 
+		if (tokenIn instanceof NativeCurrency) {
+			return await this.executeNativeBridge(
+				tokenIn,
+				address,
+				amount,
+				quote,
+				args as HomeFuseBridgeFunctionArgs,
+				simulateOnly,
+			)
+		} else {
+			return await this.executeForeignBridge(
+				tokenIn,
+				address,
+				abi,
+				quote,
+				args as FuseForeignBridgeFunctionArgs,
+				simulateOnly,
+			)
+		}
+	}
+
+	static async executeNativeBridge(
+		tokenIn: Token | NativeCurrency,
+		bridgeAddress: Address,
+		amount: bigint,
+		quote: [bigint, bigint],
+		args: HomeFuseBridgeFunctionArgs,
+		simulateOnly: boolean = false,
+	) {
+		const client = ClientManager.getClient(fuse.id)
+		const wallet = ClientManager.getWalletClient(fuse.id)
+
 		const { request } = await client.simulateContract({
-			address,
-			abi,
-			functionName: 'bridge',
+			address: bridgeAddress,
+			abi: FUSE_BRIDGE_HOME_ABI,
+			functionName: 'bridgeNative',
 			account: wallet.account,
-			value: quote[0],
-			args: args as FuseHomeBridgeFunctionArgs,
+			value: amount + quote[0],
+			args: args,
 		})
 
 		if (simulateOnly) {
@@ -148,16 +230,48 @@ export class FuseBridge {
 
 		const txHash = await wallet.writeContract(request)
 
+		return new FuseBridgeTx(txHash, fuse.id)
+	}
+
+	static async executeForeignBridge(
+		tokenIn: Token | NativeCurrency,
+		bridgeAddress: Address,
+		abi:
+			| typeof FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN
+			| typeof FUSE_ERC20_BRIDGE_ABI_ON_FUSE,
+		quote: [bigint, bigint],
+		args: FuseForeignBridgeFunctionArgs,
+		simulateOnly: boolean = false,
+	) {
+		const client = ClientManager.getClient(tokenIn.chainId)
+		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+
+		const result = await client.simulateContract({
+			address: bridgeAddress,
+			abi,
+			functionName: 'bridge',
+			account: wallet.account,
+			value: quote[0],
+			args: args,
+		})
+
+		if (simulateOnly) {
+			return new FuseBridgeTx(zeroHash, tokenIn.chainId)
+		}
+
+		const txHash = await wallet.writeContract(result.request)
+
 		return new FuseBridgeTx(txHash, tokenIn.chainId)
 	}
 
 	static async approveToBridge(
 		tokenIn: Token | NativeCurrency,
 		amount: bigint,
+		toChainId: number,
 	) {
 		if (tokenIn instanceof NativeCurrency) return
 
-		const bridge = this.getBridge(tokenIn.chainId)
+		const bridge = this.getBridge(tokenIn, toChainId)
 
 		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
 		const userAddr = wallet.account!.address
@@ -172,7 +286,7 @@ export class FuseBridge {
 	}
 
 	private static async validateBalance(
-		token: Token,
+		token: Token | NativeCurrency,
 		recipient: Address,
 		amount: bigint,
 	) {
@@ -201,13 +315,24 @@ export class FuseBridge {
 	}
 
 	private static getBridgeArgs(
-		tokenIn: Token,
+		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		recipient: Address,
 		amount: bigint,
 		unwrapWeth: boolean,
-	): FuseHomeBridgeFunctionArgs | FuseForeignBridgeFunctionArgs {
+	):
+		| FuseHomeBridgeFunctionArgs
+		| FuseForeignBridgeFunctionArgs
+		| HomeFuseBridgeFunctionArgs {
 		if (tokenIn.chainId === fuse.id) {
+			if (tokenIn instanceof NativeCurrency) {
+				return [
+					amount,
+					recipient,
+					{ refundAddress: recipient, zroPaymentAddress: recipient },
+					this.adapterParams,
+				] as HomeFuseBridgeFunctionArgs
+			}
 			return [
 				tokenIn.address,
 				this.getLzV1ChainEid(toChainId),
@@ -219,8 +344,9 @@ export class FuseBridge {
 					zroPaymentAddress: recipient,
 				},
 				this.adapterParams,
-			]
+			] as FuseHomeBridgeFunctionArgs
 		}
+
 		return [
 			tokenIn.address,
 			amount,
@@ -230,18 +356,18 @@ export class FuseBridge {
 				zroPaymentAddress: recipient,
 			},
 			this.adapterParams,
-		]
+		] as FuseForeignBridgeFunctionArgs
 	}
 
 	static async quote(
-		tokenIn: Token,
+		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		// amountIn: bigint,
 		useZro: boolean = false,
 	) {
 		const client = ClientManager.getClient(tokenIn.chainId)
 
-		const { address, abi } = this.getBridge(tokenIn.chainId)
+		const { address, abi } = this.getBridge(tokenIn, toChainId)
 
 		const args = this.getEstimateArgs(tokenIn, toChainId, useZro)
 
@@ -256,7 +382,7 @@ export class FuseBridge {
 	}
 
 	private static getEstimateArgs(
-		tokenIn: Token,
+		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		useZro: boolean = false,
 	): [number, boolean, Hex] | [boolean, Hex] {
@@ -268,19 +394,19 @@ export class FuseBridge {
 	}
 
 	static async getTvlOnRemoteChain(
-		remoteChainId: number,
-		remoteTokenAddress: Address,
+		tokenIn: Token | NativeCurrency,
+		toChainId: number,
 	) {
 		const sourceChainId = fuse.id
 		const client = ClientManager.getClient(sourceChainId)
 
-		const { address } = this.getBridge(sourceChainId)
+		const { address } = this.getBridge(tokenIn, toChainId)
 
 		const result = await client.readContract({
 			address,
 			abi: FUSE_ERC20_BRIDGE_ABI_ON_FUSE,
 			functionName: 'totalValueLocked',
-			args: [remoteChainId, remoteTokenAddress],
+			args: [toChainId, tokenIn.address],
 		})
 
 		return result
@@ -292,13 +418,32 @@ export class FuseBridge {
 		}
 	}
 
-	static getBridge(chainId: number): {
+	static getBridge(
+		tokenIn: Token | NativeCurrency,
+		toChainId: number,
+	): {
 		address: Address
 		abi:
 			| typeof FUSE_ERC20_BRIDGE_ABI_ON_FUSE
 			| typeof FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN
+		// | typeof FUSE_BRIDGE_HOME_ABI
 	} {
-		if (chainId === fuse.id) {
+		if (tokenIn.chainId === fuse.id) {
+			if (tokenIn instanceof NativeCurrency) {
+				const address =
+					FUSE_TOKEN_BRIDGE_ADDRESSES[tokenIn.chainId][toChainId]
+
+				if (!address) {
+					throw new FuseBridgeError(
+						`No FUSE bridge address found for ${tokenIn.chainId} to ${toChainId}`,
+					)
+				}
+
+				return {
+					address,
+					abi: FUSE_ERC20_BRIDGE_ABI_ON_FUSE,
+				}
+			}
 			return {
 				address: ERC20_BRIDGE_FUSE,
 				abi: FUSE_ERC20_BRIDGE_ABI_ON_FUSE,
