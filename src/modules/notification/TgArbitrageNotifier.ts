@@ -12,6 +12,7 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 	}
 
 	async sendArbitrageStart(
+		name: string,
 		path: ArbitragePath,
 		edgesWithRate: Map<string, EdgeWithRate>,
 		startTokenPrice: number,
@@ -21,16 +22,20 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 			edgesWithRate,
 			startTokenPrice,
 		)
-		await this.sendMessage(prettyPath)
+		await this.sendMessage(`${name}:\n${prettyPath}`)
 	}
 
-	async sendArbitrageEnd(actualAmountOut: string, actualProfitUsd: number) {
+	async sendArbitrageEnd(
+		name: string,
+		actualAmountOut: string,
+		actualProfitUsd: number,
+	) {
 		await this.sendMessage(
-			`Arbitrage is finished, amount out: ${actualAmountOut}, profit: $${actualProfitUsd}`,
+			`${name}:\nArbitrage is finished, amount out: ${actualAmountOut}, profit: $${actualProfitUsd}`,
 		)
 	}
 
-	async sendArbitrageError(error: string) {
-		await this.sendMessage(`Arbitrage error: ${error}`)
+	async sendArbitrageError(name: string, error: string) {
+		await this.sendMessage(`${name}:\nArbitrage error: ${error}`)
 	}
 }

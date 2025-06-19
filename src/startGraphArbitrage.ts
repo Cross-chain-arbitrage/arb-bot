@@ -52,6 +52,7 @@ async function main() {
 	logger.info('Starting searching for arbitrage')
 
 	const bot = new GraphArbitrageBot({
+		name: 'Weth Pools Bot',
 		graph,
 		priceOracle: priceOracle,
 		TgArbitrageNotifier: new TgArbitrageNotifier(),

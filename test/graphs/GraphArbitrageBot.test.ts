@@ -113,6 +113,7 @@ makeSuite('GraphArbitrageBot', () => {
 		}
 
 		bot = new GraphArbitrageBot({
+			name: 'Test Bot',
 			graph,
 			priceOracle,
 			TgArbitrageNotifier: notifier,

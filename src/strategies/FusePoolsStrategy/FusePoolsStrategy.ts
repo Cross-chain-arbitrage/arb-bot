@@ -69,6 +69,7 @@ class FusePoolsStrategy {
 		const usdt = await TokenUtils.fromAddress(USDT_ADDRESS, bsc.id)
 
 		return new GraphArbitrageBot({
+			name: 'Fuse Pools Bot',
 			graph: await this.buildGraph(),
 			priceOracle,
 			TgArbitrageNotifier: new TgArbitrageNotifier(),

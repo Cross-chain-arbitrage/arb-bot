@@ -26,6 +26,7 @@ const DEFAULT_OPTIONS = {
 }
 
 interface GraphArbitrageBotParams {
+	name: string
 	graph: Graph
 	priceOracle: PriceOracle
 	TgArbitrageNotifier: TgArbitrageNotifier
@@ -50,7 +51,7 @@ export class GraphArbitrageBot {
 	readonly pollingInterval: number
 	readonly arbitrageTimeout: number
 	readonly retryExecuteEdgeCount: number
-
+	readonly name: string
 	constructor(params: GraphArbitrageBotParams) {
 		this.TgArbitrageNotifier = params.TgArbitrageNotifier
 		this.priceOracle = params.priceOracle
@@ -66,12 +67,13 @@ export class GraphArbitrageBot {
 		this.retryExecuteEdgeCount =
 			params.options?.retryExecuteEdgeCount ||
 			DEFAULT_OPTIONS.retryExecuteEdgeCount
+		this.name = params.name
 	}
 
 	start() {
 		logger.warn('Check that you gave all required token approvals')
 
-		let message = 'Arbitrage bot started\n\nGraph:\n'
+		let message = `${this.name} started\n\nGraph:\n`
 
 		const { view, edit } = getLinksToMermaidGraph(this.graph)
 
@@ -196,11 +198,12 @@ export class GraphArbitrageBot {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error'
 
-		this.TgArbitrageNotifier.sendArbitrageError(errorMessage).catch(
-			(err) => {
-				logger.error(err, 'Error sending error to telegram')
-			},
-		)
+		this.TgArbitrageNotifier.sendArbitrageError(
+			this.name,
+			errorMessage,
+		).catch((err) => {
+			logger.error(err, 'Error sending error to telegram')
+		})
 	}
 
 	private notifyAboutArbEnd(
@@ -208,6 +211,7 @@ export class GraphArbitrageBot {
 		actualProfitUsd: number,
 	) {
 		this.TgArbitrageNotifier.sendArbitrageEnd(
+			this.name,
 			actualAmountOut,
 			actualProfitUsd,
 		).catch((err) => {
@@ -220,6 +224,7 @@ export class GraphArbitrageBot {
 		edgesWithRate: Map<string, EdgeWithRate>,
 	) {
 		this.TgArbitrageNotifier.sendArbitrageStart(
+			this.name,
 			path,
 			edgesWithRate,
 			this.startTokenPrice(),

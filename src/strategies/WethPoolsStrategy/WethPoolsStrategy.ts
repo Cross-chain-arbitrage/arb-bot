@@ -66,6 +66,7 @@ class WethPoolsStrategy {
 		const ethNative = TokenUtils.getNative(arbitrum.id)
 
 		return new GraphArbitrageBot({
+			name: 'Weth Pools Bot',
 			graph: await this.buildGraph(),
 			priceOracle,
 			TgArbitrageNotifier: new TgArbitrageNotifier(),

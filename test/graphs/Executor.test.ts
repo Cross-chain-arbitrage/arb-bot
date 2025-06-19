@@ -290,7 +290,7 @@ makeSuite('GraphExecutor', () => {
 				ClientManager.getClient(arbitrum.id),
 			)
 
-			await FuseBridge.approveToBridge(wbtcArbToken, amountIn)
+			await FuseBridge.approveToBridge(wbtcArbToken, amountIn, fuse.id)
 
 			const edge: GraphEdge = {
 				from: wbtcArbToken.id,

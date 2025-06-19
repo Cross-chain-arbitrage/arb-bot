@@ -18,6 +18,7 @@ async function main() {
 	logger.info('Starting approve all')
 
 	const bot = new GraphArbitrageBot({
+		name: 'FuseWbtcGraphStrategy',
 		graph,
 		priceOracle: priceOracle,
 		TgArbitrageNotifier: new TgArbitrageNotifier(),
