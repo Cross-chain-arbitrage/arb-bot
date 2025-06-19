@@ -75,6 +75,12 @@ export class GraphArbitrageBot {
 
 		const { view, edit } = getLinksToMermaidGraph(this.graph)
 
+		// Создаем скрытые ссылки с помощью ANSI escape последовательностей
+		const viewLink = `\x1b]8;;${view}\x1b\\📊 View Graph\x1b]8;;\x1b\\`
+		const editLink = `\x1b]8;;${edit}\x1b\\✏️ Edit Graph\x1b]8;;\x1b\\`
+
+		logger.info(`Graph links: ${viewLink} | ${editLink}`)
+
 		message += `<a href="${view}">📊 View Graph</a> | <a href="${edit}">✏️ Edit Graph</a>\n\n`
 
 		this.TgArbitrageNotifier.sendMessage(message).catch((err) => {
