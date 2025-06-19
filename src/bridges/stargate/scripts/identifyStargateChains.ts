@@ -6,6 +6,7 @@ import { Address, Chain } from 'viem'
 
 import { BlockscoutAPI } from '../../../data-apis/blockscout/BlockscoutAPI'
 import { ClientManager } from '../../../utils/ClientManager'
+import { isSameAddress } from '../../../utils/common'
 import logger from '../../../utils/logger'
 import { StargateAPI } from '../StargateAPI'
 
@@ -151,8 +152,8 @@ async function getPoolsForChain(
 
 			// Create pool info for each token pair
 			for (const otherToken of otherTokens) {
-				const token1 = tokens.find(
-					(t) => t.address === otherToken.address,
+				const token1 = tokens.find((t) =>
+					isSameAddress(t.address, otherToken.address),
 				)
 				if (token1) {
 					pools.push({

@@ -71,7 +71,7 @@ export abstract class UniV2LikePool extends Pool {
 			params.amountIn,
 			reserves[0],
 			reserves[1],
-			params.tokenIn.address === this.token0.address,
+			isSameAddress(params.tokenIn.address, this.token0.address),
 		)
 
 		return {
