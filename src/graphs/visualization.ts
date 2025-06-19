@@ -1,3 +1,4 @@
+import { deflate } from 'pako'
 import { Stargate } from '../bridges/stargate/Stargate'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { EdgeWithRate, Graph, GraphNode, GraphNodeId } from './Graph'
@@ -19,6 +20,45 @@ export async function getMermaidGraph(
 	}
 
 	return mermaidGraph
+}
+
+export class MermaidLinkGenerator {
+	static generateViewLink(mermaidCode: string): string {
+		return this.generateLink(mermaidCode, false)
+	}
+
+	static generateEditLink(mermaidCode: string): string {
+		return this.generateLink(mermaidCode, true)
+	}
+
+	private static generateLink(mermaidCode: string, isEdit: boolean): string {
+		// Create the proper JSON structure
+		const graphData = {
+			code: mermaidCode,
+			mermaid: { theme: 'default' },
+		}
+
+		// Convert to bytes and compress with pako
+		const jsonString = JSON.stringify(graphData)
+		const compressed = deflate(jsonString)
+
+		// Convert to base64 and make URL-safe
+		const base64 = Buffer.from(compressed)
+			.toString('base64')
+			.replace(/\+/g, '-')
+			.replace(/\//g, '_')
+
+		const endpoint = isEdit ? 'edit' : 'view'
+		return `https://mermaid.live/${endpoint}#pako:${base64}`
+	}
+}
+
+export function getLinksToMermaidGraph(graph: Graph) {
+	const mermaidCode = graphToMermaid(graph)
+	return {
+		view: MermaidLinkGenerator.generateViewLink(mermaidCode),
+		edit: MermaidLinkGenerator.generateEditLink(mermaidCode),
+	}
 }
 
 /**
@@ -55,7 +95,7 @@ export function graphToMermaid(graph: Graph) {
 		str += `\n\t${getNodeId(edge.from)} --> |"${edge.type}"| ${getNodeId(edge.to)}`
 	}
 
-	console.log(str)
+	return str
 }
 
 function getNodeId(graphNodeId: GraphNodeId) {

@@ -12,6 +12,7 @@ import { ActionType, EdgeWithRate, Graph, GraphEdge, GraphNode } from './Graph'
 import { GraphExecutor } from './GraphExecutor'
 import { ArbitragePath } from './path'
 import { getEdgeNodes } from './utils'
+import { getLinksToMermaidGraph } from './visualization'
 
 const DEFAULT_OPTIONS = {
 	minProfitUsd: 3,
@@ -65,11 +66,17 @@ export class GraphArbitrageBot {
 
 	start() {
 		logger.warn('Check that you gave all required token approvals')
-		this.TgArbitrageNotifier.sendMessage('Arbitrage bot started').catch(
-			(err) => {
-				logger.error(err, 'Error sending message to telegram')
-			},
-		)
+
+		let message = 'Arbitrage bot started\n\nGraph:\n'
+
+		const { view, edit } = getLinksToMermaidGraph(this.graph)
+
+		message += `<a href="${view}">📊 View Graph</a> | <a href="${edit}">✏️ Edit Graph</a>\n\n`
+
+		this.TgArbitrageNotifier.sendMessage(message).catch((err) => {
+			logger.error(err, 'Error sending message to telegram')
+		})
+
 		void runFuncWithDelay(
 			this.findAndExecuteArbitrage.bind(this),
 			this.pollingInterval,
