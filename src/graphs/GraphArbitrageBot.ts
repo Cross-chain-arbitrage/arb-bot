@@ -59,7 +59,11 @@ export class GraphArbitrageBot {
 
 	start() {
 		logger.warn('Check that you gave all required token approvals')
-
+		this.TgArbitrageNotifier.sendMessage('Arbitrage bot started').catch(
+			(err) => {
+				logger.error(err, 'Error sending message to telegram')
+			},
+		)
 		void runFuncWithDelay(
 			this.findAndExecuteArbitrage.bind(this),
 			this.pollingInterval,
