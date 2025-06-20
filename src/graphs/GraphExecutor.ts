@@ -1,27 +1,32 @@
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Stargate } from '../bridges/stargate/Stargate'
-import { Pool } from '../dex/Pool'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import { ClientManager } from '../utils/ClientManager'
 import { runFnWithRetry, shortenAddress } from '../utils/common'
 import logger from '../utils/logger'
-import { ActionType, EdgeWithRate, GraphEdge } from './Graph'
-import { getEdgeNodes } from './utils'
+import {
+	Edge,
+	FuseBridgeEdge,
+	StargateBridgeEdge,
+	SwapEdge,
+	UnwrapEdge,
+	WrapEdge,
+} from './primitives/Edge'
 
 export interface GraphExecutorConfig {
-	path: EdgeWithRate[]
+	path: Edge[]
 	startAmount: bigint
 	retryExecuteEdgeCount?: number
 	beforeExecuteEdgeHook?: (
-		path: EdgeWithRate[],
-		currentEdge: EdgeWithRate,
+		path: Edge[],
+		currentEdge: Edge,
 		amountIn: bigint,
 	) => unknown
 	afterExecuteEdgeHook?: (
-		path: EdgeWithRate[],
-		currentEdge: EdgeWithRate,
+		path: Edge[],
+		currentEdge: Edge,
 		amountOut: bigint,
 	) => unknown
 }
@@ -43,11 +48,11 @@ export class GraphExecutor {
 		let amountIn = startAmount
 
 		for (const edge of path) {
-			const { from, to } = await getEdgeNodes(edge)
+			const { from, to } = edge
 
 			await beforeExecuteEdgeHook?.(path, edge, amountIn)
 
-			const beforeExecuteLogMsg = `Start ${edge.type} from: ${from.toString()} to:${to.toString()} input:${from.formatUnits(amountIn)}}`
+			const beforeExecuteLogMsg = `Start ${edge.actionType} from: ${from.toString()} to:${to.toString()} input:${from.formatUnits(amountIn)}}`
 			logger.info(beforeExecuteLogMsg)
 
 			const { amountOut, dstTxHash, srcTxHash } = await runFnWithRetry(
@@ -57,8 +62,8 @@ export class GraphExecutor {
 
 			const afterExecuteLogMsg =
 				srcTxHash === dstTxHash
-					? `End ${edge.type} amountOut:${to.formatUnits(amountOut)} ${beforeExecuteLogMsg} tx:${dstTxHash}`
-					: `End ${edge.type} amountOut:${to.formatUnits(amountOut)} ${beforeExecuteLogMsg} srcTxHash:${srcTxHash} dstTxHash:${dstTxHash} `
+					? `End ${edge.actionType} amountOut:${to.formatUnits(amountOut)} ${beforeExecuteLogMsg} tx:${dstTxHash}`
+					: `End ${edge.actionType} amountOut:${to.formatUnits(amountOut)} ${beforeExecuteLogMsg} srcTxHash:${srcTxHash} dstTxHash:${dstTxHash} `
 
 			logger.info(afterExecuteLogMsg)
 
@@ -71,16 +76,17 @@ export class GraphExecutor {
 	}
 
 	static async executeEdge(
-		edge: EdgeWithRate,
+		edge: Edge,
 		amountIn: bigint,
 	): Promise<{
 		amountOut: bigint
 		srcTxHash: string
 		dstTxHash: string
 	}> {
-		switch (edge.type) {
+		// TODO: implement type guard for edge
+		switch (edge.actionType) {
 			case ActionType.SWAP:
-				return await this.executeSwap(edge, amountIn)
+				return await this.executeSwap(edge as SwapEdge, amountIn)
 
 			case ActionType.STARGATE_BRIDGE:
 				return await this.executeStargateBridge(edge, amountIn)
@@ -89,21 +95,15 @@ export class GraphExecutor {
 				return await this.executeFuseBridge(edge, amountIn)
 
 			case ActionType.WRAP:
-				return await this.executeWrap(edge, amountIn)
+				return await this.executeWrap(edge as WrapEdge, amountIn)
 
 			case ActionType.UNWRAP:
-				return await this.executeUnwrap(edge, amountIn)
+				return await this.executeUnwrap(edge as UnwrapEdge, amountIn)
 		}
 	}
 
-	static async executeSwap(
-		edge: GraphEdge & {
-			type: ActionType.SWAP
-			pool: Pool
-		},
-		amountIn: bigint,
-	) {
-		const { from, to } = await getEdgeNodes(edge)
+	static async executeSwap(edge: SwapEdge, amountIn: bigint) {
+		const { from, to } = edge
 		const { pool } = edge
 
 		if (from.isNative()) {
@@ -131,8 +131,8 @@ export class GraphExecutor {
 		}
 	}
 
-	static async executeWrap(edge: GraphEdge, amountIn: bigint) {
-		const { to } = await getEdgeNodes(edge)
+	static async executeWrap(edge: WrapEdge, amountIn: bigint) {
+		const { to } = edge
 
 		if (!(to instanceof WrappedNative)) {
 			throw new Error(
@@ -150,8 +150,8 @@ export class GraphExecutor {
 		}
 	}
 
-	static async executeUnwrap(edge: GraphEdge, amountIn: bigint) {
-		const { from } = await getEdgeNodes(edge)
+	static async executeUnwrap(edge: UnwrapEdge, amountIn: bigint) {
+		const { from } = edge
 
 		if (!(from instanceof WrappedNative)) {
 			throw new Error(
@@ -169,9 +169,8 @@ export class GraphExecutor {
 		}
 	}
 
-	static async executeFuseBridge(edge: GraphEdge, amountIn: bigint) {
-		const { from, to } = await getEdgeNodes(edge)
-
+	static async executeFuseBridge(edge: FuseBridgeEdge, amountIn: bigint) {
+		const { from, to } = edge
 		const tx = await FuseBridge.bridge(
 			from as Token,
 			to.chainId,
@@ -190,12 +189,15 @@ export class GraphExecutor {
 		}
 	}
 
-	static async executeStargateBridge(edge: GraphEdge, amountIn: bigint) {
+	static async executeStargateBridge(
+		edge: StargateBridgeEdge,
+		amountIn: bigint,
+	) {
 		const { from, to } = edge
 
-		const fromChainId = Number(from.split(':')[0])
-		const fromAddress = from.split(':')[1] as Address
-		const toChainId = Number(to.split(':')[0])
+		const fromChainId = from.chainId
+		const fromAddress = from.address
+		const toChainId = to.chainId
 
 		const fromToken = await TokenUtils.fromAddress(fromAddress, fromChainId)
 

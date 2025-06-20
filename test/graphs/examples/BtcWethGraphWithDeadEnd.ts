@@ -1,6 +1,10 @@
 import { arbitrum, fuse } from 'viem/chains'
 import { Pool } from '../../../src/dex/Pool'
-import { ActionType, Graph, GraphEdgeAction } from '../../../src/graphs/Graph'
+import {
+	ActionType,
+	Graph,
+	GraphEdgeAction,
+} from '../../../src/graphs/primitives/Graph'
 import { TokenUtils } from '../../../src/primitives/tokens/TokenUtils'
 import { safeMultiply } from '../../testUtils/math'
 

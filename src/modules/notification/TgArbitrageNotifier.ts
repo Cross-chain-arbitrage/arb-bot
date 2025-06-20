@@ -1,6 +1,3 @@
-import { EdgeWithRate } from '../../graphs/Graph'
-import { ArbitragePath } from '../../graphs/path'
-import { getPrettyPath } from '../../graphs/visualization'
 import { getEnvSafe } from '../../utils/common'
 import { TgBaseNotifier } from './TgBaseNotifier'
 
@@ -13,16 +10,11 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 
 	async sendArbitrageStart(
 		name: string,
-		path: ArbitragePath,
-		edgesWithRate: Map<string, EdgeWithRate>,
+		path: GraphArbitrageOpportunity,
 		startTokenPrice: number,
 	) {
-		const prettyPath = await getPrettyPath(
-			path,
-			edgesWithRate,
-			startTokenPrice,
-		)
-		await this.sendMessage(`${name}:\n${prettyPath}`)
+		// TODO: implement pretty path
+		await this.sendMessage(`${name}: start arbitrage`)
 	}
 
 	async sendArbitrageEnd(

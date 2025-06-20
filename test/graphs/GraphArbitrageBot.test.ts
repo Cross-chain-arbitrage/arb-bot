@@ -1,10 +1,14 @@
 import { arbitrum, fuse } from 'viem/chains'
 import { Pool } from '../../src/dex/Pool'
 import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
-import { ActionType, EdgeWithRate, Graph } from '../../src/graphs/Graph'
 import { GraphArbitrageBot } from '../../src/graphs/GraphArbitrageBot'
 import { GraphBuilder } from '../../src/graphs/GraphBuilder'
 import { GraphExecutor } from '../../src/graphs/GraphExecutor'
+import {
+	ActionType,
+	EdgeWithRate,
+	Graph,
+} from '../../src/graphs/primitives/Graph'
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
 import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'

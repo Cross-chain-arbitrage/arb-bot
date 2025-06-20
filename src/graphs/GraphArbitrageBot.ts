@@ -9,13 +9,11 @@ import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
-import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import logger from '../utils/logger'
 import { runFuncWithDelay } from '../utils/polling'
-import { ActionType, EdgeWithRate, Graph, GraphEdge, GraphNode } from './Graph'
 import { GraphExecutor } from './GraphExecutor'
-import { ArbitragePath } from './path'
-import { getEdgeNodes } from './utils'
+import { Edge, SwapEdge } from './primitives/Edge'
+import { Graph } from './primitives/Graph'
 import { getLinksToMermaidGraph } from './visualization'
 
 const DEFAULT_OPTIONS = {
@@ -124,10 +122,7 @@ export class GraphArbitrageBot {
 		}
 	}
 
-	async executeArbitrage(
-		path: ArbitragePath,
-		edgesWithRate: Map<string, EdgeWithRate>,
-	) {
+	async executeArbitrage(path: GraphArbitrageOpportunity) {
 		const expectedProfitUsd =
 			Number(this.startToken.formatUnits(path.profitAmount)) *
 			this.startTokenPrice()
@@ -136,7 +131,7 @@ export class GraphArbitrageBot {
 			logger.info(
 				`Starting arbitrage, start amount: ${this.startToken.formatUnits(path.startAmount)}, expected profit: $${expectedProfitUsd}, expected amountOut: ${this.startToken.formatUnits(path.endAmount)}`,
 			)
-			this.notifyAboutArbStart(path, edgesWithRate)
+			this.notifyAboutArbStart(path)
 
 			const { actualAmountOut, actualProfitUsd } =
 				await this.execute(path)
@@ -191,7 +186,7 @@ export class GraphArbitrageBot {
 			return
 		}
 
-		await this.executeArbitrage(path, edgesWithRate)
+		await this.executeArbitrage(path)
 	}
 
 	private notifyAboutArbError(error: unknown) {
@@ -219,32 +214,30 @@ export class GraphArbitrageBot {
 		})
 	}
 
-	private notifyAboutArbStart(
-		path: ArbitragePath,
-		edgesWithRate: Map<string, EdgeWithRate>,
-	) {
+	private notifyAboutArbStart(path: GraphArbitrageOpportunity) {
 		this.TgArbitrageNotifier.sendArbitrageStart(
 			this.name,
 			path,
-			edgesWithRate,
 			this.startTokenPrice(),
 		).catch((err) => {
 			logger.error(err, 'Error sending path to telegram')
 		})
 	}
 
-	async execute(path: ArbitragePath) {
+	async execute(graphArbitrageOpportunity: GraphArbitrageOpportunity) {
 		this.setArbitrageExecutingTrue()
 
+		const { path, startAmount } = graphArbitrageOpportunity
+
 		const actualAmountOut = await GraphExecutor.execute({
-			path: path.edges,
-			startAmount: path.startAmount,
+			path,
+			startAmount,
 			beforeExecuteEdgeHook: this.checkEdgeProfitability.bind(this),
 			retryExecuteEdgeCount: this.retryExecuteEdgeCount,
 		})
 
 		const actualProfitUsd =
-			(Number(this.startToken.formatUnits(path.startAmount)) -
+			(Number(this.startToken.formatUnits(startAmount)) -
 				Number(this.startToken.formatUnits(actualAmountOut))) *
 			this.startTokenPrice()
 
@@ -257,13 +250,13 @@ export class GraphArbitrageBot {
 	 * Throw error if distance becomes non-negative after receiving new rate for swap on non-start token chain
 	 */
 	private async checkEdgeProfitability(
-		path: EdgeWithRate[],
-		currentEdge: EdgeWithRate,
+		path: Edge[],
+		currentEdge: Edge,
 		amountIn: bigint,
 	) {
-		if (currentEdge.type !== ActionType.SWAP) return
+		if (currentEdge.actionType !== ActionType.SWAP) return
 
-		const fromToken = await TokenUtils.fromId(currentEdge.from)
+		const fromToken = currentEdge.from
 
 		if (fromToken.chainId === this.startToken.chainId) return
 
@@ -275,7 +268,7 @@ export class GraphArbitrageBot {
 			if (edge.from === currentEdge.from && edge.to === currentEdge.to) {
 				distance += currentRate.rate
 			} else {
-				distance += edge.rate
+				distance += edge.lastRate!
 			}
 		}
 
@@ -292,11 +285,11 @@ export class GraphArbitrageBot {
 	}
 
 	async approveAll() {
-		for (const edge of this.graph.edges) {
-			const { from, to } = await getEdgeNodes(edge)
+		for (const [edgeId, edge] of this.graph.edges) {
+			const { from, to } = edge
 
 			logger.info(
-				`approving for edge ${edge.type} ${from.chainId}:${from.symbol} - ${to.chainId}:${to.symbol}`,
+				`approving for edge ${edge.actionType} ${from.chainId}:${from.symbol} - ${to.chainId}:${to.symbol}`,
 			)
 			const tx = await this.approveForEdge(edge)
 
@@ -309,14 +302,14 @@ export class GraphArbitrageBot {
 	}
 
 	private async approveForEdge(
-		edge: GraphEdge,
+		edge: Edge,
 	): Promise<TransactionReceipt | undefined> {
-		const { from, to } = await getEdgeNodes(edge)
+		const { from, to } = edge
 
-		switch (edge.type) {
+		switch (edge.actionType) {
 			case ActionType.SWAP:
 				return await (from as Token).approve(
-					edge.pool.routerAddress,
+					(edge as SwapEdge).pool.routerAddress,
 					maxUint256,
 				)
 

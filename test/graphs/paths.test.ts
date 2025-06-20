@@ -1,6 +1,6 @@
 import { arbitrum } from 'viem/chains'
-import { Graph } from '../../src/graphs/Graph'
-import { findArbitragePath } from '../../src/graphs/path'
+import { findArbOpportunity } from '../../src/graphs/GraphOpportunityFinder'
+import { Graph } from '../../src/graphs/primitives/Graph'
 import { makeSuite } from '../testUtils/makeSuite'
 import { getWethWbtcFuseGraph } from './examples/BtcWethGraph'
 import { getWethWbtcFuseGraphWithDeadEnd } from './examples/BtcWethGraphWithDeadEnd'
@@ -12,7 +12,7 @@ makeSuite('Path optimization in Graph', () => {
 		graph = undefined
 	})
 
-	describe('findArbitragePath', () => {
+	describe('findArbOpportunity', () => {
 		it('MUST be able to find the optimal path', async () => {
 			const spread = 0.05
 			graph = await getWethWbtcFuseGraph(1 + spread)
@@ -26,7 +26,7 @@ makeSuite('Path optimization in Graph', () => {
 
 			const startAmount = startToken.parseUnits('0.001')
 
-			const { path } = await findArbitragePath(
+			const { path } = await findArbOpportunity(
 				startToken,
 				startAmount,
 				graph,
@@ -68,7 +68,7 @@ makeSuite('Path optimization in Graph', () => {
 
 			const startAmount = startToken.parseUnits('0.001')
 
-			const { path } = await findArbitragePath(
+			const { path } = await findArbOpportunity(
 				startToken,
 				startAmount,
 				graph,
@@ -112,7 +112,7 @@ makeSuite('Path optimization in Graph', () => {
 
 			const startAmount = startToken.parseUnits('0.001')
 
-			const { path } = await findArbitragePath(
+			const { path } = await findArbOpportunity(
 				startToken,
 				startAmount,
 				graph,

@@ -7,20 +7,19 @@ import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import logger from '../utils/logger'
-import { ActionType, Graph, GraphError, GraphNode } from './Graph'
+import {
+	FuseBridgeEdge,
+	StargateBridgeEdge,
+	UnwrapEdge,
+	WrapEdge,
+} from './primitives/Edge'
+import { Graph, GraphError } from './primitives/Graph'
 
 export class GraphBuilderError extends Error {
 	constructor(message: string) {
 		super(message)
 		Object.setPrototypeOf(this, GraphBuilderError.prototype)
 		this.name = 'GraphBuilderError'
-	}
-}
-
-const constantGetRateWithoutDecimalsChange = (amountIn: bigint) => {
-	return {
-		rate: -Math.log(1),
-		amountOut: amountIn,
 	}
 }
 
@@ -87,7 +86,7 @@ export class GraphBuilder {
 		/* ================ Setup Pools (With Tokens) ================ */
 
 		for (const pool of pools) {
-			graph.addDexPool(pool, slippage)
+			graph.addDexPool(pool)
 			logger.info(
 				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${ChainUtils.getChainNameById(pool.chainId)})`,
 			)
@@ -175,21 +174,9 @@ export class GraphBuilder {
 
 		// ADD WRAP / UNWRAP
 		for (const wrapped of wrappedNativeCurrencies) {
-			const getWrapRate = constantGetRateWithoutDecimalsChange
+			graph.addEdge(new WrapEdge(wrapped.native, wrapped, graph))
 
-			graph.addEdge({
-				from: wrapped.native.id,
-				to: wrapped.id,
-				type: ActionType.WRAP,
-				getRate: getWrapRate,
-			})
-
-			graph.addEdge({
-				from: wrapped.id,
-				to: wrapped.native.id,
-				type: ActionType.UNWRAP,
-				getRate: getWrapRate,
-			})
+			graph.addEdge(new UnwrapEdge(wrapped, wrapped.native, graph))
 		}
 	}
 
@@ -262,7 +249,7 @@ export class GraphBuilder {
 		}
 
 		for (const pair of pairs) {
-			graph.addStargateBridgeEdge(pair[0], pair[1])
+			graph.addEdge(new StargateBridgeEdge(pair[0], pair[1], graph))
 		}
 	}
 
@@ -306,19 +293,9 @@ export class GraphBuilder {
 			for (const token of tokens) {
 				if (token.chainId === fuse.id) continue
 
-				graph.addEdge({
-					from: token.id,
-					to: tokenOnFuse.id,
-					type: ActionType.FUSE_BRIDGE,
-					getRate: constantGetRateWithoutDecimalsChange,
-				})
+				graph.addEdge(new FuseBridgeEdge(token, tokenOnFuse, graph))
 
-				graph.addEdge({
-					from: tokenOnFuse.id,
-					to: token.id,
-					type: ActionType.FUSE_BRIDGE,
-					getRate: constantGetRateWithoutDecimalsChange,
-				})
+				graph.addEdge(new FuseBridgeEdge(tokenOnFuse, token, graph))
 			}
 
 			const assetGroupString = tokens

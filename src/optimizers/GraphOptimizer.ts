@@ -1,5 +1,8 @@
-import { EdgeWithRate, Graph, GraphNode } from '../graphs/Graph'
-import { ArbitragePath, findArbitragePath } from '../graphs/path'
+import {
+	GraphArbitrageOpportunity,
+	findArbOpportunity,
+} from '../graphs/GraphOpportunityFinder'
+import { EdgeWithRate, Graph, GraphNode } from '../graphs/primitives/Graph'
 
 const DEFAULT_OPTIONS = {
 	initialValueUSD: 15,
@@ -15,7 +18,7 @@ export class GraphOptimizer {
 		graph: Graph,
 		options: GraphOptimizerOptions = {},
 	): Promise<{
-		path: ArbitragePath | null
+		path: GraphArbitrageOpportunity | null
 		edgesWithRate: Map<string, EdgeWithRate>
 	}> {
 		const { initialValueUSD, stepUSD, stepsAmount, maxPathLength } = {
@@ -24,7 +27,7 @@ export class GraphOptimizer {
 		}
 
 		const algorithmResultsPromises: Promise<{
-			path: ArbitragePath | null
+			path: GraphArbitrageOpportunity | null
 			edgesWithRate: Map<string, EdgeWithRate>
 		}>[] = []
 
@@ -37,7 +40,7 @@ export class GraphOptimizer {
 			valueUSD += stepUSD
 
 			algorithmResultsPromises.push(
-				findArbitragePath(
+				findArbOpportunity(
 					startToken,
 					tokenAmount,
 					graph,

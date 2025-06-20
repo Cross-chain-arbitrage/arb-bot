@@ -1,7 +1,7 @@
 import { Address, isAddress } from 'viem'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
-import { findArbitrageOpportunity } from './optimize'
+import { findArbOpportunity } from './optimize'
 import { poolsByChain } from './pools'
 import { Token } from './primitives/tokens/Token'
 import { ClientManager } from './utils/ClientManager'
@@ -226,7 +226,7 @@ async function findArbitrageOpportunities(
 				pool.type,
 			)
 
-			const profitData = await findArbitrageOpportunity(
+			const profitData = await findArbOpportunity(
 				tickPool,
 				prices[token0Cat],
 				prices[token1Cat],

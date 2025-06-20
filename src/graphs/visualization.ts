@@ -1,13 +1,13 @@
 import { deflate } from 'pako'
 import { Stargate } from '../bridges/stargate/Stargate'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { EdgeWithRate, Graph, GraphNode, GraphNodeId } from './Graph'
-import { ArbitragePath } from './path'
+import { GraphArbitrageOpportunity } from './GraphOpportunityFinder'
+import { EdgeWithRate, Graph, GraphNode, GraphNodeId } from './primitives/Graph'
 import { getEdgeNodes } from './utils'
 
 /**
  * Returns a Mermaid graph string with edges and rates
- * @param edgesWithRate - Map of edges with rates, returned by `findArbitragePath()`
+ * @param edgesWithRate - Map of edges with rates, returned by `findArbOpportunity()`
  */
 export async function getMermaidGraph(
 	edgesWithRate: Map<string, EdgeWithRate>,
@@ -115,7 +115,7 @@ function getChainName(chainId: number) {
 }
 
 export async function getPrettyPath(
-	path: ArbitragePath | null,
+	path: GraphArbitrageOpportunity | null,
 	edgesWithRate: Map<string, EdgeWithRate>,
 	startTokenPrice: number,
 ) {

@@ -3,7 +3,7 @@ import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
 
 export function findArbOpportunityByGraph() {}
 
-export async function findArbitrageOpportunity(
+export async function findArbOpportunity(
 	pool: Pool,
 	actualPrice0USD: number,
 	actualPrice1USD: number,

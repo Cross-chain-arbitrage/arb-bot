@@ -6,7 +6,7 @@ import {
 	Graph,
 	GraphEdge,
 	GraphError,
-} from '../../src/graphs/Graph'
+} from '../../src/graphs/primitives/Graph'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
