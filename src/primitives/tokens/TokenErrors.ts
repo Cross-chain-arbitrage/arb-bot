@@ -13,3 +13,11 @@ export class NativeCurrencyError extends TokenError {
 		this.name = 'NativeCurrencyError'
 	}
 }
+
+export class WrappedNativeError extends Error {
+	constructor(message: string) {
+		super(message)
+		Object.setPrototypeOf(this, WrappedNativeError.prototype)
+		this.name = 'WrappedNativeError'
+	}
+}

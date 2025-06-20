@@ -1,5 +1,10 @@
-import { Address, erc20Abi, isAddress, TransactionReceipt } from 'viem'
-import { isSameAddress } from '../../utils/common'
+import {
+	Address,
+	erc20Abi,
+	isAddress,
+	isAddressEqual,
+	TransactionReceipt,
+} from 'viem'
 import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from './NativeCurrency'
 import { TokenBase } from './TokenBase'
 import { TokenError } from './TokenErrors'
@@ -23,7 +28,7 @@ export class Token extends TokenBase {
 
 	isSame(token: Token): boolean {
 		return (
-			isSameAddress(this.address, token.address) &&
+			isAddressEqual(this.address, token.address) &&
 			this.chainId === token.chainId
 		)
 	}

@@ -1,8 +1,8 @@
-import { decodeEventLog } from 'viem'
+import { decodeEventLog, isAddressEqual } from 'viem'
 import { UNIV2_POOL_ABI } from '../abi/uniV2/pool'
 import { UNIV2_ROUTER_ABI } from '../abi/uniV2/router'
 import { Token } from '../primitives/tokens/Token'
-import { isSameAddress } from '../utils/common'
+
 import { Pool } from './Pool'
 
 export class UniV2LikePoolError extends Error {
@@ -71,7 +71,7 @@ export abstract class UniV2LikePool extends Pool {
 			params.amountIn,
 			reserves[0],
 			reserves[1],
-			isSameAddress(params.tokenIn.address, this.token0.address),
+			isAddressEqual(params.tokenIn.address, this.token0.address),
 		)
 
 		return {
@@ -160,7 +160,7 @@ export abstract class UniV2LikePool extends Pool {
 
 		const swapEvent = receipt.logs
 			.map((log) => {
-				if (!isSameAddress(log.address, this.address)) return null
+				if (!isAddressEqual(log.address, this.address)) return null
 
 				const event = decodeEventLog({
 					abi: UNIV2_POOL_ABI,

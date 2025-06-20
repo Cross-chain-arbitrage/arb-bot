@@ -1,4 +1,4 @@
-import { zeroAddress, zeroHash } from 'viem'
+import { isAddressEqual, zeroAddress, zeroHash } from 'viem'
 import { arbitrum, base, bsc, fuse, mainnet, optimism } from 'viem/chains'
 import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20BridgeForeign'
 import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
@@ -6,7 +6,6 @@ import { FUSE_BRIDGE_HOME_ABI } from '../../abi/fuse/fuseBridgeHome'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
-import { isSameAddress } from '../../utils/common'
 import { FuseBridgeTx } from './FuseBridgeTx'
 
 const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
@@ -523,6 +522,6 @@ export class FuseBridge {
 	}
 
 	private static isFuse(token: Token | NativeCurrency) {
-		return isSameAddress(token.address, FUSE_ADDRESSES[token.chainId])
+		return isAddressEqual(token.address, FUSE_ADDRESSES[token.chainId])
 	}
 }

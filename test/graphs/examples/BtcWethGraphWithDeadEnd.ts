@@ -2,7 +2,7 @@ import { arbitrum, fuse } from 'viem/chains'
 import { Pool } from '../../../src/dex/Pool'
 import { ActionType, Graph, GraphEdgeAction } from '../../../src/graphs/Graph'
 import { TokenUtils } from '../../../src/primitives/tokens/TokenUtils'
-import { safeMultiply } from '../../../src/utils/math'
+import { safeMultiply } from '../../testUtils/math'
 
 export async function getWethWbtcFuseGraphWithDeadEnd(
 	ethPoolPriceMultiplier: number = 1,

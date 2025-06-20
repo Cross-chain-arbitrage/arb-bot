@@ -1,17 +1,10 @@
 import { arbitrum, bsc, fuse, hemi, lightlinkPhoenix, story } from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
-import { getAccountAddress } from '../../utils/getAccount'
+import { getAccountAddress } from '../../utils/common'
 import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'
+import { WrappedNativeError } from './TokenErrors'
 import { TokenUtils } from './TokenUtils'
-
-export class WethError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, WethError.prototype)
-		this.name = 'WethError'
-	}
-}
 
 export const wrappedTokens: Record<number, Address | undefined> = {
 	[arbitrum.id]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
@@ -45,7 +38,7 @@ export class WrappedNative extends Token {
 		const balance = await this.native.balanceOf(getAccountAddress())
 
 		if (balance < amount) {
-			throw new WethError('Insufficient balance')
+			throw new WrappedNativeError('Insufficient balance')
 		}
 
 		const hash = await this.wallet.writeContract({
@@ -60,7 +53,7 @@ export class WrappedNative extends Token {
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
 		if (receipt.status !== 'success')
-			throw new WethError(`Deposit failed, tx: ${hash}`)
+			throw new WrappedNativeError(`Deposit failed, tx: ${hash}`)
 
 		return receipt
 	}
@@ -69,7 +62,7 @@ export class WrappedNative extends Token {
 		const balance = await this.balanceOf(getAccountAddress())
 
 		if (balance < amount) {
-			throw new WethError('Insufficient balance')
+			throw new WrappedNativeError('Insufficient balance')
 		}
 
 		const hash = await this.wallet.writeContract({
@@ -84,7 +77,7 @@ export class WrappedNative extends Token {
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
 		if (receipt.status !== 'success')
-			throw new WethError(`Withdraw failed, tx: ${hash}`)
+			throw new WrappedNativeError(`Withdraw failed, tx: ${hash}`)
 
 		return receipt
 	}

@@ -13,7 +13,7 @@ import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { getAlchemyRpcUrl } from '../../src/utils/alchemy'
 import { ClientManager } from '../../src/utils/ClientManager'
-import { getAccountAddress } from '../../src/utils/getAccount'
+import { getAccountAddress } from '../../src/utils/common'
 import { setTokenBalance, useAnvil } from '../testUtils/anvil'
 import { makeSuite } from '../testUtils/makeSuite'
 

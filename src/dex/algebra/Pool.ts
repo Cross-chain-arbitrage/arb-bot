@@ -1,8 +1,7 @@
-import { Address, decodeEventLog, zeroAddress } from 'viem'
+import { Address, decodeEventLog, isAddressEqual, zeroAddress } from 'viem'
 import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
 import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
 import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
-import { isSameAddress } from '../../utils/common'
 import { TickPool } from '../TickPool'
 import { peripheryAddresses } from './data'
 import { getPoolImmutables } from './helpers'
@@ -135,7 +134,7 @@ export class AlgebraPool extends TickPool {
 
 		const swapEvent = receipt.logs
 			.map((log) => {
-				if (!isSameAddress(log.address, this.address)) return null
+				if (!isAddressEqual(log.address, this.address)) return null
 
 				const event = decodeEventLog({
 					abi: ALGEBRA_POOL_ABI,

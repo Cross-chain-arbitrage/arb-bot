@@ -2,7 +2,7 @@ import { ChildProcess, exec } from 'child_process'
 import getPort from 'get-port'
 import { Chain, Client, encodeAbiParameters, keccak256, toHex } from 'viem'
 import { ClientManager } from '../../src/utils/ClientManager'
-import { getPrivateKey } from '../../src/utils/getAccount'
+import { getPrivateKey } from '../../src/utils/common'
 
 /* ======== useAnvil ======== */
 

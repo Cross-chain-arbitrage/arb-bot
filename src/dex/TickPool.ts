@@ -1,9 +1,9 @@
-import { Address, TransactionReceipt } from 'viem'
+import { Address, isAddressEqual, TransactionReceipt } from 'viem'
 import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { ClientManager } from '../utils/ClientManager'
-import { isSameAddress, shortenAddress } from '../utils/common'
+import { shortenAddress } from '../utils/common'
 import { Pool } from './Pool'
 
 export class TickPoolError extends Error {
@@ -54,20 +54,20 @@ export abstract class TickPool extends Pool {
 	}
 
 	validateMismatchSwapParams(params: SwapParams) {
-		if (isSameAddress(params.tokenIn.address, params.tokenOut.address)) {
+		if (isAddressEqual(params.tokenIn.address, params.tokenOut.address)) {
 			throw new TickPoolError('tokenIn and tokenOut cannot be the same')
 		}
 
 		if (
-			!isSameAddress(params.tokenIn.address, this.token0.address) &&
-			!isSameAddress(params.tokenIn.address, this.token1.address)
+			!isAddressEqual(params.tokenIn.address, this.token0.address) &&
+			!isAddressEqual(params.tokenIn.address, this.token1.address)
 		) {
 			throw new TickPoolError('tokenIn must be token0 or token1')
 		}
 
 		if (
-			!isSameAddress(params.tokenOut.address, this.token0.address) &&
-			!isSameAddress(params.tokenOut.address, this.token1.address)
+			!isAddressEqual(params.tokenOut.address, this.token0.address) &&
+			!isAddressEqual(params.tokenOut.address, this.token1.address)
 		) {
 			throw new TickPoolError(
 				`tokenOut must be ${this.token0.symbol} (${this.token0.chainId}:${shortenAddress(this.token0.address)}) ` +

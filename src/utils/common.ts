@@ -1,28 +1,10 @@
-import { isAddress } from 'viem'
+import dotenv from 'dotenv'
+import { Hex, pad } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
 import logger from './logger'
 
 export const wait = (ms: number): Promise<void> =>
 	new Promise((resolve) => setTimeout(resolve, ms))
-
-export function isSameAddress(address1: Address, address2: Address): boolean {
-	if (!isAddress(address1)) {
-		throw new Error(`Invalid address 1: ${JSON.stringify(address1)}`)
-	}
-
-	if (!isAddress(address2)) {
-		throw new Error(`Invalid address 2: ${JSON.stringify(address2)}`)
-	}
-
-	return address1.toLowerCase() === address2.toLowerCase()
-}
-
-export function divideByDecimals(amount: bigint, decimals: number): number {
-	return Number(amount) / 10 ** decimals
-}
-
-export function multiplyByDecimals(amount: number, decimals: number): bigint {
-	return BigInt(Math.floor(amount * 10 ** decimals))
-}
 
 export function calculatePriceDiff(
 	actualPrice: number,
@@ -64,4 +46,27 @@ export async function runFnWithRetry<T>(
 	}
 
 	throw lastError!
+}
+
+export function padAddressToBytes32(address: Address): Hex {
+	return pad(address, { size: 32 })
+}
+
+dotenv.config()
+
+export function getPrivateKey(): Hex {
+	const privateKey = process.env[`PRIVATE_KEY`]
+
+	if (!privateKey) {
+		throw new Error(`Private key not found`)
+	}
+
+	return privateKey as Hex
+}
+
+export function getAccountAddress() {
+	const pk = getPrivateKey()
+	const account = privateKeyToAccount(pk)
+
+	return account.address
 }

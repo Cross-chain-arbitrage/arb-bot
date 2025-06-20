@@ -1,4 +1,3 @@
-import { parseUnits } from 'viem'
 import {
 	EdgeWithRate,
 	GetRate,
@@ -187,40 +186,4 @@ async function reconstructCycle(
 		profitAmount,
 		profitPercentage,
 	}
-}
-
-/**
- * Finds the optimal arbitrage path by trying different starting amounts
- * @param startToken - The token to start the arbitrage from
- * @param graph - The graph containing all possible trading paths
- * @param maxDepth - Maximum number of edges to traverse (default: 4)
- * @returns The most profitable arbitrage path found, or null if none exists
- */
-export async function findOptimalArbitrage(
-	startToken: GraphNode,
-	graph: Graph,
-	maxDepth: number = 4,
-): Promise<ArbitragePath | null> {
-	// Try different starting amounts
-	const amounts = [
-		parseUnits('1000', 18), // $1000
-		parseUnits('5000', 18), // $5000
-		parseUnits('10000', 18), // $10000
-	]
-
-	let bestPath: ArbitragePath | null = null
-
-	for (const amount of amounts) {
-		const { path } = await findArbitragePath(
-			startToken,
-			amount,
-			graph,
-			maxDepth,
-		)
-		if (path && (!bestPath || path.profitAmount > bestPath.profitAmount)) {
-			bestPath = path
-		}
-	}
-
-	return bestPath
 }

@@ -1,7 +1,6 @@
-import { Address, getAddress, isAddress } from 'viem'
+import { Address, getAddress, isAddress, isAddressEqual } from 'viem'
 import { ERC20_ABI } from '../../abi/erc20'
 import { ClientManager } from '../../utils/ClientManager'
-import { isSameAddress } from '../../utils/common'
 import {
 	NATIVE_ADDRESS,
 	NativeCurrency,
@@ -30,8 +29,8 @@ export class TokenUtils {
 
 	static isNative(address: Address): boolean {
 		return (
-			isSameAddress(address, NATIVE_ADDRESS) ||
-			isSameAddress(address, STARGATE_NATIVE_ADDRESS)
+			isAddressEqual(address, NATIVE_ADDRESS) ||
+			isAddressEqual(address, STARGATE_NATIVE_ADDRESS)
 		)
 	}
 
@@ -42,7 +41,7 @@ export class TokenUtils {
 			return false
 		}
 
-		return isSameAddress(address, wrappedToken)
+		return isAddressEqual(address, wrappedToken)
 	}
 
 	static isToken(address: Address): boolean {

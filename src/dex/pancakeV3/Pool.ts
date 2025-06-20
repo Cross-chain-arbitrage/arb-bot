@@ -1,8 +1,7 @@
-import { Address, decodeEventLog } from 'viem'
+import { Address, decodeEventLog, isAddressEqual } from 'viem'
 import { PANCAKE_V3_POOL_ABI } from '../../abi/pancakeV3/pancakeV3Pool'
 import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
 import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
-import { isSameAddress } from '../../utils/common'
 import { TickPool } from '../TickPool'
 import { peripheryAddresses } from './data'
 import { getPoolImmutables } from './helpers'
@@ -144,7 +143,7 @@ export class PancakeV3Pool extends TickPool {
 
 		const swapEvent = receipt.logs
 			.map((log) => {
-				if (!isSameAddress(log.address, this.address)) return null
+				if (!isAddressEqual(log.address, this.address)) return null
 
 				const event = decodeEventLog({
 					abi: PANCAKE_V3_POOL_ABI,

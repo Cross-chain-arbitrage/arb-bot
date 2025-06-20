@@ -11,7 +11,7 @@ import * as chains from 'viem/chains'
 
 import { arbitrum, bsc, mainnet } from 'viem/chains'
 import { getAlchemyRpcUrl } from './alchemy'
-import { getPrivateKey } from './getAccount'
+import { getPrivateKey } from './common'
 
 const CUSTOM_RPC_URLS = {
 	[mainnet.id]: getAlchemyRpcUrl(mainnet.id),

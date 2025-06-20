@@ -4,7 +4,15 @@ import { LayerZeroScanAPI } from '../data-apis/layerzeroscan/LayerZeroScanAPI'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { Tx } from '../primitives/transactions/Tx'
-import { BridgeTx } from './Bridge'
+
+export interface BridgeTx {
+	srcTx: Tx
+	dstTx?: Tx
+	srcToken: Token | NativeCurrency
+	dstToken: Token | NativeCurrency
+	amount: bigint
+	waitForBridgeToFinish(): Promise<unknown>
+}
 
 export class LZBridgeTx implements BridgeTx {
 	public srcTx: Tx

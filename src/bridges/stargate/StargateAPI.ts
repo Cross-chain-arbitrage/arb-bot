@@ -1,9 +1,8 @@
 import TTLCache from '@isaacs/ttlcache'
 import axios from 'axios'
-import { zeroAddress } from 'viem'
+import { isAddressEqual, zeroAddress } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
-import { isSameAddress } from '../../utils/common'
 import { STARGATE_CHAINS } from './dumped/chains'
 import { Stargate } from './Stargate'
 
@@ -68,7 +67,7 @@ export class StargateAPI {
 
 		const tokenMetadata = metadata.find(
 			(metadata) =>
-				isSameAddress(metadata.token.address, token.address) &&
+				isAddressEqual(metadata.token.address, token.address) &&
 				metadata.chainKey === chainKey,
 		)
 
@@ -88,7 +87,7 @@ export class StargateAPI {
 
 		const asset = metadata.find(
 			(metadata) =>
-				isSameAddress(metadata.token.address, token.address) &&
+				isAddressEqual(metadata.token.address, token.address) &&
 				metadata.chainKey === Stargate.getChainKey(token.chainId),
 		)
 

@@ -1,7 +1,7 @@
+import ms from 'ms'
 import TelegramBot from 'node-telegram-bot-api'
 import { ArbitrageOpportunity } from '../../getArbitrageOpportunities'
 import { getEnvSafe } from '../../utils/common'
-import { msToTimeIntervalString } from '../../utils/time'
 import { TgBaseNotifier } from './TgBaseNotifier'
 
 export class TgOpportunityNotifier extends TgBaseNotifier {
@@ -62,8 +62,7 @@ export class TgOpportunityNotifier extends TgBaseNotifier {
 
 		const lifetimeMs = new Date().getTime() - inception.getTime()
 
-		const lifetimeMessage =
-			lifetimeMs === 0 ? 'Just now' : msToTimeIntervalString(lifetimeMs)
+		const lifetimeMessage = lifetimeMs === 0 ? 'Just now' : ms(lifetimeMs)
 
 		message += `\n\n⏳ Lifetime: ${lifetimeMessage}`
 
