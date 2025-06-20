@@ -6,6 +6,7 @@ import { FUSE_BRIDGE_HOME_ABI } from '../../abi/fuse/fuseBridgeHome'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
+import { createCustomError } from '../../utils/common'
 import { FuseBridgeTx } from './FuseBridgeTx'
 
 const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
@@ -37,13 +38,7 @@ const FUSE_ADDRESSES: Record<number, Address> = {
 	[base.id]: '0x01facc69ec7360640aa5898e852326752801674a',
 }
 
-export class FuseBridgeError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, FuseBridgeError.prototype)
-		this.name = 'FuseBridgeError'
-	}
-}
+export const FuseBridgeError = createCustomError('FuseBridgeError')
 
 export const LZ_V1_CHAIN_EIDS: Record<number, number> = {
 	[mainnet.id]: 101,

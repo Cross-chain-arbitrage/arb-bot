@@ -9,18 +9,12 @@ import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../primitives/tokens/WrappedNative'
 import { ClientManager } from '../../utils/ClientManager'
-import { padAddressToBytes32 } from '../../utils/common'
+import { createCustomError, padAddressToBytes32 } from '../../utils/common'
 import { StargateAPI } from './StargateAPI'
 import { StargateBridgeTx } from './StargateBridgeTx'
 import { STARGATE_CHAINS } from './dumped/chains'
 
-export class StargateError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, StargateError.prototype)
-		this.name = 'StargateError'
-	}
-}
+export const StargateError = createCustomError('StargateError')
 
 const QUOTE_CACHE_TTL = 1000 * 60 * 1 // 1 minute
 
@@ -451,11 +445,11 @@ export class Stargate {
 	}
 
 	static validateBridgingAmount(oftLimit: OFTLimit, amount: bigint) {
-		if (oftLimit.minAmountLD < amount) {
+		if (oftLimit.minAmountLD > amount) {
 			throw new StargateError(
 				`Expected amount out is less than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
 			)
-		} else if (oftLimit.maxAmountLD > amount) {
+		} else if (oftLimit.maxAmountLD < amount) {
 			throw new StargateError(
 				`Expected amount out is greater than the amount, has ${oftLimit.maxAmountLD}, needed ${amount}`,
 			)

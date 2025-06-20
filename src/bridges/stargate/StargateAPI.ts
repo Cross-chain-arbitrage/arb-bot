@@ -4,15 +4,10 @@ import { isAddressEqual } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { createCustomError } from '../../utils/common'
 import { Stargate } from './Stargate'
 
-export class StargateAPIError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, StargateAPIError.prototype)
-		this.name = 'StargateAPIError'
-	}
-}
+export const StargateAPIError = createCustomError('StargateAPIError')
 
 const STARGATE_API_URL = new URL('https://mainnet.stargate-api.com/v1')
 

@@ -70,3 +70,13 @@ export function getAccountAddress() {
 
 	return account.address
 }
+
+export function createCustomError(errorName: string) {
+	return class CustomError extends Error {
+		constructor(message: string) {
+			super(message)
+			Object.setPrototypeOf(this, new.target.prototype)
+			this.name = errorName
+		}
+	}
+}

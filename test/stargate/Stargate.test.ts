@@ -15,52 +15,64 @@ import { mockWaitForBridgeToFinish } from '../testUtils/mock'
 
 makeSuite('Stargate', () => {
 	describe('Arbitrum One', () => {
+		const USDT = new Token(
+			'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
+			arbitrum.id,
+			'USD₮0',
+			6,
+			'USD₮0',
+		)
+		const ETH = TokenUtils.getNative(arbitrum.id)
+
 		useAnvil({
 			chainId: arbitrum.id,
 			rpcUrl: getAlchemyRpcUrl(arbitrum.id),
 		})
 
 		it('MUST simulate sending Token', async () => {
-			const USDT0 = await TokenUtils.fromAddress<Token>(
-				'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
-				arbitrum.id,
-			)
-
-			const amount = USDT0.parseUnits('1')
-			// const balanceSlot = 4n
+			console.time('STG')
+			const amount = USDT.parseUnits('1')
+			const balanceSlot = 51n
 			const wallet = ClientManager.getWalletClient(arbitrum.id)
 			const recipient = wallet.account!.address
 
-			for (let i = 0; i < 100; i++) {
-				await setTokenBalance(
-					recipient,
-					USDT0.address,
-					BigInt(i),
-					amount,
-					wallet,
-				)
-			}
+			console.time('setTokenBalance')
 
-			const bridgeAddr = await Stargate.getBridgeAddress(USDT0)
-			await USDT0.approve(bridgeAddr, amount)
+			await setTokenBalance(
+				recipient,
+				USDT.address,
+				balanceSlot,
+				amount,
+				wallet,
+			)
 
+			console.timeEnd('setTokenBalance')
+
+			console.time('getBridgeAddress')
+			const bridgeAddr = await Stargate.getBridgeAddress(USDT)
+			console.timeEnd('getBridgeAddress')
+
+			console.time('approve')
+			await USDT.approve(bridgeAddr, amount)
+			console.timeEnd('approve')
+
+			console.time('bridge')
 			const result = await Stargate.bridge(
-				USDT0,
+				USDT,
 				fuse.id,
 				recipient,
 				amount,
-				true,
 			)
+			console.timeEnd('bridge')
 
 			expect(result).toBeDefined()
 			expect(result.bridgeTx.srcTx.hash).toBeDefined()
 			expect(result.bridgeTx.srcTx.chainId).toBe(arbitrum.id)
+			console.timeEnd('STG')
 		})
 
 		it('MUST simulate sending Native', async () => {
-			const native = TokenUtils.getNative(arbitrum.id)
-
-			const amount = native.parseUnits('1')
+			const amount = ETH.parseUnits('1')
 
 			const wallet = ClientManager.getWalletClient(arbitrum.id)
 			const recipient = wallet.account!.address
@@ -68,7 +80,7 @@ makeSuite('Stargate', () => {
 			await setNativeBalance(wallet, recipient, amount * 2n)
 
 			const result = await Stargate.bridge(
-				native,
+				ETH,
 				fuse.id,
 				recipient,
 				amount,
@@ -186,7 +198,8 @@ makeSuite('Stargate', () => {
 					if (token instanceof NativeCurrency) {
 						await setNativeBalance(wallet, recipient, amount * 2n)
 					} else {
-						for (let i = 0; i < 100; i++) {
+						// const balanceSlot = token.symbol === 'USDT' ? 4n : 8n
+						for (let i = 50; i < 100; i++) {
 							await setTokenBalance(
 								recipient,
 								token.address,
