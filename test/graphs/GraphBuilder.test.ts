@@ -54,7 +54,7 @@ makeSuite('GraphBuilder', () => {
 			const graph = await GraphBuilder.build({ pools: singlePool })
 
 			const swapEdges = Array.from(graph.edges.values()).filter(
-				(edge) => edge.type === ActionType.SWAP,
+				(edge) => edge.actionType === ActionType.SWAP,
 			)
 
 			expect(swapEdges.length).toBe(2)
@@ -64,7 +64,7 @@ makeSuite('GraphBuilder', () => {
 			const graph = await GraphBuilder.build({ pools: singlePool })
 
 			const swapEdges = Array.from(graph.edges.values()).filter(
-				(edge) => edge.type === ActionType.SWAP,
+				(edge) => edge.actionType === ActionType.SWAP,
 			)
 
 			expect(swapEdges.length).toBe(2)
@@ -146,11 +146,11 @@ makeSuite('GraphBuilder', () => {
 			expect(wrappedNativeCurrencies[0].chainId).toBe(arbitrum.id)
 
 			const wrapEdges = Array.from(graph.edges.values()).filter(
-				(edge) => edge.type === ActionType.WRAP,
+				(edge) => edge.actionType === ActionType.WRAP,
 			)
 
 			const unwrapEdges = Array.from(graph.edges.values()).filter(
-				(edge) => edge.type === ActionType.UNWRAP,
+				(edge) => edge.actionType === ActionType.UNWRAP,
 			)
 
 			expect(wrapEdges.length).toBe(1)
@@ -197,7 +197,7 @@ makeSuite('GraphBuilder', () => {
 			})
 
 			const stargateBridges = Array.from(graph.edges.values()).filter(
-				(edge) => edge.type === ActionType.STARGATE_BRIDGE,
+				(edge) => edge.actionType === ActionType.STARGATE_BRIDGE,
 			)
 
 			expect(stargateBridges.length).toBe(2)
@@ -221,13 +221,13 @@ makeSuite('GraphBuilder', () => {
 			})
 
 			const stargateBridges = Array.from(graph.edges.values()).filter(
-				(edge) => edge.type === ActionType.STARGATE_BRIDGE,
+				(edge) => edge.actionType === ActionType.STARGATE_BRIDGE,
 			)
 
 			expect(stargateBridges.length).toBe(8)
 
 			const usdcBridges = stargateBridges.filter((bridge) =>
-				graph.getToken(bridge.from).symbol.includes('USDC'),
+				graph.getToken(bridge.from.id).symbol.includes('USDC'),
 			)
 
 			expect(usdcBridges.length).toBe(2)
@@ -239,14 +239,14 @@ makeSuite('GraphBuilder', () => {
 			expect(usdcBridge.to).toBe(reverseUsdcBridge.from)
 
 			const ethBridges = stargateBridges.filter((bridge) =>
-				graph.getToken(bridge.from).symbol.includes('ETH'),
+				graph.getToken(bridge.from.id).symbol.includes('ETH'),
 			)
 
 			expect(ethBridges.length).toBe(6)
 
 			for (const bridge of ethBridges) {
-				const from = graph.getToken(bridge.from)
-				const to = graph.getToken(bridge.to)
+				const from = graph.getToken(bridge.from.id)
+				const to = graph.getToken(bridge.to.id)
 
 				expect(from.symbol.includes('ETH')).toBe(true)
 				expect(to.symbol.includes('ETH')).toBe(true)
@@ -264,14 +264,14 @@ makeSuite('GraphBuilder', () => {
 				})
 
 				const stargateBridges = Array.from(graph.edges.values()).filter(
-					(edge) => edge.type === ActionType.STARGATE_BRIDGE,
+					(edge) => edge.actionType === ActionType.STARGATE_BRIDGE,
 				)
 
 				expect(stargateBridges.length).toBe(4)
 
 				for (const bridge of stargateBridges) {
-					const from = graph.getToken(bridge.from)
-					const to = graph.getToken(bridge.to)
+					const from = graph.getToken(bridge.from.id)
+					const to = graph.getToken(bridge.to.id)
 
 					expect(
 						[from.chainId, to.chainId].includes(arbitrum.id),
@@ -289,14 +289,14 @@ makeSuite('GraphBuilder', () => {
 				})
 
 				const stargateBridges = Array.from(graph.edges.values()).filter(
-					(edge) => edge.type === ActionType.STARGATE_BRIDGE,
+					(edge) => edge.actionType === ActionType.STARGATE_BRIDGE,
 				)
 
 				expect(stargateBridges.length).toBe(4)
 
 				for (const bridge of stargateBridges) {
-					const from = graph.getToken(bridge.from)
-					const to = graph.getToken(bridge.to)
+					const from = graph.getToken(bridge.from.id)
+					const to = graph.getToken(bridge.to.id)
 
 					// All pairs must include base chain
 					expect([from.chainId, to.chainId].includes(fuse.id)).toBe(
@@ -311,7 +311,7 @@ makeSuite('GraphBuilder', () => {
 		it('MUST add 2 Fuse Bridges for Fuse Chain', async () => {
 			const graph = await GraphBuilder.build({ pools })
 			const fuseBridges = Array.from(graph.edges.values()).filter(
-				(edge) => edge.type === ActionType.FUSE_BRIDGE,
+				(edge) => edge.actionType === ActionType.FUSE_BRIDGE,
 			)
 
 			expect(fuseBridges.length).toBe(2)
@@ -321,11 +321,11 @@ makeSuite('GraphBuilder', () => {
 
 			// Check that the bridges are reversible
 
-			const from = graph.getToken(bridge.from)
-			const to = graph.getToken(bridge.to)
+			const from = graph.getToken(bridge.from.id)
+			const to = graph.getToken(bridge.to.id)
 
-			const reverseFrom = graph.getToken(reverseBridge.from)
-			const reverseTo = graph.getToken(reverseBridge.to)
+			const reverseFrom = graph.getToken(reverseBridge.from.id)
+			const reverseTo = graph.getToken(reverseBridge.to.id)
 
 			expect(from.symbol.includes('WBTC')).toBe(true)
 			expect(to.symbol.includes('WBTC')).toBe(true)

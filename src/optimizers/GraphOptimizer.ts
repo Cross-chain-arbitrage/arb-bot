@@ -1,8 +1,5 @@
-import {
-	GraphArbitrageOpportunity,
-	findArbOpportunity,
-} from '../graphs/GraphOpportunityFinder'
-import { EdgeWithRate, Graph, GraphNode } from '../graphs/primitives/Graph'
+import { GraphOpportunityFinder } from '../graphs/GraphOpportunityFinder'
+import { Graph } from '../graphs/primitives/Graph'
 
 const DEFAULT_OPTIONS = {
 	initialValueUSD: 15,
@@ -17,19 +14,14 @@ export class GraphOptimizer {
 		startTokenUSDPrice: number,
 		graph: Graph,
 		options: GraphOptimizerOptions = {},
-	): Promise<{
-		path: GraphArbitrageOpportunity | null
-		edgesWithRate: Map<string, EdgeWithRate>
-	}> {
+	): Promise<GraphArbitrageOpportunity | null> {
 		const { initialValueUSD, stepUSD, stepsAmount, maxPathLength } = {
 			...DEFAULT_OPTIONS,
 			...options,
 		}
 
-		const algorithmResultsPromises: Promise<{
-			path: GraphArbitrageOpportunity | null
-			edgesWithRate: Map<string, EdgeWithRate>
-		}>[] = []
+		const algorithmResultsPromises: Promise<GraphArbitrageOpportunity | null>[] =
+			[]
 
 		let valueUSD = initialValueUSD
 		for (let i = 0; i < stepsAmount; i++) {
@@ -40,7 +32,7 @@ export class GraphOptimizer {
 			valueUSD += stepUSD
 
 			algorithmResultsPromises.push(
-				findArbOpportunity(
+				GraphOpportunityFinder.findArbOpportunity(
 					startToken,
 					tokenAmount,
 					graph,
@@ -52,14 +44,11 @@ export class GraphOptimizer {
 		const algorithmResults = await Promise.all(algorithmResultsPromises)
 
 		const maxProfitPath = algorithmResults.reduce((max, current) => {
-			if (max.path === null) {
+			if (max === null) {
 				return max
 			}
 
-			if (
-				current.path &&
-				current.path.profitAmount > max.path.profitAmount
-			) {
+			if (current && current.profitAmount > max.profitAmount) {
 				return current
 			}
 

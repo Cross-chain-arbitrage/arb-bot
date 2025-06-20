@@ -2,11 +2,11 @@ import { arbitrum, fuse } from 'viem/chains'
 import { Pool } from '../../src/dex/Pool'
 import { UniV3Pool } from '../../src/dex/uniswapV3/Pool'
 import {
-	ActionType,
-	Graph,
-	GraphEdge,
-	GraphError,
-} from '../../src/graphs/primitives/Graph'
+	FuseBridgeEdge,
+	StargateBridgeEdge,
+	SwapEdge,
+} from '../../src/graphs/primitives/Edge'
+import { Graph, GraphError } from '../../src/graphs/primitives/Graph'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
@@ -88,103 +88,105 @@ makeSuite('Graph', () => {
 			const BTC_PRICE = 110_000
 			const ETH_PRICE = 2_700
 
-			const swapEdge: GraphEdge = {
-				from: WBTC_ARB.id, // $110k
-				to: ETH_ARB.id, // $2.7k,
-				type: ActionType.SWAP,
-				pool: {} as Pool,
-				getRate: (amountIn: bigint) => {
-					return Promise.resolve({
-						rate: BTC_PRICE / ETH_PRICE,
-						amountOut: amountIn,
-					})
-				},
+			const swapEdge = new SwapEdge(
+				WBTC_ARB,
+				ETH_ARB as unknown as Token,
+				{} as Pool,
+				graph,
+			)
+
+			swapEdge.getRate = (amountIn: bigint) => {
+				return Promise.resolve({
+					rate: BTC_PRICE / ETH_PRICE,
+					amountOut: amountIn,
+				})
 			}
 
-			const reverseSwapEdge: GraphEdge = {
-				from: ETH_ARB.id,
-				to: WBTC_ARB.id,
-				type: ActionType.SWAP,
-				pool: {} as Pool,
-				getRate: (amountIn: bigint) => {
-					return Promise.resolve({
-						rate: ETH_PRICE / BTC_PRICE,
-						amountOut: amountIn,
-					})
-				},
+			const reverseSwapEdge = new SwapEdge(
+				ETH_ARB as unknown as Token,
+				WBTC_ARB,
+				{} as Pool,
+				graph,
+			)
+			reverseSwapEdge.getRate = (amountIn: bigint) => {
+				return Promise.resolve({
+					rate: ETH_PRICE / BTC_PRICE,
+					amountOut: amountIn,
+				})
 			}
+
 			graph.addEdge(swapEdge)
 			graph.addEdge(reverseSwapEdge)
 
 			expect(graph.edges.size).toBe(2)
-			expect(graph.edges.has(swapEdge)).toBe(true)
-			expect(graph.edges.has(reverseSwapEdge)).toBe(true)
+			expect(graph.edges.has(swapEdge.id)).toBe(true)
+			expect(graph.edges.has(reverseSwapEdge.id)).toBe(true)
 		})
 
 		it('MUST be able to add `Stargate Bridge`s as edges', () => {
-			const stargateBridgeEdge: GraphEdge = {
-				from: ETH_ARB.id,
-				to: WETH_FUSE.id,
-				type: ActionType.STARGATE_BRIDGE,
-				getRate: (amountIn: bigint) => {
-					return Promise.resolve({
-						rate: 1,
-						amountOut: amountIn,
-					})
-				},
+			const stargateBridgeEdge = new StargateBridgeEdge(
+				ETH_ARB,
+				WETH_FUSE,
+				graph,
+			)
+			stargateBridgeEdge.getRate = (amountIn: bigint) => {
+				return Promise.resolve({
+					rate: 1,
+					amountOut: amountIn,
+				})
 			}
 
-			const reverseStargateBridgeEdge: GraphEdge = {
-				from: WETH_FUSE.id,
-				to: ETH_ARB.id,
-				type: ActionType.STARGATE_BRIDGE,
-				getRate: (amountIn: bigint) => {
-					return Promise.resolve({
-						rate: 1,
-						amountOut: amountIn,
-					})
-				},
+			const reverseStargateBridgeEdge = new StargateBridgeEdge(
+				WETH_FUSE,
+				ETH_ARB,
+				graph,
+			)
+			reverseStargateBridgeEdge.getRate = (amountIn: bigint) => {
+				return Promise.resolve({
+					rate: 1,
+					amountOut: amountIn,
+				})
 			}
 
 			graph.addEdge(stargateBridgeEdge)
 			graph.addEdge(reverseStargateBridgeEdge)
 
 			expect(graph.edges.size).toBe(2)
-			expect(graph.edges.has(stargateBridgeEdge)).toBe(true)
-			expect(graph.edges.has(reverseStargateBridgeEdge)).toBe(true)
+			expect(graph.edges.has(stargateBridgeEdge.id)).toBe(true)
+			expect(graph.edges.has(reverseStargateBridgeEdge.id)).toBe(true)
 		})
 
 		it('MUST be able to add `Fuse Bridge`s as edges', () => {
-			const stargateBridgeEdge: GraphEdge = {
-				from: WBTC_ARB.id,
-				to: WBTC_FUSE.id,
-				type: ActionType.FUSE_BRIDGE,
-				getRate: (amountIn: bigint) => {
-					return Promise.resolve({
-						rate: 1,
-						amountOut: amountIn,
-					})
-				},
+			const fuseBridgeEdge = new FuseBridgeEdge(
+				WBTC_ARB,
+				WBTC_FUSE,
+				graph,
+			)
+			fuseBridgeEdge.getRate = (amountIn: bigint) => {
+				return Promise.resolve({
+					rate: 1,
+					amountOut: amountIn,
+				})
 			}
 
-			const reverseStargateBridgeEdge: GraphEdge = {
-				from: WBTC_FUSE.id,
-				to: WBTC_ARB.id,
-				type: ActionType.FUSE_BRIDGE,
-				getRate: (amountIn: bigint) => {
-					return Promise.resolve({
-						rate: 1,
-						amountOut: amountIn,
-					})
-				},
+			const reverseFuseBridgeEdge = new FuseBridgeEdge(
+				WBTC_FUSE,
+				WBTC_ARB,
+				graph,
+			)
+			reverseFuseBridgeEdge.getRate = (amountIn: bigint) => {
+				return Promise.resolve({
+					rate: 1,
+					amountOut: amountIn,
+				})
 			}
 
-			graph.addEdge(stargateBridgeEdge)
-			graph.addEdge(reverseStargateBridgeEdge)
+			graph.addEdge(fuseBridgeEdge)
+			graph.addEdge(reverseFuseBridgeEdge)
 
 			expect(graph.edges.size).toBe(2)
-			expect(graph.edges.has(stargateBridgeEdge)).toBe(true)
-			expect(graph.edges.has(reverseStargateBridgeEdge)).toBe(true)
+			expect(graph.edges.has(fuseBridgeEdge.id)).toBe(true)
+			expect(graph.edges.has(reverseFuseBridgeEdge.id)).toBe(true)
 		})
 	})
 
@@ -201,7 +203,7 @@ makeSuite('Graph', () => {
 				arbitrum.id,
 			)
 
-			graph.addDexPool(pool, 50)
+			graph.addDexPool(pool)
 
 			// Check adding nodes
 			expect(graph.nodes.size).toBe(2)
@@ -212,16 +214,16 @@ makeSuite('Graph', () => {
 			expect(graph.edges.size).toBe(2)
 
 			const edges = Array.from(graph.edges)
-			const edge = edges[0]
-			const reverseEdge = edges[1]
+			const [, edge] = edges[0]
+			const [, reverseEdge] = edges[1]
 
 			// Check that edges are reversed
-			expect(edge.from).toBe(reverseEdge.to)
-			expect(edge.to).toBe(reverseEdge.from)
+			expect(edge.from.id).toBe(reverseEdge.to.id)
+			expect(edge.to.id).toBe(reverseEdge.from.id)
 
 			// Check that edges are of type `SWAP`
-			expect(edge.type).toBe(ActionType.SWAP)
-			expect(reverseEdge.type).toBe(ActionType.SWAP)
+			expect(edge.actionType).toBe(ActionType.SWAP)
+			expect(reverseEdge.actionType).toBe(ActionType.SWAP)
 
 			// Check that getRate is working and different directions return different rates
 			const getRate = await edge.getRate(pool.token0.parseUnits('0.001'))
@@ -252,17 +254,12 @@ makeSuite('Graph', () => {
 
 		it('MUST throw an error if an edge is added with a node that does not exist', () => {
 			const graph = new Graph()
-			const edge: GraphEdge = {
-				from: WBTC_ARB.id,
-				to: WETH_FUSE.id,
-				type: ActionType.SWAP,
-				pool: {} as Pool,
-				getRate: (amountIn: bigint) => {
-					return Promise.resolve({
-						rate: 1,
-						amountOut: amountIn,
-					})
-				},
+			const edge = new SwapEdge(WBTC_ARB, WETH_FUSE, {} as Pool, graph)
+			edge.getRate = (amountIn: bigint) => {
+				return Promise.resolve({
+					rate: 1,
+					amountOut: amountIn,
+				})
 			}
 
 			expect(() => graph.addEdge(edge)).toThrow(GraphError)
@@ -282,17 +279,12 @@ makeSuite('Graph', () => {
 			graph.addNode(WBTC_ARB)
 			graph.addNode(WETH_FUSE)
 
-			const edge: GraphEdge = {
-				from: WBTC_ARB.id,
-				to: WETH_FUSE.id,
-				type: ActionType.SWAP,
-				pool: {} as Pool,
-				getRate: (amountIn: bigint) => {
-					return Promise.resolve({
-						rate: 1,
-						amountOut: amountIn,
-					})
-				},
+			const edge = new SwapEdge(WBTC_ARB, WETH_FUSE, {} as Pool, graph)
+			edge.getRate = (amountIn: bigint) => {
+				return Promise.resolve({
+					rate: 1,
+					amountOut: amountIn,
+				})
 			}
 
 			graph.addEdge(edge)

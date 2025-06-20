@@ -8,7 +8,14 @@ import { Pool } from '../../src/dex/Pool'
 import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { UniV3Pool } from '../../src/dex/uniswapV3/Pool'
 import { GraphExecutor } from '../../src/graphs/GraphExecutor'
-import { ActionType, GraphEdge } from '../../src/graphs/primitives/Graph'
+import {
+	FuseBridgeEdge,
+	StargateBridgeEdge,
+	SwapEdge,
+	UnwrapEdge,
+	WrapEdge,
+} from '../../src/graphs/primitives/Edge'
+import { Graph } from '../../src/graphs/primitives/Graph'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
@@ -39,6 +46,8 @@ let wbtcFuseToken: Token
 let wethFuseToken: Token
 let walletClient: WalletClient
 let botAddress: Address
+let graph: Graph
+
 const getRate = () => Promise.resolve({ rate: 1, amountOut: 0n })
 
 makeSuite('GraphExecutor', () => {
@@ -79,22 +88,15 @@ makeSuite('GraphExecutor', () => {
 		wbtcArbToken = wbtcArbResult as Token
 		wbtcFuseToken = wbtcFuseResult as Token
 		wethFuseToken = wethFuseResult as Token
+		graph = new Graph()
 	})
 
 	describe('executeSwap', () => {
-		let edge: GraphEdge & {
-			type: ActionType.SWAP
-			pool: Pool
-		}
+		let edge: SwapEdge
 
 		beforeAll(() => {
-			edge = {
-				from: wethToken.id,
-				to: usdtToken.id,
-				type: ActionType.SWAP,
-				pool,
-				getRate,
-			}
+			edge = new SwapEdge(wethToken, usdtToken, pool, graph)
+			edge.getRate = getRate
 		})
 
 		it('should execute a swap and return correct transaction data', async () => {
@@ -134,20 +136,22 @@ makeSuite('GraphExecutor', () => {
 		it('should throw error if token is native', async () => {
 			const amountIn = parseEther('0.1')
 
-			const edge: GraphEdge = {
-				from: nativeCurrency.id,
-				to: wethToken.id,
-				type: ActionType.SWAP,
+			const edge = new SwapEdge(
+				nativeCurrency as unknown as Token,
+				wethToken,
 				pool,
-				getRate,
-			}
+				graph,
+			)
+			edge.getRate = getRate
 
 			await expect(
 				GraphExecutor.executeSwap(edge, amountIn),
 			).rejects.toThrow('Cannot swap from native currency')
 
-			edge.from = wethToken.id
-			edge.to = nativeCurrency.id
+			//@ts-expect-error switch from and to
+			edge.from = wethToken
+			//@ts-expect-error switch from and to
+			edge.to = nativeCurrency
 
 			await expect(
 				GraphExecutor.executeSwap(edge, amountIn),
@@ -166,12 +170,8 @@ makeSuite('GraphExecutor', () => {
 				parseEther('1'),
 			)
 
-			const edge: GraphEdge = {
-				from: nativeCurrency.id,
-				to: wethToken.id,
-				type: ActionType.WRAP,
-				getRate,
-			}
+			const edge = new WrapEdge(nativeCurrency, wethToken, graph)
+			edge.getRate = getRate
 
 			const balanceBefore = await wethToken.balanceOf(botAddress)
 
@@ -192,12 +192,8 @@ makeSuite('GraphExecutor', () => {
 				arbitrum.id,
 			)
 
-			const edge: GraphEdge = {
-				from: nativeCurrency.id,
-				to: regularToken.id,
-				type: ActionType.WRAP,
-				getRate,
-			}
+			const edge = new WrapEdge(nativeCurrency, regularToken, graph)
+			edge.getRate = getRate
 
 			await expect(
 				GraphExecutor.executeWrap(edge, parseEther('0.1')),
@@ -217,13 +213,8 @@ makeSuite('GraphExecutor', () => {
 				ClientManager.getClient(arbitrum.id),
 			)
 
-			const edge: GraphEdge = {
-				from: wethToken.id,
-				to: nativeCurrency.id,
-				type: ActionType.UNWRAP,
-				getRate: () =>
-					Promise.resolve({ rate: 1, amountOut: amountIn }),
-			}
+			const edge = new UnwrapEdge(wethToken, nativeCurrency, graph)
+			edge.getRate = getRate
 
 			const balanceBefore = await nativeCurrency.balanceOf(botAddress)
 
@@ -253,12 +244,8 @@ makeSuite('GraphExecutor', () => {
 				arbitrum.id,
 			)
 
-			const edge: GraphEdge = {
-				from: regularToken.id,
-				to: nativeCurrency.id,
-				type: ActionType.UNWRAP,
-				getRate,
-			}
+			const edge = new UnwrapEdge(regularToken, nativeCurrency, graph)
+			edge.getRate = getRate
 
 			await expect(
 				GraphExecutor.executeUnwrap(edge, parseEther('0.1')),
@@ -292,12 +279,8 @@ makeSuite('GraphExecutor', () => {
 
 			await FuseBridge.approveToBridge(wbtcArbToken, amountIn, fuse.id)
 
-			const edge: GraphEdge = {
-				from: wbtcArbToken.id,
-				to: wbtcFuseToken.id,
-				type: ActionType.FUSE_BRIDGE,
-				getRate,
-			}
+			const edge = new FuseBridgeEdge(wbtcArbToken, wbtcFuseToken, graph)
+			edge.getRate = getRate
 
 			const result = await GraphExecutor.executeFuseBridge(edge, amountIn)
 
@@ -334,12 +317,12 @@ makeSuite('GraphExecutor', () => {
 				nativeCurrency.parseUnits('1'),
 			)
 
-			const edge: GraphEdge = {
-				from: nativeCurrency.id,
-				to: wethFuseToken.id,
-				type: ActionType.STARGATE_BRIDGE,
-				getRate,
-			}
+			const edge = new StargateBridgeEdge(
+				nativeCurrency,
+				wethFuseToken,
+				graph,
+			)
+			edge.getRate = getRate
 
 			const result = await GraphExecutor.executeStargateBridge(
 				edge,

@@ -175,11 +175,10 @@ export class GraphArbitrageBot {
 			return
 		}
 
-		const { path, edgesWithRate } = arbitrageOpportunity
-
 		const expectedProfitUsd =
-			Number(this.startToken.formatUnits(path.profitAmount)) *
-			this.startTokenPrice()
+			Number(
+				this.startToken.formatUnits(arbitrageOpportunity.profitAmount),
+			) * this.startTokenPrice()
 
 		if (expectedProfitUsd < this.minProfitUsd) {
 			logger.info(
@@ -188,7 +187,7 @@ export class GraphArbitrageBot {
 			return
 		}
 
-		await this.executeArbitrage(path)
+		await this.executeArbitrage(arbitrageOpportunity)
 	}
 
 	private notifyAboutArbError(error: unknown) {

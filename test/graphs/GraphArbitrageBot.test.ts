@@ -4,11 +4,9 @@ import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { GraphArbitrageBot } from '../../src/graphs/GraphArbitrageBot'
 import { GraphBuilder } from '../../src/graphs/GraphBuilder'
 import { GraphExecutor } from '../../src/graphs/GraphExecutor'
-import {
-	ActionType,
-	EdgeWithRate,
-	Graph,
-} from '../../src/graphs/primitives/Graph'
+
+import { Edge } from '../../src/graphs/primitives/Edge'
+import { Graph } from '../../src/graphs/primitives/Graph'
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
 import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
@@ -54,10 +52,10 @@ makeSuite('GraphArbitrageBot', () => {
 
 	beforeEach(async () => {
 		jest.spyOn(GraphExecutor, 'executeEdge').mockImplementation(
-			async (edge: EdgeWithRate) => {
+			async (edge: Edge) => {
 				if (
-					edge.type === ActionType.STARGATE_BRIDGE ||
-					edge.type === ActionType.FUSE_BRIDGE
+					edge.actionType === ActionType.STARGATE_BRIDGE ||
+					edge.actionType === ActionType.FUSE_BRIDGE
 				) {
 					await wait(500)
 				}
@@ -72,47 +70,53 @@ makeSuite('GraphArbitrageBot', () => {
 		swapWbtcToWethOnFuseRateMock = jest.fn().mockReturnValue(-100)
 		swapWethToWbtcOnArbitrumRateMock = jest.fn().mockReturnValue(10)
 
-		for (const edge of graph.edges) {
-			if (edge.type === ActionType.SWAP) {
-				const from = await TokenUtils.fromId(edge.from)
+		for (const [, edge] of graph.edges) {
+			if (edge.actionType === ActionType.SWAP) {
+				const from = await TokenUtils.fromId(edge.from.id)
 
 				if (from.symbol === 'WETH' && from.chainId === fuse.id) {
 					edge.getRate = (amountIn: bigint) => {
-						return { amountOut: amountIn / 100n, rate: 100 }
+						return Promise.resolve({
+							amountOut: amountIn / 100n,
+							rate: 100,
+						})
 					}
 					continue
 				}
 
 				if (from.symbol === 'WBTC' && from.chainId === fuse.id) {
 					edge.getRate = (amountIn: bigint) => {
-						return {
+						return Promise.resolve({
 							amountOut: amountIn * 100n,
 							rate: swapWbtcToWethOnFuseRateMock(),
-						}
+						})
 					}
 					continue
 				}
 
 				if (from.symbol === 'WETH' && from.chainId === arbitrum.id) {
 					edge.getRate = (amountIn: bigint) => {
-						return {
+						return Promise.resolve({
 							amountOut: amountIn / 10n,
 							rate: swapWethToWbtcOnArbitrumRateMock(),
-						}
+						})
 					}
 					continue
 				}
 
 				if (from.symbol === 'WBTC' && from.chainId === arbitrum.id) {
 					edge.getRate = (amountIn: bigint) => {
-						return { amountOut: amountIn * 10n, rate: -10 }
+						return Promise.resolve({
+							amountOut: amountIn * 10n,
+							rate: -10,
+						})
 					}
 					continue
 				}
 			}
 
 			edge.getRate = (amountIn: bigint) => {
-				return { amountOut: amountIn, rate: 0 }
+				return Promise.resolve({ amountOut: amountIn, rate: 0 })
 			}
 		}
 

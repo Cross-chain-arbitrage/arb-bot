@@ -1,5 +1,5 @@
 import { arbitrum } from 'viem/chains'
-import { findArbOpportunity } from '../../src/graphs/GraphOpportunityFinder'
+import { GraphOpportunityFinder } from '../../src/graphs/GraphOpportunityFinder'
 import { Graph } from '../../src/graphs/primitives/Graph'
 import { makeSuite } from '../testUtils/makeSuite'
 import { getWethWbtcFuseGraph } from './examples/BtcWethGraph'
@@ -26,33 +26,33 @@ makeSuite('Path optimization in Graph', () => {
 
 			const startAmount = startToken.parseUnits('0.001')
 
-			const { path } = await findArbOpportunity(
+			const opportunity = await GraphOpportunityFinder.findArbOpportunity(
 				startToken,
 				startAmount,
 				graph,
 				4,
 			)
 
-			if (!path) throw new Error('No path found')
+			if (!opportunity) throw new Error('No path found')
 
-			expect(path.edges.length).toBe(4)
+			expect(opportunity.path.length).toBe(4)
 
-			expect(path.endAmount).toBeGreaterThan(startAmount)
-			expect(path.startAmount).toBe(startAmount)
+			expect(opportunity.endAmount).toBeGreaterThan(startAmount)
+			expect(opportunity.startAmount).toBe(startAmount)
 
 			const endAmountNumber = Number(
-				startToken.formatUnits(path.endAmount),
+				startToken.formatUnits(opportunity.endAmount),
 			)
 			const startAmountNumber = Number(
-				startToken.formatUnits(path.startAmount),
+				startToken.formatUnits(opportunity.startAmount),
 			)
 			expect(endAmountNumber).toBeCloseTo(
 				startAmountNumber * (1 + spread),
 				2,
 			)
 
-			expect(path.profitPercentage).toBeCloseTo(spread * 100, 1)
-			expect(path.profitAmount).toBeGreaterThan(0)
+			expect(opportunity.profitPercentage).toBeCloseTo(spread * 100, 1)
+			expect(opportunity.profitAmount).toBeGreaterThan(0)
 		})
 
 		it('MUST be able to find the  reversed optimal path in mirrored situation', async () => {
@@ -68,35 +68,35 @@ makeSuite('Path optimization in Graph', () => {
 
 			const startAmount = startToken.parseUnits('0.001')
 
-			const { path } = await findArbOpportunity(
+			const opportunity = await GraphOpportunityFinder.findArbOpportunity(
 				startToken,
 				startAmount,
 				graph,
 				4,
 			)
 
-			if (!path) throw new Error('No path found')
+			if (!opportunity) throw new Error('No path found')
 
-			console.log('path', path.edges)
+			console.log('path', opportunity.path)
 
-			expect(path.edges.length).toBe(4)
+			expect(opportunity.path.length).toBe(4)
 
-			expect(path.endAmount).toBeGreaterThan(startAmount)
-			expect(path.startAmount).toBe(startAmount)
+			expect(opportunity.endAmount).toBeGreaterThan(startAmount)
+			expect(opportunity.startAmount).toBe(startAmount)
 
 			const endAmountNumber = Number(
-				startToken.formatUnits(path.endAmount),
+				startToken.formatUnits(opportunity.endAmount),
 			)
 			const startAmountNumber = Number(
-				startToken.formatUnits(path.startAmount),
+				startToken.formatUnits(opportunity.startAmount),
 			)
 			expect(endAmountNumber).toBeCloseTo(
 				startAmountNumber * (1 + spread),
 				2,
 			)
 
-			expect(path.profitAmount).toBeGreaterThan(0)
-			expect(path.profitPercentage).toBeCloseTo(spread * 100, 0)
+			expect(opportunity.profitAmount).toBeGreaterThan(0)
+			expect(opportunity.profitPercentage).toBeCloseTo(spread * 100, 0)
 		})
 
 		it('MUST NOT fall into dead ends', async () => {
@@ -112,35 +112,35 @@ makeSuite('Path optimization in Graph', () => {
 
 			const startAmount = startToken.parseUnits('0.001')
 
-			const { path } = await findArbOpportunity(
+			const opportunity = await GraphOpportunityFinder.findArbOpportunity(
 				startToken,
 				startAmount,
 				graph,
 				4,
 			)
 
-			if (!path) throw new Error('No path found')
+			if (!opportunity) throw new Error('No path found')
 
-			console.log('path', path.edges)
+			console.log('path', opportunity.path)
 
-			expect(path.edges.length).toBe(4)
+			expect(opportunity.path.length).toBe(4)
 
-			expect(path.endAmount).toBeGreaterThan(startAmount)
-			expect(path.startAmount).toBe(startAmount)
+			expect(opportunity.endAmount).toBeGreaterThan(startAmount)
+			expect(opportunity.startAmount).toBe(startAmount)
 
 			const endAmountNumber = Number(
-				startToken.formatUnits(path.endAmount),
+				startToken.formatUnits(opportunity.endAmount),
 			)
 			const startAmountNumber = Number(
-				startToken.formatUnits(path.startAmount),
+				startToken.formatUnits(opportunity.startAmount),
 			)
 			expect(endAmountNumber).toBeCloseTo(
 				startAmountNumber * (1 + spread),
 				2,
 			)
 
-			expect(path.profitAmount).toBeGreaterThan(0)
-			expect(path.profitPercentage).toBeCloseTo(spread * 100, 0)
+			expect(opportunity.profitAmount).toBeGreaterThan(0)
+			expect(opportunity.profitPercentage).toBeCloseTo(spread * 100, 0)
 		})
 	})
 })
