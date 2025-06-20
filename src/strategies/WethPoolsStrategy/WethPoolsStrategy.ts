@@ -5,6 +5,7 @@ import { GraphBuilder } from '../../graphs/GraphBuilder'
 import { TgArbitrageNotifier } from '../../modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from '../../modules/PriceOracle/PriceOracle'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { ClientManager } from '../../utils/ClientManager'
 import logger from '../../utils/logger'
 import { WETH_POOLS } from './wethPools'
 
@@ -45,7 +46,7 @@ class WethPoolsStrategy {
 	}
 
 	static async run(giveApprovals: boolean = false) {
-		// ClientManager.useCustomRpcUrl(arbitrum.id)
+		ClientManager.useCustomRpcUrl(arbitrum.id)
 
 		if (giveApprovals) {
 			await this.prepare()
