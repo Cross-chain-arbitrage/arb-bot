@@ -12,9 +12,9 @@ import { Token } from '../primitives/tokens/Token'
 import logger from '../utils/logger'
 import { runFuncWithDelay } from '../utils/polling'
 import { GraphExecutor } from './GraphExecutor'
+import { GraphVisualizer } from './GraphVisualizer'
 import { Edge, SwapEdge } from './primitives/Edge'
 import { Graph } from './primitives/Graph'
-import { getLinksToMermaidGraph } from './visualization'
 
 const DEFAULT_OPTIONS = {
 	minProfitUsd: 3,
@@ -73,7 +73,9 @@ export class GraphArbitrageBot {
 
 		let message = `${this.name} started\n\nGraph:\n`
 
-		const { view, edit } = getLinksToMermaidGraph(this.graph)
+		const { view, edit } = GraphVisualizer.getLinksToMermaidGraph(
+			this.graph,
+		)
 
 		// Создаем скрытые ссылки с помощью ANSI escape последовательностей
 		const viewLink = `\x1b]8;;${view}\x1b\\📊 View Graph\x1b]8;;\x1b\\`
