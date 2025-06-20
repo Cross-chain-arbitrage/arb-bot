@@ -1,9 +1,9 @@
 import TTLCache from '@isaacs/ttlcache'
 import axios from 'axios'
-import { isAddressEqual, zeroAddress } from 'viem'
+import { isAddressEqual } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
-import { STARGATE_CHAINS } from './dumped/chains'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { Stargate } from './Stargate'
 
 export class StargateAPIError extends Error {
@@ -15,7 +15,6 @@ export class StargateAPIError extends Error {
 }
 
 const STARGATE_API_URL = new URL('https://mainnet.stargate-api.com/v1')
-const STARGATE_OLD_API_URL = new URL('https://stargate.finance/api/v1')
 
 type RequestId = string
 
@@ -102,143 +101,14 @@ export class StargateAPI {
 		return metadata.filter((metadata) => metadata.assetId === assetId)
 	}
 
-	static async getChains() {
-		try {
-			console.log('~ StargateAPI ~ getChains')
-			const response = await axios.get<{ chains: StargateAPIChain[] }>(
-				`${STARGATE_OLD_API_URL}/chains`,
-			)
-			return response.data.chains
-		} catch (error) {
-			console.error('Error fetching Stargate chains:', error)
-			throw error
-		}
-	}
+	static async getTokensOnChain(chainId: number) {
+		const metadata = await this.getTokensMetadataOnChain(chainId)
+		const tokenData = metadata.map((token) => token.token)
 
-	static async getTokens(
-		chainKey: string = '',
-		includeLPs: boolean = false,
-	): Promise<StargateToken[]> {
-		try {
-			const response = await axios.get<{ tokens: StargateToken[] }>(
-				`${STARGATE_API_URL}/tokens`,
-			)
+		const tokens = tokenData.map((token) =>
+			TokenUtils.fromAddress(token.address, chainId),
+		)
 
-			let tokens = response.data.tokens
-
-			if (chainKey) {
-				tokens = tokens.filter((token) => token.chainKey === chainKey)
-			}
-
-			if (!includeLPs) {
-				tokens = tokens.filter(
-					(token) =>
-						!token.name?.includes('LP') &&
-						!token.symbol?.includes('S*'),
-				)
-			}
-
-			return tokens
-		} catch (error) {
-			console.error('Error fetching tokens:', error)
-			return []
-		}
-	}
-
-	static async getStablecoinsOnStargate() {
-		const tokens = await this.getTokens()
-
-		const stablecoins = this.filterStablecoins(tokens)
-
-		return stablecoins
-	}
-
-	static async getStablecoinOnStargate(
-		symbol: string,
-	): Promise<Stablecoin | undefined> {
-		const tokens = await this.getTokens()
-
-		const stablecoins = this.filterStablecoins(tokens)
-
-		return stablecoins.find((coin) => coin.symbol === symbol)
-	}
-
-	private static filterStablecoins(tokens: StargateToken[]): Stablecoin[] {
-		const stablecoinMap: { [symbol: string]: Stablecoin } = {}
-
-		for (const token of tokens) {
-			const stableName = this.getTokenSymbol(token)
-
-			if (!token.price?.usd) {
-				// console.log('No price for', token.symbol, token.chainKey)
-				continue
-			}
-
-			// Check if the token price is within a small range of $1
-			if (!token.price?.usd) continue
-			// Aptos is supported only in Stargate V1
-			if (token.chainKey === 'aptos') continue
-
-			const priceInUSD = parseFloat(token.price.usd.toString())
-			const lowerBound = 0.98
-			const upperBound = 1.02
-
-			// Consider a token a stablecoin if its price is between $0.98 and $1.02
-			if (priceInUSD >= lowerBound && priceInUSD <= upperBound) {
-				if (!stablecoinMap[stableName]) {
-					stablecoinMap[stableName] = {
-						symbol: stableName,
-						chains: [],
-						address: zeroAddress,
-					}
-				}
-
-				if (!stablecoinMap[stableName].chains) {
-					stablecoinMap[stableName].chains = []
-				}
-
-				stablecoinMap[stableName].chains.push({
-					chainKey: token.chainKey,
-					address: token.address,
-					price: token.price.usd,
-					decimals: token.decimals,
-					name: token.name,
-				})
-			}
-		}
-
-		return Object.values(stablecoinMap)
-	}
-
-	private static getTokenSymbol(token: StargateToken) {
-		const usdtAnalogs = ['USDT', 'USDt', 'm.USDT']
-
-		if (usdtAnalogs.includes(token.symbol)) {
-			return 'USDT'
-		}
-
-		if (token.symbol === 'USDC.e' && token.name?.includes('Stargate'))
-			return 'USDC'
-
-		const avalancheBridgedUSDC = [
-			'0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8', // arbitrum
-			'0x7F5c764cBc14f9669B88837ca1490cCa17c31607', // optimism
-			'0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // polygon
-		]
-
-		if (token.address && avalancheBridgedUSDC.includes(token.address)) {
-			return 'USDC.e'
-		}
-
-		return token.symbol
-	}
-
-	private static validateChainKey(chainKey: string) {
-		if (
-			chainKey &&
-			!STARGATE_CHAINS.some((chain) => chain.chainKey === chainKey)
-		) {
-			throw new StargateAPIError(`Invalid Stargate chainKey: ${chainKey}`)
-		}
+		return Promise.all(tokens)
 	}
 }
