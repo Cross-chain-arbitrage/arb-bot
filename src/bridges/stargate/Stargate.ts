@@ -82,7 +82,7 @@ export class Stargate {
 		const { quote, expectedAmountOut, tokenOut } =
 			await Stargate.getExpectedAmountOut(tokenIn, amount, toChainId)
 
-		this.validateBridgingAmount(quote.oftReceipt, amount)
+		this.validateBridgingAmount(quote.oftLimit, amount)
 
 		const toChainEId = getChainEIdByNativeChainId(toChainId)
 		const recipientBytes32 = padAddressToBytes32(recipient)
@@ -450,14 +450,14 @@ export class Stargate {
 		}
 	}
 
-	static validateBridgingAmount(oftReceipt: OFTReceipt, amount: bigint) {
-		if (oftReceipt.amountReceivedLD < amount) {
+	static validateBridgingAmount(oftLimit: OFTLimit, amount: bigint) {
+		if (oftLimit.minAmountLD < amount) {
 			throw new StargateError(
-				`Expected amount out is less than the amount, has ${oftReceipt.amountReceivedLD}, needed ${amount}`,
+				`Expected amount out is less than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
 			)
-		} else if (oftReceipt.amountReceivedLD > amount) {
+		} else if (oftLimit.maxAmountLD > amount) {
 			throw new StargateError(
-				`Expected amount out is greater than the amount, has ${oftReceipt.amountReceivedLD}, needed ${amount}`,
+				`Expected amount out is greater than the amount, has ${oftLimit.maxAmountLD}, needed ${amount}`,
 			)
 		}
 	}
