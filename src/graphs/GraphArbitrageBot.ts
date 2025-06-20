@@ -160,9 +160,9 @@ export class GraphArbitrageBot {
 						sender: err.sender,
 					},
 				)
-				logger.error(shortenedError, 'Error finding arbitrage')
+				logger.error(shortenedError, 'Error executing arbitrage')
 			} else {
-				logger.error(err, 'Error finding arbitrage')
+				logger.error(err, 'Error executing arbitrage')
 			}
 			this.notifyAboutArbError(err)
 		}
