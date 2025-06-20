@@ -7,3 +7,4 @@ playground
 **/.DS_Store
 terraform.json
 dist
+logs
