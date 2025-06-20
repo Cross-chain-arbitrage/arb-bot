@@ -12,13 +12,10 @@ interface SendParams {
 }
 
 interface QuoteResult {
-	isOFT: boolean
 	messagingFee: MessagingFee
-	oftFees?: {
-		oftLimit: OFTLimit
-		oftFeeDetails: OFTFeeDetail[]
-		oftReceipt: OFTReceipt
-	}
+	oftLimit: OFTLimit
+	oftFeeDetails: OFTFeeDetail[]
+	oftReceipt: OFTReceipt
 }
 
 interface MessagingFee {

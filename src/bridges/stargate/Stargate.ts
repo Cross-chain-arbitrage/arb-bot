@@ -67,13 +67,6 @@ export class Stargate {
 
 		const poolOrOFT = tokenMetadata.address
 
-		await Stargate.validatePathCredits(
-			poolOrOFT,
-			toChainId,
-			tokenIn.chainId,
-			// amount,
-		)
-
 		const balance = await tokenIn.balanceOf(recipient)
 
 		if (balance < amount) {
@@ -89,11 +82,11 @@ export class Stargate {
 		const { quote, expectedAmountOut, tokenOut } =
 			await Stargate.getExpectedAmountOut(tokenIn, amount, toChainId)
 
+		this.validateBridgingAmount(quote.oftReceipt, amount)
+
 		const toChainEId = getChainEIdByNativeChainId(toChainId)
 		const recipientBytes32 = padAddressToBytes32(recipient)
-		const minAmountLD = quote.isOFT
-			? (quote.oftFees?.oftLimit.minAmountLD ?? amount)
-			: amount
+		const minAmountLD = quote.oftReceipt.amountReceivedLD
 
 		const sendParams = {
 			dstEid: toChainEId,
@@ -152,33 +145,6 @@ export class Stargate {
 		const tokenMetadata = await StargateAPI.getTokenMetadata(token)
 
 		return tokenMetadata.address
-	}
-
-	private static async validatePathCredits(
-		poolOrOFT: Address,
-		toChainId: number,
-		chainId: number,
-		// amount: bigint,
-	): Promise<void> {
-		const pathCredits = await Stargate.getPathCredits(
-			poolOrOFT,
-			toChainId,
-			chainId,
-		)
-
-		if (pathCredits === 0n) {
-			throw new StargateError(
-				`Bridge path doesn't exist for ${poolOrOFT} from ${chainId} to ${toChainId}`,
-			)
-		}
-
-		// TODO: find a way to get bridging limit and validate it
-
-		// if (pathCredits < amount) {
-		// 	throw new StargateError(
-		// 		`Not enough credits for bridging ${poolOrOFT} from ${chainId} to ${toChainId}, needed ${amount}, has ${pathCredits}`,
-		// 	)
-		// }
 	}
 
 	private static async validateAllowance(
@@ -273,39 +239,31 @@ export class Stargate {
 			fromChainId,
 		)
 
-		const result: QuoteResult = {
-			isOFT: false,
-			messagingFee,
+		const [oftLimit, oftFeeDetails, oftReceipt] = await Stargate.quoteOFT(
+			metadata.address,
+			amount,
+			recipient,
+			toChainId,
+			fromChainId,
+		)
+
+		if (oftLimit.minAmountLD > amount) {
+			throw new StargateError(
+				`Bridging min amount is greater than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
+			)
 		}
 
-		if (metadata.stargateType === 'OFT') {
-			const [oftLimit, oftFeeDetails, oftReceipt] =
-				await Stargate.quoteOFT(
-					metadata.address,
-					amount,
-					recipient,
-					toChainId,
-					fromChainId,
-				)
+		if (oftLimit.maxAmountLD < amount) {
+			throw new StargateError(
+				`Bridging max amount is less than the amount, has ${oftLimit.maxAmountLD}, needed ${amount}`,
+			)
+		}
 
-			if (oftLimit.minAmountLD > amount) {
-				throw new StargateError(
-					`Bridging min amount is greater than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
-				)
-			}
-
-			if (oftLimit.maxAmountLD < amount) {
-				throw new StargateError(
-					`Bridging max amount is less than the amount, has ${oftLimit.maxAmountLD}, needed ${amount}`,
-				)
-			}
-
-			result.isOFT = true
-			result.oftFees = {
-				oftLimit,
-				oftFeeDetails,
-				oftReceipt,
-			}
+		const result: QuoteResult = {
+			messagingFee,
+			oftLimit,
+			oftFeeDetails,
+			oftReceipt,
 		}
 
 		this.quoteCache.set(cacheKey, result)
@@ -460,22 +418,14 @@ export class Stargate {
 		const quote = await this.quote(tokenIn, toChainId, amountIn)
 		const tokenOut = await Stargate.getDstToken(tokenIn, toChainId)
 
-		if (quote.oftFees) {
-			return {
-				quote,
-				expectedAmountOut: quote.oftFees.oftReceipt.amountReceivedLD,
-				tokenOut,
-			}
-		} else {
-			const sharedDecimals = 6
-			const amountSD =
-				amountIn / 10n ** BigInt(tokenIn.decimals - sharedDecimals)
+		const sharedDecimals = 6
+		const amountSD =
+			amountIn / 10n ** BigInt(tokenIn.decimals - sharedDecimals)
 
-			const amountOutOnDst =
-				amountSD * 10n ** BigInt(tokenOut.decimals - sharedDecimals)
+		const amountOutOnDst =
+			amountSD * 10n ** BigInt(tokenOut.decimals - sharedDecimals)
 
-			return { quote, expectedAmountOut: amountOutOnDst, tokenOut }
-		}
+		return { quote, expectedAmountOut: amountOutOnDst, tokenOut }
 	}
 
 	private static getCacheKey(
@@ -496,6 +446,18 @@ export class Stargate {
 		if (wallet.account!.address !== recipient) {
 			throw new StargateError(
 				'Recipient is not the same as the wallet address',
+			)
+		}
+	}
+
+	static validateBridgingAmount(oftReceipt: OFTReceipt, amount: bigint) {
+		if (oftReceipt.amountReceivedLD < amount) {
+			throw new StargateError(
+				`Expected amount out is less than the amount, has ${oftReceipt.amountReceivedLD}, needed ${amount}`,
+			)
+		} else if (oftReceipt.amountReceivedLD > amount) {
+			throw new StargateError(
+				`Expected amount out is greater than the amount, has ${oftReceipt.amountReceivedLD}, needed ${amount}`,
 			)
 		}
 	}

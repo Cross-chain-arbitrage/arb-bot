@@ -1,7 +1,6 @@
 import { parseEther, WalletClient } from 'viem'
 import { arbitrum, fuse } from 'viem/chains'
 
-import { Message } from '@layerzerolabs/scan-client'
 import { FuseBridge } from '../../src/bridges/FuseBridge/FuseBridge'
 import { FuseBridgeTx } from '../../src/bridges/FuseBridge/FuseBridgeTx'
 import { StargateBridgeTx } from '../../src/bridges/stargate/StargateBridgeTx'
@@ -18,6 +17,7 @@ import { ClientManager } from '../../src/utils/ClientManager'
 import { getAlchemyRpcUrl } from '../../src/utils/alchemy'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'
 import { makeSuite } from '../testUtils/makeSuite'
+import { mockWaitForBridgeToFinish } from '../testUtils/mock'
 
 /* ======== Constants arbitrum ======== */
 
@@ -357,10 +357,3 @@ makeSuite('GraphExecutor', () => {
 		})
 	})
 })
-
-function mockWaitForBridgeToFinish() {
-	return Promise.resolve({
-		srcTxHash: '0x1234567890abcdef1234567890abcdef12345678',
-		dstTxHash: '0xabcdef1234567890abcdef1234567890abcdef12',
-	} as Message)
-}
