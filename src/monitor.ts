@@ -1,12 +1,14 @@
+import { arbitrum } from 'viem/chains'
 import {
 	ArbitrageOpportunity,
 	getArbitrageOpportunities,
 } from './getArbitrageOpportunities'
 import { TgOpportunityNotifier } from './modules/notification/TgOpportunityNotifier'
+import { ClientManager } from './utils/ClientManager'
 import { runFuncWithDelay } from './utils/polling'
 
 const MIN_DIFFERENCE_TO_NOTIFY = 2
-const MIN_PROFIT_TO_NOTIFY = 5
+const MIN_PROFIT_TO_NOTIFY = 2
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000
 
@@ -26,6 +28,7 @@ const opportunityRecords = new Map<ID, ArbitrageOpportunityRecord>()
 runFuncWithDelay(monitor, POLL_INTERVAL_MS).catch(console.error)
 
 async function monitor() {
+	ClientManager.useCustomRpcUrl(arbitrum.id)
 	const opportunities = await getArbitrageOpportunities()
 
 	opportunityRecords.forEach((record) => {
