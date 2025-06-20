@@ -4,7 +4,6 @@ import { zeroAddress } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { isSameAddress } from '../../utils/common'
-import { isValidUrl } from '../../utils/validation'
 import { STARGATE_CHAINS } from './dumped/chains'
 import { Stargate } from './Stargate'
 
@@ -16,8 +15,8 @@ export class StargateAPIError extends Error {
 	}
 }
 
-const STARGATE_API_URL = 'https://mainnet.stargate-api.com/v1'
-const STARGATE_OLD_API_URL = 'https://stargate.finance/api/v1'
+const STARGATE_API_URL = new URL('https://mainnet.stargate-api.com/v1')
+const STARGATE_OLD_API_URL = new URL('https://stargate.finance/api/v1')
 
 type RequestId = string
 
@@ -34,10 +33,8 @@ export class StargateAPI {
 		if (cachedMetadata) return cachedMetadata
 
 		try {
-			const apiUrl = this.getApiUrl()
-
 			const response = await axios.get<Response>(
-				`${apiUrl}/metadata?version=v2`,
+				`${STARGATE_API_URL}/metadata?version=v2`,
 			)
 
 			const metadata = response.data.data.v2
@@ -244,15 +241,5 @@ export class StargateAPI {
 		) {
 			throw new StargateAPIError(`Invalid Stargate chainKey: ${chainKey}`)
 		}
-	}
-
-	private static getApiUrl(): string {
-		const apiUrl = STARGATE_API_URL
-
-		if (!apiUrl || !isValidUrl(apiUrl)) {
-			throw new StargateAPIError('STARGATE_API_URL is not a valid URL')
-		}
-
-		return apiUrl
 	}
 }
