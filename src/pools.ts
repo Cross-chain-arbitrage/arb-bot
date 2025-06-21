@@ -48,10 +48,10 @@ export const poolsByChain: Record<
 			address: '0x3e014A9EF5F45454d9BdDb15741ce8A04e7d96F5',
 		},
 		// Low liquidity
-		// {
-		// 	type: PoolType.UNIV3,
-		// 	address: '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0',
-		// },
+		{
+			type: PoolType.UNIV3,
+			address: '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0',
+		},
 		{
 			type: PoolType.UNIV3,
 			address: '0xc36a310BD93E2927452de563fAAA89A86822a21f',
