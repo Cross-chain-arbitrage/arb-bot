@@ -41,7 +41,14 @@ export class GraphOptimizer {
 			)
 		}
 
-		const algorithmResults = await Promise.all(algorithmResultsPromises)
+		const algorithmResultsSettled = await Promise.allSettled(
+			algorithmResultsPromises,
+		)
+
+		// TODO: add logging for failed paths
+		const algorithmResults = algorithmResultsSettled
+			.filter((result) => result.status === 'fulfilled')
+			.map((result) => result.value)
 
 		const maxProfitPath = algorithmResults.reduce((max, current) => {
 			if (max === null) {
