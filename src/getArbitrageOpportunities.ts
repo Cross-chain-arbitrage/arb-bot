@@ -1,4 +1,4 @@
-import { Address, isAddress, withRetry } from 'viem'
+import { Address, ContractFunctionExecutionError, isAddress } from 'viem'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { findArbOpportunity } from './optimize'
@@ -258,10 +258,24 @@ async function findArbitrageOpportunities(
 				}
 			}
 		} catch (error) {
-			console.error(
-				`Error calculating profit for pool ${pool.address}:${pool.chainName}`,
-				error,
-			)
+			if (error instanceof ContractFunctionExecutionError) {
+				const shortErr = new ContractFunctionExecutionError(
+					error.cause,
+					{
+						abi: [],
+						args: error.args,
+						contractAddress: error.contractAddress,
+						functionName: error.functionName,
+						sender: error.sender,
+					},
+				)
+				console.error(shortErr.shortMessage)
+			} else {
+				console.error(
+					`Error calculating profit for pool ${pool.address}:${pool.chainName}`,
+					error,
+				)
+			}
 		}
 
 		opportunities.push(opportunity)
