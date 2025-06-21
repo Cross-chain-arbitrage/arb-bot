@@ -7,6 +7,7 @@ import { ClientManager } from '../utils/ClientManager'
 import { runFnWithRetry, shortenAddress } from '../utils/common'
 import logger from '../utils/logger'
 import {
+	ActionType,
 	Edge,
 	FuseBridgeEdge,
 	StargateBridgeEdge,

@@ -2,6 +2,7 @@ import { arbitrum, fuse, hemi } from 'viem/chains'
 import { Pool } from '../../src/dex/Pool'
 import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { GraphBuilder, GraphBuilderError } from '../../src/graphs/GraphBuilder'
+import { ActionType } from '../../src/graphs/primitives/Edge'
 import { WrappedNative } from '../../src/primitives/tokens/WrappedNative'
 import { makeSuite } from '../testUtils/makeSuite'
 
@@ -156,11 +157,15 @@ makeSuite('GraphBuilder', () => {
 			expect(wrapEdges.length).toBe(1)
 			expect(unwrapEdges.length).toBe(1)
 
-			expect(wrapEdges[0].from).toBe(wrappedNativeCurrencies[0].native.id)
-			expect(wrapEdges[0].to).toBe(wrappedNativeCurrencies[0].id)
+			expect(wrapEdges[0].from.id).toBe(
+				wrappedNativeCurrencies[0].native.id,
+			)
+			expect(wrapEdges[0].to.id).toBe(wrappedNativeCurrencies[0].id)
 
-			expect(unwrapEdges[0].from).toBe(wrappedNativeCurrencies[0].id)
-			expect(unwrapEdges[0].to).toBe(wrappedNativeCurrencies[0].native.id)
+			expect(unwrapEdges[0].from.id).toBe(wrappedNativeCurrencies[0].id)
+			expect(unwrapEdges[0].to.id).toBe(
+				wrappedNativeCurrencies[0].native.id,
+			)
 		})
 
 		it('MUST add Wrapped Native Currencies for Multiple Chain', async () => {

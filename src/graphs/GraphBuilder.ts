@@ -46,8 +46,8 @@ export interface GraphBuildConfig {
 	stargateConfig?: StargateConfig
 	/** The slippage tolerance for the swaps */
 	slippage?: number
-	/** cache for calling getRate on swap edges */
-	swapCacheTTL?: number
+	/** cache for calling getRate on edges */
+	edgeCacheTTL?: number
 }
 
 /**
@@ -81,7 +81,7 @@ export class GraphBuilder {
 			throw new GraphBuilderError('No pools provided')
 		}
 
-		const graph = new Graph()
+		const graph = new Graph(buildConfig.edgeCacheTTL)
 
 		/* ================ Setup Pools (With Tokens) ================ */
 

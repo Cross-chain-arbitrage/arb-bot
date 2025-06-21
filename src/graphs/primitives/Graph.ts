@@ -15,11 +15,11 @@ export class Graph {
 	edges: Map<EdgeId, Edge> = new Map()
 	nodes: Map<GraphNodeId, GraphNode> = new Map()
 
-	private swapCache: TTLCache<string, GetRateResult>
+	private edgeCache: TTLCache<string, GetRateResult>
 
-	constructor(swapCacheTTL: number = 1000 * 1) {
-		this.swapCache = new TTLCache<string, GetRateResult>({
-			ttl: swapCacheTTL,
+	constructor(edgeCacheTTL: number = 1000 * 1) {
+		this.edgeCache = new TTLCache<string, GetRateResult>({
+			ttl: edgeCacheTTL,
 		})
 	}
 
@@ -70,16 +70,17 @@ export class Graph {
 		}
 
 		this.addEdge(new SwapEdge(from, to, pool, this))
+		this.addEdge(new SwapEdge(to, from, pool, this))
 
 		// this._addDexPoolEdge(pool, slippage)
 	}
 
 	getCachedEdgeRate(edgeId: string) {
-		return this.swapCache.get(edgeId)
+		return this.edgeCache.get(edgeId)
 	}
 
 	cacheEdgeRate(edgeId: string, rate: GetRateResult) {
-		this.swapCache.set(edgeId, rate)
+		this.edgeCache.set(edgeId, rate)
 	}
 
 	addNode(node: GraphNode) {

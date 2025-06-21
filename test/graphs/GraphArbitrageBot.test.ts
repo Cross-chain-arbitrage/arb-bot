@@ -4,8 +4,7 @@ import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { GraphArbitrageBot } from '../../src/graphs/GraphArbitrageBot'
 import { GraphBuilder } from '../../src/graphs/GraphBuilder'
 import { GraphExecutor } from '../../src/graphs/GraphExecutor'
-
-import { Edge } from '../../src/graphs/primitives/Edge'
+import { ActionType, Edge } from '../../src/graphs/primitives/Edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
 import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
@@ -46,7 +45,7 @@ makeSuite('GraphArbitrageBot', () => {
 
 		graph = await GraphBuilder.build({
 			pools: [wethWbtcFuse, wethWbtcArb],
-			swapCacheTTL: 50,
+			edgeCacheTTL: 1,
 		})
 	})
 
@@ -75,7 +74,7 @@ makeSuite('GraphArbitrageBot', () => {
 				const from = await TokenUtils.fromId(edge.from.id)
 
 				if (from.symbol === 'WETH' && from.chainId === fuse.id) {
-					edge.getRate = (amountIn: bigint) => {
+					edge.getRateWithoutCache = (amountIn: bigint) => {
 						return Promise.resolve({
 							amountOut: amountIn / 100n,
 							rate: 100,
@@ -85,7 +84,7 @@ makeSuite('GraphArbitrageBot', () => {
 				}
 
 				if (from.symbol === 'WBTC' && from.chainId === fuse.id) {
-					edge.getRate = (amountIn: bigint) => {
+					edge.getRateWithoutCache = (amountIn: bigint) => {
 						return Promise.resolve({
 							amountOut: amountIn * 100n,
 							rate: swapWbtcToWethOnFuseRateMock(),
@@ -95,7 +94,7 @@ makeSuite('GraphArbitrageBot', () => {
 				}
 
 				if (from.symbol === 'WETH' && from.chainId === arbitrum.id) {
-					edge.getRate = (amountIn: bigint) => {
+					edge.getRateWithoutCache = (amountIn: bigint) => {
 						return Promise.resolve({
 							amountOut: amountIn / 10n,
 							rate: swapWethToWbtcOnArbitrumRateMock(),
@@ -105,7 +104,7 @@ makeSuite('GraphArbitrageBot', () => {
 				}
 
 				if (from.symbol === 'WBTC' && from.chainId === arbitrum.id) {
-					edge.getRate = (amountIn: bigint) => {
+					edge.getRateWithoutCache = (amountIn: bigint) => {
 						return Promise.resolve({
 							amountOut: amountIn * 10n,
 							rate: -10,
@@ -115,7 +114,7 @@ makeSuite('GraphArbitrageBot', () => {
 				}
 			}
 
-			edge.getRate = (amountIn: bigint) => {
+			edge.getRateWithoutCache = (amountIn: bigint) => {
 				return Promise.resolve({ amountOut: amountIn, rate: 0 })
 			}
 		}
@@ -150,6 +149,8 @@ makeSuite('GraphArbitrageBot', () => {
 	})
 
 	it('should find and execute arbitrage', async () => {
+		await wait(0) // wait for edge cache to be expired
+
 		const loggerInfoFn = jest
 			.spyOn(logger, 'info')
 			.mockImplementation(() => {})

@@ -19,7 +19,8 @@ makeSuite('Path optimization in Graph', () => {
 
 			const nodes = Array.from(graph.nodes.values())
 			const startToken = nodes.find(
-				(node) => node.isNative() && node.chainId === arbitrum.id,
+				(node) =>
+					node.symbol === 'WETH' && node.chainId === arbitrum.id,
 			)!
 
 			expect(startToken).toBeDefined()
@@ -32,6 +33,8 @@ makeSuite('Path optimization in Graph', () => {
 				graph,
 				4,
 			)
+
+			console.log('opportunity', opportunity)
 
 			if (!opportunity) throw new Error('No path found')
 
@@ -61,7 +64,8 @@ makeSuite('Path optimization in Graph', () => {
 
 			const nodes = Array.from(graph.nodes.values())
 			const startToken = nodes.find(
-				(node) => node.isNative() && node.chainId === arbitrum.id,
+				(node) =>
+					node.symbol === 'WETH' && node.chainId === arbitrum.id,
 			)!
 
 			expect(startToken).toBeDefined()
@@ -105,7 +109,8 @@ makeSuite('Path optimization in Graph', () => {
 
 			const nodes = Array.from(graph.nodes.values())
 			const startToken = nodes.find(
-				(node) => node.isNative() && node.chainId === arbitrum.id,
+				(node) =>
+					node.symbol === 'WETH' && node.chainId === arbitrum.id,
 			)!
 
 			expect(startToken).toBeDefined()

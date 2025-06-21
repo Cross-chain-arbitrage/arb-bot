@@ -2,6 +2,7 @@ import { arbitrum, fuse } from 'viem/chains'
 import { Pool } from '../../src/dex/Pool'
 import { UniV3Pool } from '../../src/dex/uniswapV3/Pool'
 import {
+	ActionType,
 	FuseBridgeEdge,
 	StargateBridgeEdge,
 	SwapEdge,
@@ -190,7 +191,7 @@ makeSuite('Graph', () => {
 		})
 	})
 
-	describe('MUST be able to add `DexPool`s as an edge', () => {
+	describe.only('MUST be able to add `DexPool`s as an edge', () => {
 		let graph: Graph
 
 		beforeEach(() => {

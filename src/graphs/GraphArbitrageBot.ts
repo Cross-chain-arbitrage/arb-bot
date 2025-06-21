@@ -13,7 +13,7 @@ import logger from '../utils/logger'
 import { runFuncWithDelay } from '../utils/polling'
 import { GraphExecutor } from './GraphExecutor'
 import { GraphVisualizer } from './GraphVisualizer'
-import { Edge, SwapEdge } from './primitives/Edge'
+import { ActionType, Edge, SwapEdge } from './primitives/Edge'
 import { Graph } from './primitives/Graph'
 
 const DEFAULT_OPTIONS = {

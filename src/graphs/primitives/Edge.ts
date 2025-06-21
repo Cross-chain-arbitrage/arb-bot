@@ -4,6 +4,14 @@ import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { Graph } from './Graph'
 
+export enum ActionType {
+	SWAP = 'SWAP',
+	STARGATE_BRIDGE = 'STARGATE_BRIDGE',
+	FUSE_BRIDGE = 'FUSE_BRIDGE',
+	WRAP = 'WRAP',
+	UNWRAP = 'UNWRAP',
+}
+
 export abstract class Edge {
 	abstract id: EdgeId
 
