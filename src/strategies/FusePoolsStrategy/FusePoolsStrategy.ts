@@ -17,8 +17,8 @@ const MIN_PROFIT_USD = 2
 const GIVE_APPROVES = false // Mark 'false' to skip approval step
 
 const OPTIMIZATION_CONFIG: GraphOptimizerOptions = {
-	initialValueUSD: 200,
-	stepUSD: 120,
+	initialValueUSD: 100,
+	stepUSD: 100,
 	stepsAmount: 5,
 	maxPathLength: 6,
 }

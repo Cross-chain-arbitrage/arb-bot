@@ -48,7 +48,7 @@ export class GraphVisualizer {
 		// Vertical path format with italic actions
 		for (let i = 0; i < path.length; i++) {
 			const edge = path[i]
-			result += `${edge.from.toString()}\n│ <i>${edge.actionType}</i>\n`
+			result += `${edge.from.toString()}\n    │ ${edge.actionType.toLowerCase()}\n`
 		}
 		// Add the last node
 		result += `${path[path.length - 1].to.toString()}\n\n`
