@@ -2,21 +2,26 @@ import {
 	Chain,
 	createPublicClient,
 	createWalletClient,
+	fallback,
 	http,
 	PublicClient,
+	Transport,
 	WalletClient,
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
 
-import { arbitrum, bsc, mainnet } from 'viem/chains'
+import { arbitrum, bsc, lightlinkPhoenix, mainnet, story } from 'viem/chains'
 import { getAlchemyRpcUrl } from './alchemy'
 import { getPrivateKey } from './common'
 
-const CUSTOM_RPC_URLS = {
+const CUSTOM_RPC_URLS: Record<number, string> = {
 	[mainnet.id]: getAlchemyRpcUrl(mainnet.id),
 	[arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
 	[bsc.id]: getAlchemyRpcUrl(bsc.id),
+	[story.id]: getAlchemyRpcUrl(story.id),
+	[lightlinkPhoenix.id]: `https://endpoints.omniatech.io/v1/lightlink/phoenix/bcd6910e361449d088886a7bfe37586c`,
+	// [hemi.id]: `https://endpoints.omniatech.io/v1/hemi/mainnet/0292053309264c18932589701ab5020a`,
 } as const
 
 export class ClientManagerError extends Error {
@@ -28,6 +33,7 @@ export class ClientManagerError extends Error {
 }
 
 export class ClientManager {
+	static requestCounter = 0
 	private static clients: Map<number, PublicClient> = new Map()
 	private static _customRpcUrls: Map<number, URL> = new Map()
 
@@ -73,13 +79,42 @@ export class ClientManager {
 		const chain = this.findChainById(chainId)
 
 		// Use custom rpc url if set
-		const rpcUrl = this._customRpcUrls.get(chainId)?.toString()
+		// const setRpcUrl = this._customRpcUrls.get(chainId)?.toString()
+
+		// const customRpcUrlFromCollection = this.getCustomRpcUrl(chainId)
+
+		const defaultRpcUrl =
+			chainId === arbitrum.id
+				? getAlchemyRpcUrl(arbitrum.id)
+				: chain.rpcUrls.default.http[0]
+
+		const transports: Transport[] = [
+			http(defaultRpcUrl, {
+				retryCount: 3,
+				retryDelay: 500,
+				timeout: 8_000,
+				batch: {
+					batchSize: 1024,
+					wait: 50,
+				},
+				// onFetchRequest: (request) => {
+				// 	console.log('request', request.url)
+				// },
+				// onFetchResponse: (response) => {
+				// 	console.log('response', response.status)
+				// },
+			}),
+		]
+
+		// if (setRpcUrl) transports.push(http(setRpcUrl, { retryCount: 3 }))
+		// if (customRpcUrlFromCollection)
+		// transports.push(http(customRpcUrlFromCollection, { retryCount: 3 }))
 
 		// Create new client
 		const client = createPublicClient({
 			chain,
 			batch,
-			transport: http(rpcUrl),
+			transport: fallback(transports),
 		})
 
 		//TODO: check why use type assertion
@@ -115,7 +150,7 @@ export class ClientManager {
 	}
 
 	static getCustomRpcUrl(chainId: number): string | undefined {
-		return CUSTOM_RPC_URLS[chainId as keyof typeof CUSTOM_RPC_URLS]
+		return CUSTOM_RPC_URLS[chainId]
 	}
 
 	static findChainById(chainId: number): Chain {
