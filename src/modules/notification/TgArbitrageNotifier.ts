@@ -1,3 +1,4 @@
+import { GraphVisualizer } from '../../graphs/GraphVisualizer'
 import { getEnvSafe } from '../../utils/common'
 import { TgBaseNotifier } from './TgBaseNotifier'
 
@@ -10,24 +11,62 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 
 	async sendArbitrageStart(
 		name: string,
-		path: GraphArbitrageOpportunity,
+		arbitrageOpportunity: GraphArbitrageOpportunity,
 		startTokenPrice: number,
 	) {
-		// TODO: implement pretty path
-		await this.sendMessage(`${name}: start arbitrage`)
+		const prettyOpportunity = GraphVisualizer.getPrettyOpportunity(
+			arbitrageOpportunity,
+			startTokenPrice,
+		)
+		await this.sendMessage(`${name}:\n\n${prettyOpportunity}`)
 	}
 
 	async sendArbitrageEnd(
 		name: string,
-		actualAmountOut: string,
-		actualProfitUsd: number,
+		actualAmountOut: bigint,
+		arbitrageOpportunity: GraphArbitrageOpportunity,
+		startTokenPrice: number,
 	) {
-		await this.sendMessage(
-			`${name}:\nArbitrage is finished, amount out: ${actualAmountOut}, profit: $${actualProfitUsd}`,
+		const startToken = arbitrageOpportunity.path[0]?.from
+
+		const startAmountFormatted = startToken.formatUnits(
+			arbitrageOpportunity.startAmount,
 		)
+		const actualAmountOutFormatted = startToken.formatUnits(actualAmountOut)
+		const expectedAmountOutFormatted = startToken.formatUnits(
+			arbitrageOpportunity.endAmount,
+		)
+		const profitAmount = actualAmountOut - arbitrageOpportunity.startAmount
+		const profitAmountFormatted = startToken.formatUnits(profitAmount)
+		const profitPercentage =
+			(Number(profitAmount) / Number(arbitrageOpportunity.startAmount)) *
+			100
+		const profitUsd = Number(profitAmountFormatted) * startTokenPrice
+
+		// Calculate expected vs actual comparison
+		const expectedProfitAmount =
+			arbitrageOpportunity.endAmount - arbitrageOpportunity.startAmount
+		const expectedProfitAmountFormatted =
+			startToken.formatUnits(expectedProfitAmount)
+		const expectedProfitUsd =
+			Number(expectedProfitAmountFormatted) * startTokenPrice
+
+		const message =
+			`${name}:\n\n` +
+			`✅ <b>Arbitrage Completed!</b>\n\n` +
+			`💰 <b>Results</b>\n` +
+			`Input: ${startAmountFormatted} ${startToken.toString()}\n` +
+			`Output: ${actualAmountOutFormatted} ${startToken.toString()}\n` +
+			`Profit: ${profitAmountFormatted} ${startToken.symbol} (${profitPercentage.toFixed(2)}%)\n` +
+			`Profit USD: $${profitUsd.toFixed(2)}\n\n` +
+			`📊 <b>Expected</b>\n` +
+			`Output: ${expectedAmountOutFormatted} ${startToken.symbol} ($${expectedProfitUsd.toFixed(2)})\n` +
+			`Profit USD: $${expectedProfitUsd.toFixed(2)}`
+
+		await this.sendMessage(message)
 	}
 
 	async sendArbitrageError(name: string, error: string) {
-		await this.sendMessage(`${name}:\nArbitrage error: ${error}`)
+		await this.sendMessage(`${name}:\n\n❌<b>Arbitrage error:</b> ${error}`)
 	}
 }

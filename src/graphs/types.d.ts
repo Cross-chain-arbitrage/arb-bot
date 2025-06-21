@@ -1,6 +1,7 @@
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
+import { Edge } from './primitives/Edge'
 
 declare global {
 	type GraphNode = Token | NativeCurrency | WrappedNative
@@ -13,7 +14,7 @@ declare global {
 	type GraphNodeId = TokenId
 
 	interface GraphArbitrageOpportunity {
-		path: EdgeWithRate[]
+		path: Edge[]
 		startAmount: bigint
 		endAmount: bigint
 		profitAmount: bigint

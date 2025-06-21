@@ -77,7 +77,6 @@ export class GraphArbitrageBot {
 			this.graph,
 		)
 
-		// Создаем скрытые ссылки с помощью ANSI escape последовательностей
 		const viewLink = `\x1b]8;;${view}\x1b\\📊 View Graph\x1b]8;;\x1b\\`
 		const editLink = `\x1b]8;;${edit}\x1b\\✏️ Edit Graph\x1b]8;;\x1b\\`
 
@@ -124,19 +123,19 @@ export class GraphArbitrageBot {
 		}
 	}
 
-	async executeArbitrage(path: GraphArbitrageOpportunity) {
+	async executeArbitrage(opportunity: GraphArbitrageOpportunity) {
 		const expectedProfitUsd =
-			Number(this.startToken.formatUnits(path.profitAmount)) *
+			Number(this.startToken.formatUnits(opportunity.profitAmount)) *
 			this.startTokenPrice()
 
 		try {
 			logger.info(
-				`Starting arbitrage, start amount: ${this.startToken.formatUnits(path.startAmount)}, expected profit: $${expectedProfitUsd}, expected amountOut: ${this.startToken.formatUnits(path.endAmount)}`,
+				`Starting arbitrage, start amount: ${this.startToken.formatUnits(opportunity.startAmount)}, expected profit: $${expectedProfitUsd}, expected amountOut: ${this.startToken.formatUnits(opportunity.endAmount)}`,
 			)
-			this.notifyAboutArbStart(path)
+			this.notifyAboutArbStart(opportunity)
 
 			const { actualAmountOut, actualProfitUsd } =
-				await this.execute(path)
+				await this.execute(opportunity)
 
 			const readableActualAmountOut =
 				this.startToken.formatUnits(actualAmountOut)
@@ -144,7 +143,7 @@ export class GraphArbitrageBot {
 			logger.info(
 				`Arbitrage is finished, amount out: ${readableActualAmountOut}, profit: $${actualProfitUsd}`,
 			)
-			this.notifyAboutArbEnd(readableActualAmountOut, actualProfitUsd)
+			this.notifyAboutArbEnd(actualAmountOut, opportunity)
 		} catch (err) {
 			if (err instanceof ContractFunctionExecutionError) {
 				const shortenedError = new ContractFunctionExecutionError(
@@ -203,13 +202,14 @@ export class GraphArbitrageBot {
 	}
 
 	private notifyAboutArbEnd(
-		actualAmountOut: string,
-		actualProfitUsd: number,
+		actualAmountOut: bigint,
+		opportunity: GraphArbitrageOpportunity,
 	) {
 		this.TgArbitrageNotifier.sendArbitrageEnd(
 			this.name,
 			actualAmountOut,
-			actualProfitUsd,
+			opportunity,
+			this.startTokenPrice(),
 		).catch((err) => {
 			logger.error(err, 'Error sending path to telegram')
 		})
