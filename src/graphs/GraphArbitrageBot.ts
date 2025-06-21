@@ -237,10 +237,10 @@ export class GraphArbitrageBot {
 			retryExecuteEdgeCount: this.retryExecuteEdgeCount,
 		})
 
-		const actualProfitUsd =
-			(Number(this.startToken.formatUnits(startAmount)) -
-				Number(this.startToken.formatUnits(actualAmountOut))) *
-			this.startTokenPrice()
+		const amountOut = Number(this.startToken.formatUnits(actualAmountOut))
+		const amountIn = Number(this.startToken.formatUnits(path.startAmount))
+
+		const actualProfitUsd = (amountOut - amountIn) * this.startTokenPrice()
 
 		this.isArbitrageExecuting = false
 
