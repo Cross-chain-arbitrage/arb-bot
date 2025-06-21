@@ -2,8 +2,9 @@ import { arbitrum, fuse, hemi } from 'viem/chains'
 
 import { Stargate } from '../../src/bridges/stargate/Stargate'
 import { StargateBridgeTx } from '../../src/bridges/stargate/StargateBridgeTx'
-import { Graph } from '../../src/graphs/Graph'
 import { GraphExecutor } from '../../src/graphs/GraphExecutor'
+import { StargateBridgeEdge } from '../../src/graphs/primitives/Edge'
+import { Graph } from '../../src/graphs/primitives/Graph'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
@@ -173,13 +174,20 @@ makeSuite('Stargate', () => {
 				graph.addNode(ETH_HEMI)
 				graph.addNode(ETH_ARBITRUM)
 
-				graph.addStargateBridgeEdge(ETH_HEMI, ETH_ARBITRUM)
+				graph.addEdge(
+					new StargateBridgeEdge(ETH_HEMI, ETH_ARBITRUM, graph),
+				)
+
+				for (const [, edge] of graph.edges) {
+					edge.getRate = () =>
+						Promise.resolve({
+							amountOut: edge.from.parseUnits('1'),
+							rate: 1,
+						})
+				}
 
 				await GraphExecutor.execute({
-					path: [...graph.edges].map((edge) => ({
-						...edge,
-						rate: 1,
-					})),
+					path: [...graph.edges.values()],
 					startAmount: ETH_HEMI.parseUnits('1'),
 				})
 			})
@@ -199,7 +207,7 @@ makeSuite('Stargate', () => {
 						await setNativeBalance(wallet, recipient, amount * 2n)
 					} else {
 						// const balanceSlot = token.symbol === 'USDT' ? 4n : 8n
-						for (let i = 50; i < 100; i++) {
+						for (let i = 0; i < 100; i++) {
 							await setTokenBalance(
 								recipient,
 								token.address,
