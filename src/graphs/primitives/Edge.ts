@@ -21,17 +21,17 @@ export abstract class Edge {
 		readonly from: GraphNode,
 		readonly to: GraphNode,
 		readonly actionType: ActionType,
-		readonly graph: Graph,
+		readonly graph?: Graph,
 	) {}
 
 	async getRate(amountIn: bigint): Promise<GetRateResult> {
-		const cachedRate = this.graph.getCachedEdgeRate(this.id)
+		const cachedRate = this.graph?.getCachedEdgeRate(this.id)
 		if (cachedRate) return cachedRate
 
 		const rateResult = await this.getRateWithoutCache(amountIn)
 		this.lastRate = rateResult.rate
 
-		this.graph.cacheEdgeRate(this.id, rateResult)
+		this.graph?.cacheEdgeRate(this.id, rateResult)
 
 		return rateResult
 	}
