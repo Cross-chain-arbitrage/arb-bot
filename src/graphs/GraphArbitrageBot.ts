@@ -124,10 +124,6 @@ export class GraphArbitrageBot {
 	}
 
 	async executeArbitrage(opportunity: GraphArbitrageOpportunity) {
-		const expectedProfitUsd =
-			Number(this.startToken.formatUnits(opportunity.profitAmount)) *
-			this.startTokenPrice()
-
 		try {
 			const prettyOpportunity = GraphVisualizer.getPrettyOpportunity(
 				opportunity,
