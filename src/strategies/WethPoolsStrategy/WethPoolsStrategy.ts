@@ -2,15 +2,8 @@ import { arbitrum } from 'viem/chains'
 import { PoolUtils } from '../../dex/PoolUtils'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
-import { BaseStrategy, StrategyConfig } from '../BaseStrategy'
+import { Strategy, StrategyConfig } from '../Strategy'
 import { WETH_POOLS } from './wethPools'
-
-/* ============ Strategy ============ */
-class WethPoolsStrategy extends BaseStrategy {
-	constructor(config: StrategyConfig) {
-		super(config)
-	}
-}
 
 /* ============ Strategy Config ============ */
 
@@ -45,7 +38,7 @@ async function main() {
 			maxPathLength: 6,
 		},
 	}
-	const strategy = new WethPoolsStrategy(config)
+	const strategy = new Strategy(config)
 	await strategy.run()
 }
 

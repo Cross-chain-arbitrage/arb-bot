@@ -24,7 +24,7 @@ export interface StrategyConfig {
 	arbitrageTimeout: number
 }
 
-export abstract class BaseStrategy {
+export class Strategy {
 	constructor(private readonly config: StrategyConfig) {}
 
 	async run() {
