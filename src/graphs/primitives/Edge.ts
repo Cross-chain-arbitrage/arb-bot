@@ -25,13 +25,18 @@ export abstract class Edge {
 	) {}
 
 	async getRate(amountIn: bigint): Promise<GetRateResult> {
-		const cachedRate = this.graph?.getCachedEdgeRate(this.id)
+		const cachedRate = this.graph?.getCachedEdgeRate(
+			`${this.id}-${amountIn.toString()}`,
+		)
 		if (cachedRate) return cachedRate
 
 		const rateResult = await this.getRateWithoutCache(amountIn)
 		this.lastRate = rateResult.rate
 
-		this.graph?.cacheEdgeRate(this.id, rateResult)
+		this.graph?.cacheEdgeRate(
+			`${this.id}-${amountIn.toString()}`,
+			rateResult,
+		)
 
 		return rateResult
 	}
