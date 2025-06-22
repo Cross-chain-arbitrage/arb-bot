@@ -1,4 +1,3 @@
-import { GraphVisualizer } from '../../graphs/GraphVisualizer'
 import { getEnvSafe } from '../../utils/common'
 import { TgBaseNotifier } from './TgBaseNotifier'
 
@@ -9,15 +8,7 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 		super(messageThreadId)
 	}
 
-	async sendArbitrageStart(
-		name: string,
-		arbitrageOpportunity: GraphArbitrageOpportunity,
-		startTokenPrice: number,
-	) {
-		const prettyOpportunity = GraphVisualizer.getPrettyOpportunity(
-			arbitrageOpportunity,
-			startTokenPrice,
-		)
+	async sendArbitrageStart(name: string, prettyOpportunity: string) {
 		await this.sendMessage(`${name}:\n\n${prettyOpportunity}`)
 	}
 

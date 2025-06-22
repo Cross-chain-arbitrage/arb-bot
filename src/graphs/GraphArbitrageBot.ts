@@ -129,10 +129,12 @@ export class GraphArbitrageBot {
 			this.startTokenPrice()
 
 		try {
-			logger.info(
-				`Starting arbitrage, start amount: ${this.startToken.formatUnits(opportunity.startAmount)}, expected profit: $${expectedProfitUsd}, expected amountOut: ${this.startToken.formatUnits(opportunity.endAmount)}`,
+			const prettyOpportunity = GraphVisualizer.getPrettyOpportunity(
+				opportunity,
+				this.startTokenPrice(),
 			)
-			this.notifyAboutArbStart(opportunity)
+			logger.info(prettyOpportunity)
+			this.notifyAboutArbStart(prettyOpportunity)
 
 			const { actualAmountOut, actualProfitUsd } =
 				await this.execute(opportunity)
@@ -215,11 +217,10 @@ export class GraphArbitrageBot {
 		})
 	}
 
-	private notifyAboutArbStart(path: GraphArbitrageOpportunity) {
+	private notifyAboutArbStart(prettyOpportunity: string) {
 		this.TgArbitrageNotifier.sendArbitrageStart(
 			this.name,
-			path,
-			this.startTokenPrice(),
+			prettyOpportunity,
 		).catch((err) => {
 			logger.error(err, 'Error sending path to telegram')
 		})
