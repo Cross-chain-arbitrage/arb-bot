@@ -1,5 +1,6 @@
 import { Address, zeroAddress } from 'viem'
 import { ALGEBRA_FACTORY_ABI } from '../abi/algebra/algebraFactory'
+import { PoolData } from '../strategies/Strategy'
 import { ClientManager } from '../utils/ClientManager'
 import { AlgebraPool } from './algebra/Pool'
 import { PancakeV2Pool } from './pancakeV2/Pool'
@@ -37,6 +38,13 @@ export class PoolUtils {
 			default:
 				throw new Error('Unknown pool type')
 		}
+	}
+
+	static async createPools(pools: PoolData[]): Promise<Pool[]> {
+		const poolPromises = pools.map((pool) =>
+			PoolUtils.createPool(pool.address, pool.chainId, pool.type),
+		)
+		return Promise.all(poolPromises)
 	}
 
 	static async getPoolAddressFromFactory(

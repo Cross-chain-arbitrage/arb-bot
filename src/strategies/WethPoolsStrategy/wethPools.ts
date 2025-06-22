@@ -1,17 +1,13 @@
-import { Address } from 'viem'
-import { arbitrum, fuse, lightlinkPhoenix } from 'viem/chains'
+import { arbitrum, fuse, hemi, lightlinkPhoenix } from 'viem/chains'
 import { PoolType } from '../../dex/PoolUtils'
+import { PoolData } from '../Strategy'
 
-export const WETH_POOLS: {
-	address: Address
-	type: PoolType
-	chainId: number
-}[] = [
-	// {
-	// 	address: '0x9580D4519C9F27642e21085E763E761a74eF3735', // WETH/USDC
-	// 	type: PoolType.UNIV3,
-	// 	chainId: hemi.id,
-	// },
+export const WETH_POOLS: PoolData[] = [
+	{
+		address: '0x9580D4519C9F27642e21085E763E761a74eF3735', // WETH/USDC
+		type: PoolType.UNIV3,
+		chainId: hemi.id,
+	},
 	{
 		address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992', // WETH/WBTC
 		type: PoolType.ALGEBRA,

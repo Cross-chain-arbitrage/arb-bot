@@ -8,12 +8,6 @@ import { WETH_POOLS } from './wethPools'
 /* ============ Strategy Config ============ */
 
 async function main() {
-	const poolPromises = WETH_POOLS.map((pool) =>
-		PoolUtils.createPool(pool.address, pool.chainId, pool.type),
-	)
-
-	const pools = await Promise.all(poolPromises)
-
 	ClientManager.useCustomRpcUrl(arbitrum.id)
 
 	const config: StrategyConfig = {
@@ -24,7 +18,7 @@ async function main() {
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
 		graphBuildConfig: {
-			pools,
+			pools: await PoolUtils.createPools(WETH_POOLS),
 			stargateConfig: {
 				connectSecondaryChains: false,
 				baseChainId: arbitrum.id,
