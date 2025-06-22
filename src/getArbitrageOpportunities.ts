@@ -1,4 +1,4 @@
-import { Address, isAddress } from 'viem'
+import { Address, isAddress, withRetry } from 'viem'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { findArbOpportunity } from './optimize'
@@ -68,10 +68,25 @@ export async function getArbitrageOpportunities(): Promise<
 	// const priceUSDT = 1
 	// const priceUSDC = 1
 
-	const priceBTC = await GeckoTerminalAPI.getTokenPriceBTC()
-	const priceETH = await GeckoTerminalAPI.getTokenPriceETH()
-	const priceFUSE = await GeckoTerminalAPI.getTokenPrice(
-		'0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
+	const retryOptions = {
+		retryCount: 3,
+		delay: 1000,
+	}
+
+	const priceBTC = await withRetry(
+		() => GeckoTerminalAPI.getTokenPriceBTC(),
+		retryOptions,
+	)
+	const priceETH = await withRetry(
+		() => GeckoTerminalAPI.getTokenPriceETH(),
+		retryOptions,
+	)
+	const priceFUSE = await withRetry(
+		() =>
+			GeckoTerminalAPI.getTokenPrice(
+				'0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
+			),
+		retryOptions,
 	)
 
 	console.log('\npriceBTC', priceBTC)
