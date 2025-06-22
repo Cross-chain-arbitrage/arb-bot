@@ -120,6 +120,8 @@ export class GraphArbitrageBot {
 			} else {
 				logger.error(err, 'Error finding arbitrage')
 			}
+
+			return null
 		}
 	}
 

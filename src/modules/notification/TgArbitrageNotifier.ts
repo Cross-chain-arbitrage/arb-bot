@@ -45,11 +45,11 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 		const message =
 			`${name}:\n\n` +
 			`✅ <b>Arbitrage Completed!</b>\n\n` +
+			`Profit USD: $${profitUsd.toFixed(2)}\n\n` +
 			`💰 <b>Results</b>\n` +
 			`Input: ${startAmountFormatted} ${startToken.toString()}\n` +
 			`Output: ${actualAmountOutFormatted} ${startToken.toString()}\n` +
-			`Profit: ${profitAmountFormatted} ${startToken.symbol} (${profitPercentage.toFixed(2)}%)\n` +
-			`Profit USD: $${profitUsd.toFixed(2)}\n\n` +
+			`Profit: ${profitAmountFormatted} ${startToken.symbol} (${profitPercentage.toFixed(2)}%)\n\n` +
 			`📊 <b>Expected</b>\n` +
 			`Output: ${expectedAmountOutFormatted} ${startToken.symbol} ($${expectedProfitUsd.toFixed(2)})\n` +
 			`Profit USD: $${expectedProfitUsd.toFixed(2)}`

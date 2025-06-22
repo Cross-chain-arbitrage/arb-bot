@@ -30,6 +30,8 @@ export class GraphVisualizer {
 
 		let result = `🔄 <b>Arbitrage Opportunity Found!</b> 🔄\n\n`
 
+		result += `Profit USD: $${(Number(profitAmountFormatted) * startTokenPriceUsd).toFixed(2)}\n\n`
+
 		// Path summary
 		result += `📊 <b>Path Summary</b>\n`
 		result += `Start: ${startAmountFormatted} ${startToken.toString()}\n`
@@ -39,8 +41,7 @@ export class GraphVisualizer {
 		// Profit details
 		result += `💰 <b>Profit Analysis</b>\n`
 		result += `Profit: ${profitAmountFormatted} ${startToken.symbol}\n`
-		result += `Profit %: ${profitPercentage.toFixed(2)}%\n`
-		result += `Profit USD: $${(Number(profitAmountFormatted) * startTokenPriceUsd).toFixed(2)}\n\n`
+		result += `Profit %: ${profitPercentage.toFixed(2)}%\n\n`
 
 		// Detailed path
 		result += `🛣️ <b>Arbitrage Path</b>\n`
