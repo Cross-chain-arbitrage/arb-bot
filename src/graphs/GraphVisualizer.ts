@@ -40,7 +40,7 @@ export class GraphVisualizer {
 		result += `💰 <b>Profit Analysis</b>\n`
 		result += `Profit: ${profitAmountFormatted} ${startToken.symbol}\n`
 		result += `Profit %: ${profitPercentage.toFixed(2)}%\n`
-		result += `Profit USD: $${(Number(profitAmount) * startTokenPriceUsd).toFixed(2)}\n\n`
+		result += `Profit USD: $${(Number(profitAmountFormatted) * startTokenPriceUsd).toFixed(2)}\n\n`
 
 		// Detailed path
 		result += `🛣️ <b>Arbitrage Path</b>\n`

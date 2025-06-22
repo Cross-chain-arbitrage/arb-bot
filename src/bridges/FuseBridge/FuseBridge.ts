@@ -102,6 +102,11 @@ export class FuseBridge {
 			address: zeroAddress,
 		},
 		{
+			chainId: fuse.id,
+			symbol: 'WFUSE',
+			address: '0x0BE9e53fd7EDaC9F859882AfdDa116645287C629',
+		},
+		{
 			chainId: bsc.id,
 			symbol: 'FUSE',
 			address: '0x5857c96dae9cf8511b08cb07f85753c472d36ea3',

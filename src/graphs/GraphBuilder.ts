@@ -278,6 +278,45 @@ export class GraphBuilder {
 
 		logger.info(`Found ${assetGroups.size} asset group(s)`)
 
+		// Handle FUSE tokens specially
+		const fuseAssets = assetGroups.get('FUSE')
+		const wfuseAssets = assetGroups.get('WFUSE')
+
+		if (fuseAssets && wfuseAssets) {
+			const wfuseToken = Array.from(wfuseAssets)[0] // Only one WFUSE token
+			const fuseOnOtherChains = Array.from(fuseAssets).filter(
+				(token) => token.chainId !== fuse.id,
+			)
+			const nativeFuseOnFuse = Array.from(fuseAssets).find(
+				(token) => token.chainId === fuse.id,
+			)
+
+			// FUSE from other chains → WFUSE on Fuse
+			for (const fuseToken of fuseOnOtherChains) {
+				graph.addEdge(new FuseBridgeEdge(fuseToken, wfuseToken, graph))
+				logger.info(
+					`Added bridge: ${fuseToken.toString()} --> ${wfuseToken.toString()}`,
+				)
+			}
+
+			// Native FUSE on Fuse → FUSE on other chains
+			if (nativeFuseOnFuse) {
+				for (const fuseToken of fuseOnOtherChains) {
+					graph.addEdge(
+						new FuseBridgeEdge(nativeFuseOnFuse, fuseToken, graph),
+					)
+					logger.info(
+						`Added bridge: ${nativeFuseOnFuse.toString()} --> ${fuseToken.toString()}`,
+					)
+				}
+			}
+
+			// Remove FUSE and WFUSE from regular processing
+			assetGroups.delete('FUSE')
+			assetGroups.delete('WFUSE')
+		}
+
+		// Handle other tokens with original logic
 		for (const assets of assetGroups.values()) {
 			const tokens = Array.from(assets)
 
@@ -285,7 +324,6 @@ export class GraphBuilder {
 				(token) => token.chainId === fuse.id,
 			)
 
-			// If there is no Token on Fuse, skip
 			if (!tokenOnFuse) {
 				continue
 			}
@@ -294,7 +332,6 @@ export class GraphBuilder {
 				if (token.chainId === fuse.id) continue
 
 				graph.addEdge(new FuseBridgeEdge(token, tokenOnFuse, graph))
-
 				graph.addEdge(new FuseBridgeEdge(tokenOnFuse, token, graph))
 			}
 
