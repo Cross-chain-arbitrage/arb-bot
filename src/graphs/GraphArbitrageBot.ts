@@ -238,7 +238,7 @@ export class GraphArbitrageBot {
 		})
 
 		const amountOut = Number(this.startToken.formatUnits(actualAmountOut))
-		const amountIn = Number(this.startToken.formatUnits(path.startAmount))
+		const amountIn = Number(this.startToken.formatUnits(startAmount))
 
 		const actualProfitUsd = (amountOut - amountIn) * this.startTokenPrice()
 
