@@ -31,21 +31,36 @@ export async function runFnWithRetry<T>(
 	fn: () => Promise<T>,
 	maxRetries: number,
 ): Promise<T> {
-	let lastError: Error
+	const errors: Error[] = []
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
 			return await fn()
 		} catch (error) {
-			lastError = error as Error
+			const currentError = error as Error
+			errors.push(currentError)
 
 			logger.warn(
-				`Attempt ${fn.name} ${attempt}/${maxRetries} failed, error message: ${lastError.message}`,
+				`Attempt ${attempt}/${maxRetries} failed:`,
+				currentError,
 			)
+
+			if (attempt === maxRetries) {
+				const errorSummary = errors
+					.map((err, index) => `Attempt ${index + 1}: ${err.message}`)
+					.join('\n')
+
+				const finalError = new Error(
+					`Function failed after ${maxRetries} attempts:\n${errorSummary}`,
+				)
+				finalError.name = 'RetryError'
+				throw finalError
+			}
 		}
 	}
 
-	throw lastError!
+	// This should never be reached, but TypeScript requires it
+	throw new Error('Unexpected error in retry function')
 }
 
 export function padAddressToBytes32(address: Address): Hex {
