@@ -1,4 +1,9 @@
-import { Address, ContractFunctionExecutionError, isAddress } from 'viem'
+import {
+	Address,
+	ContractFunctionExecutionError,
+	isAddress,
+	withRetry,
+} from 'viem'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
 import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { findArbOpportunity } from './optimize'
