@@ -101,12 +101,7 @@ export class ClientManager {
 		const client = createPublicClient({
 			chain,
 			batch,
-			transport: fallback(transports, {
-				shouldThrow: (error) => {
-					console.log('error', error)
-					return false
-				},
-			}),
+			transport: fallback(transports, {}),
 		})
 
 		//TODO: check why use type assertion
