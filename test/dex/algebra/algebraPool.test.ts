@@ -6,7 +6,7 @@ import {
 	WalletClient,
 } from 'viem'
 import { fuse } from 'viem/chains'
-import { AlgebraPool } from '../../../src/dex/algebra/Pool'
+import { AlgebraPool } from '../../../src/dex/pools/AlgebraPool'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import {
 	setNativeBalance,

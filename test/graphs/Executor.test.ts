@@ -4,9 +4,10 @@ import { arbitrum, fuse } from 'viem/chains'
 import { FuseBridge } from '../../src/bridges/FuseBridge/FuseBridge'
 import { FuseBridgeTx } from '../../src/bridges/FuseBridge/FuseBridgeTx'
 import { StargateBridgeTx } from '../../src/bridges/stargate/StargateBridgeTx'
-import { Pool } from '../../src/dex/Pool'
-import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
-import { UniV3Pool } from '../../src/dex/uniswapV3/Pool'
+import { PoolUtils } from '../../src/dex/PoolUtils'
+import { Pool } from '../../src/dex/base/Pool'
+import { PoolType } from '../../src/dex/poolVariety'
+import { UniV3Pool } from '../../src/dex/pools/UniV3Pool'
 import { GraphExecutor } from '../../src/graphs/GraphExecutor'
 import {
 	FuseBridgeEdge,

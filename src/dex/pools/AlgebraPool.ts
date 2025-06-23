@@ -1,80 +1,66 @@
-import { Address, decodeEventLog, isAddressEqual } from 'viem'
-import { PANCAKE_V3_POOL_ABI } from '../../abi/pancakeV3/pancakeV3Pool'
-import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
-import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
-import { TickPool } from '../TickPool'
-import { peripheryAddresses } from './data'
-import { getPoolImmutables } from './helpers'
+import { Address, decodeEventLog, isAddressEqual, zeroAddress } from 'viem'
+import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
+import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
+import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
+import {
+	getV3PoolImmutables,
+	PoolCreationError,
+	validateAndGetPeriphery,
+} from '../base/poolCreationHelpers'
+import { UniV3LikePool } from '../base/UniV3LikePool'
+import { PoolType } from '../poolVariety'
 
-export class PancakeV3PoolError extends Error {
+export class AlgebraPoolError extends Error {
 	constructor(message: string) {
 		super(message)
-		Object.setPrototypeOf(this, PancakeV3PoolError.prototype)
-		this.name = 'PancakeV3PoolError'
+		Object.setPrototypeOf(this, AlgebraPoolError.prototype)
+		this.name = 'AlgebraPoolError'
 	}
 }
 
-export class PancakeV3Pool extends TickPool {
+export class AlgebraPool extends UniV3LikePool {
 	constructor(
 		poolAddress: Address,
 		chainId: number,
 		immutables: PoolImmutables,
 	) {
-		const periphery = peripheryAddresses[chainId]
+		const periphery = validateAndGetPeriphery(
+			chainId,
+			PoolType.ALGEBRA,
+		) as PoolPeriphery
 
-		if (!periphery)
-			throw new PancakeV3PoolError(
-				`No periphery found for chain ${chainId}`,
-			)
-
-		// TODO: Add router address
 		super(poolAddress, chainId, immutables, periphery)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		const immutables = await getPoolImmutables(poolAddress, chainId)
+		try {
+			const immutables = await getV3PoolImmutables(
+				poolAddress,
+				chainId,
+				PoolType.ALGEBRA,
+			)
 
-		return new PancakeV3Pool(poolAddress, chainId, immutables)
+			return new AlgebraPool(poolAddress, chainId, immutables)
+		} catch (error) {
+			if (error instanceof PoolCreationError) {
+				throw new AlgebraPoolError(error.message)
+			}
+			throw error
+		}
 	}
 
-	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {
+	async getPrices() {
 		const address = this.address
 
 		const [sqrtPriceX96] = await this.client.readContract({
 			address,
-			abi: PANCAKE_V3_POOL_ABI,
-			functionName: 'slot0',
+			abi: ALGEBRA_POOL_ABI,
+			functionName: 'globalState',
 		})
 
-		// Calculate price
 		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
 
 		return { price, sqrtPriceX96 }
-	}
-
-	async quoteSwap(params: SwapParams) {
-		this.validateMismatchSwapParams(params)
-
-		const { result } = await this.client.simulateContract({
-			address: this.quoterAddress,
-			abi: UNIV3_QUOTER_ABI,
-			functionName: 'quoteExactInputSingle',
-			account: this.account.address,
-			args: [
-				{
-					tokenIn: params.tokenIn.address,
-					tokenOut: params.tokenOut.address,
-					amountIn: params.amountIn,
-					fee: this.fee,
-					sqrtPriceLimitX96: 0n,
-				},
-			],
-		})
-
-		return {
-			amountOut: result[0],
-			fee: this.fee,
-		}
 	}
 
 	async getSwapArguments(params: SwapParams) {
@@ -85,18 +71,36 @@ export class PancakeV3Pool extends TickPool {
 			params.slippage ?? this.defaultSlippage,
 		)
 
-		const args: UniV3SwapArgs = {
+		return {
 			tokenIn: params.tokenIn.address,
 			tokenOut: params.tokenOut.address,
-			fee: this.fee,
+			deployer: zeroAddress,
 			recipient: this.account.address,
 			deadline: this.calcDeadline(60 * 5),
 			amountIn: params.amountIn,
 			amountOutMinimum,
-			sqrtPriceLimitX96: 0n,
+			limitSqrtPrice: 0n, // amountOutMinimum is enough for ensuring slippage
 		}
+	}
 
-		return args
+	async quoteSwap(params: SwapParams) {
+		this.validateMismatchSwapParams(params)
+
+		const { result } = await this.client.simulateContract({
+			address: this.quoterAddress,
+			abi: ALGEBRA_QUOTER_ABI,
+			functionName: 'quoteExactInputSingle',
+			account: this.account.address,
+			args: [
+				params.tokenIn.address,
+				params.tokenOut.address,
+				zeroAddress, //deployer
+				params.amountIn,
+				0n, //sqrtMaxLimit
+			],
+		})
+
+		return { amountOut: result[0], fee: result[1] }
 	}
 
 	async simulateSwap(params: SwapParams) {
@@ -106,7 +110,7 @@ export class PancakeV3Pool extends TickPool {
 
 		const { result: amountOut } = await this.client.simulateContract({
 			address: this.routerAddress,
-			abi: UNIV3_ROUTER_ABI,
+			abi: ALGEBRA_ROUTER_ABI,
 			functionName: 'exactInputSingle',
 			account: this.account.address,
 			args: [args],
@@ -120,7 +124,7 @@ export class PancakeV3Pool extends TickPool {
 
 		const gas = await this.client.estimateContractGas({
 			address: this.routerAddress,
-			abi: UNIV3_ROUTER_ABI,
+			abi: ALGEBRA_ROUTER_ABI,
 			functionName: 'exactInputSingle',
 			args: [args],
 			account: this.account,
@@ -128,7 +132,7 @@ export class PancakeV3Pool extends TickPool {
 
 		const hash = await this.wallet.writeContract({
 			address: this.routerAddress,
-			abi: UNIV3_ROUTER_ABI,
+			abi: ALGEBRA_ROUTER_ABI,
 			account: this.account,
 			chain: this.wallet.chain,
 			functionName: 'exactInputSingle',
@@ -139,14 +143,14 @@ export class PancakeV3Pool extends TickPool {
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
 		if (receipt.status !== 'success')
-			throw new PancakeV3PoolError(`Swap failed, tx: ${hash}`)
+			throw new AlgebraPoolError(`Swap failed, tx: ${hash}`)
 
 		const swapEvent = receipt.logs
 			.map((log) => {
 				if (!isAddressEqual(log.address, this.address)) return null
 
 				const event = decodeEventLog({
-					abi: PANCAKE_V3_POOL_ABI,
+					abi: ALGEBRA_POOL_ABI,
 					data: log.data,
 					topics: log.topics,
 				})
@@ -155,7 +159,7 @@ export class PancakeV3Pool extends TickPool {
 			})
 			.find((event) => event?.eventName === 'Swap')
 
-		if (!swapEvent) throw new PancakeV3PoolError('Swap event not found')
+		if (!swapEvent) throw new AlgebraPoolError('Swap event not found')
 
 		const amountOut =
 			swapEvent.args.amount0 < 0n

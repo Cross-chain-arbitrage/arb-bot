@@ -1,6 +1,6 @@
 import { TransactionReceipt } from 'viem'
-import { BaseContract } from '../primitives/contracts/BaseContract'
-import { Token } from '../primitives/tokens/Token'
+import { BaseContract } from '../../primitives/contracts/BaseContract'
+import { Token } from '../../primitives/tokens/Token'
 
 export abstract class Pool extends BaseContract {
 	routerAddress: Address

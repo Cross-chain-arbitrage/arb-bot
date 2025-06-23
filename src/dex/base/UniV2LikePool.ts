@@ -1,8 +1,7 @@
 import { decodeEventLog, isAddressEqual } from 'viem'
-import { UNIV2_POOL_ABI } from '../abi/uniV2/pool'
-import { UNIV2_ROUTER_ABI } from '../abi/uniV2/router'
-import { Token } from '../primitives/tokens/Token'
-
+import { UNIV2_POOL_ABI } from '../../abi/uniV2/pool'
+import { UNIV2_ROUTER_ABI } from '../../abi/uniV2/router'
+import { Token } from '../../primitives/tokens/Token'
 import { Pool } from './Pool'
 
 export class UniV2LikePoolError extends Error {
@@ -34,7 +33,7 @@ export abstract class UniV2LikePool extends Pool {
 
 		// Calculate price based on reserves
 		const price = this.calculatePriceFromReserves(reserves)
-		// For compatibility with TickPool interface, we'll use a dummy sqrtPriceX96
+		// For compatibility with UniV3LikePool interface, we'll use a dummy sqrtPriceX96
 		const sqrtPriceX96 = 0n
 
 		return { price, sqrtPriceX96 }

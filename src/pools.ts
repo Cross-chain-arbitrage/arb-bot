@@ -1,5 +1,5 @@
 import * as chains from 'viem/chains'
-import { PoolType } from './dex/PoolUtils'
+import { PoolType } from './dex/poolVariety'
 
 export const poolsByChain: Record<
 	number,

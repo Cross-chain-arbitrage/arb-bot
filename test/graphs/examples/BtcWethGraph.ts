@@ -1,5 +1,5 @@
 import { arbitrum, fuse } from 'viem/chains'
-import { Pool } from '../../../src/dex/Pool'
+import { Pool } from '../../../src/dex/base/Pool'
 import {
 	FuseBridgeEdge,
 	StargateBridgeEdge,

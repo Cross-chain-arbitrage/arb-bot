@@ -47,4 +47,33 @@ declare global {
 	interface UniV2PoolPeriphery {
 		router: Address
 	}
+
+	interface UniV3PoolPeriphery {
+		quoter: Address
+		router: Address
+	}
+
+	interface V3PoolConfig {
+		type: 'v3-like'
+		abi: Abi
+		slotFunction: string // 'slot0' or 'globalState'
+		slotTickSpacingIndex: number // index in slot0/globalState result for tickSpacing
+		feeFunction: string
+		tokenFunctions: {
+			token0: string
+			token1: string
+		}
+	}
+
+	interface V2PoolConfig {
+		type: 'v2-like'
+		abi: Abi
+		defaultFee: number // basis points
+		tokenFunctions: {
+			token0: string
+			token1: string
+		}
+	}
+
+	type PoolConfig = V3PoolConfig | V2PoolConfig
 }

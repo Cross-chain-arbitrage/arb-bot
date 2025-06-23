@@ -2,9 +2,13 @@ import { Address, decodeEventLog, isAddressEqual } from 'viem'
 import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
 import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
 import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
-import { TickPool } from '../TickPool'
-import { peripheryAddresses } from './data'
-import { getPoolImmutables } from './helpers'
+import { UniV3LikePool } from '../base/UniV3LikePool'
+import {
+	getV3PoolImmutables,
+	PoolCreationError,
+	validateAndGetPeriphery,
+} from '../base/poolCreationHelpers'
+import { PoolType } from '../poolVariety'
 
 export class UniV3PoolError extends Error {
 	constructor(message: string) {
@@ -14,25 +18,35 @@ export class UniV3PoolError extends Error {
 	}
 }
 
-export class UniV3Pool extends TickPool {
+export class UniV3Pool extends UniV3LikePool {
 	constructor(
 		poolAddress: Address,
 		chainId: number,
 		immutables: PoolImmutables,
 	) {
-		const periphery = peripheryAddresses[chainId]
+		const periphery = validateAndGetPeriphery(
+			chainId,
+			PoolType.UNIV3,
+		) as PoolPeriphery
 
-		if (!periphery)
-			throw new UniV3PoolError(`No periphery found for chain ${chainId}`)
-
-		// TODO: Add router address
 		super(poolAddress, chainId, immutables, periphery)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		const immutables = await getPoolImmutables(poolAddress, chainId)
+		try {
+			const immutables = await getV3PoolImmutables(
+				poolAddress,
+				chainId,
+				PoolType.UNIV3,
+			)
 
-		return new UniV3Pool(poolAddress, chainId, immutables)
+			return new UniV3Pool(poolAddress, chainId, immutables)
+		} catch (error) {
+			if (error instanceof PoolCreationError) {
+				throw new UniV3PoolError(error.message)
+			}
+			throw error
+		}
 	}
 
 	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {

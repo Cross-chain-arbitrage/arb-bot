@@ -1,4 +1,4 @@
-import { PoolType } from '../dex/PoolUtils'
+import { PoolType } from '../dex/poolVariety'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'

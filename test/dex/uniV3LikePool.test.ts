@@ -6,8 +6,9 @@ import {
 	WalletClient,
 } from 'viem'
 import { fuse } from 'viem/chains'
-import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
-import { TickPool } from '../../src/dex/TickPool'
+import { UniV3LikePool } from '../../src/dex/base/UniV3LikePool'
+import { PoolUtils } from '../../src/dex/PoolUtils'
+import { PoolType } from '../../src/dex/poolVariety'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { ClientManager } from '../../src/utils/ClientManager'
@@ -29,11 +30,11 @@ let botAddress: Address
 let usdtContract: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
 let wethContract: GetContractReturnType<typeof erc20Abi, WalletClient, Address>
 let usdcToken: Token
-let pool: TickPool
+let pool: UniV3LikePool
 
 /* ======== Tests ======== */
 
-makeSuite('TickPool', () => {
+makeSuite('UniV3LikePool', () => {
 	useAnvil({
 		chainId: fuse.id,
 	})
@@ -61,7 +62,7 @@ makeSuite('TickPool', () => {
 			wethUsdtPoolAddress,
 			fuse.id,
 			PoolType.ALGEBRA,
-		)) as unknown as TickPool
+		)) as unknown as UniV3LikePool
 	})
 
 	it('should correctly convert price to sqrtPriceX96 and vice versa', () => {

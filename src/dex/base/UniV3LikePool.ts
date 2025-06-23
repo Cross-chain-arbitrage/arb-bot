@@ -1,22 +1,22 @@
 import { Address, isAddressEqual, TransactionReceipt } from 'viem'
-import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
-import { Token } from '../primitives/tokens/Token'
-import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ClientManager } from '../utils/ClientManager'
-import { shortenAddress } from '../utils/common'
+import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
+import { Token } from '../../primitives/tokens/Token'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { ClientManager } from '../../utils/ClientManager'
+import { shortenAddress } from '../../utils/common'
 import { Pool } from './Pool'
 
-export class TickPoolError extends Error {
+export class UniV3LikePoolError extends Error {
 	constructor(message: string) {
 		super(message)
-		Object.setPrototypeOf(this, TickPoolError.prototype)
-		this.name = 'TickPoolError'
+		Object.setPrototypeOf(this, UniV3LikePoolError.prototype)
+		this.name = 'UniV3LikePoolError'
 	}
 }
 
 const BASIS_POINTS = 10000n
 
-export abstract class TickPool extends Pool {
+export abstract class UniV3LikePool extends Pool {
 	public readonly fee: number
 	public readonly tickSpacing: number
 
@@ -55,21 +55,23 @@ export abstract class TickPool extends Pool {
 
 	validateMismatchSwapParams(params: SwapParams) {
 		if (isAddressEqual(params.tokenIn.address, params.tokenOut.address)) {
-			throw new TickPoolError('tokenIn and tokenOut cannot be the same')
+			throw new UniV3LikePoolError(
+				'tokenIn and tokenOut cannot be the same',
+			)
 		}
 
 		if (
 			!isAddressEqual(params.tokenIn.address, this.token0.address) &&
 			!isAddressEqual(params.tokenIn.address, this.token1.address)
 		) {
-			throw new TickPoolError('tokenIn must be token0 or token1')
+			throw new UniV3LikePoolError('tokenIn must be token0 or token1')
 		}
 
 		if (
 			!isAddressEqual(params.tokenOut.address, this.token0.address) &&
 			!isAddressEqual(params.tokenOut.address, this.token1.address)
 		) {
-			throw new TickPoolError(
+			throw new UniV3LikePoolError(
 				`tokenOut must be ${this.token0.symbol} (${this.token0.chainId}:${shortenAddress(this.token0.address)}) ` +
 					`or ${this.token1.symbol} (${this.token1.chainId}:${shortenAddress(this.token1.address)}), ` +
 					`got ${params.tokenOut.symbol} (${params.tokenOut.chainId}:${shortenAddress(params.tokenOut.address)})`,
@@ -77,7 +79,7 @@ export abstract class TickPool extends Pool {
 		}
 
 		if (params.amountIn <= 0n) {
-			throw new TickPoolError('amountIn cannot be 0 or negative')
+			throw new UniV3LikePoolError('amountIn cannot be 0 or negative')
 		}
 	}
 
@@ -92,7 +94,7 @@ export abstract class TickPool extends Pool {
 		const balance = await tokenIn.balanceOf(this.account.address)
 
 		if (balance < amountIn) {
-			throw new TickPoolError(
+			throw new UniV3LikePoolError(
 				`Insufficient balance, needed ${amountIn}, has ${balance}`,
 			)
 		}
@@ -107,7 +109,7 @@ export abstract class TickPool extends Pool {
 		)
 
 		if (allowance < amountIn) {
-			throw new TickPoolError(
+			throw new UniV3LikePoolError(
 				`Insufficient allowance, needed ${amountIn}, has ${allowance}`,
 			)
 		}
