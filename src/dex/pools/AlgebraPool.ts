@@ -4,7 +4,6 @@ import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
 import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
 import {
 	getV3PoolImmutables,
-	PoolCreationError,
 	validateAndGetPeriphery,
 } from '../base/poolCreationHelpers'
 import { UniV3LikePool } from '../base/UniV3LikePool'
@@ -33,20 +32,13 @@ export class AlgebraPool extends UniV3LikePool {
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		try {
-			const immutables = await getV3PoolImmutables(
-				poolAddress,
-				chainId,
-				PoolType.ALGEBRA,
-			)
+		const immutables = await getV3PoolImmutables(
+			poolAddress,
+			chainId,
+			PoolType.ALGEBRA,
+		)
 
-			return new AlgebraPool(poolAddress, chainId, immutables)
-		} catch (error) {
-			if (error instanceof PoolCreationError) {
-				throw new AlgebraPoolError(error.message)
-			}
-			throw error
-		}
+		return new AlgebraPool(poolAddress, chainId, immutables)
 	}
 
 	async getPrices() {

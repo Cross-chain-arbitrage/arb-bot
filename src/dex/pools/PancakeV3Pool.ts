@@ -5,7 +5,6 @@ import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
 import { UniV3LikePool } from '../base/UniV3LikePool'
 import {
 	getV3PoolImmutables,
-	PoolCreationError,
 	validateAndGetPeriphery,
 } from '../base/poolCreationHelpers'
 import { PoolType } from '../poolVariety'
@@ -33,20 +32,13 @@ export class PancakeV3Pool extends UniV3LikePool {
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		try {
-			const immutables = await getV3PoolImmutables(
-				poolAddress,
-				chainId,
-				PoolType.PANCAKEV3,
-			)
+		const immutables = await getV3PoolImmutables(
+			poolAddress,
+			chainId,
+			PoolType.PANCAKEV3,
+		)
 
-			return new PancakeV3Pool(poolAddress, chainId, immutables)
-		} catch (error) {
-			if (error instanceof PoolCreationError) {
-				throw new PancakeV3PoolError(error.message)
-			}
-			throw error
-		}
+		return new PancakeV3Pool(poolAddress, chainId, immutables)
 	}
 
 	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {

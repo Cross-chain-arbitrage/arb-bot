@@ -4,7 +4,6 @@ import { UniV2LikePool } from '../base/UniV2LikePool'
 import {
 	getV2DefaultFee,
 	getV2PoolTokens,
-	PoolCreationError,
 	validateAndGetPeriphery,
 } from '../base/poolCreationHelpers'
 import { PoolType } from '../poolVariety'
@@ -34,19 +33,12 @@ export class UniV2Pool extends UniV2LikePool {
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		try {
-			const [token0, token1] = await getV2PoolTokens(
-				poolAddress,
-				chainId,
-				PoolType.UNIV2,
-			)
+		const [token0, token1] = await getV2PoolTokens(
+			poolAddress,
+			chainId,
+			PoolType.UNIV2,
+		)
 
-			return new UniV2Pool(poolAddress, chainId, token0, token1)
-		} catch (error) {
-			if (error instanceof PoolCreationError) {
-				throw new UniV2PoolError(error.message)
-			}
-			throw error
-		}
+		return new UniV2Pool(poolAddress, chainId, token0, token1)
 	}
 }
