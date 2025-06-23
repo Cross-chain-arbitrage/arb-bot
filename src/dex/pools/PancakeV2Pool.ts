@@ -29,7 +29,15 @@ export class PancakeV2Pool extends UniV2LikePool {
 		) as UniV2PoolPeriphery
 		const fee = getV2DefaultFee(PoolType.PANCAKEV2)
 
-		super(token0, token1, poolAddress, periphery.router, chainId, fee)
+		super(
+			token0,
+			token1,
+			poolAddress,
+			periphery.router,
+			chainId,
+			fee,
+			PoolType.PANCAKEV2,
+		)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {

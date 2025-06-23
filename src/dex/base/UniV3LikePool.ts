@@ -4,6 +4,7 @@ import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
 import { shortenAddress } from '../../utils/common'
+import { POOL_CONFIGS, PoolType } from '../poolVariety'
 import { Pool } from './Pool'
 
 export class UniV3LikePoolError extends Error {
@@ -29,6 +30,7 @@ export abstract class UniV3LikePool extends Pool {
 		chainId: number,
 		immutables: PoolImmutables,
 		periphery: PoolPeriphery,
+		poolType: PoolType,
 	) {
 		super(
 			immutables.token0,
@@ -36,6 +38,7 @@ export abstract class UniV3LikePool extends Pool {
 			poolAddress,
 			periphery.router,
 			chainId,
+			poolType,
 		)
 
 		this.fee = immutables.fee
@@ -115,6 +118,25 @@ export abstract class UniV3LikePool extends Pool {
 		}
 	}
 
+	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {
+		const address = this.address
+
+		const config = POOL_CONFIGS[this.poolType] as V3PoolConfig
+
+		const result = await this.client.readContract({
+			address,
+			abi: config.abi,
+			functionName: config.slotFunction,
+		})
+
+		const sqrtPriceX96 = (result as bigint[])[config.slotTickSpacingIndex]
+
+		// Calculate price
+		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
+
+		return { price, sqrtPriceX96 }
+	}
+
 	static async getTokens(
 		poolAddress: Address,
 		chainId: number,
@@ -187,7 +209,6 @@ export abstract class UniV3LikePool extends Pool {
 		return (gas * 15n) / 10n
 	}
 
-	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
 	abstract simulateSwap(
 		params: SwapParams, //TODO: remove any
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

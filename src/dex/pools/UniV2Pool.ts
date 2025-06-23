@@ -27,9 +27,18 @@ export class UniV2Pool extends UniV2LikePool {
 			chainId,
 			PoolType.UNIV2,
 		) as UniV2PoolPeriphery
+
 		const fee = getV2DefaultFee(PoolType.UNIV2)
 
-		super(token0, token1, poolAddress, periphery.router, chainId, fee)
+		super(
+			token0,
+			token1,
+			poolAddress,
+			periphery.router,
+			chainId,
+			fee,
+			PoolType.UNIV2,
+		)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {

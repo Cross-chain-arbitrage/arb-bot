@@ -28,7 +28,7 @@ export class AlgebraPool extends UniV3LikePool {
 			PoolType.ALGEBRA,
 		) as PoolPeriphery
 
-		super(poolAddress, chainId, immutables, periphery)
+		super(poolAddress, chainId, immutables, periphery, PoolType.ALGEBRA)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
@@ -39,20 +39,6 @@ export class AlgebraPool extends UniV3LikePool {
 		)
 
 		return new AlgebraPool(poolAddress, chainId, immutables)
-	}
-
-	async getPrices() {
-		const address = this.address
-
-		const [sqrtPriceX96] = await this.client.readContract({
-			address,
-			abi: ALGEBRA_POOL_ABI,
-			functionName: 'globalState',
-		})
-
-		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
-
-		return { price, sqrtPriceX96 }
 	}
 
 	async getSwapArguments(params: SwapParams) {

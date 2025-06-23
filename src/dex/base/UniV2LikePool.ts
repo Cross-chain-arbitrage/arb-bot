@@ -2,6 +2,7 @@ import { decodeEventLog, isAddressEqual } from 'viem'
 import { UNIV2_POOL_ABI } from '../../abi/uniV2/pool'
 import { UNIV2_ROUTER_ABI } from '../../abi/uniV2/router'
 import { Token } from '../../primitives/tokens/Token'
+import { PoolType } from '../poolVariety'
 import { Pool } from './Pool'
 
 export class UniV2LikePoolError extends Error {
@@ -15,17 +16,16 @@ export class UniV2LikePoolError extends Error {
 const BASIS_POINTS = 10000n
 
 export abstract class UniV2LikePool extends Pool {
-	fee: number
 	constructor(
-		public readonly token0: Token,
-		public readonly token1: Token,
+		token0: Token,
+		token1: Token,
 		poolAddress: Address,
 		routerAddress: Address,
-		public chainId: number,
-		fee: number,
+		chainId: number,
+		public readonly fee: number,
+		poolType: PoolType,
 	) {
-		super(token0, token1, poolAddress, routerAddress, chainId)
-		this.fee = fee
+		super(token0, token1, poolAddress, routerAddress, chainId, poolType)
 	}
 
 	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {

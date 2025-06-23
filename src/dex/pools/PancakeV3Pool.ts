@@ -28,7 +28,7 @@ export class PancakeV3Pool extends UniV3LikePool {
 			PoolType.PANCAKEV3,
 		) as PoolPeriphery
 
-		super(poolAddress, chainId, immutables, periphery)
+		super(poolAddress, chainId, immutables, periphery, PoolType.PANCAKEV3)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {

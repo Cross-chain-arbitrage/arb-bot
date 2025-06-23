@@ -1,20 +1,18 @@
 import { TransactionReceipt } from 'viem'
 import { BaseContract } from '../../primitives/contracts/BaseContract'
 import { Token } from '../../primitives/tokens/Token'
+import { PoolType } from '../poolVariety'
 
 export abstract class Pool extends BaseContract {
-	routerAddress: Address
-
 	constructor(
 		public readonly token0: Token,
 		public readonly token1: Token,
 		poolAddress: Address,
-		routerAddress: Address,
-		public chainId: number,
+		public readonly routerAddress: Address,
+		public readonly chainId: number,
+		public readonly poolType: PoolType,
 	) {
 		super(poolAddress, chainId)
-
-		this.routerAddress = routerAddress
 	}
 
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>

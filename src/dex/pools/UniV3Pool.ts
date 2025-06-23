@@ -28,7 +28,7 @@ export class UniV3Pool extends UniV3LikePool {
 			PoolType.UNIV3,
 		) as PoolPeriphery
 
-		super(poolAddress, chainId, immutables, periphery)
+		super(poolAddress, chainId, immutables, periphery, PoolType.UNIV3)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
