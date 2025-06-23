@@ -33,7 +33,6 @@ export class ClientManagerError extends Error {
 }
 
 export class ClientManager {
-	static requestCounter = 0
 	private static clients: Map<number, PublicClient> = new Map()
 	private static _customRpcUrls: Map<number, URL> = new Map()
 
@@ -79,24 +78,16 @@ export class ClientManager {
 		const chain = this.findChainById(chainId)
 
 		// Use custom rpc url if set
-		// const setRpcUrl = this._customRpcUrls.get(chainId)?.toString()
+		const setRpcUrl = this._customRpcUrls.get(chainId)?.toString()
 
-		// const customRpcUrlFromCollection = this.getCustomRpcUrl(chainId)
-
-		const defaultRpcUrl =
-			chainId === arbitrum.id
-				? getAlchemyRpcUrl(arbitrum.id)
-				: chain.rpcUrls.default.http[0]
+		const rpcUrl = setRpcUrl ?? chain.rpcUrls.default.http[0]
 
 		const transports: Transport[] = [
-			http(defaultRpcUrl, {
+			http(rpcUrl, {
 				retryCount: 3,
 				retryDelay: 500,
-				timeout: 8_000,
-				batch: {
-					batchSize: 1024,
-					wait: 50,
-				},
+				timeout: 6_000,
+				batch: true,
 				// onFetchRequest: (request) => {
 				// 	console.log('request', request.url)
 				// },
@@ -106,15 +97,16 @@ export class ClientManager {
 			}),
 		]
 
-		// if (setRpcUrl) transports.push(http(setRpcUrl, { retryCount: 3 }))
-		// if (customRpcUrlFromCollection)
-		// transports.push(http(customRpcUrlFromCollection, { retryCount: 3 }))
-
 		// Create new client
 		const client = createPublicClient({
 			chain,
 			batch,
-			transport: fallback(transports),
+			transport: fallback(transports, {
+				shouldThrow: (error) => {
+					console.log('error', error)
+					return false
+				},
+			}),
 		})
 
 		//TODO: check why use type assertion
