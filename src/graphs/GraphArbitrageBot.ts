@@ -308,9 +308,8 @@ export class GraphArbitrageBot {
 
 		switch (edge.actionType) {
 			case ActionType.SWAP:
-				return await (from as Token).approve(
+				return await (from as Token).approveInfinite(
 					(edge as SwapEdge).pool.routerAddress,
-					maxUint256,
 				)
 
 			case ActionType.STARGATE_BRIDGE:

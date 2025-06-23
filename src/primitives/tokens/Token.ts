@@ -3,6 +3,7 @@ import {
 	erc20Abi,
 	isAddress,
 	isAddressEqual,
+	maxUint256,
 	TransactionReceipt,
 } from 'viem'
 import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from './NativeCurrency'
@@ -99,5 +100,19 @@ export class Token extends TokenBase {
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
 		return receipt
+	}
+
+	async approveInfinite(
+		spender: Address,
+	): Promise<TransactionReceipt | undefined> {
+		const allowance = await this.allowance(this.account.address, spender)
+
+		const infiniteThreshold = this.parseUnits('1000000000000000000000000')
+
+		if (allowance >= infiniteThreshold) return
+
+		const hash = await this.approve(spender, maxUint256)
+
+		return hash
 	}
 }
