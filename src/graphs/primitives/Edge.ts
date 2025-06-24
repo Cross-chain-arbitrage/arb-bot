@@ -1,5 +1,5 @@
 import { Stargate } from '../../bridges/stargate/Stargate'
-import { Pool } from '../../dex/Pool'
+import { Pool } from '../../dex/base/Pool'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { Graph } from './Graph'

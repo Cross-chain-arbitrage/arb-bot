@@ -1,4 +1,4 @@
-import { Pool } from './dex/Pool'
+import { Pool } from './dex/base/Pool'
 import { BatchQuoteOptimizer } from './optimizers/BatchQuoteOptimizer'
 
 export function findArbOpportunityByGraph() {}

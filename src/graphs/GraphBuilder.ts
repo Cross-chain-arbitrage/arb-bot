@@ -1,7 +1,7 @@
 import { arbitrum, fuse } from 'viem/chains'
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { StargateAPI, StargateAPIError } from '../bridges/stargate/StargateAPI'
-import { Pool } from '../dex/Pool'
+import { Pool } from '../dex/base/Pool'
 import { ChainUtils } from '../primitives/chains/ChainUtils'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'

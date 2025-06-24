@@ -5,7 +5,7 @@ import {
 	WalletClient,
 } from 'viem'
 import { mainnet } from 'viem/chains'
-import { UniV2Pool } from '../../../src/dex/uniswapV2/Pool'
+import { UniV2Pool } from '../../../src/dex/pools/UniV2Pool'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import {

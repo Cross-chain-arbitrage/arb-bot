@@ -1,6 +1,6 @@
 import { arbitrum, fuse } from 'viem/chains'
-import { Pool } from '../../src/dex/Pool'
-import { UniV3Pool } from '../../src/dex/uniswapV3/Pool'
+import { Pool } from '../../src/dex/base/Pool'
+import { UniV3Pool } from '../../src/dex/pools/UniV3Pool'
 import {
 	ActionType,
 	FuseBridgeEdge,

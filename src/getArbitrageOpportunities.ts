@@ -5,7 +5,8 @@ import {
 	withRetry,
 } from 'viem'
 import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
-import { PoolType, PoolUtils } from './dex/PoolUtils'
+import { PoolUtils } from './dex/PoolUtils'
+import { PoolType } from './dex/poolVariety'
 import { findArbOpportunity } from './optimize'
 import { poolsByChain } from './pools'
 import { Token } from './primitives/tokens/Token'
@@ -125,13 +126,6 @@ async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 		try {
 			pool.chainName = ClientManager.findChainById(chainId)?.name
 
-			if (pool.type === PoolType.UNKNOWN) {
-				console.warn(
-					`Pool ${pool.address}:${pool.chainName} has unknown pool type`,
-				)
-				continue
-			}
-
 			const Pool = await PoolUtils.createPool(
 				pool.address,
 				chainId,
@@ -240,14 +234,14 @@ async function findArbitrageOpportunities(
 
 		// Calculate potential profit
 		try {
-			const tickPool = await PoolUtils.createPool(
+			const uniV3LikePool = await PoolUtils.createPool(
 				pool.address,
 				pool.priceData.token0.chainId,
 				pool.type,
 			)
 
 			const profitData = await findArbOpportunity(
-				tickPool,
+				uniV3LikePool,
 				prices[token0Cat],
 				prices[token1Cat],
 			)

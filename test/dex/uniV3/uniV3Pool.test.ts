@@ -6,8 +6,9 @@ import {
 	WalletClient,
 } from 'viem'
 import { hemi } from 'viem/chains'
-import { PoolType, PoolUtils } from '../../../src/dex/PoolUtils'
-import { UniV3Pool } from '../../../src/dex/uniswapV3/Pool'
+import { PoolUtils } from '../../../src/dex/PoolUtils'
+import { PoolType } from '../../../src/dex/poolVariety'
+import { UniV3Pool } from '../../../src/dex/pools/UniV3Pool'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import {
 	setNativeBalance,

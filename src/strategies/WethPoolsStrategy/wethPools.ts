@@ -1,5 +1,5 @@
 import { arbitrum, fuse, hemi, lightlinkPhoenix } from 'viem/chains'
-import { PoolType } from '../../dex/PoolUtils'
+import { PoolType } from '../../dex/poolVariety'
 import { PoolData } from '../Strategy'
 
 export const WETH_POOLS: PoolData[] = [

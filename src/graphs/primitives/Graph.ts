@@ -1,5 +1,5 @@
 import TTLCache from '@isaacs/ttlcache'
-import { Pool } from '../../dex/Pool'
+import { Pool } from '../../dex/base/Pool'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { Edge, SwapEdge } from './Edge'
 

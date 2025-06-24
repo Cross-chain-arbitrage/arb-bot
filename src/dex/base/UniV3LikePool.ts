@@ -1,22 +1,23 @@
-import { Address, isAddressEqual, TransactionReceipt } from 'viem'
-import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
-import { Token } from '../primitives/tokens/Token'
-import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ClientManager } from '../utils/ClientManager'
-import { shortenAddress } from '../utils/common'
+import {
+	Address,
+	decodeEventLog,
+	isAddressEqual,
+	TransactionReceipt,
+} from 'viem'
+import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
+import { PANCAKE_V3_POOL_ABI } from '../../abi/pancakeV3/pancakeV3Pool'
+import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
+import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
+import { Token } from '../../primitives/tokens/Token'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { ClientManager } from '../../utils/ClientManager'
+import { shortenAddress } from '../../utils/common'
+import { POOL_CONFIGS, PoolType } from '../poolVariety'
 import { Pool } from './Pool'
-
-export class TickPoolError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, TickPoolError.prototype)
-		this.name = 'TickPoolError'
-	}
-}
 
 const BASIS_POINTS = 10000n
 
-export abstract class TickPool extends Pool {
+export abstract class UniV3LikePool extends Pool {
 	public readonly fee: number
 	public readonly tickSpacing: number
 
@@ -29,6 +30,7 @@ export abstract class TickPool extends Pool {
 		chainId: number,
 		immutables: PoolImmutables,
 		periphery: PoolPeriphery,
+		poolType: PoolType,
 	) {
 		super(
 			immutables.token0,
@@ -36,6 +38,7 @@ export abstract class TickPool extends Pool {
 			poolAddress,
 			periphery.router,
 			chainId,
+			poolType,
 		)
 
 		this.fee = immutables.fee
@@ -53,23 +56,72 @@ export abstract class TickPool extends Pool {
 		])
 	}
 
+	async quoteSwap(params: SwapParams) {
+		this.validateMismatchSwapParams(params)
+
+		const { result } = await this.client.simulateContract({
+			address: this.quoterAddress,
+			abi: UNIV3_QUOTER_ABI,
+			functionName: 'quoteExactInputSingle',
+			account: this.account.address,
+			args: [
+				{
+					tokenIn: params.tokenIn.address,
+					tokenOut: params.tokenOut.address,
+					amountIn: params.amountIn,
+					fee: this.fee,
+					sqrtPriceLimitX96: 0n,
+				},
+			],
+		})
+
+		return {
+			amountOut: result[0],
+			fee: this.fee,
+		}
+	}
+
+	async getSwapArguments(params: SwapParams) {
+		const { amountOut } = await this.quoteSwap(params)
+
+		const amountOutMinimum = this.calcMinAmountOut(
+			amountOut,
+			params.slippage ?? this.defaultSlippage,
+		)
+
+		const args = {
+			tokenIn: params.tokenIn.address,
+			tokenOut: params.tokenOut.address,
+			fee: this.fee,
+			recipient: this.account.address,
+			deadline: this.calcDeadline(60 * 5),
+			amountIn: params.amountIn,
+			amountOutMinimum,
+			sqrtPriceLimitX96: 0n,
+		}
+
+		return args
+	}
+
 	validateMismatchSwapParams(params: SwapParams) {
 		if (isAddressEqual(params.tokenIn.address, params.tokenOut.address)) {
-			throw new TickPoolError('tokenIn and tokenOut cannot be the same')
+			throw new this.customError(
+				'tokenIn and tokenOut cannot be the same',
+			)
 		}
 
 		if (
 			!isAddressEqual(params.tokenIn.address, this.token0.address) &&
 			!isAddressEqual(params.tokenIn.address, this.token1.address)
 		) {
-			throw new TickPoolError('tokenIn must be token0 or token1')
+			throw new this.customError('tokenIn must be token0 or token1')
 		}
 
 		if (
 			!isAddressEqual(params.tokenOut.address, this.token0.address) &&
 			!isAddressEqual(params.tokenOut.address, this.token1.address)
 		) {
-			throw new TickPoolError(
+			throw new this.customError(
 				`tokenOut must be ${this.token0.symbol} (${this.token0.chainId}:${shortenAddress(this.token0.address)}) ` +
 					`or ${this.token1.symbol} (${this.token1.chainId}:${shortenAddress(this.token1.address)}), ` +
 					`got ${params.tokenOut.symbol} (${params.tokenOut.chainId}:${shortenAddress(params.tokenOut.address)})`,
@@ -77,14 +129,9 @@ export abstract class TickPool extends Pool {
 		}
 
 		if (params.amountIn <= 0n) {
-			throw new TickPoolError('amountIn cannot be 0 or negative')
+			throw new this.customError('amountIn cannot be 0 or negative')
 		}
 	}
-
-	abstract quoteSwap(params: SwapParams): Promise<{
-		amountOut: bigint
-		fee: number
-	}>
 
 	async validateBalance(swapParams: SwapParams) {
 		const { tokenIn, amountIn } = swapParams
@@ -92,7 +139,7 @@ export abstract class TickPool extends Pool {
 		const balance = await tokenIn.balanceOf(this.account.address)
 
 		if (balance < amountIn) {
-			throw new TickPoolError(
+			throw new this.customError(
 				`Insufficient balance, needed ${amountIn}, has ${balance}`,
 			)
 		}
@@ -107,10 +154,70 @@ export abstract class TickPool extends Pool {
 		)
 
 		if (allowance < amountIn) {
-			throw new TickPoolError(
+			throw new this.customError(
 				`Insufficient allowance, needed ${amountIn}, has ${allowance}`,
 			)
 		}
+	}
+
+	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {
+		const address = this.address
+
+		const config = POOL_CONFIGS[this.poolType] as V3PoolConfig
+
+		const result = await this.client.readContract({
+			address,
+			abi: config.abi,
+			functionName: config.slotFunction,
+		})
+
+		const sqrtPriceX96 = (result as bigint[])[config.slotTickSpacingIndex]
+
+		// Calculate price
+		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
+
+		return { price, sqrtPriceX96 }
+	}
+
+	parseAmountOut(swapReceipt: TransactionReceipt): bigint {
+		const swapEvent = swapReceipt.logs
+			.map((log) => {
+				if (!isAddressEqual(log.address, this.address)) return null
+
+				let abi
+
+				switch (this.poolType) {
+					case PoolType.UNIV3:
+						abi = UNIV3_POOL_ABI
+						break
+					case PoolType.PANCAKEV3:
+						abi = PANCAKE_V3_POOL_ABI
+						break
+					case PoolType.ALGEBRA:
+						abi = ALGEBRA_POOL_ABI
+						break
+					default:
+						throw new this.customError('Unsupported pool type')
+				}
+
+				const event = decodeEventLog({
+					abi,
+					data: log.data,
+					topics: log.topics,
+				})
+
+				return event
+			})
+			.find((event) => event?.eventName === 'Swap')
+
+		if (!swapEvent) throw new this.customError('Swap event not found')
+
+		const amountOut =
+			swapEvent.args.amount0 < 0n
+				? -swapEvent.args.amount0
+				: -swapEvent.args.amount1
+
+		return amountOut
 	}
 
 	static async getTokens(
@@ -179,19 +286,4 @@ export abstract class TickPool extends Pool {
 	calcDeadline(secondsToAdd: number) {
 		return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
 	}
-
-	multiplyGas(gas: bigint) {
-		//TODO: remove magic number
-		return (gas * 15n) / 10n
-	}
-
-	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
-	abstract simulateSwap(
-		params: SwapParams, //TODO: remove any
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	): Promise<{ amountOut: bigint; args: any }>
-	abstract swap(params: SwapParams): Promise<{
-		receipt: TransactionReceipt
-		amountOut: bigint
-	}>
 }

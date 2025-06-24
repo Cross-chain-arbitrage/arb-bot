@@ -1,6 +1,6 @@
 import { Address } from 'viem'
 import { bsc, fuse } from 'viem/chains'
-import { PoolType } from '../../dex/PoolUtils'
+import { PoolType } from '../../dex/poolVariety'
 
 export const FUSE_POOLS: {
 	address: Address

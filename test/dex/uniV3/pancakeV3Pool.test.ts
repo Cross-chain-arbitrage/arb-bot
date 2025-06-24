@@ -6,8 +6,9 @@ import {
 	WalletClient,
 } from 'viem'
 import { bsc } from 'viem/chains'
-import { PancakeV3Pool } from '../../../src/dex/pancakeV3/Pool'
-import { PoolType, PoolUtils } from '../../../src/dex/PoolUtils'
+import { PancakeV3Pool } from '../../../src/dex/pools/PancakeV3Pool'
+import { PoolUtils } from '../../../src/dex/PoolUtils'
+import { PoolType } from '../../../src/dex/poolVariety'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import {
