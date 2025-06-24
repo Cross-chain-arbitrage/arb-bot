@@ -31,28 +31,6 @@ export class UniV3Pool extends UniV3LikePool {
 		return new UniV3Pool(poolAddress, chainId, immutables)
 	}
 
-	async getSwapArguments(params: SwapParams) {
-		const { amountOut } = await this.quoteSwap(params)
-
-		const amountOutMinimum = this.calcMinAmountOut(
-			amountOut,
-			params.slippage ?? this.defaultSlippage,
-		)
-
-		const args = {
-			tokenIn: params.tokenIn.address,
-			tokenOut: params.tokenOut.address,
-			fee: this.fee,
-			recipient: this.account.address,
-			deadline: this.calcDeadline(60 * 5),
-			amountIn: params.amountIn,
-			amountOutMinimum,
-			sqrtPriceLimitX96: 0n,
-		}
-
-		return args
-	}
-
 	async simulateSwap(params: SwapParams) {
 		await this.validateSwapParams(params)
 
