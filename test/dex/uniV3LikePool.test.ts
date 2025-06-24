@@ -5,8 +5,8 @@ import {
 	GetContractReturnType,
 	WalletClient,
 } from 'viem'
-import { fuse } from 'viem/chains'
-import { UniV3LikePool } from '../../src/dex/base/UniV3LikePool'
+import { fuse, story } from 'viem/chains'
+import { UniV3LikePool } from '../../src/dex/base/UniV3LikePool/UniV3LikePool'
 import { PoolUtils } from '../../src/dex/PoolUtils'
 import { PoolType } from '../../src/dex/poolVariety'
 import { Token } from '../../src/primitives/tokens/Token'
@@ -74,7 +74,7 @@ makeSuite('UniV3LikePool', () => {
 		expect(sqrtPriceX96).toBe(sqrtPriceX962)
 	})
 
-	describe('validation', () => {
+	describe('swap validation', () => {
 		it('should throw when tokenIn and tokenOut are the same', async () => {
 			await expect(
 				pool.validateSwapParams({
@@ -132,6 +132,21 @@ makeSuite('UniV3LikePool', () => {
 					amountIn: 1000000n,
 				}),
 			).rejects.toThrow('Insufficient allowance')
+		})
+	})
+
+	describe('create validation', () => {
+		const poolAddressWithWrongPeriphery =
+			'0x3dd013fddf4daa3b642a1538e274d85e8e54ae8b'
+
+		it('should throw when pool factory does not match quoter factory', async () => {
+			await expect(
+				PoolUtils.createPool(
+					poolAddressWithWrongPeriphery,
+					story.id,
+					PoolType.UNIV3,
+				),
+			).rejects.toThrow('Invalid periphery')
 		})
 	})
 })

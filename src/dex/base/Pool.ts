@@ -2,6 +2,7 @@ import { TransactionReceipt } from 'viem'
 import { BaseContract } from '../../primitives/contracts/BaseContract'
 import { Token } from '../../primitives/tokens/Token'
 import { createCustomError } from '../../utils/common'
+import { CHAIN_PERIPHERY_CONFIG } from '../periphery'
 import { POOL_ERRORS, PoolType } from '../poolVariety'
 export abstract class Pool extends BaseContract {
 	public readonly customError: ReturnType<typeof createCustomError>
@@ -54,8 +55,27 @@ export abstract class Pool extends BaseContract {
 		return { receipt, amountOut }
 	}
 
+	static getPeripherySafe(
+		chainId: number,
+		poolType: PoolType,
+	): UniV3PoolPeriphery | UniV2PoolPeriphery {
+		const periphery = CHAIN_PERIPHERY_CONFIG[chainId]?.[poolType]
+
+		if (!periphery) {
+			throw new POOL_ERRORS[poolType](
+				`No periphery configuration found for ${poolType} on chain ${chainId}`,
+			)
+		}
+
+		return periphery
+	}
+
 	multiplyGas(gas: bigint) {
 		//TODO: remove magic number
 		return (gas * 15n) / 10n
+	}
+
+	calcDeadline(secondsToAdd: number): bigint {
+		return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
 	}
 }

@@ -1,11 +1,7 @@
 import { Address, zeroAddress } from 'viem'
 import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
 import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
-import {
-	getV3PoolImmutables,
-	validateAndGetPeriphery,
-} from '../base/poolCreationHelpers'
-import { UniV3LikePool } from '../base/UniV3LikePool'
+import { UniV3LikePool } from '../base/UniV3LikePool/UniV3LikePool'
 import { PoolType } from '../poolVariety'
 
 export class AlgebraPool extends UniV3LikePool {
@@ -13,23 +9,19 @@ export class AlgebraPool extends UniV3LikePool {
 		poolAddress: Address,
 		chainId: number,
 		immutables: PoolImmutables,
+		periphery: PoolPeriphery,
 	) {
-		const periphery = validateAndGetPeriphery(
-			chainId,
-			PoolType.ALGEBRA,
-		) as PoolPeriphery
-
 		super(poolAddress, chainId, immutables, periphery, PoolType.ALGEBRA)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		const immutables = await getV3PoolImmutables(
+		const { immutables, periphery } = await this.getPeripheryAndImmutables(
 			poolAddress,
 			chainId,
 			PoolType.ALGEBRA,
 		)
 
-		return new AlgebraPool(poolAddress, chainId, immutables)
+		return new AlgebraPool(poolAddress, chainId, immutables, periphery)
 	}
 
 	async getAlgebraSwapArguments(params: SwapParams) {

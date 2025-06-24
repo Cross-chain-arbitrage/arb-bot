@@ -5,15 +5,15 @@ import {
 	SimulateContractReturnType,
 	TransactionReceipt,
 } from 'viem'
-import { UNIV2_POOL_ABI } from '../../abi/uniV2/pool'
-import { UNIV2_ROUTER_ABI } from '../../abi/uniV2/router'
-import { Token } from '../../primitives/tokens/Token'
-import { PoolType } from '../poolVariety'
-import { Pool } from './Pool'
+import { UNIV2_POOL_ABI } from '../../../abi/uniV2/pool'
+import { UNIV2_ROUTER_ABI } from '../../../abi/uniV2/router'
+import { Token } from '../../../primitives/tokens/Token'
+import { PoolType } from '../../poolVariety'
+import { UniV2LikePoolStatic } from './UniV2LikePoolStatic'
 
 const BASIS_POINTS = 10000n
 
-export abstract class UniV2LikePool extends Pool {
+export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 	constructor(
 		token0: Token,
 		token1: Token,
@@ -204,9 +204,5 @@ export abstract class UniV2LikePool extends Pool {
 				`Slippage is too high: ${(params.slippage / 10000) * 100}%`,
 			)
 		}
-	}
-
-	calcDeadline(secondsToAdd: number): bigint {
-		return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
 	}
 }

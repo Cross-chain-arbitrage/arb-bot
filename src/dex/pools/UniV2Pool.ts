@@ -1,11 +1,6 @@
 import { Address } from 'viem'
 import { Token } from '../../primitives/tokens/Token'
-import { UniV2LikePool } from '../base/UniV2LikePool'
-import {
-	getV2DefaultFee,
-	getV2PoolTokens,
-	validateAndGetPeriphery,
-} from '../base/poolCreationHelpers'
+import { UniV2LikePool } from '../base/UniV2LikePool/UniV2LikePool'
 import { PoolType } from '../poolVariety'
 
 export class UniV2Pool extends UniV2LikePool {
@@ -14,13 +9,9 @@ export class UniV2Pool extends UniV2LikePool {
 		chainId: number,
 		token0: Token,
 		token1: Token,
+		periphery: UniV2PoolPeriphery,
 	) {
-		const periphery = validateAndGetPeriphery(
-			chainId,
-			PoolType.UNIV2,
-		) as UniV2PoolPeriphery
-
-		const fee = getV2DefaultFee(PoolType.UNIV2)
+		const fee = UniV2Pool.getV2DefaultFee(PoolType.UNIV2)
 
 		super(
 			token0,
@@ -34,12 +25,18 @@ export class UniV2Pool extends UniV2LikePool {
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		const [token0, token1] = await getV2PoolTokens(
+		const { periphery, tokens } = await this.getPeripheryAndImmutables(
 			poolAddress,
 			chainId,
 			PoolType.UNIV2,
 		)
 
-		return new UniV2Pool(poolAddress, chainId, token0, token1)
+		return new UniV2Pool(
+			poolAddress,
+			chainId,
+			tokens.token0,
+			tokens.token1,
+			periphery,
+		)
 	}
 }

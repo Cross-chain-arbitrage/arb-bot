@@ -1,10 +1,6 @@
 import { Address } from 'viem'
 import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
-import { UniV3LikePool } from '../base/UniV3LikePool'
-import {
-	getV3PoolImmutables,
-	validateAndGetPeriphery,
-} from '../base/poolCreationHelpers'
+import { UniV3LikePool } from '../base/UniV3LikePool/UniV3LikePool'
 import { PoolType } from '../poolVariety'
 
 export class UniV3Pool extends UniV3LikePool {
@@ -12,23 +8,19 @@ export class UniV3Pool extends UniV3LikePool {
 		poolAddress: Address,
 		chainId: number,
 		immutables: PoolImmutables,
+		periphery: PoolPeriphery,
 	) {
-		const periphery = validateAndGetPeriphery(
-			chainId,
-			PoolType.UNIV3,
-		) as PoolPeriphery
-
 		super(poolAddress, chainId, immutables, periphery, PoolType.UNIV3)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		const immutables = await getV3PoolImmutables(
+		const { immutables, periphery } = await this.getPeripheryAndImmutables(
 			poolAddress,
 			chainId,
 			PoolType.UNIV3,
 		)
 
-		return new UniV3Pool(poolAddress, chainId, immutables)
+		return new UniV3Pool(poolAddress, chainId, immutables, periphery)
 	}
 
 	async simulateSwap(params: SwapParams) {

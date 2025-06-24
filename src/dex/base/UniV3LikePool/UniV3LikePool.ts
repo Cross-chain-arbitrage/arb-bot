@@ -4,20 +4,17 @@ import {
 	isAddressEqual,
 	TransactionReceipt,
 } from 'viem'
-import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
-import { PANCAKE_V3_POOL_ABI } from '../../abi/pancakeV3/pancakeV3Pool'
-import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
-import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
-import { Token } from '../../primitives/tokens/Token'
-import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ClientManager } from '../../utils/ClientManager'
-import { shortenAddress } from '../../utils/common'
-import { POOL_CONFIGS, PoolType } from '../poolVariety'
-import { Pool } from './Pool'
+import { ALGEBRA_POOL_ABI } from '../../../abi/algebra/algebraPool'
+import { PANCAKE_V3_POOL_ABI } from '../../../abi/pancakeV3/pancakeV3Pool'
+import { UNIV3_POOL_ABI } from '../../../abi/uniV3/uniV3Pool'
+import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
+import { shortenAddress } from '../../../utils/common'
+import { POOL_CONFIGS, PoolType } from '../../poolVariety'
+import { UniV3LikePoolStatic } from './UniV3LikePoolStatic'
 
 const BASIS_POINTS = 10000n
 
-export abstract class UniV3LikePool extends Pool {
+export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 	public readonly fee: number
 	public readonly tickSpacing: number
 
@@ -220,37 +217,6 @@ export abstract class UniV3LikePool extends Pool {
 		return amountOut
 	}
 
-	static async getTokens(
-		poolAddress: Address,
-		chainId: number,
-	): Promise<[Token, Token]> {
-		const client = ClientManager.getClient(chainId)
-
-		const [token0Address, token1Address] = await Promise.all([
-			client.readContract({
-				address: poolAddress,
-				abi: UNIV3_POOL_ABI,
-				functionName: 'token0',
-			}),
-			client.readContract({
-				address: poolAddress,
-				abi: UNIV3_POOL_ABI,
-				functionName: 'token1',
-			}),
-		])
-
-		const token0 = await TokenUtils.fromAddress<Token>(
-			token0Address,
-			chainId,
-		)
-		const token1 = await TokenUtils.fromAddress<Token>(
-			token1Address,
-			chainId,
-		)
-
-		return [token0, token1]
-	}
-
 	sqrtPriceX96ToPrice(sqrtPriceX96: bigint): number {
 		const sqrtPrice = Number(sqrtPriceX96) / 2 ** 96
 
@@ -281,9 +247,5 @@ export abstract class UniV3LikePool extends Pool {
 		return zeroToOne
 			? this.priceToSqrtPriceX96(price * (1 - slippage / bpNumber))
 			: this.priceToSqrtPriceX96(price * (1 + slippage / bpNumber))
-	}
-
-	calcDeadline(secondsToAdd: number) {
-		return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
 	}
 }
