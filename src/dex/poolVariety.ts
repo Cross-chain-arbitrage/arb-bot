@@ -2,6 +2,7 @@ import { ALGEBRA_POOL_ABI } from '../abi/algebra/algebraPool'
 import { PANCAKE_V3_POOL_ABI } from '../abi/pancakeV3/pancakeV3Pool'
 import { UNIV2_POOL_ABI } from '../abi/uniV2/pool'
 import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
+import { createCustomError } from '../utils/common'
 
 export enum PoolType {
 	UNIV3 = 'uniV3',
@@ -9,6 +10,17 @@ export enum PoolType {
 	PANCAKEV2 = 'pancakeV2',
 	PANCAKEV3 = 'pancakeV3',
 	ALGEBRA = 'algebra',
+}
+
+export const POOL_ERRORS: Record<
+	PoolType,
+	ReturnType<typeof createCustomError>
+> = {
+	[PoolType.UNIV3]: createCustomError('UniV3PoolError'),
+	[PoolType.UNIV2]: createCustomError('UniV2PoolError'),
+	[PoolType.PANCAKEV2]: createCustomError('PancakeV2PoolError'),
+	[PoolType.PANCAKEV3]: createCustomError('PancakeV3PoolError'),
+	[PoolType.ALGEBRA]: createCustomError('AlgebraPoolError'),
 }
 
 export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {

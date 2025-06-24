@@ -1,11 +1,4 @@
-import {
-	Address,
-	decodeEventLog,
-	isAddressEqual,
-	TransactionReceipt,
-	zeroAddress,
-} from 'viem'
-import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
+import { Address, zeroAddress } from 'viem'
 import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
 import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
 import {
@@ -14,14 +7,6 @@ import {
 } from '../base/poolCreationHelpers'
 import { UniV3LikePool } from '../base/UniV3LikePool'
 import { PoolType } from '../poolVariety'
-
-export class AlgebraPoolError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, AlgebraPoolError.prototype)
-		this.name = 'AlgebraPoolError'
-	}
-}
 
 export class AlgebraPool extends UniV3LikePool {
 	constructor(
@@ -47,7 +32,7 @@ export class AlgebraPool extends UniV3LikePool {
 		return new AlgebraPool(poolAddress, chainId, immutables)
 	}
 
-	async getSwapArguments(params: SwapParams) {
+	async getAlgebraSwapArguments(params: SwapParams) {
 		const { amountOut } = await this.quoteSwap(params)
 
 		const amountOutMinimum = this.calcMinAmountOut(
@@ -67,6 +52,9 @@ export class AlgebraPool extends UniV3LikePool {
 		}
 	}
 
+	/**
+	 * @dev override the quoteSwap method to use the AlgebraQuoter ABI and unique arguments
+	 */
 	async quoteSwap(params: SwapParams) {
 		this.validateMismatchSwapParams(params)
 
@@ -90,7 +78,7 @@ export class AlgebraPool extends UniV3LikePool {
 	async simulateSwap(params: SwapParams) {
 		await this.validateSwapParams(params)
 
-		const args = await this.getSwapArguments(params)
+		const args = await this.getAlgebraSwapArguments(params)
 
 		const { result: amountOut, request } =
 			await this.client.simulateContract({
@@ -105,30 +93,5 @@ export class AlgebraPool extends UniV3LikePool {
 			amountOut,
 			request: request as unknown as SimulateRequestWithAccount,
 		}
-	}
-
-	parseAmountOut(swapReceipt: TransactionReceipt): bigint {
-		const swapEvent = swapReceipt.logs
-			.map((log) => {
-				if (!isAddressEqual(log.address, this.address)) return null
-
-				const event = decodeEventLog({
-					abi: ALGEBRA_POOL_ABI,
-					data: log.data,
-					topics: log.topics,
-				})
-
-				return event
-			})
-			.find((event) => event?.eventName === 'Swap')
-
-		if (!swapEvent) throw new AlgebraPoolError('Swap event not found')
-
-		const amountOut =
-			swapEvent.args.amount0 < 0n
-				? -swapEvent.args.amount0
-				: -swapEvent.args.amount1
-
-		return amountOut
 	}
 }

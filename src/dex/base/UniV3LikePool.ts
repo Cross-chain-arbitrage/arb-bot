@@ -1,19 +1,19 @@
-import { Address, isAddressEqual } from 'viem'
+import {
+	Address,
+	decodeEventLog,
+	isAddressEqual,
+	TransactionReceipt,
+} from 'viem'
+import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
+import { PANCAKE_V3_POOL_ABI } from '../../abi/pancakeV3/pancakeV3Pool'
 import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
+import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
 import { shortenAddress } from '../../utils/common'
 import { POOL_CONFIGS, PoolType } from '../poolVariety'
 import { Pool } from './Pool'
-
-export class UniV3LikePoolError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, UniV3LikePoolError.prototype)
-		this.name = 'UniV3LikePoolError'
-	}
-}
 
 const BASIS_POINTS = 10000n
 
@@ -56,9 +56,56 @@ export abstract class UniV3LikePool extends Pool {
 		])
 	}
 
+	async quoteSwap(params: SwapParams) {
+		this.validateMismatchSwapParams(params)
+
+		const { result } = await this.client.simulateContract({
+			address: this.quoterAddress,
+			abi: UNIV3_QUOTER_ABI,
+			functionName: 'quoteExactInputSingle',
+			account: this.account.address,
+			args: [
+				{
+					tokenIn: params.tokenIn.address,
+					tokenOut: params.tokenOut.address,
+					amountIn: params.amountIn,
+					fee: this.fee,
+					sqrtPriceLimitX96: 0n,
+				},
+			],
+		})
+
+		return {
+			amountOut: result[0],
+			fee: this.fee,
+		}
+	}
+
+	async getSwapArguments(params: SwapParams) {
+		const { amountOut } = await this.quoteSwap(params)
+
+		const amountOutMinimum = this.calcMinAmountOut(
+			amountOut,
+			params.slippage ?? this.defaultSlippage,
+		)
+
+		const args = {
+			tokenIn: params.tokenIn.address,
+			tokenOut: params.tokenOut.address,
+			fee: this.fee,
+			recipient: this.account.address,
+			deadline: this.calcDeadline(60 * 5),
+			amountIn: params.amountIn,
+			amountOutMinimum,
+			sqrtPriceLimitX96: 0n,
+		}
+
+		return args
+	}
+
 	validateMismatchSwapParams(params: SwapParams) {
 		if (isAddressEqual(params.tokenIn.address, params.tokenOut.address)) {
-			throw new UniV3LikePoolError(
+			throw new this.customError(
 				'tokenIn and tokenOut cannot be the same',
 			)
 		}
@@ -67,14 +114,14 @@ export abstract class UniV3LikePool extends Pool {
 			!isAddressEqual(params.tokenIn.address, this.token0.address) &&
 			!isAddressEqual(params.tokenIn.address, this.token1.address)
 		) {
-			throw new UniV3LikePoolError('tokenIn must be token0 or token1')
+			throw new this.customError('tokenIn must be token0 or token1')
 		}
 
 		if (
 			!isAddressEqual(params.tokenOut.address, this.token0.address) &&
 			!isAddressEqual(params.tokenOut.address, this.token1.address)
 		) {
-			throw new UniV3LikePoolError(
+			throw new this.customError(
 				`tokenOut must be ${this.token0.symbol} (${this.token0.chainId}:${shortenAddress(this.token0.address)}) ` +
 					`or ${this.token1.symbol} (${this.token1.chainId}:${shortenAddress(this.token1.address)}), ` +
 					`got ${params.tokenOut.symbol} (${params.tokenOut.chainId}:${shortenAddress(params.tokenOut.address)})`,
@@ -82,7 +129,7 @@ export abstract class UniV3LikePool extends Pool {
 		}
 
 		if (params.amountIn <= 0n) {
-			throw new UniV3LikePoolError('amountIn cannot be 0 or negative')
+			throw new this.customError('amountIn cannot be 0 or negative')
 		}
 	}
 
@@ -92,7 +139,7 @@ export abstract class UniV3LikePool extends Pool {
 		const balance = await tokenIn.balanceOf(this.account.address)
 
 		if (balance < amountIn) {
-			throw new UniV3LikePoolError(
+			throw new this.customError(
 				`Insufficient balance, needed ${amountIn}, has ${balance}`,
 			)
 		}
@@ -107,7 +154,7 @@ export abstract class UniV3LikePool extends Pool {
 		)
 
 		if (allowance < amountIn) {
-			throw new UniV3LikePoolError(
+			throw new this.customError(
 				`Insufficient allowance, needed ${amountIn}, has ${allowance}`,
 			)
 		}
@@ -130,6 +177,47 @@ export abstract class UniV3LikePool extends Pool {
 		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
 
 		return { price, sqrtPriceX96 }
+	}
+
+	parseAmountOut(swapReceipt: TransactionReceipt): bigint {
+		const swapEvent = swapReceipt.logs
+			.map((log) => {
+				if (!isAddressEqual(log.address, this.address)) return null
+
+				let abi
+
+				switch (this.poolType) {
+					case PoolType.UNIV3:
+						abi = UNIV3_POOL_ABI
+						break
+					case PoolType.PANCAKEV3:
+						abi = PANCAKE_V3_POOL_ABI
+						break
+					case PoolType.ALGEBRA:
+						abi = ALGEBRA_POOL_ABI
+						break
+					default:
+						throw new this.customError('Unsupported pool type')
+				}
+
+				const event = decodeEventLog({
+					abi,
+					data: log.data,
+					topics: log.topics,
+				})
+
+				return event
+			})
+			.find((event) => event?.eventName === 'Swap')
+
+		if (!swapEvent) throw new this.customError('Swap event not found')
+
+		const amountOut =
+			swapEvent.args.amount0 < 0n
+				? -swapEvent.args.amount0
+				: -swapEvent.args.amount1
+
+		return amountOut
 	}
 
 	static async getTokens(

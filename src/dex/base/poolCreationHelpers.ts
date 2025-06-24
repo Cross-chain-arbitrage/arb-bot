@@ -3,15 +3,7 @@ import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
 import { getPeriphery } from '../periphery'
-import { POOL_CONFIGS, PoolType } from '../poolVariety'
-
-export class PoolCreationError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, PoolCreationError.prototype)
-		this.name = 'PoolCreationError'
-	}
-}
+import { POOL_CONFIGS, POOL_ERRORS, PoolType } from '../poolVariety'
 
 /**
  * Fetches pool immutables for V3-like pools (UniV3, PancakeV3, Algebra)
@@ -24,7 +16,7 @@ export async function getV3PoolImmutables(
 	const config = POOL_CONFIGS[poolType] as V3PoolConfig
 
 	if (config.type !== 'v3-like') {
-		throw new PoolCreationError(
+		throw new POOL_ERRORS[poolType](
 			`PoolType ${poolType} is not a V3-like pool`,
 		)
 	}
@@ -69,7 +61,7 @@ export async function getV2PoolTokens(
 	const config = POOL_CONFIGS[poolType] as V2PoolConfig
 
 	if (config.type !== 'v2-like') {
-		throw new PoolCreationError(
+		throw new POOL_ERRORS[poolType](
 			`PoolType ${poolType} is not a V2-like pool`,
 		)
 	}
@@ -104,7 +96,7 @@ export function validateAndGetPeriphery(
 	const periphery = getPeriphery(chainId, poolType)
 
 	if (!periphery) {
-		throw new PoolCreationError(
+		throw new POOL_ERRORS[poolType](
 			`No periphery configuration found for ${poolType} on chain ${chainId}`,
 		)
 	}
@@ -119,7 +111,7 @@ export function getV2DefaultFee(poolType: PoolType): number {
 	const config = POOL_CONFIGS[poolType] as V2PoolConfig
 
 	if (config.type !== 'v2-like') {
-		throw new PoolCreationError(
+		throw new POOL_ERRORS[poolType](
 			`PoolType ${poolType} is not a V2-like pool`,
 		)
 	}

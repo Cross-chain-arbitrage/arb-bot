@@ -8,14 +8,6 @@ import {
 } from '../base/poolCreationHelpers'
 import { PoolType } from '../poolVariety'
 
-export class UniV2PoolError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, UniV2PoolError.prototype)
-		this.name = 'UniV2PoolError'
-	}
-}
-
 export class UniV2Pool extends UniV2LikePool {
 	constructor(
 		poolAddress: Address,

@@ -16,29 +16,6 @@ declare global {
 		tickSpacing: number
 	}
 
-	//TODO: extract from abi
-	type AlgebraSwapArgs = {
-		tokenIn: Address
-		tokenOut: Address
-		deployer: Address
-		recipient: Address
-		deadline: bigint
-		amountIn: bigint
-		amountOutMinimum: bigint
-		limitSqrtPrice: bigint
-	}
-
-	type UniV3SwapArgs = {
-		tokenIn: Address
-		tokenOut: Address
-		fee: number
-		recipient: Address
-		deadline: bigint
-		amountIn: bigint
-		amountOutMinimum: bigint
-		sqrtPriceLimitX96: bigint
-	}
-
 	interface PoolPeriphery {
 		quoter: Address
 		router: Address

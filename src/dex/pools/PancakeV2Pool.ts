@@ -8,14 +8,6 @@ import {
 } from '../base/poolCreationHelpers'
 import { PoolType } from '../poolVariety'
 
-export class PancakeV2PoolError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, PancakeV2PoolError.prototype)
-		this.name = 'PancakeV2PoolError'
-	}
-}
-
 export class PancakeV2Pool extends UniV2LikePool {
 	constructor(
 		poolAddress: Address,

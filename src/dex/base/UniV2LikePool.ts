@@ -11,14 +11,6 @@ import { Token } from '../../primitives/tokens/Token'
 import { PoolType } from '../poolVariety'
 import { Pool } from './Pool'
 
-export class UniV2LikePoolError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, UniV2LikePoolError.prototype)
-		this.name = 'UniV2LikePoolError'
-	}
-}
-
 const BASIS_POINTS = 10000n
 
 export abstract class UniV2LikePool extends Pool {
@@ -162,7 +154,7 @@ export abstract class UniV2LikePool extends Pool {
 			})
 			.find((event) => event?.eventName === 'Swap')
 
-		if (!swapEvent) throw new UniV2LikePoolError('Swap event not found')
+		if (!swapEvent) throw new this.customError('Swap event not found')
 
 		const amountOut =
 			swapEvent.args.amount0Out > 0n
@@ -174,7 +166,7 @@ export abstract class UniV2LikePool extends Pool {
 
 	validateMismatchSwapParams(params: SwapParams) {
 		if (params.tokenIn.isSame(params.tokenOut)) {
-			throw new UniV2LikePoolError(
+			throw new this.customError(
 				'Token in and token out cannot be the same',
 			)
 		}
@@ -186,7 +178,7 @@ export abstract class UniV2LikePool extends Pool {
 		)
 
 		if (!isTokenInOneOfAllowed) {
-			throw new UniV2LikePoolError(
+			throw new this.customError(
 				`Incorrect token in: ${params.tokenIn.address}:${params.tokenIn.chainId}`,
 			)
 		}
@@ -196,19 +188,19 @@ export abstract class UniV2LikePool extends Pool {
 		)
 
 		if (!isTokenOutOneOfAllowed) {
-			throw new UniV2LikePoolError(
+			throw new this.customError(
 				`Incorrect token out: ${params.tokenOut.address}:${params.tokenOut.chainId}`,
 			)
 		}
 
 		if (params.amountIn <= 10n) {
-			throw new UniV2LikePoolError(
+			throw new this.customError(
 				`Amount in is too low, ${params.tokenIn.formatUnits(params.amountIn)} ${params.tokenIn.symbol}`,
 			)
 		}
 
 		if (params.slippage && params.slippage >= 3000) {
-			throw new UniV2LikePoolError(
+			throw new this.customError(
 				`Slippage is too high: ${(params.slippage / 10000) * 100}%`,
 			)
 		}

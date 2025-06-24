@@ -1,11 +1,4 @@
-import {
-	Address,
-	decodeEventLog,
-	isAddressEqual,
-	TransactionReceipt,
-} from 'viem'
-import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
-import { UNIV3_QUOTER_ABI } from '../../abi/uniV3/uniV3Quoter'
+import { Address } from 'viem'
 import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
 import { UniV3LikePool } from '../base/UniV3LikePool'
 import {
@@ -13,14 +6,6 @@ import {
 	validateAndGetPeriphery,
 } from '../base/poolCreationHelpers'
 import { PoolType } from '../poolVariety'
-
-export class UniV3PoolError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, UniV3PoolError.prototype)
-		this.name = 'UniV3PoolError'
-	}
-}
 
 export class UniV3Pool extends UniV3LikePool {
 	constructor(
@@ -46,46 +31,6 @@ export class UniV3Pool extends UniV3LikePool {
 		return new UniV3Pool(poolAddress, chainId, immutables)
 	}
 
-	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {
-		const address = this.address
-
-		const [sqrtPriceX96] = await this.client.readContract({
-			address,
-			abi: UNIV3_POOL_ABI,
-			functionName: 'slot0',
-		})
-
-		// Calculate price
-		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
-
-		return { price, sqrtPriceX96 }
-	}
-
-	async quoteSwap(params: SwapParams) {
-		this.validateMismatchSwapParams(params)
-
-		const { result } = await this.client.simulateContract({
-			address: this.quoterAddress,
-			abi: UNIV3_QUOTER_ABI,
-			functionName: 'quoteExactInputSingle',
-			account: this.account.address,
-			args: [
-				{
-					tokenIn: params.tokenIn.address,
-					tokenOut: params.tokenOut.address,
-					amountIn: params.amountIn,
-					fee: this.fee,
-					sqrtPriceLimitX96: 0n,
-				},
-			],
-		})
-
-		return {
-			amountOut: result[0],
-			fee: this.fee,
-		}
-	}
-
 	async getSwapArguments(params: SwapParams) {
 		const { amountOut } = await this.quoteSwap(params)
 
@@ -94,7 +39,7 @@ export class UniV3Pool extends UniV3LikePool {
 			params.slippage ?? this.defaultSlippage,
 		)
 
-		const args: UniV3SwapArgs = {
+		const args = {
 			tokenIn: params.tokenIn.address,
 			tokenOut: params.tokenOut.address,
 			fee: this.fee,
@@ -126,30 +71,5 @@ export class UniV3Pool extends UniV3LikePool {
 			amountOut,
 			request: request as unknown as SimulateRequestWithAccount,
 		}
-	}
-
-	parseAmountOut(swapReceipt: TransactionReceipt): bigint {
-		const swapEvent = swapReceipt.logs
-			.map((log) => {
-				if (!isAddressEqual(log.address, this.address)) return null
-
-				const event = decodeEventLog({
-					abi: UNIV3_POOL_ABI,
-					data: log.data,
-					topics: log.topics,
-				})
-
-				return event
-			})
-			.find((event) => event?.eventName === 'Swap')
-
-		if (!swapEvent) throw new UniV3PoolError('Swap event not found')
-
-		const amountOut =
-			swapEvent.args.amount0 < 0n
-				? -swapEvent.args.amount0
-				: -swapEvent.args.amount1
-
-		return amountOut
 	}
 }

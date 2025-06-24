@@ -1,9 +1,11 @@
 import { TransactionReceipt } from 'viem'
 import { BaseContract } from '../../primitives/contracts/BaseContract'
 import { Token } from '../../primitives/tokens/Token'
-import { PoolType } from '../poolVariety'
-
+import { createCustomError } from '../../utils/common'
+import { POOL_ERRORS, PoolType } from '../poolVariety'
 export abstract class Pool extends BaseContract {
+	public readonly customError: ReturnType<typeof createCustomError>
+
 	constructor(
 		public readonly token0: Token,
 		public readonly token1: Token,
@@ -13,6 +15,7 @@ export abstract class Pool extends BaseContract {
 		public readonly poolType: PoolType,
 	) {
 		super(poolAddress, chainId)
+		this.customError = POOL_ERRORS[poolType]
 	}
 
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
@@ -44,7 +47,7 @@ export abstract class Pool extends BaseContract {
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
 
 		if (receipt.status !== 'success')
-			throw new Error(`Swap failed, tx: ${hash}`)
+			throw new this.customError(`Swap failed, tx: ${hash}`)
 
 		const amountOut = this.parseAmountOut(receipt)
 
