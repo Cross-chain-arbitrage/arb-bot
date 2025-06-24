@@ -10,6 +10,7 @@ const CURRENCY_TO_UCID = {
 	BTC: '1',
 	FUSE: '5634',
 	USDT: '825',
+	USDC: '3408',
 }
 
 export class PriceOracle<
