@@ -1,4 +1,10 @@
-import { Address, decodeEventLog, isAddressEqual, zeroAddress } from 'viem'
+import {
+	Address,
+	decodeEventLog,
+	isAddressEqual,
+	TransactionReceipt,
+	zeroAddress,
+} from 'viem'
 import { ALGEBRA_POOL_ABI } from '../../abi/algebra/algebraPool'
 import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
 import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
@@ -86,44 +92,23 @@ export class AlgebraPool extends UniV3LikePool {
 
 		const args = await this.getSwapArguments(params)
 
-		const { result: amountOut } = await this.client.simulateContract({
-			address: this.routerAddress,
-			abi: ALGEBRA_ROUTER_ABI,
-			functionName: 'exactInputSingle',
-			account: this.account.address,
-			args: [args],
-		})
+		const { result: amountOut, request } =
+			await this.client.simulateContract({
+				address: this.routerAddress,
+				abi: ALGEBRA_ROUTER_ABI,
+				functionName: 'exactInputSingle',
+				account: this.account.address,
+				args: [args],
+			})
 
-		return { amountOut, args }
+		return {
+			amountOut,
+			request: request as unknown as SimulateRequestWithAccount,
+		}
 	}
 
-	async swap(params: SwapParams) {
-		const { args } = await this.simulateSwap(params)
-
-		const gas = await this.client.estimateContractGas({
-			address: this.routerAddress,
-			abi: ALGEBRA_ROUTER_ABI,
-			functionName: 'exactInputSingle',
-			args: [args],
-			account: this.account,
-		})
-
-		const hash = await this.wallet.writeContract({
-			address: this.routerAddress,
-			abi: ALGEBRA_ROUTER_ABI,
-			account: this.account,
-			chain: this.wallet.chain,
-			functionName: 'exactInputSingle',
-			args: [args],
-			gas: this.multiplyGas(gas),
-		})
-
-		const receipt = await this.client.waitForTransactionReceipt({ hash })
-
-		if (receipt.status !== 'success')
-			throw new AlgebraPoolError(`Swap failed, tx: ${hash}`)
-
-		const swapEvent = receipt.logs
+	parseAmountOut(swapReceipt: TransactionReceipt): bigint {
+		const swapEvent = swapReceipt.logs
 			.map((log) => {
 				if (!isAddressEqual(log.address, this.address)) return null
 
@@ -144,6 +129,6 @@ export class AlgebraPool extends UniV3LikePool {
 				? -swapEvent.args.amount0
 				: -swapEvent.args.amount1
 
-		return { receipt, amountOut }
+		return amountOut
 	}
 }

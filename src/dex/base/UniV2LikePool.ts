@@ -1,4 +1,10 @@
-import { decodeEventLog, isAddressEqual } from 'viem'
+import {
+	Account,
+	decodeEventLog,
+	isAddressEqual,
+	SimulateContractReturnType,
+	TransactionReceipt,
+} from 'viem'
 import { UNIV2_POOL_ABI } from '../../abi/uniV2/pool'
 import { UNIV2_ROUTER_ABI } from '../../abi/uniV2/router'
 import { Token } from '../../primitives/tokens/Token'
@@ -117,47 +123,32 @@ export abstract class UniV2LikePool extends Pool {
 
 		const args = await this.getSwapArguments(params)
 
-		const { result: amountOut } = await this.client.simulateContract({
-			address: this.routerAddress,
-			abi: UNIV2_ROUTER_ABI,
-			functionName: 'swapExactTokensForTokens',
-			account: this.account.address,
-			args: [
-				args.amountIn,
-				args.amountOutMinimum,
-				[args.tokenIn, args.tokenOut],
-				args.recipient,
-				this.calcDeadline(60 * 5),
-			],
-		})
+		const { result: amountOut, request } =
+			await this.client.simulateContract({
+				address: this.routerAddress,
+				abi: UNIV2_ROUTER_ABI,
+				functionName: 'swapExactTokensForTokens',
+				account: this.account.address,
+				args: [
+					args.amountIn,
+					args.amountOutMinimum,
+					[args.tokenIn, args.tokenOut],
+					args.recipient,
+					this.calcDeadline(60 * 5),
+				],
+			})
 
-		return { amountOut: amountOut[amountOut.length - 1], args }
+		return {
+			amountOut: amountOut[amountOut.length - 1],
+			request:
+				request as unknown as SimulateContractReturnType['request'] & {
+					account: Account
+				},
+		}
 	}
 
-	async swap(params: SwapParams) {
-		const { args } = await this.simulateSwap(params)
-
-		const hash = await this.wallet.writeContract({
-			address: this.routerAddress,
-			abi: UNIV2_ROUTER_ABI,
-			account: this.account,
-			chain: this.wallet.chain,
-			functionName: 'swapExactTokensForTokens',
-			args: [
-				args.amountIn,
-				args.amountOutMinimum,
-				[args.tokenIn, args.tokenOut],
-				args.recipient,
-				args.deadline,
-			],
-		})
-
-		const receipt = await this.client.waitForTransactionReceipt({ hash })
-
-		if (receipt.status !== 'success')
-			throw new UniV2LikePoolError(`Swap failed, tx: ${hash}`)
-
-		const swapEvent = receipt.logs
+	parseAmountOut(swapReceipt: TransactionReceipt): bigint {
+		const swapEvent = swapReceipt.logs
 			.map((log) => {
 				if (!isAddressEqual(log.address, this.address)) return null
 
@@ -178,7 +169,7 @@ export abstract class UniV2LikePool extends Pool {
 				? swapEvent.args.amount0Out
 				: swapEvent.args.amount1Out
 
-		return { receipt, amountOut }
+		return amountOut
 	}
 
 	validateMismatchSwapParams(params: SwapParams) {

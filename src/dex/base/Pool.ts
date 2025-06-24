@@ -22,8 +22,37 @@ export abstract class Pool extends BaseContract {
 		fee: number
 	}>
 
-	abstract swap(params: SwapParams): Promise<{
+	abstract simulateSwap(params: SwapParams): Promise<{
 		amountOut: bigint
-		receipt: TransactionReceipt
+		request: SimulateRequestWithAccount
 	}>
+
+	abstract parseAmountOut(swapReceipt: TransactionReceipt): bigint
+
+	async swap(params: SwapParams) {
+		const { request } = await this.simulateSwap(params)
+
+		const gas = await this.client.estimateContractGas({
+			...request,
+		})
+
+		const hash = await this.wallet.writeContract({
+			...request,
+			gas: this.multiplyGas(gas),
+		})
+
+		const receipt = await this.client.waitForTransactionReceipt({ hash })
+
+		if (receipt.status !== 'success')
+			throw new Error(`Swap failed, tx: ${hash}`)
+
+		const amountOut = this.parseAmountOut(receipt)
+
+		return { receipt, amountOut }
+	}
+
+	multiplyGas(gas: bigint) {
+		//TODO: remove magic number
+		return (gas * 15n) / 10n
+	}
 }

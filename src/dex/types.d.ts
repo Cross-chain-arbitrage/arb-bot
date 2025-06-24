@@ -1,4 +1,4 @@
-import { Address } from 'viem'
+import { Address, SimulateContractReturnType } from 'viem'
 import { Token } from '../primitives/tokens/Token'
 
 declare global {
@@ -76,4 +76,8 @@ declare global {
 	}
 
 	type PoolConfig = V3PoolConfig | V2PoolConfig
+
+	type SimulateRequestWithAccount = SimulateContractReturnType['request'] & {
+		account: Account
+	}
 }

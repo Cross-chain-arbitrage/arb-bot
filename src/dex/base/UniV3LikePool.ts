@@ -1,4 +1,4 @@
-import { Address, isAddressEqual, TransactionReceipt } from 'viem'
+import { Address, isAddressEqual } from 'viem'
 import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
@@ -85,11 +85,6 @@ export abstract class UniV3LikePool extends Pool {
 			throw new UniV3LikePoolError('amountIn cannot be 0 or negative')
 		}
 	}
-
-	abstract quoteSwap(params: SwapParams): Promise<{
-		amountOut: bigint
-		fee: number
-	}>
 
 	async validateBalance(swapParams: SwapParams) {
 		const { tokenIn, amountIn } = swapParams
@@ -203,18 +198,4 @@ export abstract class UniV3LikePool extends Pool {
 	calcDeadline(secondsToAdd: number) {
 		return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
 	}
-
-	multiplyGas(gas: bigint) {
-		//TODO: remove magic number
-		return (gas * 15n) / 10n
-	}
-
-	abstract simulateSwap(
-		params: SwapParams, //TODO: remove any
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	): Promise<{ amountOut: bigint; args: any }>
-	abstract swap(params: SwapParams): Promise<{
-		receipt: TransactionReceipt
-		amountOut: bigint
-	}>
 }
