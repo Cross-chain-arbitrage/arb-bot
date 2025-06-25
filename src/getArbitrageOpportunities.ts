@@ -76,7 +76,7 @@ export async function getArbitrageOpportunities(): Promise<
 
 	const retryOptions = {
 		retryCount: 3,
-		delay: 1000,
+		delay: 8_000,
 	}
 
 	const priceBTC = await withRetry(
