@@ -34,8 +34,9 @@ declare global {
 		type: 'v3-like'
 		abi: Abi
 		slotFunction: string // 'slot0' or 'globalState'
-		slotTickSpacingIndex: number // index in slot0/globalState result for tickSpacing
+		sqrtPriceX96Index: number // index in slot0/globalState result for sqrtPriceX96
 		feeFunction: string
+		tickSpacingFunction: string
 		tokenFunctions: {
 			token0: string
 			token1: string

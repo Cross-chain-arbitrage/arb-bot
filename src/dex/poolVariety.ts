@@ -28,8 +28,9 @@ export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
 		type: 'v3-like',
 		abi: UNIV3_POOL_ABI,
 		slotFunction: 'slot0',
-		slotTickSpacingIndex: 1,
+		sqrtPriceX96Index: 0,
 		feeFunction: 'fee',
+		tickSpacingFunction: 'tickSpacing',
 		tokenFunctions: {
 			token0: 'token0',
 			token1: 'token1',
@@ -39,8 +40,9 @@ export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
 		type: 'v3-like',
 		abi: PANCAKE_V3_POOL_ABI,
 		slotFunction: 'slot0',
-		slotTickSpacingIndex: 1,
+		sqrtPriceX96Index: 0,
 		feeFunction: 'fee',
+		tickSpacingFunction: 'tickSpacing',
 		tokenFunctions: {
 			token0: 'token0',
 			token1: 'token1',
@@ -50,8 +52,9 @@ export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
 		type: 'v3-like',
 		abi: ALGEBRA_POOL_ABI,
 		slotFunction: 'globalState',
-		slotTickSpacingIndex: 1,
+		sqrtPriceX96Index: 0,
 		feeFunction: 'fee',
+		tickSpacingFunction: 'tickSpacing',
 		tokenFunctions: {
 			token0: 'token0',
 			token1: 'token1',

@@ -95,20 +95,20 @@ export abstract class UniV3LikePoolStatic extends Pool {
 		}
 
 		const client = ClientManager.getClient(chainId)
+
 		const contract = getContract({
 			address: poolAddress,
 			abi: config.abi,
 			client,
 		})
 
-		const [slotData, fee, token0Address, token1Address] = await Promise.all(
-			[
-				contract.read[config.slotFunction](),
+		const [fee, token0Address, token1Address, tickSpacing] =
+			await Promise.all([
 				contract.read[config.feeFunction](),
 				contract.read[config.tokenFunctions.token0](),
 				contract.read[config.tokenFunctions.token1](),
-			],
-		)
+				contract.read[config.tickSpacingFunction](),
+			])
 
 		const [token0, token1] = await Promise.all([
 			TokenUtils.fromAddress<Token>(token0Address as Address, chainId),
@@ -119,9 +119,7 @@ export abstract class UniV3LikePoolStatic extends Pool {
 			token0,
 			token1,
 			fee: fee as number,
-			tickSpacing: (slotData as readonly unknown[])[
-				config.slotTickSpacingIndex
-			] as number,
+			tickSpacing: tickSpacing as number,
 		}
 	}
 
