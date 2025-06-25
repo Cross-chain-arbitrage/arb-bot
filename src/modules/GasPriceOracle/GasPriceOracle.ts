@@ -1,13 +1,14 @@
 import TTLCache from '@isaacs/ttlcache'
 import { Chain, Eip1559FeesNotSupportedError, parseUnits } from 'viem'
-import { estimateFeesPerGas } from 'viem/_types/actions/public/estimateFeesPerGas'
+import { EstimateFeesPerGasReturnType } from 'viem/_types/actions/public/estimateFeesPerGas'
 import { ChainUtils } from '../../primitives/chains/ChainUtils'
 import { ClientManager } from '../../utils/ClientManager'
 import { createCustomError } from '../../utils/common'
 import logger from '../../utils/logger'
 import { LEGACY_TX_TYPE_CHAINS } from './chains'
 
-export type GasPriceData = Awaited<ReturnType<typeof estimateFeesPerGas>>
+export type GasPriceData<T extends 'eip1559' | 'legacy'> =
+	EstimateFeesPerGasReturnType<T>
 
 export const GasPriceOracleError = createCustomError('GasPriceOracleError')
 
@@ -16,24 +17,19 @@ export interface ChainGasConfig {
 	gasMultiplier?: number
 	fallbackRpcUrls?: string[]
 	validationThresholds?: {
-		minGasPrice?: bigint
-		maxGasPrice?: bigint
+		minGasPrice: bigint
+		maxGasPrice: bigint
 	}
 }
 
 export interface GasPriceOracleConfig {
 	defaultTtl: number
 	defaultGasMultiplier: number
+	chainConfigs: Map<number, ChainGasConfig>
 	globalValidationThresholds: {
 		minGasPrice: bigint
 		maxGasPrice: bigint
 	}
-	chainConfigs: Map<number, ChainGasConfig>
-}
-
-interface PendingRequest {
-	promise: Promise<GasPriceData>
-	timestamp: number
 }
 
 /**
@@ -44,12 +40,18 @@ interface PendingRequest {
 export class GasPriceOracle {
 	static instance: GasPriceOracle
 
-	private readonly _config: GasPriceOracleConfig
-	private readonly _cachedGasPrices: TTLCache<number, GasPriceData>
-	private readonly _pendingRequests: Map<number, PendingRequest> = new Map()
+	private readonly _oracleConfig: GasPriceOracleConfig
+	private readonly _cachedGasPrices: TTLCache<
+		number,
+		GasPriceData<'eip1559' | 'legacy'>
+	>
+	private readonly _pendingRequests: Map<
+		number,
+		Promise<GasPriceData<'eip1559' | 'legacy'>>
+	> = new Map()
 
 	constructor(config?: Partial<GasPriceOracleConfig>) {
-		this._config = {
+		this._oracleConfig = {
 			defaultTtl: 60_000, // 1 minute
 			defaultGasMultiplier: 1.5,
 			globalValidationThresholds: {
@@ -61,7 +63,7 @@ export class GasPriceOracle {
 		}
 
 		this._cachedGasPrices = new TTLCache({
-			ttl: this._config.defaultTtl,
+			ttl: this._oracleConfig.defaultTtl,
 		})
 	}
 
@@ -72,69 +74,46 @@ export class GasPriceOracle {
 		return GasPriceOracle.instance
 	}
 
-	async getGasPrice(chainId: number): Promise<GasPriceData> {
+	async getGasPrice<T extends 'eip1559' | 'legacy'>(
+		chainId: number,
+	): Promise<GasPriceData<T>> {
 		// Check cache first
-		const cachedGasPrice = this._cachedGasPrices.get(chainId)
+		const cachedGasPrice =
+			this._cachedGasPrices.get<GasPriceData<T>>(chainId)
+
 		if (cachedGasPrice) {
 			return cachedGasPrice
 		}
 
 		// Check if there's already a pending request for this chain
 		const pendingRequest = this._pendingRequests.get(chainId)
-		if (pendingRequest) {
-			// If the pending request is too old, create a new one
-			if (Date.now() - pendingRequest.timestamp < 5000) {
-				return pendingRequest.promise
-			} else {
-				this._pendingRequests.delete(chainId)
-			}
-		}
+		if (pendingRequest) return pendingRequest as Promise<GasPriceData<T>>
 
-		const promise = this._fetchGasPriceWithFallback(chainId)
-		this._pendingRequests.set(chainId, {
-			promise,
-			timestamp: Date.now(),
-		})
+		const promise = this._fetchGasPriceFromRPC(chainId)
+
+		this._pendingRequests.set(chainId, promise)
 
 		try {
 			const result = await promise
+			this._cachedGasPrices.set(chainId, result)
 			this._pendingRequests.delete(chainId)
-			return result
+
+			this._validateGasPrice(chainId, result)
+
+			return result as GasPriceData<T>
 		} catch (error) {
 			this._pendingRequests.delete(chainId)
 			throw error
 		}
 	}
 
-	private async _fetchGasPriceWithFallback(
-		chainId: number,
-	): Promise<GasPriceData> {
-		const config = this._getChainConfig(chainId)
-		const cachedGasPrice = this._cachedGasPrices.get(chainId)
-
-		if (cachedGasPrice) {
-			return cachedGasPrice
-		}
-
-		const gasPrice = await this._fetchGasPriceFromRPC(chainId)
-
-		// Validate the gas price
-		this._validateGasPrice(chainId, gasPrice)
-
-		// Cache successful result
-		const ttl = config.ttl ?? this._config.defaultTtl
-		this._cachedGasPrices.set(chainId, gasPrice, { ttl })
-
-		return gasPrice
-	}
-
 	private async _fetchGasPriceFromRPC(
 		chainId: number,
-	): Promise<GasPriceData> {
+	): Promise<GasPriceData<'eip1559' | 'legacy'>> {
 		const client = ClientManager.getClient(chainId)
-		const config = this._getChainConfig(chainId)
+		const chainConfig = this._getChainConfig(chainId)
 		const gasMultiplier =
-			config.gasMultiplier ?? this._config.defaultGasMultiplier
+			chainConfig.gasMultiplier ?? this._oracleConfig.defaultGasMultiplier
 
 		try {
 			const txType = this.isChainEIP1559Compatible(chainId)
@@ -178,11 +157,14 @@ export class GasPriceOracle {
 		}
 	}
 
-	private _validateGasPrice(chainId: number, gasPrice: GasPriceData): void {
-		const config = this._getChainConfig(chainId)
+	private _validateGasPrice(
+		chainId: number,
+		gasPrice: GasPriceData<'eip1559' | 'legacy'>,
+	): void {
+		const chainConfig = this._getChainConfig(chainId)
 		const thresholds =
-			config.validationThresholds ??
-			this._config.globalValidationThresholds
+			chainConfig.validationThresholds ??
+			this._oracleConfig.globalValidationThresholds
 
 		// Validate legacy gas price
 		if (
@@ -222,11 +204,7 @@ export class GasPriceOracle {
 	}
 
 	private _getChainConfig(chainId: number): ChainGasConfig {
-		return this._config.chainConfigs.get(chainId) ?? {}
-	}
-
-	private async _delay(ms: number): Promise<void> {
-		return new Promise((resolve) => setTimeout(resolve, ms))
+		return this._oracleConfig.chainConfigs.get(chainId) ?? {}
 	}
 
 	isChainEIP1559Compatible(chainId: number): boolean {
@@ -234,18 +212,23 @@ export class GasPriceOracle {
 	}
 
 	getGasMultiplier(chainId: number): number {
-		const config = this._getChainConfig(chainId)
-		return config.gasMultiplier ?? this._config.defaultGasMultiplier
+		const chainConfig = this._getChainConfig(chainId)
+		return (
+			chainConfig.gasMultiplier ?? this._oracleConfig.defaultGasMultiplier
+		)
 	}
 
 	setGasMultiplier(chainId: number, gasMultiplier: number): void {
-		const config = this._getChainConfig(chainId)
-		this._config.chainConfigs.set(chainId, { ...config, gasMultiplier })
+		const chainConfig = this._getChainConfig(chainId)
+		this._oracleConfig.chainConfigs.set(chainId, {
+			...chainConfig,
+			gasMultiplier,
+		})
 		this._cachedGasPrices.delete(chainId)
 	}
 
-	setChainConfig(chainId: number, config: ChainGasConfig): void {
-		this._config.chainConfigs.set(chainId, config)
+	setChainConfig(chainId: number, chainConfig: ChainGasConfig): void {
+		this._oracleConfig.chainConfigs.set(chainId, chainConfig)
 		this._cachedGasPrices.delete(chainId)
 	}
 
@@ -259,7 +242,3 @@ export class GasPriceOracle {
 		}
 	}
 }
-
-/**
- * 1.
- */
