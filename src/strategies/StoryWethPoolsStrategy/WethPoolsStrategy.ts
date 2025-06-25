@@ -9,12 +9,14 @@ import { WETH_POOLS } from './wethPools'
 
 async function main() {
 	ClientManager.useCustomRpcUrl(arbitrum.id)
+	const usdcAddress = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
+	const usdc = await TokenUtils.fromAddress(usdcAddress, arbitrum.id)
 
 	const config: StrategyConfig = {
-		name: 'Weth Pools Bot',
+		name: 'Story Weth Pools Bot',
 		giveApprovals: false,
-		startToken: TokenUtils.getNative(arbitrum.id),
-		minProfitUsd: 1.5,
+		startToken: usdc,
+		minProfitUsd: 2.5,
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
 		graphBuildConfig: {
@@ -26,8 +28,8 @@ async function main() {
 			slippage: 30,
 		},
 		graphOptimizerOptions: {
-			initialValueUSD: 250,
-			stepUSD: 250,
+			initialValueUSD: 200,
+			stepUSD: 200,
 			stepsAmount: 5,
 			maxPathLength: 6,
 		},

@@ -17,4 +17,5 @@ COPY tsconfig.build.json tsconfig.json ./
 # Compile TypeScript to JavaScript
 RUN yarn build
 
-CMD ["node", "dist/strategies/StoryWethPoolsStrategy/WethPoolsStrategy.js"]
+# Use environment variable for entry point
+CMD ["sh", "-c", "node dist/strategies/${ENTRY_POINT}"]
