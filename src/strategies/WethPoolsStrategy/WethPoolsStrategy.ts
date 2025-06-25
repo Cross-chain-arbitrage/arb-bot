@@ -14,7 +14,7 @@ async function main() {
 		name: 'Weth Pools Bot',
 		giveApprovals: false,
 		startToken: TokenUtils.getNative(arbitrum.id),
-		minProfitUsd: 3,
+		minProfitUsd: 1.5,
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
 		graphBuildConfig: {
