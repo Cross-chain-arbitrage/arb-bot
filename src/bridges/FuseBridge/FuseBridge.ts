@@ -164,7 +164,7 @@ export class FuseBridge {
 
 		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
 
-		await this.validateBalance(tokenIn, wallet.account!.address, amount)
+		await this.validateBalance(tokenIn, wallet.account.address, amount)
 
 		const localToken = tokenIn
 
@@ -177,7 +177,7 @@ export class FuseBridge {
 			tokenIn.chainId !== fuse.id
 		) {
 			await this.validateAllowance(
-				wallet.account!.address,
+				wallet.account.address,
 				address,
 				amount,
 				tokenIn,
@@ -283,7 +283,7 @@ export class FuseBridge {
 		const bridge = this.getBridge(tokenIn, toChainId)
 
 		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
-		const userAddr = wallet.account!.address
+		const userAddr = wallet.account.address
 
 		const allowance = await tokenIn.allowance(userAddr, bridge.address)
 
@@ -514,7 +514,7 @@ export class FuseBridge {
 
 		const wallet = ClientManager.getWalletClient(chainId)
 
-		if (wallet.account!.address !== recipient) {
+		if (wallet.account.address !== recipient) {
 			throw new FuseBridgeError(
 				'Recipient is not the same as the wallet address',
 			)

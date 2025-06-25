@@ -166,7 +166,7 @@ export class Stargate {
 		return this.quoteWithRecipient(
 			tokenIn,
 			toChainId,
-			wallet.account!.address,
+			wallet.account.address,
 			amount,
 		)
 	}
@@ -197,7 +197,7 @@ export class Stargate {
 		const poolOrOFT = await Stargate.getBridgeAddress(tokenIn)
 
 		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
-		const userAddr = wallet.account!.address
+		const userAddr = wallet.account.address
 
 		const allowance = await tokenIn.allowance(userAddr, poolOrOFT)
 
@@ -437,7 +437,7 @@ export class Stargate {
 
 		const wallet = ClientManager.getWalletClient(chainId)
 
-		if (wallet.account!.address !== recipient) {
+		if (wallet.account.address !== recipient) {
 			throw new StargateError(
 				'Recipient is not the same as the wallet address',
 			)

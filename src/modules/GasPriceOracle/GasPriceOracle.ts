@@ -132,7 +132,6 @@ export class GasPriceOracle {
 		chainId: number,
 	): Promise<GasPriceData> {
 		const client = ClientManager.getClient(chainId)
-		const chain = client.chain as Chain
 		const config = this._getChainConfig(chainId)
 		const gasMultiplier =
 			config.gasMultiplier ?? this._config.defaultGasMultiplier
@@ -148,7 +147,7 @@ export class GasPriceOracle {
 			>({
 				type: txType,
 				chain: {
-					...chain,
+					...client.chain,
 					fees: {
 						baseFeeMultiplier: () => gasMultiplier,
 					},
@@ -165,7 +164,7 @@ export class GasPriceOracle {
 				const fees = await client.estimateFeesPerGas<Chain, 'legacy'>({
 					type: 'legacy',
 					chain: {
-						...chain,
+						...client.chain,
 						fees: {
 							baseFeeMultiplier: () => gasMultiplier,
 						},

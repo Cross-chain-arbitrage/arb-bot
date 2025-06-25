@@ -175,7 +175,7 @@ export class GraphExecutor {
 		const tx = await FuseBridge.bridge(
 			from as Token,
 			to.chainId,
-			ClientManager.getWalletClient(to.chainId).account!.address,
+			ClientManager.getWalletClient(to.chainId).account.address,
 			amountIn,
 		)
 
@@ -205,7 +205,7 @@ export class GraphExecutor {
 		const result = await Stargate.bridge(
 			fromToken,
 			toChainId,
-			ClientManager.getWalletClient(fromChainId).account!.address,
+			ClientManager.getWalletClient(fromChainId).account.address,
 			amountIn,
 		)
 

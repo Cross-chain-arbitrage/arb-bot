@@ -1,8 +1,10 @@
 import {
+	Account,
 	Chain,
 	createPublicClient,
 	createWalletClient,
 	fallback,
+	FallbackTransport,
 	http,
 	PublicClient,
 	Transport,
@@ -33,27 +35,35 @@ export class ClientManagerError extends Error {
 }
 
 export class ClientManager {
-	private static clients: Map<number, PublicClient> = new Map()
+	private static clients: Map<
+		number,
+		PublicClient<FallbackTransport, Chain, undefined, undefined>
+	> = new Map()
 	private static _customRpcUrls: Map<number, URL> = new Map()
 
-	private static _walletClients: Map<number, WalletClient> = new Map()
+	private static _walletClients: Map<
+		number,
+		WalletClient<FallbackTransport, Chain, Account, undefined>
+	> = new Map()
 
-	static getWalletClient(chainId: number): WalletClient {
-		if (this._walletClients.has(chainId)) {
-			return this._walletClients.get(chainId) as WalletClient
-		}
+	static getWalletClient(
+		chainId: number,
+	): WalletClient<FallbackTransport, Chain, Account, undefined> {
+		const existingClient = this._walletClients.get(chainId)
+
+		if (existingClient) return existingClient
 
 		const chain = this.findChainById(chainId)
 
 		const client = createWalletClient({
 			account: privateKeyToAccount(getPrivateKey()),
 			chain,
-			transport: http(),
+			transport: fallback([this.getTransport(chainId)], {}),
 		})
 
 		this._walletClients.set(chainId, client)
 
-		return client as WalletClient
+		return client
 	}
 
 	/**
@@ -62,7 +72,9 @@ export class ClientManager {
 	 * @returns PublicClient
 	 * @dev If custom rpc url is set, it will be used ONCE the client is created
 	 */
-	static getClient(chainId: number): PublicClient {
+	static getClient(
+		chainId: number,
+	): PublicClient<FallbackTransport, Chain, undefined, undefined> {
 		const batch = {
 			multicall: true,
 		}
@@ -70,9 +82,7 @@ export class ClientManager {
 		// Check if client already exists
 		const existingClient = this.clients.get(chainId)
 
-		if (existingClient) {
-			return existingClient
-		}
+		if (existingClient) return existingClient
 
 		// Find chain config
 		const chain = this.findChainById(chainId)
@@ -106,9 +116,24 @@ export class ClientManager {
 
 		//TODO: check why use type assertion
 		// Store client
-		this.clients.set(chainId, client as PublicClient)
+		this.clients.set(chainId, client)
 
-		return client as PublicClient
+		return client
+	}
+
+	static getTransport(chainId: number): Transport {
+		const chain = this.findChainById(chainId)
+
+		const setRpcUrl = this._customRpcUrls.get(chainId)?.toString()
+
+		const rpcUrl = setRpcUrl ?? chain.rpcUrls.default.http[0]
+
+		return http(rpcUrl, {
+			retryCount: 3,
+			retryDelay: 500,
+			timeout: 6_000,
+			batch: true,
+		})
 	}
 
 	/**
