@@ -53,7 +53,7 @@ export class ClientManager {
 
 		if (existingClient) return existingClient
 
-		const chain = this.findChainById(chainId)
+		const chain = this.getChain(chainId)
 
 		const client = createWalletClient({
 			account: privateKeyToAccount(getPrivateKey()),
@@ -84,8 +84,7 @@ export class ClientManager {
 
 		if (existingClient) return existingClient
 
-		// Find chain config
-		const chain = this.findChainById(chainId)
+		const chain = this.getChain(chainId)
 
 		// Use custom rpc url if set
 		const setRpcUrl = this._customRpcUrls.get(chainId)?.toString()
@@ -108,8 +107,13 @@ export class ClientManager {
 		]
 
 		// Create new client
-		const client = createPublicClient({
-			chain,
+		const client = createPublicClient<
+			FallbackTransport,
+			Chain,
+			undefined,
+			undefined
+		>({
+			chain: this.getChain(chainId),
 			batch,
 			transport: fallback(transports, {}),
 		})
@@ -134,6 +138,16 @@ export class ClientManager {
 			timeout: 6_000,
 			batch: true,
 		})
+	}
+
+	static getChain(chainId: number): Chain {
+		const chain = this.findChainById(chainId)
+		return {
+			...chain,
+			fees: {
+				baseFeeMultiplier: () => 1.5,
+			},
+		}
 	}
 
 	/**
