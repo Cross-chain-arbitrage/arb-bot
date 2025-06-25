@@ -1,7 +1,7 @@
 import { arbitrum, fuse } from 'viem/chains'
-import { PoolType } from '../../dex/PoolUtils'
-import { PoolData } from '../Strategy'
 
+import { PoolType } from '../../dex/poolVariety'
+import { PoolData } from '../Strategy'
 export const WBTC_POOLS: PoolData[] = [
 	{
 		address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992', // WETH/WBTC
