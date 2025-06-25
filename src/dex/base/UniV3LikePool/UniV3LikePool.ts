@@ -168,7 +168,7 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 			functionName: config.slotFunction,
 		})
 
-		const sqrtPriceX96 = (result as bigint[])[config.slotTickSpacingIndex]
+		const sqrtPriceX96 = (result as bigint[])[config.sqrtPriceX96Index]
 
 		// Calculate price
 		const price = this.sqrtPriceX96ToPrice(sqrtPriceX96)
