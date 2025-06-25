@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import { Hex, pad } from 'viem'
+import { BaseError, Hex, pad } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import logger from './logger'
 
@@ -44,23 +44,32 @@ export async function runFnWithRetry<T>(
 				`Attempt ${attempt}/${maxRetries} failed:`,
 				currentError,
 			)
-
-			if (attempt === maxRetries) {
-				const errorSummary = errors
-					.map((err, index) => `Attempt ${index + 1}: ${err.message}`)
-					.join('\n')
-
-				const finalError = new Error(
-					`Function failed after ${maxRetries} attempts:\n${errorSummary}`,
-				)
-				finalError.name = 'RetryError'
-				throw finalError
-			}
 		}
 	}
 
-	// This should never be reached, but TypeScript requires it
-	throw new Error('Unexpected error in retry function')
+	const errorSummary = errors
+		.map((err, index) => {
+			let errorMessage = ''
+			switch (true) {
+				case err instanceof BaseError:
+					errorMessage = err.shortMessage
+					break
+
+				default:
+					errorMessage = err.message
+					break
+			}
+			return `Attempt ${index + 1}: ${errorMessage}`
+		})
+		.join('\n')
+
+	const finalError = new Error(
+		`Function failed after ${maxRetries} attempts:\n${errorSummary}`,
+	)
+
+	finalError.name = 'RetryError'
+
+	throw finalError
 }
 
 export function padAddressToBytes32(address: Address): Hex {
