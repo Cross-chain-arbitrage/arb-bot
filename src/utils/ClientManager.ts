@@ -7,7 +7,6 @@ import {
 	FallbackTransport,
 	http,
 	PublicClient,
-	Transport,
 	WalletClient,
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
@@ -55,10 +54,12 @@ export class ClientManager {
 
 		const chain = this.getChain(chainId)
 
+		const transport = this.getTransport(chainId)
+
 		const client = createWalletClient({
 			account: privateKeyToAccount(getPrivateKey()),
 			chain,
-			transport: fallback([this.getTransport(chainId)], {}),
+			transport,
 		})
 
 		this._walletClients.set(chainId, client)
@@ -85,26 +86,7 @@ export class ClientManager {
 		if (existingClient) return existingClient
 
 		const chain = this.getChain(chainId)
-
-		// Use custom rpc url if set
-		const setRpcUrl = this._customRpcUrls.get(chainId)?.toString()
-
-		const rpcUrl = setRpcUrl ?? chain.rpcUrls.default.http[0]
-
-		const transports: Transport[] = [
-			http(rpcUrl, {
-				retryCount: 3,
-				retryDelay: 500,
-				timeout: 6_000,
-				batch: true,
-				// onFetchRequest: (request) => {
-				// 	console.log('request', request.url)
-				// },
-				// onFetchResponse: (response) => {
-				// 	console.log('response', response.status)
-				// },
-			}),
-		]
+		const transport = this.getTransport(chainId)
 
 		// Create new client
 		const client = createPublicClient<
@@ -113,9 +95,9 @@ export class ClientManager {
 			undefined,
 			undefined
 		>({
-			chain: this.getChain(chainId),
+			chain,
 			batch,
-			transport: fallback(transports, {}),
+			transport,
 		})
 
 		//TODO: check why use type assertion
@@ -125,19 +107,24 @@ export class ClientManager {
 		return client
 	}
 
-	static getTransport(chainId: number): Transport {
+	static getTransport(chainId: number): FallbackTransport {
 		const chain = this.findChainById(chainId)
 
 		const setRpcUrl = this._customRpcUrls.get(chainId)?.toString()
 
 		const rpcUrl = setRpcUrl ?? chain.rpcUrls.default.http[0]
 
-		return http(rpcUrl, {
-			retryCount: 3,
-			retryDelay: 500,
-			timeout: 6_000,
-			batch: true,
-		})
+		return fallback(
+			[
+				http(rpcUrl, {
+					retryCount: 3,
+					retryDelay: 500,
+					timeout: 6_000,
+					batch: true,
+				}),
+			],
+			{},
+		)
 	}
 
 	static getChain(chainId: number): Chain {
