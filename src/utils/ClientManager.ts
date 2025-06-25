@@ -76,10 +76,6 @@ export class ClientManager {
 	static getClient(
 		chainId: number,
 	): PublicClient<FallbackTransport, Chain, undefined, undefined> {
-		const batch = {
-			multicall: true,
-		}
-
 		const existingClient = this.clients.get(chainId)
 
 		if (existingClient) return existingClient
@@ -94,7 +90,6 @@ export class ClientManager {
 			undefined
 		>({
 			chain,
-			batch,
 			transport,
 		})
 
@@ -113,13 +108,14 @@ export class ClientManager {
 		return fallback(
 			[
 				http(rpcUrl, {
-					retryCount: 3,
-					retryDelay: 500,
 					timeout: 6_000,
 					batch: true,
 				}),
 			],
-			{},
+			{
+				retryCount: 3,
+				retryDelay: 500,
+			},
 		)
 	}
 
