@@ -80,7 +80,6 @@ export class ClientManager {
 			multicall: true,
 		}
 
-		// Check if client already exists
 		const existingClient = this.clients.get(chainId)
 
 		if (existingClient) return existingClient
@@ -88,7 +87,6 @@ export class ClientManager {
 		const chain = this.getChain(chainId)
 		const transport = this.getTransport(chainId)
 
-		// Create new client
 		const client = createPublicClient<
 			FallbackTransport,
 			Chain,
@@ -100,8 +98,6 @@ export class ClientManager {
 			transport,
 		})
 
-		//TODO: check why use type assertion
-		// Store client
 		this.clients.set(chainId, client)
 
 		return client
