@@ -28,14 +28,17 @@ export class GraphVisualizer {
 		const endAmountFormatted = startToken.formatUnits(endAmount)
 		const profitAmountFormatted = startToken.formatUnits(profitAmount)
 
+		const startUsd = Number(startAmountFormatted) * startTokenPriceUsd
+		const endUsd = Number(endAmountFormatted) * startTokenPriceUsd
+
 		let result = `🔄 <b>Arbitrage Opportunity Found!</b> 🔄\n\n`
 
 		result += `Profit USD: $${(Number(profitAmountFormatted) * startTokenPriceUsd).toFixed(2)}\n\n`
 
 		// Path summary
 		result += `📊 <b>Path Summary</b>\n`
-		result += `Start: ${startAmountFormatted} ${startToken.toString()}\n`
-		result += `End: ${endAmountFormatted} ${startToken.toString()}\n`
+		result += `Start: $${startUsd.toFixed(2)} ${startAmountFormatted} ${startToken.toString()}\n`
+		result += `End: $${endUsd.toFixed(2)} ${endAmountFormatted} ${startToken.toString()}\n`
 		result += `Steps: ${path.length}\n\n`
 
 		// Profit details
