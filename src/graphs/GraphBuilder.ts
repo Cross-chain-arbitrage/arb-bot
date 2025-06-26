@@ -70,7 +70,6 @@ export class GraphBuilder {
 				connectSecondaryChains: true,
 				baseChainId: arbitrum.id,
 			},
-			slippage = 30,
 		} = buildConfig
 
 		logger.info('============================')

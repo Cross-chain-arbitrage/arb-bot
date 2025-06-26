@@ -177,6 +177,7 @@ makeSuite('Stargate', () => {
 				await GraphExecutor.execute({
 					path: [...graph.edges.values()],
 					startAmount: ETH_HEMI.parseUnits('1'),
+					retryExecuteEdgeCount: 1,
 				})
 			})
 

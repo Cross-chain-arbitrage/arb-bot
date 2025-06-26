@@ -19,7 +19,7 @@ import {
 export interface GraphExecutorConfig {
 	path: Edge[]
 	startAmount: bigint
-	retryExecuteEdgeCount?: number
+	retryExecuteEdgeCount: number
 	beforeExecuteEdgeHook?: (
 		path: Edge[],
 		currentEdge: Edge,
@@ -41,7 +41,7 @@ export class GraphExecutor {
 		const {
 			path,
 			startAmount,
-			retryExecuteEdgeCount = 1,
+			retryExecuteEdgeCount,
 			beforeExecuteEdgeHook,
 			afterExecuteEdgeHook,
 		} = config
