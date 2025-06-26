@@ -2,7 +2,6 @@ import {
 	Address,
 	erc20Abi,
 	isAddress,
-	isAddressEqual,
 	maxUint256,
 	TransactionReceipt,
 } from 'viem'
@@ -25,13 +24,6 @@ export class Token extends TokenBase {
 
 	isNative(): this is Token {
 		return false
-	}
-
-	isSame(token: Token): boolean {
-		return (
-			isAddressEqual(this.address, token.address) &&
-			this.chainId === token.chainId
-		)
 	}
 
 	private validateTokenAddress(address: Address): void {

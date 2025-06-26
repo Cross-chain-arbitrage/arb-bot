@@ -1,16 +1,12 @@
+import { createCustomError } from '../../utils/common'
+import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'
 
-export class TokenAmountError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, TokenAmountError.prototype)
-		this.name = 'TokenAmountError'
-	}
-}
+export const TokenAmountError = createCustomError('TokenAmountError')
 
 export class TokenAmount {
 	constructor(
-		public readonly token: Token,
+		public readonly token: Token | NativeCurrency,
 		public amount: bigint,
 	) {}
 
@@ -25,7 +21,7 @@ export class TokenAmount {
 	}
 
 	validateToken(tokenAmount: TokenAmount) {
-		if (this.token !== tokenAmount.token)
+		if (!this.token.isSame(tokenAmount.token))
 			throw new TokenAmountError('Math operation on different tokens')
 	}
 }

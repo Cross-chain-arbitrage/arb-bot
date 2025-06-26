@@ -1,4 +1,4 @@
-import { Address, formatUnits, parseUnits } from 'viem'
+import { Address, formatUnits, isAddressEqual, parseUnits } from 'viem'
 import { shortenAddress } from '../../utils/common'
 import { ChainUtils } from '../chains/ChainUtils'
 import { BaseContract } from '../contracts/BaseContract'
@@ -23,6 +23,13 @@ export abstract class TokenBase extends BaseContract {
 	}
 
 	abstract isNative(): boolean
+
+	isSame(token: TokenBase): boolean {
+		return (
+			isAddressEqual(this.address, token.address) &&
+			this.chainId === token.chainId
+		)
+	}
 
 	abstract balanceOf(address: Address): Promise<bigint>
 
