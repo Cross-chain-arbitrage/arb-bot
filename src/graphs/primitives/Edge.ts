@@ -91,12 +91,11 @@ export class StargateBridgeEdge extends Edge {
 	}
 
 	getRateWithoutCache = async (amountIn: bigint) => {
-		const { expectedAmountOut: amountOut } =
-			await Stargate.getExpectedAmountOut(
-				this.from,
-				amountIn,
-				this.to.chainId,
-			)
+		const { amountOut } = await Stargate.quoteBridge(
+			this.from,
+			amountIn,
+			this.to.chainId,
+		)
 
 		const rate = this.calcRate(amountIn, amountOut)
 
