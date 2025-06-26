@@ -34,6 +34,7 @@ export abstract class UniV2LikePoolStatic extends Pool {
 		}
 
 		const client = ClientManager.getClient(chainId)
+
 		const contract = getContract<
 			Transport,
 			Address,
@@ -62,7 +63,6 @@ export abstract class UniV2LikePoolStatic extends Pool {
 	static async validatePeriphery(
 		chainId: number,
 		poolType: PoolType,
-		poolAddress: Address,
 		periphery: UniV2PoolPeriphery,
 		poolFactory: Address,
 	) {
@@ -102,13 +102,7 @@ export abstract class UniV2LikePoolStatic extends Pool {
 			factory,
 		) as PoolPeriphery
 
-		await this.validatePeriphery(
-			chainId,
-			poolType,
-			poolAddress,
-			periphery,
-			factory,
-		)
+		await this.validatePeriphery(chainId, poolType, periphery, factory)
 
 		return { periphery, tokens: { token0, token1 }, factory }
 	}
