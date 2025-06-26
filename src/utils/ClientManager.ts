@@ -136,11 +136,24 @@ export class ClientManager {
 			transports.push(http(customRpcUrl, defaultTransportConfig))
 		}
 
+		const customTransportFromCollection = CUSTOM_RPC_URLS[chainId]
+
+		if (
+			customTransportFromCollection &&
+			customTransportFromCollection !== customRpcUrl
+		) {
+			transports.push(
+				http(customTransportFromCollection, defaultTransportConfig),
+			)
+		}
+
 		/* ======== Build Fallback Transport ======== */
 
 		return fallback(transports, {
 			retryCount: 3,
 			retryDelay: 500,
+			// rank: true results in strange behavior
+			// significantly slows down process while doing many requests
 			rank: false,
 		})
 	}
