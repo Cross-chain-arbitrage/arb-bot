@@ -41,8 +41,8 @@ export async function runFnWithRetry<T>(
 			errors.push(currentError)
 
 			logger.warn(
+				{ err: currentError },
 				`Attempt ${attempt}/${maxRetries} failed:`,
-				currentError,
 			)
 		}
 	}
@@ -64,7 +64,7 @@ export async function runFnWithRetry<T>(
 		.join('\n')
 
 	const finalError = new Error(
-		`Function failed after ${maxRetries} attempts:\n${errorSummary}`,
+		`Function ${fn.name} failed after ${maxRetries} attempts:\n${errorSummary}`,
 	)
 
 	finalError.name = 'RetryError'
