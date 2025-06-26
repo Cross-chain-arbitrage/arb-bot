@@ -106,7 +106,7 @@ const ethTokens = [
 
 makeSuite('GeckoTerminalAPI', () => {
 	it('should receive price for one asset', async () => {
-		const price = await GeckoTerminalAPI.getTokenPriceForChain(
+		const price = await GeckoTerminalAPI.getTokenPrice(
 			ethTokens[0] as Address,
 			'eth',
 		)
@@ -123,7 +123,7 @@ makeSuite('GeckoTerminalAPI', () => {
 		expect(prices).toHaveLength(5)
 
 		for (const token of prices) {
-			expect(Number(token.attributes.price_usd)).toBeGreaterThan(0)
+			expect(token.price).toBeGreaterThan(0)
 		}
 	})
 
@@ -135,13 +135,13 @@ makeSuite('GeckoTerminalAPI', () => {
 		)
 		expect(prices).toHaveLength(35)
 		for (const token of prices) {
-			expect(Number(token.attributes.price_usd)).toBeGreaterThan(0)
+			expect(token.price).toBeGreaterThan(0)
 		}
 	})
 
 	it('should throw an error for an invalid chain', async () => {
 		await expect(
-			GeckoTerminalAPI.getTokenPriceForChain(
+			GeckoTerminalAPI.getTokenPrice(
 				ethTokens[0] as Address,
 				'invalidChain',
 			),

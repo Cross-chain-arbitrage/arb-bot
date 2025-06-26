@@ -11,7 +11,7 @@ export class NativeCurrency extends TokenBase {
 		super(STARGATE_NATIVE_ADDRESS, chainId, symbol, 18, name)
 	}
 
-	isNative(): this is NativeCurrency {
+	isNative(): true {
 		return true
 	}
 

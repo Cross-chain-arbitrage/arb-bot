@@ -23,7 +23,7 @@ export class Token extends TokenBase {
 		this.validateDecimals(decimals)
 	}
 
-	isNative(): this is Token {
+	isNative(): false {
 		return false
 	}
 

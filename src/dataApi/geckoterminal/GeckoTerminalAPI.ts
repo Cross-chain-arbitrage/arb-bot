@@ -1,11 +1,12 @@
+import axios from 'axios'
 import { Address } from 'viem'
-import { chainIdToGeckoChainId, CHAINS } from './chains'
+import { CHAINS } from './chains'
 
 interface GeckoTerminalTokenData {
 	id: string
 	type: string
 	attributes: {
-		address: string
+		address: Address
 		name: string
 		symbol: string
 		decimals: number
@@ -31,25 +32,32 @@ export class GeckoTerminalAPI {
 
 	static async getTokenData(
 		address: Address,
-		network: string = chainIdToGeckoChainId['1'],
+		network: string,
 	): Promise<GeckoTerminalTokenData> {
 		this.validateChain(network)
 
 		const tokenDataUrl = `${GeckoTerminalAPI.baseUrl}/networks/${network}/tokens/${address}`
-		const response = await fetch(tokenDataUrl)
-		const data = (await response.json()) as { data: GeckoTerminalTokenData }
+		const { data } = await axios.get<{ data: GeckoTerminalTokenData }>(
+			tokenDataUrl,
+		)
+
 		return data.data
 	}
 
-	static async getTokenPrice(address: Address): Promise<number> {
-		const tokenData = await this.getTokenData(address)
+	static async getTokenPrice(
+		address: Address,
+		network: string,
+	): Promise<number> {
+		this.validateChain(network)
+
+		const tokenData = await this.getTokenData(address, network)
 		return Number(tokenData.attributes.price_usd)
 	}
 
 	static async getTokensPrices(
 		addresses: Address[],
 		network: string,
-	): Promise<GeckoTerminalTokenData[]> {
+	): Promise<{ address: Address; price: number }[]> {
 		this.validateChain(network)
 
 		const allTokens: GeckoTerminalTokenData[] = []
@@ -61,33 +69,31 @@ export class GeckoTerminalAPI {
 
 			const tokensDataUrl = `${GeckoTerminalAPI.baseUrl}/networks/${network}/tokens/multi/${addressesString}`
 
-			const response = await fetch(tokensDataUrl)
-			const data = (await response.json()) as {
+			const { data } = await axios.get<{
 				data: GeckoTerminalTokenData[]
-			}
+			}>(tokensDataUrl)
 
 			allTokens.push(...data.data)
 		}
 
-		return allTokens
-	}
-
-	static async getTokenPriceForChain(
-		address: Address,
-		network: string,
-	): Promise<number> {
-		this.validateChain(network)
-
-		const tokenData = await this.getTokenData(address, network)
-		return Number(tokenData.attributes.price_usd)
+		return allTokens.map((token) => ({
+			address: token.attributes.address,
+			price: Number(token.attributes.price_usd),
+		}))
 	}
 
 	static async getTokenPriceETH(): Promise<number> {
-		return this.getTokenPrice('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
+		return this.getTokenPrice(
+			'0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+			'eth',
+		)
 	}
 
 	static async getTokenPriceBTC(): Promise<number> {
-		return this.getTokenPrice('0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599')
+		return this.getTokenPrice(
+			'0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+			'eth',
+		)
 	}
 
 	static validateChain(chain: string) {

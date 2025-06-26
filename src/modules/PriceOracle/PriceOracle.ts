@@ -1,101 +1,270 @@
-import axios, { AxiosInstance } from 'axios'
-import dotenv from 'dotenv'
-import { getEnvSafe } from '../../utils/common'
-import logger from '../../utils/logger'
+import { isAddressEqual } from 'viem'
+import { GeckoTerminalAPI } from '../../dataApi/geckoterminal/GeckoTerminalAPI'
+import { chainIdToGeckoChainId } from '../../dataApi/geckoterminal/chains'
+import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
+import { Token } from '../../primitives/tokens/Token'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { createCustomError } from '../../utils/common'
 
-dotenv.config()
+export type CurrencyId = TokenId
+export type Currency = Token | NativeCurrency
 
-const CURRENCY_TO_UCID = {
-	ETH: '1027',
-	BTC: '1',
-	FUSE: '5634',
-	USDT: '825',
-	USDC: '3408',
-}
+const PriceOracleError = createCustomError('PriceOracleError')
 
-export class PriceOracle<
-	T extends Record<string, string> = typeof CURRENCY_TO_UCID,
-> {
-	readonly axiosClient: AxiosInstance
-	readonly currencyToUCID: T
-	readonly updateInterval: number
-	updateIntervalId: NodeJS.Timeout | undefined
+export class PriceOracle {
+	protected static prices: Map<CurrencyId, number> = new Map()
+	protected static currenciesToUpdate: Map<CurrencyId, Currency> = new Map()
+	protected static priceUpdater: NodeJS.Timeout | undefined
 
-	private _UCIDToCurrency: Record<string, string>
-	private _prices: Record<keyof T, number>
-
-	constructor(updateInterval: number, currencyToUCID: T) {
-		this.updateInterval = updateInterval
-		this._UCIDToCurrency = Object.fromEntries(
-			Object.entries(currencyToUCID).map(([currency, ucid]) => [
-				ucid,
-				currency,
-			]),
+	/**
+	 * Initialize prices for a list of currencies and start updating prices every 5 minutes
+	 * @param updateInterval - The interval to update prices, false to not update prices, undefined to use the default interval
+	 */
+	static async initializePrices(
+		currencies: Currency[],
+		updateInterval: number | false | undefined = 1000 * 60 * 5,
+	) {
+		currencies.forEach((currency) =>
+			this.currenciesToUpdate.set(currency.id, currency),
 		)
-		this.currencyToUCID = currencyToUCID
-		this.axiosClient = axios.create({
-			baseURL: 'https://pro-api.coinmarketcap.com/v1',
-			headers: {
-				'X-CMC_PRO_API_KEY': getEnvSafe('CMC_API_KEY'),
-			},
-		})
-		this._prices = {} as Record<keyof T, number>
-	}
 
-	static async create<
-		T extends Record<string, string> = typeof CURRENCY_TO_UCID,
-	>(
-		updateInterval: number = 10 * 60 * 1000,
-		currencyToUCID?: T,
-	): Promise<PriceOracle<T>> {
-		const priceOracle = new PriceOracle(
+		const currenciesAndPrices = await this.getPrices(
+			currencies,
 			updateInterval,
-			currencyToUCID || (CURRENCY_TO_UCID as unknown as T),
 		)
 
-		await priceOracle.updatePrices()
+		if (updateInterval) {
+			this.startPriceUpdating(updateInterval)
+		}
 
-		priceOracle.updateIntervalId = setInterval(() => {
-			priceOracle.updatePrices().catch((error) => {
-				logger.error(error)
-			})
-		}, priceOracle.updateInterval)
-
-		return priceOracle
+		return currenciesAndPrices
 	}
 
-	private async updatePrices() {
-		const prices = await this.retrievePrices()
+	/**
+	 * Start updating prices every updateInterval, if there is no price updater running, it will be started
+	 */
+	static startPriceUpdating(updateInterval: number = 1000 * 60 * 5): void {
+		if (this.priceUpdater) {
+			return
+		}
 
-		for (const currency in prices.data) {
-			const currencyName = this._UCIDToCurrency[currency] as keyof T
+		this.priceUpdater = setInterval(() => {
+			this.updatePrices().catch((error) =>
+				console.error('Error updating prices:', error),
+			)
+		}, updateInterval)
+	}
 
-			this._prices[currencyName] = prices.data[currency].quote.USD.price
+	static stopPriceUpdating(): void {
+		if (this.priceUpdater) {
+			clearInterval(this.priceUpdater)
+			this.priceUpdater = undefined
 		}
 	}
 
-	private async retrievePrices() {
-		const ids = Object.values(this.currencyToUCID)
+	/**
+	 * Get the price of a currency, cache it and update it every 5 minutes
+	 * @param updateInterval - The interval to update prices, false to not update prices, undefined to use the default interval
+	 */
+	static async getPrice(
+		currency: Currency,
+		updateInterval: number | false | undefined = 1000 * 60 * 5,
+	): Promise<number> {
+		const isCurrencyNative = currency.isNative()
 
-		const response = await this.axiosClient.get<CMCQuotesResponse>(
-			'/cryptocurrency/quotes/latest',
-			{
-				params: {
-					id: ids.join(','),
-				},
-			},
-		)
-
-		return response.data
-	}
-
-	getPrice(currency: keyof T) {
-		const price = this._prices[currency]
-
-		if (!price) {
-			throw new Error(`Price for ${currency.toString()} not found`)
+		if (isCurrencyNative) {
+			const wrappedNative = await TokenUtils.getWrappedNative(
+				currency.chainId,
+			)
+			currency = wrappedNative
 		}
 
-		return price as number
+		const price = this.prices.get(currency.id)
+
+		if (price) {
+			return price
+		}
+
+		const geckoId = this.getGeckoId(currency.chainId)
+
+		const tokenPrice = await GeckoTerminalAPI.getTokenPrice(
+			currency.address,
+			geckoId,
+		)
+
+		this.currenciesToUpdate.set(currency.id, currency)
+		this.prices.set(currency.id, tokenPrice)
+
+		if (updateInterval) {
+			this.startPriceUpdating(updateInterval)
+		}
+
+		return tokenPrice
+	}
+
+	/**
+	 * Get the price of a currency, cache it and update it every 5 minutes
+	 * @param updateInterval - The interval to update prices, false to not update prices, undefined to use the default interval
+	 */
+	static async getPrices(
+		currencies: Currency[],
+		updateInterval: number | false | undefined = 1000 * 60 * 5,
+	): Promise<{ currency: Currency; price: number }[]> {
+		const unknownCurrenciesByChain = new Map<number, Currency[]>()
+
+		const unknownCurrencies: Currency[] = []
+		const prices: { currency: Currency; price: number }[] = []
+
+		for (const currency of currencies) {
+			const isCurrencyNative = currency.isNative()
+
+			if (isCurrencyNative) {
+				const wrappedNative = await TokenUtils.getWrappedNative(
+					currency.chainId,
+				)
+
+				const currencyPrice = this.prices.get(wrappedNative.id)
+
+				if (currencyPrice) {
+					prices.push({ currency, price: currencyPrice })
+				} else {
+					unknownCurrencies.push(currency)
+				}
+			} else {
+				const currencyPrice = this.prices.get(currency.id)
+
+				if (currencyPrice) {
+					prices.push({ currency, price: currencyPrice })
+					continue
+				}
+
+				unknownCurrencies.push(currency)
+			}
+		}
+
+		for (const currency of unknownCurrencies) {
+			if (!unknownCurrenciesByChain.has(currency.chainId)) {
+				unknownCurrenciesByChain.set(currency.chainId, [])
+			}
+
+			unknownCurrenciesByChain.get(currency.chainId)!.push(currency)
+		}
+
+		for (const [
+			chainId,
+			chainCurrencies,
+		] of unknownCurrenciesByChain.entries()) {
+			const currenciesAndPricesOnChain =
+				await this.getUnknownPricesOnChain(chainId, chainCurrencies)
+
+			prices.push(...currenciesAndPricesOnChain)
+		}
+
+		if (updateInterval) {
+			this.startPriceUpdating(updateInterval)
+		}
+
+		return prices
+	}
+
+	/**
+	 * fetch prices, add it in cache and in currenciesToUpdate
+	 */
+	private static async getUnknownPricesOnChain(
+		chainId: number,
+		currencies: Currency[],
+	) {
+		const prices: { currency: Currency; price: number }[] = []
+
+		const geckoId = this.getGeckoId(chainId)
+		const addresses: Address[] = []
+
+		for (const currency of currencies) {
+			const isCurrencyNative = currency.isNative()
+
+			if (isCurrencyNative) {
+				const wrappedNative = await TokenUtils.getWrappedNative(
+					currency.chainId,
+				)
+
+				addresses.push(wrappedNative.address)
+			} else {
+				addresses.push(currency.address)
+			}
+		}
+
+		const addressesAndPrices = await GeckoTerminalAPI.getTokensPrices(
+			addresses,
+			geckoId,
+		)
+
+		for (const currency of currencies) {
+			const isCurrencyNative = currency.isNative()
+
+			if (isCurrencyNative) {
+				const wrappedNative = await TokenUtils.getWrappedNative(
+					currency.chainId,
+				)
+
+				const addressAndPrice = addressesAndPrices.find(
+					(addressAndPrice) =>
+						isAddressEqual(
+							addressAndPrice.address,
+							wrappedNative.address,
+						),
+				)
+
+				if (!addressAndPrice) {
+					// should never throw, because we are sure that the address is in the list
+					throw new PriceOracleError(
+						`Price not found for address: ${wrappedNative.address}`,
+					)
+				}
+
+				prices.push({ currency, price: addressAndPrice.price })
+			} else {
+				const addressAndPrice = addressesAndPrices.find(
+					(addressAndPrice) =>
+						isAddressEqual(
+							addressAndPrice.address,
+							currency.address,
+						),
+				)
+
+				if (!addressAndPrice) {
+					// should never throw, because we are sure that the address is in the list
+					throw new PriceOracleError(
+						`Price not found for address: ${currency.address}`,
+					)
+				}
+
+				prices.push({ currency, price: addressAndPrice.price })
+
+				this.prices.set(currency.id, addressAndPrice.price)
+				this.currenciesToUpdate.set(currency.id, currency)
+			}
+		}
+
+		return prices
+	}
+
+	private static async updatePrices(): Promise<void> {
+		const currenciesToUpdate = Array.from(this.currenciesToUpdate.values())
+
+		if (currenciesToUpdate.length > 0) {
+			await this.getPrices(currenciesToUpdate)
+		}
+	}
+
+	private static getGeckoId(chainId: number): string {
+		const chainIdStr = String(chainId) as keyof typeof chainIdToGeckoChainId
+
+		const geckoId = chainIdToGeckoChainId[chainIdStr]
+
+		if (!geckoId) {
+			throw new Error(`Unsupported chainId for PriceOracle: ${chainId}`)
+		}
+
+		return geckoId
 	}
 }
