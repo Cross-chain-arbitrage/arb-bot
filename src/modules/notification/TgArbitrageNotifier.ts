@@ -57,7 +57,17 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 		await this.sendMessage(message)
 	}
 
-	async sendArbitrageError(name: string, error: string) {
-		await this.sendMessage(`${name}:\n\n❌<b>Arbitrage error:</b> ${error}`)
+	async sendArbitrageError(
+		name: string,
+		error: string,
+		isLastNotification: boolean,
+	) {
+		let message = `${name}:\n\n❌<b>Arbitrage error:</b> ${error}`
+
+		if (!isLastNotification)
+			message +=
+				'\n\n⚠️ Too many execution errors in a row, next errors will not be notified'
+
+		await this.sendMessage(message)
 	}
 }

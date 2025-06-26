@@ -50,6 +50,9 @@ export class GraphArbitrageBot {
 	readonly arbitrageTimeout: number
 	readonly retryExecuteEdgeCount: number
 	readonly name: string
+
+	private executionErrorInARow = 0
+
 	constructor(params: GraphArbitrageBotParams) {
 		this.TgArbitrageNotifier = params.TgArbitrageNotifier
 		this.priceOracle = params.priceOracle
@@ -190,12 +193,20 @@ export class GraphArbitrageBot {
 	}
 
 	private notifyAboutArbError(error: unknown) {
+		if (this.executionErrorInARow++ > 3) {
+			logger.warn(
+				'Too many execution errors in a row, skipping notification',
+			)
+			return
+		}
+
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error'
 
 		this.TgArbitrageNotifier.sendArbitrageError(
 			this.name,
 			errorMessage,
+			this.executionErrorInARow > 2,
 		).catch((err) => {
 			logger.error(err, 'Error sending error to telegram')
 		})
@@ -205,6 +216,8 @@ export class GraphArbitrageBot {
 		actualAmountOut: bigint,
 		opportunity: GraphArbitrageOpportunity,
 	) {
+		this.executionErrorInARow = 0
+
 		this.TgArbitrageNotifier.sendArbitrageEnd(
 			this.name,
 			actualAmountOut,
