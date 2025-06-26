@@ -9,11 +9,12 @@ const GraphOpportunityFinderError = createCustomError(
 export class GraphOpportunityFinder {
 	/**
 	 * Finds an arbitrage path using the Bellman-Ford algorithm
+	 * @dev Tries to find negative sum cyclic path of graph traversal
 	 * @param startToken - The token to start the arbitrage from
 	 * @param startAmount - The amount of tokens to start with
 	 * @param graph - The graph containing all possible trading paths
 	 * @param maxDepth - Maximum number of edges to traverse (default: 7)
-	 * @returns Object containing the arbitrage path and edge rates
+	 * @returns - {@link GraphArbitrageOpportunity} or null, if no opportunity found
 	 */
 	static async findArbOpportunity(
 		startToken: GraphNode,
