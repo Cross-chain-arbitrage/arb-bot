@@ -51,17 +51,15 @@ export abstract class UniV3LikePoolStatic extends Pool {
 	): Promise<[Token, Token]> {
 		const client = ClientManager.getClient(chainId)
 
+		const contract = getContract({
+			address: poolAddress,
+			abi: UNIV3_POOL_ABI,
+			client,
+		})
+
 		const [token0Address, token1Address] = await Promise.all([
-			client.readContract({
-				address: poolAddress,
-				abi: UNIV3_POOL_ABI,
-				functionName: 'token0',
-			}),
-			client.readContract({
-				address: poolAddress,
-				abi: UNIV3_POOL_ABI,
-				functionName: 'token1',
-			}),
+			contract.read.token0(),
+			contract.read.token1(),
 		])
 
 		const token0 = await TokenUtils.fromAddress<Token>(

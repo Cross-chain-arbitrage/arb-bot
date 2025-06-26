@@ -1,5 +1,5 @@
 import TTLCache from '@isaacs/ttlcache'
-import { zeroAddress, zeroHash } from 'viem'
+import { getContract, zeroAddress, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
 import { getChainEIdByNativeChainId } from '../../data-apis/layerzeroscan/utils'
@@ -315,22 +315,23 @@ export class Stargate {
 
 		const client = ClientManager.getClient(fromChainId)
 
-		const result = await client.readContract({
+		const contract = getContract({
 			address: token,
 			abi: OFT_ABI,
-			functionName: 'quoteOFT',
-			args: [
-				{
-					dstEid: toChainEId,
-					to: recipientBytes32,
-					amountLD: amount,
-					minAmountLD: amount,
-					extraOptions: '0x',
-					composeMsg: '0x',
-					oftCmd: '0x',
-				},
-			],
+			client,
 		})
+
+		const result = await contract.read.quoteOFT([
+			{
+				dstEid: toChainEId,
+				to: recipientBytes32,
+				amountLD: amount,
+				minAmountLD: amount,
+				extraOptions: '0x',
+				composeMsg: '0x',
+				oftCmd: '0x',
+			},
+		])
 
 		return result as [OFTLimit, OFTFeeDetail[], OFTReceipt]
 	}
