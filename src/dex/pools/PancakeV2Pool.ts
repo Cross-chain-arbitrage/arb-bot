@@ -10,6 +10,7 @@ export class PancakeV2Pool extends UniV2LikePool {
 		token0: Token,
 		token1: Token,
 		periphery: UniV2PoolPeriphery,
+		factory: Address,
 	) {
 		const fee = PancakeV2Pool.getV2DefaultFee(PoolType.PANCAKEV2)
 
@@ -21,15 +22,17 @@ export class PancakeV2Pool extends UniV2LikePool {
 			chainId,
 			fee,
 			PoolType.PANCAKEV2,
+			factory,
 		)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		const { periphery, tokens } = await this.getPeripheryAndImmutables(
-			poolAddress,
-			chainId,
-			PoolType.PANCAKEV2,
-		)
+		const { periphery, tokens, factory } =
+			await this.getPeripheryAndImmutables(
+				poolAddress,
+				chainId,
+				PoolType.PANCAKEV2,
+			)
 
 		return new PancakeV2Pool(
 			poolAddress,
@@ -37,6 +40,7 @@ export class PancakeV2Pool extends UniV2LikePool {
 			tokens.token0,
 			tokens.token1,
 			periphery,
+			factory,
 		)
 	}
 }

@@ -1,4 +1,4 @@
-import { getContract, isAddressEqual } from 'viem'
+import { getContract, isAddressEqual, Transport } from 'viem'
 import { UNIV2_POOL_ABI } from '../../../abi/uniV2/pool'
 import { UNIV2_ROUTER_ABI } from '../../../abi/uniV2/router'
 import { Token } from '../../../primitives/tokens/Token'
@@ -20,11 +20,11 @@ export abstract class UniV2LikePoolStatic extends Pool {
 		return config.defaultFee
 	}
 
-	static async getV2PoolTokens(
+	static async getV2PoolImmutables(
 		poolAddress: Address,
 		chainId: number,
 		poolType: PoolType,
-	): Promise<[Token, Token]> {
+	): Promise<[Token, Token, Address]> {
 		const config = POOL_CONFIGS[poolType] as V2PoolConfig
 
 		if (config.type !== 'v2-like') {
@@ -34,23 +34,29 @@ export abstract class UniV2LikePoolStatic extends Pool {
 		}
 
 		const client = ClientManager.getClient(chainId)
-		const contract = getContract({
+		const contract = getContract<
+			Transport,
+			Address,
+			typeof UNIV2_POOL_ABI,
+			typeof client
+		>({
 			address: poolAddress,
 			abi: config.abi,
 			client,
 		})
 
-		const [token0Address, token1Address] = await Promise.all([
-			contract.read[config.tokenFunctions.token0](),
-			contract.read[config.tokenFunctions.token1](),
+		const [token0Address, token1Address, factory] = await Promise.all([
+			contract.read.token0(),
+			contract.read.token1(),
+			contract.read.factory(),
 		])
 
 		const [token0, token1] = await Promise.all([
-			TokenUtils.fromAddress<Token>(token0Address as Address, chainId),
-			TokenUtils.fromAddress<Token>(token1Address as Address, chainId),
+			TokenUtils.fromAddress<Token>(token0Address, chainId),
+			TokenUtils.fromAddress<Token>(token1Address, chainId),
 		])
 
-		return [token0, token1]
+		return [token0, token1, factory]
 	}
 
 	static async validatePeriphery(
@@ -58,14 +64,9 @@ export abstract class UniV2LikePoolStatic extends Pool {
 		poolType: PoolType,
 		poolAddress: Address,
 		periphery: UniV2PoolPeriphery,
+		poolFactory: Address,
 	) {
 		const client = ClientManager.getClient(chainId)
-
-		const poolFactoryAddress = await client.readContract({
-			address: poolAddress,
-			abi: UNIV2_POOL_ABI,
-			functionName: 'factory',
-		})
 
 		const routerFactoryAddress = await client.readContract({
 			address: periphery.router,
@@ -73,9 +74,9 @@ export abstract class UniV2LikePoolStatic extends Pool {
 			functionName: 'factory',
 		})
 
-		if (!isAddressEqual(routerFactoryAddress, poolFactoryAddress)) {
+		if (!isAddressEqual(routerFactoryAddress, poolFactory)) {
 			throw new POOL_ERRORS[poolType](
-				`Invalid periphery: router factory ${routerFactoryAddress} does not match pool factory ${poolFactoryAddress}`,
+				`Invalid periphery: router factory ${routerFactoryAddress} does not match pool factory ${poolFactory}`,
 			)
 		}
 	}
@@ -87,8 +88,9 @@ export abstract class UniV2LikePoolStatic extends Pool {
 	): Promise<{
 		periphery: UniV2PoolPeriphery
 		tokens: { token0: Token; token1: Token }
+		factory: Address
 	}> {
-		const [token0, token1] = await this.getV2PoolTokens(
+		const [token0, token1, factory] = await this.getV2PoolImmutables(
 			poolAddress,
 			chainId,
 			poolType,
@@ -97,10 +99,17 @@ export abstract class UniV2LikePoolStatic extends Pool {
 		const periphery = this.getPeripherySafe(
 			chainId,
 			poolType,
+			factory,
 		) as PoolPeriphery
 
-		await this.validatePeriphery(chainId, poolType, poolAddress, periphery)
+		await this.validatePeriphery(
+			chainId,
+			poolType,
+			poolAddress,
+			periphery,
+			factory,
+		)
 
-		return { periphery, tokens: { token0, token1 } }
+		return { periphery, tokens: { token0, token1 }, factory }
 	}
 }
