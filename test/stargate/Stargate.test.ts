@@ -31,13 +31,10 @@ makeSuite('Stargate', () => {
 		})
 
 		it('MUST simulate sending Token', async () => {
-			console.time('STG')
 			const amount = USDT.parseUnits('1')
 			const balanceSlot = 51n
 			const wallet = ClientManager.getWalletClient(arbitrum.id)
-			const recipient = wallet.account!.address
-
-			console.time('setTokenBalance')
+			const recipient = wallet.account.address
 
 			await setTokenBalance(
 				recipient,
@@ -47,36 +44,27 @@ makeSuite('Stargate', () => {
 				wallet,
 			)
 
-			console.timeEnd('setTokenBalance')
-
-			console.time('getBridgeAddress')
 			const bridgeAddr = await Stargate.getBridgeAddress(USDT)
-			console.timeEnd('getBridgeAddress')
 
-			console.time('approve')
 			await USDT.approve(bridgeAddr, amount)
-			console.timeEnd('approve')
 
-			console.time('bridge')
 			const result = await Stargate.bridge(
 				USDT,
 				fuse.id,
 				recipient,
 				amount,
 			)
-			console.timeEnd('bridge')
 
 			expect(result).toBeDefined()
 			expect(result.bridgeTx.srcTx.hash).toBeDefined()
 			expect(result.bridgeTx.srcTx.chainId).toBe(arbitrum.id)
-			console.timeEnd('STG')
 		})
 
 		it('MUST simulate sending Native', async () => {
 			const amount = ETH.parseUnits('1')
 
 			const wallet = ClientManager.getWalletClient(arbitrum.id)
-			const recipient = wallet.account!.address
+			const recipient = wallet.account.address
 
 			await setNativeBalance(wallet, recipient, amount * 2n)
 
@@ -102,14 +90,14 @@ makeSuite('Stargate', () => {
 
 				const amount = USDT0.parseUnits('1')
 
-				const { expectedAmountOut, tokenOut, quote } =
-					await Stargate.getExpectedAmountOut(USDT0, amount, fuse.id)
+				const { amountOut, tokenOut, quote } =
+					await Stargate.quoteBridge(USDT0, amount, fuse.id)
 
 				expect(tokenOut.address).toBe(
 					'0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7',
 				)
 				expect(tokenOut.chainId).toBe(fuse.id)
-				expect(expectedAmountOut).toBe(amount)
+				expect(amountOut).toBe(amount)
 
 				expect(quote).toBeDefined()
 				expect(quote.oftLimit).toBeDefined()
@@ -125,8 +113,8 @@ makeSuite('Stargate', () => {
 				const amount = 199559617334342520n
 				const realAmountOut = 199559000000000000n
 
-				const { expectedAmountOut: calculatedAmountOut } =
-					await Stargate.getExpectedAmountOut(ETH, amount, fuse.id)
+				const { amountOut: calculatedAmountOut } =
+					await Stargate.quoteBridge(ETH, amount, fuse.id)
 
 				expect(calculatedAmountOut).toBe(realAmountOut)
 			})
@@ -201,7 +189,7 @@ makeSuite('Stargate', () => {
 
 					// const balanceSlot = 4n
 					const wallet = ClientManager.getWalletClient(hemi.id)
-					const recipient = wallet.account!.address
+					const recipient = wallet.account.address
 
 					if (token instanceof NativeCurrency) {
 						await setNativeBalance(wallet, recipient, amount * 2n)
