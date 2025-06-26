@@ -1,12 +1,14 @@
 import {
 	Client,
 	erc20Abi,
+	getAddress,
 	getContract,
 	GetContractReturnType,
 	WalletClient,
 } from 'viem'
 import { fuse, story } from 'viem/chains'
 import { UniV3LikePool } from '../../src/dex/base/UniV3LikePool/UniV3LikePool'
+import { CHAIN_PERIPHERY_CONFIG } from '../../src/dex/periphery'
 import { PoolUtils } from '../../src/dex/PoolUtils'
 import { PoolType } from '../../src/dex/poolVariety'
 import { Token } from '../../src/primitives/tokens/Token'
@@ -136,8 +138,16 @@ makeSuite('UniV3LikePool', () => {
 	})
 
 	describe('create validation', () => {
+		// PiperX Pool
 		const poolAddressWithWrongPeriphery =
 			'0x3dd013fddf4daa3b642a1538e274d85e8e54ae8b'
+
+		const config =
+			CHAIN_PERIPHERY_CONFIG[story.id].uniV3![
+				getAddress('0xb8c21e89983B5EcCD841846eA294c4c8a89718f1')
+			]
+
+		config.quoter = '0x1434Ae03CfA29d314da73fC18013CCd04f100af6' // StoryHunt Quoter
 
 		it('should throw when pool factory does not match quoter factory', async () => {
 			await expect(

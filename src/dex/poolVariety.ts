@@ -31,10 +31,6 @@ export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
 		sqrtPriceX96Index: 0,
 		feeFunction: 'fee',
 		tickSpacingFunction: 'tickSpacing',
-		tokenFunctions: {
-			token0: 'token0',
-			token1: 'token1',
-		},
 	},
 	[PoolType.PANCAKEV3]: {
 		type: 'v3-like',
@@ -43,10 +39,6 @@ export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
 		sqrtPriceX96Index: 0,
 		feeFunction: 'fee',
 		tickSpacingFunction: 'tickSpacing',
-		tokenFunctions: {
-			token0: 'token0',
-			token1: 'token1',
-		},
 	},
 	[PoolType.ALGEBRA]: {
 		type: 'v3-like',
@@ -55,27 +47,15 @@ export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
 		sqrtPriceX96Index: 0,
 		feeFunction: 'fee',
 		tickSpacingFunction: 'tickSpacing',
-		tokenFunctions: {
-			token0: 'token0',
-			token1: 'token1',
-		},
 	},
 	[PoolType.UNIV2]: {
 		type: 'v2-like',
 		abi: UNIV2_POOL_ABI,
 		defaultFee: 30, // 0.3%
-		tokenFunctions: {
-			token0: 'token0',
-			token1: 'token1',
-		},
 	},
 	[PoolType.PANCAKEV2]: {
 		type: 'v2-like',
 		abi: UNIV2_POOL_ABI,
 		defaultFee: 25, // 0.25%
-		tokenFunctions: {
-			token0: 'token0',
-			token1: 'token1',
-		},
 	},
 }
