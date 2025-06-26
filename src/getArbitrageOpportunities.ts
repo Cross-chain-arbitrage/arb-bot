@@ -4,7 +4,7 @@ import {
 	isAddress,
 	withRetry,
 } from 'viem'
-import { GeckoTerminalAPI } from './data-apis/geckoterminal/GeckoTerminalAPI'
+import { GeckoTerminalAPI } from './dataApi/geckoterminal/GeckoTerminalAPI'
 import { PoolUtils } from './dex/PoolUtils'
 import { PoolType } from './dex/poolVariety'
 import { findArbOpportunity } from './optimize'

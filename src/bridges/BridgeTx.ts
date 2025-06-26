@@ -1,6 +1,6 @@
 import { Message } from '@layerzerolabs/scan-client'
 import { Hash } from 'viem'
-import { LayerZeroScanAPI } from '../data-apis/layerzeroscan/LayerZeroScanAPI'
+import { LayerZeroScanAPI } from '../dataApi/layerzeroscan/LayerZeroScanAPI'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { Tx } from '../primitives/transactions/Tx'

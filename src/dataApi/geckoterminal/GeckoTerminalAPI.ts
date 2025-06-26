@@ -1,7 +1,7 @@
 import { Address } from 'viem'
-import { CHAINS, GeckoTerminalChainId } from './chains'
+import { chainIdToGeckoChainId, CHAINS } from './chains'
 
-interface TokenData {
+interface GeckoTerminalTokenData {
 	id: string
 	type: string
 	attributes: {
@@ -22,19 +22,22 @@ interface TokenData {
 	}
 }
 
+// docs say that you can retrieve up to 30 addresses in one request
+const BATCH_SIZE = 30
+
 export class GeckoTerminalAPI {
 	private static readonly baseUrl: string =
 		'https://api.geckoterminal.com/api/v2'
 
 	static async getTokenData(
 		address: Address,
-		network: GeckoTerminalChainId = GeckoTerminalChainId.ETH,
-	): Promise<TokenData> {
+		network: string = chainIdToGeckoChainId['1'],
+	): Promise<GeckoTerminalTokenData> {
 		this.validateChain(network)
 
 		const tokenDataUrl = `${GeckoTerminalAPI.baseUrl}/networks/${network}/tokens/${address}`
 		const response = await fetch(tokenDataUrl)
-		const data = (await response.json()) as { data: TokenData }
+		const data = (await response.json()) as { data: GeckoTerminalTokenData }
 		return data.data
 	}
 
@@ -43,9 +46,35 @@ export class GeckoTerminalAPI {
 		return Number(tokenData.attributes.price_usd)
 	}
 
+	static async getTokensPrices(
+		addresses: Address[],
+		network: string,
+	): Promise<GeckoTerminalTokenData[]> {
+		this.validateChain(network)
+
+		const allTokens: GeckoTerminalTokenData[] = []
+
+		// Process addresses in batches of 30
+		for (let i = 0; i < addresses.length; i += BATCH_SIZE) {
+			const batch = addresses.slice(i, i + BATCH_SIZE)
+			const addressesString = batch.join(',')
+
+			const tokensDataUrl = `${GeckoTerminalAPI.baseUrl}/networks/${network}/tokens/multi/${addressesString}`
+
+			const response = await fetch(tokensDataUrl)
+			const data = (await response.json()) as {
+				data: GeckoTerminalTokenData[]
+			}
+
+			allTokens.push(...data.data)
+		}
+
+		return allTokens
+	}
+
 	static async getTokenPriceForChain(
 		address: Address,
-		network: GeckoTerminalChainId,
+		network: string,
 	): Promise<number> {
 		this.validateChain(network)
 
