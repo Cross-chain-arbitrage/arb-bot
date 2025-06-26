@@ -121,8 +121,8 @@ export class GraphOpportunityFinder {
 			const edge = predecessors.get(currentToken)
 
 			if (!edge) {
-				throw new Error(
-					'Invalid cycle: missing edge in predecessors map',
+				throw new GraphOpportunityFinderError(
+					'Missing edge in predecessors map',
 				)
 			}
 
