@@ -68,6 +68,7 @@ export class PriceOracle {
 	 */
 	static async getPrice(
 		currency: Currency,
+		useCache: boolean = true,
 		updateInterval: number | false | undefined = 1000 * 60 * 5,
 	): Promise<number> {
 		const isCurrencyNative = currency.isNative()
@@ -79,10 +80,12 @@ export class PriceOracle {
 			currency = wrappedNative
 		}
 
-		const price = this.prices.get(currency.id)
+		if (useCache) {
+			const price = this.prices.get(currency.id)
 
-		if (price) {
-			return price
+			if (price) {
+				return price
+			}
 		}
 
 		const geckoId = this.getGeckoId(currency.chainId)
@@ -109,37 +112,42 @@ export class PriceOracle {
 	static async getPrices(
 		currencies: Currency[],
 		updateInterval: number | false | undefined = 1000 * 60 * 5,
+		useCache: boolean = true,
 	): Promise<{ currency: Currency; price: number }[]> {
 		const unknownCurrenciesByChain = new Map<number, Currency[]>()
 
 		const unknownCurrencies: Currency[] = []
 		const prices: { currency: Currency; price: number }[] = []
 
-		for (const currency of currencies) {
-			const isCurrencyNative = currency.isNative()
+		if (useCache) {
+			for (const currency of currencies) {
+				const isCurrencyNative = currency.isNative()
 
-			if (isCurrencyNative) {
-				const wrappedNative = await TokenUtils.getWrappedNative(
-					currency.chainId,
-				)
+				if (isCurrencyNative) {
+					const wrappedNative = await TokenUtils.getWrappedNative(
+						currency.chainId,
+					)
 
-				const currencyPrice = this.prices.get(wrappedNative.id)
+					const currencyPrice = this.prices.get(wrappedNative.id)
 
-				if (currencyPrice) {
-					prices.push({ currency, price: currencyPrice })
+					if (currencyPrice) {
+						prices.push({ currency, price: currencyPrice })
+					} else {
+						unknownCurrencies.push(currency)
+					}
 				} else {
+					const currencyPrice = this.prices.get(currency.id)
+
+					if (currencyPrice) {
+						prices.push({ currency, price: currencyPrice })
+						continue
+					}
+
 					unknownCurrencies.push(currency)
 				}
-			} else {
-				const currencyPrice = this.prices.get(currency.id)
-
-				if (currencyPrice) {
-					prices.push({ currency, price: currencyPrice })
-					continue
-				}
-
-				unknownCurrencies.push(currency)
 			}
+		} else {
+			unknownCurrencies.push(...currencies)
 		}
 
 		for (const currency of unknownCurrencies) {
