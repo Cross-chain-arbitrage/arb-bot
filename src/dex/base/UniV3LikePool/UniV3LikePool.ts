@@ -36,6 +36,7 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 			periphery.router,
 			chainId,
 			poolType,
+			immutables.factory,
 		)
 
 		this.fee = immutables.fee

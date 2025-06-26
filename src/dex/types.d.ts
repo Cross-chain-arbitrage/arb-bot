@@ -14,6 +14,7 @@ declare global {
 		token1: Token
 		fee: number
 		tickSpacing: number
+		factory: Address
 	}
 
 	interface PoolPeriphery {
@@ -37,20 +38,12 @@ declare global {
 		sqrtPriceX96Index: number // index in slot0/globalState result for sqrtPriceX96
 		feeFunction: string
 		tickSpacingFunction: string
-		tokenFunctions: {
-			token0: string
-			token1: string
-		}
 	}
 
 	interface V2PoolConfig {
 		type: 'v2-like'
 		abi: Abi
 		defaultFee: number // basis points
-		tokenFunctions: {
-			token0: string
-			token1: string
-		}
 	}
 
 	type PoolConfig = V3PoolConfig | V2PoolConfig

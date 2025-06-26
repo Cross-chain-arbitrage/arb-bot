@@ -22,8 +22,17 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 		chainId: number,
 		public readonly fee: number,
 		poolType: PoolType,
+		factory: Address,
 	) {
-		super(token0, token1, poolAddress, routerAddress, chainId, poolType)
+		super(
+			token0,
+			token1,
+			poolAddress,
+			routerAddress,
+			chainId,
+			poolType,
+			factory,
+		)
 	}
 
 	async getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }> {

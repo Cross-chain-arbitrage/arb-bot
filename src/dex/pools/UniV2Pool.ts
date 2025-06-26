@@ -10,6 +10,7 @@ export class UniV2Pool extends UniV2LikePool {
 		token0: Token,
 		token1: Token,
 		periphery: UniV2PoolPeriphery,
+		factory: Address,
 	) {
 		const fee = UniV2Pool.getV2DefaultFee(PoolType.UNIV2)
 
@@ -21,15 +22,17 @@ export class UniV2Pool extends UniV2LikePool {
 			chainId,
 			fee,
 			PoolType.UNIV2,
+			factory,
 		)
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
-		const { periphery, tokens } = await this.getPeripheryAndImmutables(
-			poolAddress,
-			chainId,
-			PoolType.UNIV2,
-		)
+		const { periphery, tokens, factory } =
+			await this.getPeripheryAndImmutables(
+				poolAddress,
+				chainId,
+				PoolType.UNIV2,
+			)
 
 		return new UniV2Pool(
 			poolAddress,
@@ -37,6 +40,7 @@ export class UniV2Pool extends UniV2LikePool {
 			tokens.token0,
 			tokens.token1,
 			periphery,
+			factory,
 		)
 	}
 }

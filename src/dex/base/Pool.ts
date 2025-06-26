@@ -1,9 +1,10 @@
-import { TransactionReceipt } from 'viem'
+import { getAddress, TransactionReceipt } from 'viem'
 import { BaseContract } from '../../primitives/contracts/BaseContract'
 import { Token } from '../../primitives/tokens/Token'
 import { createCustomError } from '../../utils/common'
 import { CHAIN_PERIPHERY_CONFIG } from '../periphery'
 import { POOL_ERRORS, PoolType } from '../poolVariety'
+
 export abstract class Pool extends BaseContract {
 	public readonly customError: ReturnType<typeof createCustomError>
 
@@ -14,6 +15,7 @@ export abstract class Pool extends BaseContract {
 		public readonly routerAddress: Address,
 		public readonly chainId: number,
 		public readonly poolType: PoolType,
+		public readonly factory: Address,
 	) {
 		super(poolAddress, chainId)
 		this.customError = POOL_ERRORS[poolType]
@@ -58,12 +60,14 @@ export abstract class Pool extends BaseContract {
 	static getPeripherySafe(
 		chainId: number,
 		poolType: PoolType,
+		factory: Address,
 	): UniV3PoolPeriphery | UniV2PoolPeriphery {
-		const periphery = CHAIN_PERIPHERY_CONFIG[chainId]?.[poolType]
+		const periphery =
+			CHAIN_PERIPHERY_CONFIG[chainId]?.[poolType]?.[getAddress(factory)]
 
 		if (!periphery) {
 			throw new POOL_ERRORS[poolType](
-				`No periphery configuration found for ${poolType} on chain ${chainId}`,
+				`No periphery configuration found for ${poolType} on chain ${chainId} with factory ${factory}`,
 			)
 		}
 
