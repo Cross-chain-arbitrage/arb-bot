@@ -1,11 +1,12 @@
 import TTLCache from '@isaacs/ttlcache'
+
 import { zeroAddress, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
-import { STARGATE_POOL_ABI } from '../../abi/stargate/stgPool'
 import { getChainEIdByNativeChainId } from '../../data-apis/layerzeroscan/utils'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
+import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../primitives/tokens/WrappedNative'
 import { ClientManager } from '../../utils/ClientManager'
@@ -21,7 +22,9 @@ const QUOTE_CACHE_TTL = 1000 * 60 * 1 // 1 minute
 type RequestId = string
 
 export class Stargate {
-	static quoteCache = new TTLCache<RequestId, QuoteResult>({
+	private static bridgeGasCost = 400_000n
+
+	private static quoteCache = new TTLCache<RequestId, QuoteResult>({
 		ttl: QUOTE_CACHE_TTL,
 	})
 
@@ -74,7 +77,7 @@ export class Stargate {
 		}
 
 		const { quote, expectedAmountOut, tokenOut } =
-			await Stargate.getExpectedAmountOut(tokenIn, amount, toChainId)
+			await Stargate.quoteBridge(tokenIn, amount, toChainId)
 
 		this.validateBridgingAmount(quote.oftLimit, amount)
 
@@ -156,7 +159,7 @@ export class Stargate {
 		)
 	}
 
-	static async quote(
+	private static async quote(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		amount: bigint,
@@ -171,7 +174,7 @@ export class Stargate {
 		)
 	}
 
-	static async quoteWithRecipient(
+	private static async quoteWithRecipient(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		recipient: Address,
@@ -265,7 +268,7 @@ export class Stargate {
 		return result
 	}
 
-	static async quoteSend(
+	private static async quoteSend(
 		token: Address,
 		amount: bigint,
 		recipient: Address,
@@ -299,7 +302,7 @@ export class Stargate {
 		return messagingFee as MessagingFee
 	}
 
-	static async quoteOFT(
+	private static async quoteOFT(
 		token: Address,
 		amount: bigint,
 		recipient: Address,
@@ -331,29 +334,6 @@ export class Stargate {
 		return result as [OFTLimit, OFTFeeDetail[], OFTReceipt]
 	}
 
-	static async getPathCredits(
-		pool: Address,
-		toChainId: number,
-		chainId: number,
-	): Promise<bigint> {
-		const client = ClientManager.getClient(chainId)
-
-		if (chainId === toChainId) {
-			throw new StargateError('Cannot getPath() to the same chain')
-		}
-
-		const remoteEId = getChainEIdByNativeChainId(toChainId)
-
-		const credits = await client.readContract({
-			address: pool,
-			abi: STARGATE_POOL_ABI,
-			functionName: 'paths',
-			args: [remoteEId],
-		})
-
-		return credits
-	}
-
 	static getChainKey(chainId: number): string {
 		const chain = STARGATE_CHAINS.find((chain) => chain.chainId === chainId)
 
@@ -366,7 +346,7 @@ export class Stargate {
 		return chain.chainKey
 	}
 
-	static async getDstToken(
+	private static async getDstToken(
 		srcToken: Token | NativeCurrency,
 		toChainId: number,
 	): Promise<Token | NativeCurrency> {
@@ -400,7 +380,7 @@ export class Stargate {
 	 * @param amountIn
 	 * @returns expectedAmountOut
 	 */
-	static async getExpectedAmountOut(
+	static async quoteBridge(
 		tokenIn: Token | NativeCurrency,
 		amountIn: bigint,
 		toChainId: number,
@@ -408,6 +388,8 @@ export class Stargate {
 		quote: QuoteResult
 		expectedAmountOut: bigint
 		tokenOut: Token | NativeCurrency
+		lzFee: TokenAmount
+		gas: bigint
 	}> {
 		const quote = await this.quote(tokenIn, toChainId, amountIn)
 		const tokenOut = await Stargate.getDstToken(tokenIn, toChainId)
@@ -419,7 +401,18 @@ export class Stargate {
 		const amountOutOnDst =
 			amountSD * 10n ** BigInt(tokenOut.decimals - sharedDecimals)
 
-		return { quote, expectedAmountOut: amountOutOnDst, tokenOut }
+		const lzFee = new TokenAmount(
+			TokenUtils.getNative(tokenIn.chainId),
+			quote.messagingFee.lzTokenFee,
+		)
+
+		return {
+			quote,
+			expectedAmountOut: amountOutOnDst,
+			tokenOut,
+			lzFee,
+			gas: this.bridgeGasCost,
+		}
 	}
 
 	private static getCacheKey(
@@ -430,7 +423,7 @@ export class Stargate {
 		return `${token.chainId}:${token.address}:${toChainId}:${amount}`
 	}
 
-	static validateRecipient(chainId: number, recipient: Address) {
+	private static validateRecipient(chainId: number, recipient: Address) {
 		if (recipient === zeroAddress) {
 			throw new StargateError('Recipient cannot be the zero address')
 		}
@@ -444,7 +437,7 @@ export class Stargate {
 		}
 	}
 
-	static validateBridgingAmount(oftLimit: OFTLimit, amount: bigint) {
+	private static validateBridgingAmount(oftLimit: OFTLimit, amount: bigint) {
 		if (oftLimit.minAmountLD > amount) {
 			throw new StargateError(
 				`Expected amount out is less than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
