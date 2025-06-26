@@ -1,5 +1,4 @@
 import TTLCache from '@isaacs/ttlcache'
-
 import { zeroAddress, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
@@ -18,12 +17,11 @@ import { STARGATE_CHAINS } from './dumped/chains'
 export const StargateError = createCustomError('StargateError')
 
 const QUOTE_CACHE_TTL = 1000 * 60 * 1 // 1 minute
+const BRIDGE_GAS_COST = 400_000n
 
 type RequestId = string
 
 export class Stargate {
-	private static bridgeGasCost = 400_000n
-
 	private static quoteCache = new TTLCache<RequestId, QuoteResult>({
 		ttl: QUOTE_CACHE_TTL,
 	})
@@ -46,7 +44,7 @@ export class Stargate {
 		simulateOnly: boolean = false,
 	): Promise<{
 		bridgeTx: StargateBridgeTx
-		expectedAmountOut: bigint
+		amountOut: bigint
 		tokenOut: Token | NativeCurrency
 	}> {
 		if (amount <= 0n)
@@ -76,8 +74,11 @@ export class Stargate {
 			await this.validateAllowance(recipient, poolOrOFT, amount, tokenIn)
 		}
 
-		const { quote, expectedAmountOut, tokenOut } =
-			await Stargate.quoteBridge(tokenIn, amount, toChainId)
+		const { quote, amountOut, tokenOut } = await Stargate.quoteBridge(
+			tokenIn,
+			amount,
+			toChainId,
+		)
 
 		this.validateBridgingAmount(quote.oftLimit, amount)
 
@@ -122,7 +123,7 @@ export class Stargate {
 					tokenOut,
 					amount,
 				),
-				expectedAmountOut,
+				amountOut,
 				tokenOut,
 			}
 		}
@@ -131,7 +132,7 @@ export class Stargate {
 
 		return {
 			bridgeTx: new StargateBridgeTx(txHash, tokenIn, tokenOut, amount),
-			expectedAmountOut,
+			amountOut,
 			tokenOut,
 		}
 	}
@@ -386,7 +387,7 @@ export class Stargate {
 		toChainId: number,
 	): Promise<{
 		quote: QuoteResult
-		expectedAmountOut: bigint
+		amountOut: bigint
 		tokenOut: Token | NativeCurrency
 		lzFee: TokenAmount
 		gas: bigint
@@ -408,10 +409,10 @@ export class Stargate {
 
 		return {
 			quote,
-			expectedAmountOut: amountOutOnDst,
+			amountOut: amountOutOnDst,
 			tokenOut,
 			lzFee,
-			gas: this.bridgeGasCost,
+			gas: BRIDGE_GAS_COST,
 		}
 	}
 
