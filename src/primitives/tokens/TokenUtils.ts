@@ -1,4 +1,10 @@
-import { Address, getAddress, isAddress, isAddressEqual } from 'viem'
+import {
+	Address,
+	getAddress,
+	getContract,
+	isAddress,
+	isAddressEqual,
+} from 'viem'
 import { ERC20_ABI } from '../../abi/erc20'
 import { ClientManager } from '../../utils/ClientManager'
 import {
@@ -18,35 +24,7 @@ export class TokenUtils {
 	private static tokenCache: Map<TokenCacheKey, Token | NativeCurrency> =
 		new Map()
 
-	/* ======== INTERNAL ======== */
-
-	private static getCacheKey(
-		address: Address,
-		chainId: number,
-	): TokenCacheKey {
-		return `${chainId}:${address.toLowerCase() as Address}`
-	}
-
-	static isNative(address: Address): boolean {
-		return (
-			isAddressEqual(address, NATIVE_ADDRESS) ||
-			isAddressEqual(address, STARGATE_NATIVE_ADDRESS)
-		)
-	}
-
-	static isWrappedNative(address: Address, chainId: number): boolean {
-		const wrappedToken = wrappedTokens[chainId]
-
-		if (!wrappedToken) {
-			return false
-		}
-
-		return isAddressEqual(address, wrappedToken)
-	}
-
-	static isToken(address: Address): boolean {
-		return !this.isNative(address)
-	}
+	/* ======== PUBLIC ======== */
 
 	static async getWrappedNative(chainId: number): Promise<WrappedNative> {
 		const wrappedToken = wrappedTokens[chainId]
@@ -84,22 +62,16 @@ export class TokenUtils {
 			return token as T
 		}
 
+		const contract = getContract({
+			address: checksumAddress,
+			abi,
+			client,
+		})
+
 		const [decimals, name, symbol] = await Promise.all([
-			client.readContract({
-				address: checksumAddress,
-				abi,
-				functionName: 'decimals',
-			}),
-			client.readContract({
-				address: checksumAddress,
-				abi,
-				functionName: 'name',
-			}),
-			client.readContract({
-				address: checksumAddress,
-				abi,
-				functionName: 'symbol',
-			}),
+			contract.read.decimals(),
+			contract.read.name(),
+			contract.read.symbol(),
 		])
 
 		let token: T
@@ -119,13 +91,6 @@ export class TokenUtils {
 		this.tokenCache.set(cacheKey, token)
 
 		return token
-	}
-
-	private static _createNative(chainId: number): NativeCurrency {
-		return (
-			NATIVE_CURRENCIES[chainId] ??
-			new NativeCurrency(chainId, 'ETH', 'ETH')
-		)
 	}
 
 	static getNative(chainId: number): NativeCurrency {
@@ -177,5 +142,44 @@ export class TokenUtils {
 		const [chainId, addr] = id.split(':')
 
 		return await this.fromAddress(addr as Address, Number(chainId))
+	}
+
+	/* ======== CHECKERS ======== */
+
+	static isNative(address: Address): boolean {
+		return (
+			isAddressEqual(address, NATIVE_ADDRESS) ||
+			isAddressEqual(address, STARGATE_NATIVE_ADDRESS)
+		)
+	}
+
+	static isWrappedNative(address: Address, chainId: number): boolean {
+		const wrappedToken = wrappedTokens[chainId]
+
+		if (!wrappedToken) {
+			return false
+		}
+
+		return isAddressEqual(address, wrappedToken)
+	}
+
+	static isToken(address: Address): boolean {
+		return !this.isNative(address)
+	}
+
+	/* ======== INTERNAL ======== */
+
+	private static getCacheKey(
+		address: Address,
+		chainId: number,
+	): TokenCacheKey {
+		return `${chainId}:${address.toLowerCase() as Address}`
+	}
+
+	private static _createNative(chainId: number): NativeCurrency {
+		return (
+			NATIVE_CURRENCIES[chainId] ??
+			new NativeCurrency(chainId, 'ETH', 'ETH')
+		)
 	}
 }
