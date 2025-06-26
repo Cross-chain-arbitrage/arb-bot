@@ -45,7 +45,7 @@ export class WrappedNative extends Token {
 			address: this.address,
 			abi: WETH_ABI,
 			functionName: 'deposit',
-			account: this.wallet.account!,
+			account: this.wallet.account,
 			chain: this.wallet.chain,
 			value: amount,
 		})
@@ -69,7 +69,7 @@ export class WrappedNative extends Token {
 			address: this.address,
 			abi: WETH_ABI,
 			functionName: 'withdraw',
-			account: this.wallet.account!,
+			account: this.wallet.account,
 			chain: this.wallet.chain,
 			args: [amount],
 		})
