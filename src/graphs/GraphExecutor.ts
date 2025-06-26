@@ -212,7 +212,7 @@ export class GraphExecutor {
 		const message = await result.bridgeTx.waitForBridgeToFinish()
 
 		return {
-			amountOut: result.expectedAmountOut,
+			amountOut: result.amountOut,
 			srcTxHash: message.srcTxHash!,
 			dstTxHash: message.dstTxHash!,
 		}

@@ -1,5 +1,5 @@
 import { arbitrum, fuse } from 'viem/chains'
-import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
+import { FUSE_BRIDGE_SUPPORTED_TOKENS } from '../bridges/FuseBridge/supportedTokens'
 import { StargateAPI, StargateAPIError } from '../bridges/stargate/StargateAPI'
 import { Pool } from '../dex/base/Pool'
 import { ChainUtils } from '../primitives/chains/ChainUtils'
@@ -261,7 +261,7 @@ export class GraphBuilder {
 		const assetGroups: Map<AssetId, Set<GraphNode>> = new Map()
 
 		for (const node of graph.nodes.values()) {
-			const supportedTokens = FuseBridge.SUPPORTED_TOKENS.map(
+			const supportedTokens = FUSE_BRIDGE_SUPPORTED_TOKENS.map(
 				(token) => `${token.chainId}:${token.address.toLowerCase()}`,
 			)
 
