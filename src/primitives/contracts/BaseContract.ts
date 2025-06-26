@@ -1,4 +1,4 @@
-import { Account, Address, isAddress, PublicClient, WalletClient } from 'viem'
+import { Address, isAddress } from 'viem'
 import { ClientManager } from '../../utils/ClientManager'
 
 export class BaseContractError extends Error {
@@ -23,15 +23,15 @@ export abstract class BaseContract {
 		}
 	}
 
-	protected get client(): PublicClient {
+	protected get client() {
 		return ClientManager.getClient(this.chainId)
 	}
 
-	protected get wallet(): WalletClient {
+	protected get wallet() {
 		return ClientManager.getWalletClient(this.chainId)
 	}
 
-	protected get account(): Account {
-		return this.wallet.account as Account
+	protected get account() {
+		return this.wallet.account
 	}
 }
