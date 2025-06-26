@@ -5,9 +5,13 @@ import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
 import { FUSE_BRIDGE_HOME_ABI } from '../../abi/fuse/fuseBridgeHome'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
+import { TokenAmount } from '../../primitives/tokens/TokenAmount'
+import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
 import { createCustomError } from '../../utils/common'
 import { FuseBridgeTx } from './FuseBridgeTx'
+import { FUSE_BRIDGE_SUPPORTED_CHAINS } from './supportedChain'
+import { FUSE_BRIDGE_SUPPORTED_TOKENS } from './supportedTokens'
 
 const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
 const ERC20_BRIDGE_FUSE = '0x353af4878d7452e974538706273887F7ED90Da47'
@@ -74,70 +78,12 @@ type FuseForeignBridgeFunctionArgs = [
 	Hex, // adapterParams
 ]
 
+const ADAPTER_PARAMS =
+	'0x000100000000000000000000000000000000000000000000000000000000000493e0' as Hex
+
+const BRIDGE_GAS_COST = 400_000n
+
 export class FuseBridge {
-	static readonly SUPPORTED_TOKENS = [
-		{
-			chainId: fuse.id,
-			address: '0x34009565bfEeFded0F7e774629a745636Bf35E82',
-			symbol: 'WBTC',
-		},
-		{
-			chainId: arbitrum.id,
-			address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
-			symbol: 'WBTC',
-		},
-		{
-			chainId: optimism.id,
-			address: '0x68f180fcCe6836688e9084f035309E29Bf0A2095',
-			symbol: 'WBTC',
-		},
-		{
-			chainId: bsc.id,
-			address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c',
-			symbol: 'WBTC',
-		},
-		{
-			chainId: fuse.id,
-			symbol: 'FUSE',
-			address: zeroAddress,
-		},
-		{
-			chainId: fuse.id,
-			symbol: 'WFUSE',
-			address: '0x0BE9e53fd7EDaC9F859882AfdDa116645287C629',
-		},
-		{
-			chainId: bsc.id,
-			symbol: 'FUSE',
-			address: '0x5857c96dae9cf8511b08cb07f85753c472d36ea3',
-		},
-		{
-			chainId: base.id,
-			symbol: 'FUSE',
-			address: '0x01facc69ec7360640aa5898e852326752801674a',
-		},
-		{
-			chainId: mainnet.id,
-			symbol: 'FUSE',
-			address: '0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
-		},
-	]
-
-	public static readonly SUPPORTED_CHAINS: number[] = [
-		arbitrum.id,
-		optimism.id,
-		bsc.id,
-		fuse.id,
-		base.id,
-		mainnet.id,
-	]
-
-	// private static readonly DEFAULT_DST_GAS_LIMIT = 300000
-	// private static readonly NATIVE_DROP = 0
-
-	private static readonly adapterParams =
-		'0x000100000000000000000000000000000000000000000000000000000000000493e0' as Hex
-
 	static async bridge(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
@@ -147,28 +93,11 @@ export class FuseBridge {
 	): Promise<FuseBridgeTx> {
 		const unwrapWeth = false
 
-		this.validateRecipient(tokenIn.chainId, recipient)
-		this.validateChain(tokenIn.chainId)
-		this.validateChain(toChainId)
-
-		if (
-			!(tokenIn instanceof NativeCurrency) &&
-			tokenIn.chainId === fuse.id
-		) {
-			const tvl = await this.getTvlOnRemoteChain(tokenIn, toChainId)
-
-			if (amount < tvl) {
-				throw new FuseBridgeError('Insufficient TVL on remote chain')
-			}
-		}
-
 		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
 
 		await this.validateBalance(tokenIn, wallet.account.address, amount)
 
-		const localToken = tokenIn
-
-		const quote = await this.quote(tokenIn, toChainId, false)
+		const { quote } = await this.quoteBridge(tokenIn, toChainId, amount)
 
 		const { address, abi } = this.getBridge(tokenIn, toChainId)
 
@@ -185,7 +114,7 @@ export class FuseBridge {
 		}
 
 		const args = this.getBridgeArgs(
-			localToken,
+			tokenIn,
 			toChainId,
 			recipient,
 			amount,
@@ -213,7 +142,7 @@ export class FuseBridge {
 		}
 	}
 
-	static async executeNativeBridge(
+	private static async executeNativeBridge(
 		tokenIn: Token | NativeCurrency,
 		bridgeAddress: Address,
 		amount: bigint,
@@ -242,7 +171,7 @@ export class FuseBridge {
 		return new FuseBridgeTx(txHash, fuse.id)
 	}
 
-	static async executeForeignBridge(
+	private static async executeForeignBridge(
 		tokenIn: Token | NativeCurrency,
 		bridgeAddress: Address,
 		abi:
@@ -294,35 +223,6 @@ export class FuseBridge {
 		return tx
 	}
 
-	private static async validateBalance(
-		token: Token | NativeCurrency,
-		recipient: Address,
-		amount: bigint,
-	) {
-		const balance = await token.balanceOf(recipient)
-
-		if (balance < amount) {
-			throw new FuseBridgeError(
-				`Insufficient balance, needed ${amount}, has ${balance}`,
-			)
-		}
-	}
-
-	private static async validateAllowance(
-		recipient: Address,
-		bridge: Address,
-		amount: bigint,
-		token: Token,
-	): Promise<void> {
-		const allowance = await token.allowance(recipient, bridge)
-
-		if (allowance >= amount) return
-
-		throw new FuseBridgeError(
-			`Insufficient allowance of ${token.symbol} from ${recipient} to ${bridge} on chain ${token.chainId}, needed ${amount}, has ${allowance}`,
-		)
-	}
-
 	private static getBridgeArgs(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
@@ -339,7 +239,7 @@ export class FuseBridge {
 					amount,
 					recipient,
 					{ refundAddress: recipient, zroPaymentAddress: recipient },
-					this.adapterParams,
+					ADAPTER_PARAMS,
 				] as HomeFuseBridgeFunctionArgs
 			}
 			return [
@@ -352,7 +252,7 @@ export class FuseBridge {
 					refundAddress: recipient,
 					zroPaymentAddress: recipient,
 				},
-				this.adapterParams,
+				ADAPTER_PARAMS,
 			] as FuseHomeBridgeFunctionArgs
 		}
 
@@ -367,7 +267,7 @@ export class FuseBridge {
 					refundAddress: recipient,
 					zroPaymentAddress: recipient,
 				},
-				this.adapterParams,
+				ADAPTER_PARAMS,
 			] as FuseHomeBridgeFunctionArgs
 		}
 
@@ -379,36 +279,59 @@ export class FuseBridge {
 				refundAddress: recipient,
 				zroPaymentAddress: recipient,
 			},
-			this.adapterParams,
+			ADAPTER_PARAMS,
 		] as FuseForeignBridgeFunctionArgs
 	}
 
-	static async quote(
+	static async quoteBridge(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
-		// amountIn: bigint,
+		amountIn: bigint,
 		useZro: boolean = false,
-	): Promise<[bigint, bigint]> {
+	): Promise<{
+		quote: [bigint, bigint]
+		amountOut: bigint
+		lzFee: TokenAmount
+		gas: bigint
+	}> {
 		const client = ClientManager.getClient(tokenIn.chainId)
+
+		this.validateToken(tokenIn)
+		this.validateChain(tokenIn.chainId)
+		this.validateChain(toChainId)
+		await this.validateBridgingLimit(tokenIn, toChainId, amountIn)
 
 		const { address, abi } = this.getBridge(tokenIn, toChainId)
 
 		const args = this.getEstimateArgs(tokenIn, toChainId, useZro)
 
+		let feeQuote: [bigint, bigint]
 		if (this.isFuse(tokenIn) && tokenIn.chainId === fuse.id) {
-			return client.readContract({
+			feeQuote = (await client.readContract({
 				address,
 				abi: FUSE_BRIDGE_HOME_ABI,
 				functionName: 'estimateBridgeFee',
 				args: args as [boolean, Hex],
-			}) as Promise<[bigint, bigint]>
+			})) as [bigint, bigint]
 		} else {
-			return client.readContract({
+			feeQuote = (await client.readContract({
 				address,
 				abi,
 				functionName: 'estimateBridgeFee',
 				args: args as [boolean, Hex],
-			}) as Promise<[bigint, bigint]>
+			})) as [bigint, bigint]
+		}
+
+		const lzFee = new TokenAmount(
+			TokenUtils.getNative(tokenIn.chainId),
+			feeQuote[0],
+		)
+
+		return {
+			quote: feeQuote,
+			amountOut: amountIn,
+			lzFee,
+			gas: BRIDGE_GAS_COST,
 		}
 	}
 
@@ -418,17 +341,17 @@ export class FuseBridge {
 		useZro: boolean = false,
 	): [number, boolean, Hex] | [boolean, Hex] {
 		if (tokenIn instanceof Token && tokenIn.chainId === fuse.id) {
-			return [this.getLzV1ChainEid(toChainId), useZro, this.adapterParams]
+			return [this.getLzV1ChainEid(toChainId), useZro, ADAPTER_PARAMS]
 		}
 
 		if (this.isFuse(tokenIn) && tokenIn.chainId !== fuse.id) {
-			return [this.getLzV1ChainEid(toChainId), useZro, this.adapterParams]
+			return [this.getLzV1ChainEid(toChainId), useZro, ADAPTER_PARAMS]
 		}
 
-		return [useZro, this.adapterParams]
+		return [useZro, ADAPTER_PARAMS]
 	}
 
-	static async getTvlOnRemoteChain(
+	private static async getTvlOnRemoteChain(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 	) {
@@ -445,12 +368,6 @@ export class FuseBridge {
 		})
 
 		return result
-	}
-
-	static validateChain(chainId: number) {
-		if (!this.SUPPORTED_CHAINS.includes(chainId)) {
-			throw new FuseBridgeError(`Unsupported chain: ${chainId}`)
-		}
 	}
 
 	static getBridge(
@@ -499,15 +416,9 @@ export class FuseBridge {
 		}
 	}
 
-	private static getLzV1ChainEid(chainId: number) {
-		if (!LZ_V1_CHAIN_EIDS[chainId]) {
-			throw new FuseBridgeError(`Unsupported chain: ${chainId}`)
-		}
+	/* ================ Validations ================ */
 
-		return LZ_V1_CHAIN_EIDS[chainId]
-	}
-
-	static validateRecipient(chainId: number, recipient: Address) {
+	protected static validateRecipient(chainId: number, recipient: Address) {
 		if (recipient === zeroAddress) {
 			throw new FuseBridgeError('Recipient cannot be the zero address')
 		}
@@ -521,7 +432,80 @@ export class FuseBridge {
 		}
 	}
 
+	protected static validateChain(chainId: number) {
+		if (!FUSE_BRIDGE_SUPPORTED_CHAINS.includes(chainId)) {
+			throw new FuseBridgeError(`Unsupported chain: ${chainId}`)
+		}
+	}
+	protected static validateToken(token: Token | NativeCurrency) {
+		const tokenInfo = FUSE_BRIDGE_SUPPORTED_TOKENS.find(
+			(t) => t.chainId === token.chainId && t.address === token.address,
+		)
+
+		if (!tokenInfo) {
+			throw new FuseBridgeError(
+				`Unsupported token: ${token.address} on chain ${token.chainId}`,
+			)
+		}
+	}
+
+	protected static async validateBalance(
+		token: Token | NativeCurrency,
+		recipient: Address,
+		amount: bigint,
+	) {
+		const balance = await token.balanceOf(recipient)
+
+		if (balance < amount) {
+			throw new FuseBridgeError(
+				`Insufficient balance, needed ${amount}, has ${balance}`,
+			)
+		}
+	}
+
+	protected static async validateAllowance(
+		recipient: Address,
+		bridge: Address,
+		amount: bigint,
+		token: Token,
+	): Promise<void> {
+		const allowance = await token.allowance(recipient, bridge)
+
+		if (allowance >= amount) return
+
+		throw new FuseBridgeError(
+			`Insufficient allowance of ${token.symbol} from ${recipient} to ${bridge} on chain ${token.chainId}, needed ${amount}, has ${allowance}`,
+		)
+	}
+
+	private static async validateBridgingLimit(
+		tokenIn: Token | NativeCurrency,
+		toChainId: number,
+		amount: bigint,
+	) {
+		if (
+			!(tokenIn instanceof NativeCurrency) &&
+			tokenIn.chainId === fuse.id
+		) {
+			const tvl = await this.getTvlOnRemoteChain(tokenIn, toChainId)
+
+			if (amount < tvl) {
+				throw new FuseBridgeError('Insufficient TVL on remote chain')
+			}
+		}
+	}
+
+	/* ================ Utils ================ */
+
 	private static isFuse(token: Token | NativeCurrency) {
 		return isAddressEqual(token.address, FUSE_ADDRESSES[token.chainId])
+	}
+
+	private static getLzV1ChainEid(chainId: number) {
+		if (!LZ_V1_CHAIN_EIDS[chainId]) {
+			throw new FuseBridgeError(`Unsupported chain: ${chainId}`)
+		}
+
+		return LZ_V1_CHAIN_EIDS[chainId]
 	}
 }
