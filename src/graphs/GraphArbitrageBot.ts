@@ -16,6 +16,8 @@ import { GraphVisualizer } from './GraphVisualizer'
 import { ActionType, Edge, SwapEdge } from './primitives/Edge'
 import { Graph } from './primitives/Graph'
 
+const MAX_EXECUTION_ERRORS_IN_A_ROW = 3
+
 const DEFAULT_OPTIONS = {
 	minProfitUsd: 3,
 	pollingInterval: 10_000,
@@ -193,7 +195,7 @@ export class GraphArbitrageBot {
 	}
 
 	private notifyAboutArbError(error: unknown) {
-		if (this.executionErrorInARow++ > 3) {
+		if (this.executionErrorInARow++ > MAX_EXECUTION_ERRORS_IN_A_ROW) {
 			logger.warn(
 				'Too many execution errors in a row, skipping notification',
 			)
@@ -206,7 +208,7 @@ export class GraphArbitrageBot {
 		this.TgArbitrageNotifier.sendArbitrageError(
 			this.name,
 			errorMessage,
-			this.executionErrorInARow > 2,
+			this.executionErrorInARow > MAX_EXECUTION_ERRORS_IN_A_ROW - 1,
 		).catch((err) => {
 			logger.error(err, 'Error sending error to telegram')
 		})
