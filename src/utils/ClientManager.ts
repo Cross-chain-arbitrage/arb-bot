@@ -6,13 +6,22 @@ import {
 	fallback,
 	FallbackTransport,
 	http,
+	HttpTransportConfig,
 	PublicClient,
+	Transport,
 	WalletClient,
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
 
-import { arbitrum, bsc, lightlinkPhoenix, mainnet, story } from 'viem/chains'
+import {
+	arbitrum,
+	bsc,
+	fuse,
+	lightlinkPhoenix,
+	mainnet,
+	story,
+} from 'viem/chains'
 import { getAlchemyRpcUrl } from './alchemy'
 import { getPrivateKey } from './common'
 
@@ -22,6 +31,7 @@ const CUSTOM_RPC_URLS: Record<number, string> = {
 	[bsc.id]: getAlchemyRpcUrl(bsc.id),
 	[story.id]: getAlchemyRpcUrl(story.id),
 	[lightlinkPhoenix.id]: `https://endpoints.omniatech.io/v1/lightlink/phoenix/bcd6910e361449d088886a7bfe37586c`,
+	[fuse.id]: `https://lb.drpc.org/ogrpc?network=fuse&dkey=REDACTED_API_KEY`,
 	// [hemi.id]: `https://endpoints.omniatech.io/v1/hemi/mainnet/0292053309264c18932589701ab5020a`,
 } as const
 
@@ -101,22 +111,38 @@ export class ClientManager {
 	static getTransport(chainId: number): FallbackTransport {
 		const chain = this.findChainById(chainId)
 
-		const setRpcUrl = this._customRpcUrls.get(chainId)?.toString()
+		const transports: Transport[] = []
 
-		const rpcUrl = setRpcUrl ?? chain.rpcUrls.default.http[0]
+		const defaultTransportConfig: HttpTransportConfig = {
+			timeout: 6_000,
+			batch: false,
+			// onFetchRequest(request, init) {
+			// },
+		}
 
-		return fallback(
-			[
-				http(rpcUrl, {
-					timeout: 6_000,
-					batch: true,
-				}),
-			],
-			{
-				retryCount: 3,
-				retryDelay: 500,
-			},
-		)
+		/* ======== Insert Default Transport ======== */
+
+		const defaultRpcUrl = chain.rpcUrls.default.http[0]
+
+		if (defaultRpcUrl) {
+			transports.push(http(defaultRpcUrl, defaultTransportConfig))
+		}
+
+		/* ======== Insert Custom Transports ======== */
+
+		const customRpcUrl = this._customRpcUrls.get(chainId)?.toString()
+
+		if (customRpcUrl) {
+			transports.push(http(customRpcUrl, defaultTransportConfig))
+		}
+
+		/* ======== Build Fallback Transport ======== */
+
+		return fallback(transports, {
+			retryCount: 3,
+			retryDelay: 500,
+			rank: false,
+		})
 	}
 
 	static getChain(chainId: number): Chain {
