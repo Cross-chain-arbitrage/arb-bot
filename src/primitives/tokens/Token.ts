@@ -2,6 +2,7 @@ import {
 	Address,
 	erc20Abi,
 	isAddress,
+	isAddressEqual,
 	maxUint256,
 	TransactionReceipt,
 } from 'viem'
@@ -31,7 +32,10 @@ export class Token extends TokenBase {
 			throw new TokenError(`Invalid address for token ${this.symbol}`)
 		}
 
-		if (address === NATIVE_ADDRESS || address === STARGATE_NATIVE_ADDRESS) {
+		if (
+			isAddressEqual(address, NATIVE_ADDRESS) ||
+			isAddressEqual(address, STARGATE_NATIVE_ADDRESS)
+		) {
 			throw new TokenError(
 				`Cannot make a token from native currency ${this.symbol}`,
 			)

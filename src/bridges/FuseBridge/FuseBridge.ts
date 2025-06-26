@@ -437,9 +437,12 @@ export class FuseBridge {
 			throw new FuseBridgeError(`Unsupported chain: ${chainId}`)
 		}
 	}
+
 	protected static validateToken(token: Token | NativeCurrency) {
 		const tokenInfo = FUSE_BRIDGE_SUPPORTED_TOKENS.find(
-			(t) => t.chainId === token.chainId && t.address === token.address,
+			(t) =>
+				token.chainId === t.chainId &&
+				isAddressEqual(token.address, t.address),
 		)
 
 		if (!tokenInfo) {

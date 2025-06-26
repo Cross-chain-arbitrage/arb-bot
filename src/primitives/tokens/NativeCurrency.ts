@@ -1,4 +1,4 @@
-import { Address } from 'viem'
+import { Address, isAddressEqual } from 'viem'
 import { TokenBase } from './TokenBase'
 import { NativeCurrencyError } from './TokenErrors'
 
@@ -16,7 +16,10 @@ export class NativeCurrency extends TokenBase {
 	}
 
 	validateNativeAddress(address: Address) {
-		if (address === NATIVE_ADDRESS || address === STARGATE_NATIVE_ADDRESS)
+		if (
+			isAddressEqual(address, NATIVE_ADDRESS) ||
+			isAddressEqual(address, STARGATE_NATIVE_ADDRESS)
+		)
 			return
 
 		throw new NativeCurrencyError(
