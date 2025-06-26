@@ -17,6 +17,12 @@ import { getAccountAddress } from '../../src/utils/common'
 import { setTokenBalance, useAnvil } from '../testUtils/anvil'
 import { makeSuite } from '../testUtils/makeSuite'
 
+class FuseBridgeTest extends FuseBridge {
+	static override validateChain(chainId: number) {
+		return super.validateChain(chainId)
+	}
+}
+
 makeSuite('FuseBridge', () => {
 	const WBTC_ARB_ADDRESS = '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f'
 	const WBTC_FUSE_ADDRESS = '0x34009565bfeefded0f7e774629a745636bf35e82'
@@ -33,10 +39,16 @@ makeSuite('FuseBridge', () => {
 				fuse.id,
 			)
 
-			const result = await FuseBridge.quote(WBTC, arbitrum.id)
+			const amountIn = WBTC.parseUnits('1')
 
-			expect(result[0]).toBeGreaterThan(0n)
-			expect(result[1]).toBeGreaterThanOrEqual(0n)
+			const result = await FuseBridge.quoteBridge(
+				WBTC,
+				arbitrum.id,
+				amountIn,
+			)
+
+			expect(result.quote[0]).toBeGreaterThan(0n)
+			expect(result.quote[1]).toBeGreaterThanOrEqual(0n)
 		})
 
 		it('should bridge WBTC from Fuse to Arbitrum', async () => {
@@ -51,7 +63,7 @@ makeSuite('FuseBridge', () => {
 			const wallet = ClientManager.getWalletClient(fuse.id)
 
 			await setTokenBalance(
-				wallet.account!.address,
+				wallet.account.address,
 				WBTC_FUSE_ADDRESS,
 				0n,
 				amount,
@@ -91,10 +103,13 @@ makeSuite('FuseBridge', () => {
 				arbitrum.id,
 			)
 
-			const result = await FuseBridge.quote(WBTC, fuse.id)
+			const amountIn = WBTC.parseUnits('1')
 
-			expect(result[0]).toBeGreaterThan(0n)
-			expect(result[1]).toBeGreaterThanOrEqual(0n)
+			const result = await FuseBridge.quoteBridge(WBTC, fuse.id, amountIn)
+			const { quote } = result
+
+			expect(quote[0]).toBeGreaterThan(0n)
+			expect(quote[1]).toBeGreaterThanOrEqual(0n)
 		})
 
 		it('MUST bridge WBTC from Arbitrum to Fuse', async () => {
@@ -110,7 +125,7 @@ makeSuite('FuseBridge', () => {
 			const balanceSlot = 51n
 
 			await setTokenBalance(
-				wallet.account!.address,
+				wallet.account.address,
 				WBTC_ARB_ADDRESS,
 				balanceSlot,
 				amount,
@@ -124,7 +139,7 @@ makeSuite('FuseBridge', () => {
 			const bridgeTx = await FuseBridge.bridge(
 				WBTC,
 				fuse.id,
-				wallet.account!.address,
+				wallet.account.address,
 				amount,
 				true,
 			)
@@ -199,7 +214,7 @@ makeSuite('FuseBridge', () => {
 				const amount = FUSE.parseUnits('100')
 
 				await setTokenBalance(
-					wallet.account!.address,
+					wallet.account.address,
 					FUSE.address,
 					0n,
 					amount,
@@ -244,7 +259,7 @@ makeSuite('FuseBridge', () => {
 
 				for (let i = 0; i < 100; i++) {
 					await setTokenBalance(
-						wallet.account!.address,
+						wallet.account.address,
 						FUSE.address,
 						BigInt(i),
 						amount,
@@ -273,14 +288,14 @@ makeSuite('FuseBridge', () => {
 	})
 
 	it('validateChain() MUST throw if an unsupported chain is provided', () => {
-		expect(() => FuseBridge.validateChain(hemi.id)).toThrow()
-		expect(() => FuseBridge.validateChain(sepolia.id)).toThrow()
+		expect(() => FuseBridgeTest.validateChain(hemi.id)).toThrow()
+		expect(() => FuseBridgeTest.validateChain(sepolia.id)).toThrow()
 	})
 
 	it('validateChain() MUST NOT throw if a supported chain is provided', () => {
-		expect(() => FuseBridge.validateChain(arbitrum.id)).not.toThrow()
-		expect(() => FuseBridge.validateChain(optimism.id)).not.toThrow()
-		expect(() => FuseBridge.validateChain(bsc.id)).not.toThrow()
-		expect(() => FuseBridge.validateChain(fuse.id)).not.toThrow()
+		expect(() => FuseBridgeTest.validateChain(arbitrum.id)).not.toThrow()
+		expect(() => FuseBridgeTest.validateChain(optimism.id)).not.toThrow()
+		expect(() => FuseBridgeTest.validateChain(bsc.id)).not.toThrow()
+		expect(() => FuseBridgeTest.validateChain(fuse.id)).not.toThrow()
 	})
 })
