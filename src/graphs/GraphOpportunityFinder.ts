@@ -1,5 +1,10 @@
-import { Edge } from './primitives/Edge'
+import { createCustomError } from '../utils/common'
+import { Edge, FuseBridgeEdge, StargateBridgeEdge } from './primitives/Edge'
 import { Graph } from './primitives/Graph'
+
+const GraphOpportunityFinderError = createCustomError(
+	'GraphOpportunityFinderError',
+)
 
 export class GraphOpportunityFinder {
 	/**
@@ -109,6 +114,7 @@ export class GraphOpportunityFinder {
 		const edges: Edge[] = []
 		let currentToken: GraphNodeId = startToken.id
 		const maxEdges = 10 // Safety limit to prevent infinite loops
+		let bridgesCount = 0
 
 		// Reconstruct the cycle by following predecessors
 		do {
@@ -120,17 +126,26 @@ export class GraphOpportunityFinder {
 				)
 			}
 
-			// const from = graph.getToken(edge.from)
-			// const to = graph.getToken(edge.to)
-
-			// console.log(`${from.toString()} -- ${edge.type} --> ${to.toString()}`)
-			// const { rate } = await edge.getRate(startAmount)
-			// console.log('Rate: ', rate.toFixed(3))
 			edges.push(edge)
 			currentToken = edge.from.id
 
 			if (edges.length > maxEdges) {
-				throw new Error('Invalid cycle: too many edges')
+				throw new GraphOpportunityFinderError(
+					'Cycle length is too long. Probably a loop appeared on path',
+				)
+			}
+
+			if (
+				edge instanceof StargateBridgeEdge ||
+				edge instanceof FuseBridgeEdge
+			) {
+				bridgesCount++
+			}
+
+			if (bridgesCount > 2) {
+				throw new GraphOpportunityFinderError(
+					'Too many bridges in the cycle',
+				)
 			}
 		} while (currentToken !== startToken.id)
 
