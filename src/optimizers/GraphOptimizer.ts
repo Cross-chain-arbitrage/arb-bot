@@ -1,5 +1,7 @@
 import { GraphOpportunityFinder } from '../graphs/GraphOpportunityFinder'
 import { Graph } from '../graphs/primitives/Graph'
+import { createCustomError } from '../utils/common'
+import logger from '../utils/logger'
 
 const DEFAULT_OPTIONS = {
 	initialValueUSD: 15,
@@ -7,6 +9,8 @@ const DEFAULT_OPTIONS = {
 	stepsAmount: 22,
 	maxPathLength: 7,
 }
+
+const GraphOptimizerError = createCustomError('GraphOptimizerError')
 
 export class GraphOptimizer {
 	static async findOpportunity(
@@ -50,6 +54,14 @@ export class GraphOptimizer {
 			.filter((result) => result.status === 'fulfilled')
 			.map((result) => result.value)
 
+		if (algorithmResults.length === 0) {
+			this.handleErrors(algorithmResultsSettled)
+
+			throw new GraphOptimizerError(
+				'All optimization attempts failed with errors',
+			)
+		}
+
 		const maxProfitPath = algorithmResults.reduce((max, current) => {
 			if (max === null) {
 				return max
@@ -63,5 +75,17 @@ export class GraphOptimizer {
 		}, algorithmResults[0])
 
 		return maxProfitPath
+	}
+
+	private static handleErrors(
+		algorithmResultsSettled: PromiseSettledResult<GraphArbitrageOpportunity | null>[],
+	) {
+		logger.error('Errors occurred during graph optimization')
+
+		algorithmResultsSettled.forEach((result) => {
+			if (result.status === 'rejected') {
+				logger.error(result.reason)
+			}
+		})
 	}
 }
