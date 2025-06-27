@@ -1,4 +1,4 @@
-import { Address, isAddress } from 'viem'
+import { Address, getAddress, isAddress } from 'viem'
 import { ClientManager } from '../../utils/ClientManager'
 
 export class BaseContractError extends Error {
@@ -10,11 +10,13 @@ export class BaseContractError extends Error {
 }
 
 export abstract class BaseContract {
+	public readonly address: Address
 	constructor(
-		public readonly address: Address,
+		address: Address,
 		public readonly chainId: number,
 	) {
 		this.validateAddress(address)
+		this.address = getAddress(address)
 	}
 
 	private validateAddress(address: Address) {
