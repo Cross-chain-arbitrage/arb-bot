@@ -1,0 +1,1 @@
+docker build -f Dockerfile.strategy -t strategy .
