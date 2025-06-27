@@ -1,5 +1,4 @@
 import {
-	Account,
 	Chain,
 	createPublicClient,
 	createWalletClient,
@@ -7,6 +6,7 @@ import {
 	FallbackTransport,
 	http,
 	HttpTransportConfig,
+	LocalAccount,
 	PublicClient,
 	Transport,
 	WalletClient,
@@ -52,12 +52,12 @@ export class ClientManager {
 
 	private static _walletClients: Map<
 		number,
-		WalletClient<FallbackTransport, Chain, Account, undefined>
+		WalletClient<FallbackTransport, Chain, LocalAccount, undefined>
 	> = new Map()
 
 	static getWalletClient(
 		chainId: number,
-	): WalletClient<FallbackTransport, Chain, Account, undefined> {
+	): WalletClient<FallbackTransport, Chain, LocalAccount, undefined> {
 		const existingClient = this._walletClients.get(chainId)
 
 		if (existingClient) return existingClient
@@ -66,7 +66,12 @@ export class ClientManager {
 
 		const transport = this.getTransport(chainId)
 
-		const client = createWalletClient({
+		const client = createWalletClient<
+			FallbackTransport,
+			Chain,
+			LocalAccount,
+			undefined
+		>({
 			account: privateKeyToAccount(getPrivateKey()),
 			chain,
 			transport,

@@ -49,12 +49,12 @@ export abstract class UniV3LikePoolStatic extends Pool {
 		poolAddress: Address,
 		chainId: number,
 	): Promise<[Token, Token]> {
-		const client = ClientManager.getClient(chainId)
+		const wallet = ClientManager.getWalletClient(chainId)
 
 		const contract = getContract({
 			address: poolAddress,
 			abi: UNIV3_POOL_ABI,
-			client,
+			client: wallet,
 		})
 
 		const [token0Address, token1Address] = await Promise.all([
@@ -87,17 +87,17 @@ export abstract class UniV3LikePoolStatic extends Pool {
 			)
 		}
 
-		const client = ClientManager.getClient(chainId)
+		const wallet = ClientManager.getWalletClient(chainId)
 
 		const contract = getContract<
 			Transport,
 			Address,
 			typeof UNIV3_POOL_ABI,
-			typeof client
+			typeof wallet
 		>({
 			address: poolAddress,
 			abi: config.abi,
-			client,
+			client: wallet,
 		})
 
 		const [fee, token0Address, token1Address, tickSpacing, factory] =

@@ -313,12 +313,12 @@ export class Stargate {
 		const toChainEId = getChainEIdByNativeChainId(toChainId)
 		const recipientBytes32 = padAddressToBytes32(recipient)
 
-		const client = ClientManager.getClient(fromChainId)
+		const wallet = ClientManager.getWalletClient(fromChainId)
 
 		const contract = getContract({
 			address: token,
 			abi: OFT_ABI,
-			client,
+			client: wallet,
 		})
 
 		const result = await contract.read.quoteOFT([

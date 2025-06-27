@@ -33,17 +33,17 @@ export abstract class UniV2LikePoolStatic extends Pool {
 			)
 		}
 
-		const client = ClientManager.getClient(chainId)
+		const wallet = ClientManager.getWalletClient(chainId)
 
 		const contract = getContract<
 			Transport,
 			Address,
 			typeof UNIV2_POOL_ABI,
-			typeof client
+			typeof wallet
 		>({
 			address: poolAddress,
 			abi: config.abi,
-			client,
+			client: wallet,
 		})
 
 		const [token0Address, token1Address, factory] = await Promise.all([
