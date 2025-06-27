@@ -48,7 +48,7 @@ export class TokenUtils {
 			return cachedToken as T
 		}
 
-		const wallet = ClientManager.getWalletClient(chainId)
+		const client = ClientManager.getClient(chainId)
 		const abi = ERC20_ABI
 
 		if (this.isNative(checksumAddress)) {
@@ -65,7 +65,7 @@ export class TokenUtils {
 		const contract = getContract({
 			address: checksumAddress,
 			abi,
-			client: wallet,
+			client,
 		})
 
 		const [decimals, name, symbol] = await Promise.all([
