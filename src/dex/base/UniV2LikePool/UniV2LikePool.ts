@@ -8,6 +8,7 @@ import {
 import { UNIV2_POOL_ABI } from '../../../abi/uniV2/pool'
 import { UNIV2_ROUTER_ABI } from '../../../abi/uniV2/router'
 import { Token } from '../../../primitives/tokens/Token'
+import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
 import { PoolType } from '../../poolVariety'
 import { UniV2LikePoolStatic } from './UniV2LikePoolStatic'
 
@@ -129,7 +130,7 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 				address: this.routerAddress,
 				abi: UNIV2_ROUTER_ABI,
 				functionName: 'swapExactTokensForTokens',
-				account: this.account.address,
+				account: this.account,
 				args: [
 					args.amountIn,
 					args.amountOutMinimum,
@@ -148,7 +149,11 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 		}
 	}
 
-	parseAmountOut(swapReceipt: TransactionReceipt): bigint {
+	parseAmounts(
+		swapReceipt: TransactionReceipt,
+		tokenIn: Token,
+		tokenOut: Token,
+	): { amountOut: TokenAmount; amountIn: TokenAmount } {
 		const swapEvent = swapReceipt.logs
 			.map((log) => {
 				if (!isAddressEqual(log.address, this.address)) return null
@@ -165,12 +170,18 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 
 		if (!swapEvent) throw new this.customError('Swap event not found')
 
-		const amountOut =
-			swapEvent.args.amount0Out > 0n
-				? swapEvent.args.amount0Out
-				: swapEvent.args.amount1Out
+		const zeroForOne = this.zeroForOne(tokenIn, tokenOut)
 
-		return amountOut
+		const { amount0In, amount0Out, amount1In, amount1Out } = swapEvent.args
+
+		const [amountInInteger, amountOutInteger] = zeroForOne
+			? [amount0In, amount1Out]
+			: [amount1In, amount0Out]
+
+		const amountIn = new TokenAmount(tokenIn, amountInInteger)
+		const amountOut = new TokenAmount(tokenOut, amountOutInteger)
+
+		return { amountOut, amountIn }
 	}
 
 	validateMismatchSwapParams(params: SwapParams) {

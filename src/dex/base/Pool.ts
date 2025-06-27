@@ -1,6 +1,7 @@
 import { getAddress, TransactionReceipt } from 'viem'
 import { BaseContract } from '../../primitives/contracts/BaseContract'
 import { Token } from '../../primitives/tokens/Token'
+import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { createCustomError } from '../../utils/common'
 import { CHAIN_PERIPHERY_CONFIG } from '../periphery'
 import { POOL_ERRORS, PoolType } from '../poolVariety'
@@ -33,7 +34,11 @@ export abstract class Pool extends BaseContract {
 		request: SimulateRequestWithAccount
 	}>
 
-	abstract parseAmountOut(swapReceipt: TransactionReceipt): bigint
+	abstract parseAmounts(
+		swapReceipt: TransactionReceipt,
+		tokenIn: Token,
+		tokenOut: Token,
+	): { amountOut: TokenAmount; amountIn: TokenAmount }
 
 	async swap(params: SwapParams) {
 		const { request } = await this.simulateSwap(params)
@@ -45,6 +50,7 @@ export abstract class Pool extends BaseContract {
 		const hash = await this.wallet.writeContract({
 			...request,
 			gas: this.multiplyGas(gas),
+			account: this.account,
 		})
 
 		const receipt = await this.client.waitForTransactionReceipt({ hash })
@@ -52,9 +58,14 @@ export abstract class Pool extends BaseContract {
 		if (receipt.status !== 'success')
 			throw new this.customError(`Swap failed, tx: ${hash}`)
 
-		const amountOut = this.parseAmountOut(receipt)
+		// const zeroForOne = this.zeroForOne(params.tokenIn, params.tokenOut)
+		const { amountOut, amountIn } = this.parseAmounts(
+			receipt,
+			params.tokenIn,
+			params.tokenOut,
+		)
 
-		return { receipt, amountOut }
+		return { receipt, amountOut, amountIn }
 	}
 
 	static getPeripherySafe(
@@ -81,5 +92,14 @@ export abstract class Pool extends BaseContract {
 
 	calcDeadline(secondsToAdd: number): bigint {
 		return BigInt(Math.floor(Date.now() / 1000) + secondsToAdd)
+	}
+
+	zeroForOne(tokenIn: Token, tokenOut: Token) {
+		if (tokenIn.isSame(tokenOut))
+			throw new this.customError(
+				`TokenIn and TokenOut cannot be the same: ${tokenIn.address}`,
+			)
+
+		return tokenIn.address.toLowerCase() < tokenOut.address.toLowerCase()
 	}
 }

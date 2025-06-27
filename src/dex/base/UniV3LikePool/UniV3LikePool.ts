@@ -8,6 +8,8 @@ import { ALGEBRA_POOL_ABI } from '../../../abi/algebra/algebraPool'
 import { PANCAKE_V3_POOL_ABI } from '../../../abi/pancakeV3/pancakeV3Pool'
 import { UNIV3_POOL_ABI } from '../../../abi/uniV3/uniV3Pool'
 import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
+import { Token } from '../../../primitives/tokens/Token'
+import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
 import { shortenAddress } from '../../../utils/common'
 import { POOL_CONFIGS, PoolType } from '../../poolVariety'
 import { UniV3LikePoolStatic } from './UniV3LikePoolStatic'
@@ -61,7 +63,7 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 			address: this.quoterAddress,
 			abi: UNIV3_QUOTER_ABI,
 			functionName: 'quoteExactInputSingle',
-			account: this.account.address,
+			account: this.account,
 			args: [
 				{
 					tokenIn: params.tokenIn.address,
@@ -177,12 +179,19 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 		return { price, sqrtPriceX96 }
 	}
 
-	parseAmountOut(swapReceipt: TransactionReceipt): bigint {
+	parseAmounts(
+		swapReceipt: TransactionReceipt,
+		tokenIn: Token,
+		tokenOut: Token,
+	): { amountOut: TokenAmount; amountIn: TokenAmount } {
 		const swapEvent = swapReceipt.logs
 			.map((log) => {
 				if (!isAddressEqual(log.address, this.address)) return null
 
-				let abi
+				let abi:
+					| typeof UNIV3_POOL_ABI
+					| typeof PANCAKE_V3_POOL_ABI
+					| typeof ALGEBRA_POOL_ABI
 
 				switch (this.poolType) {
 					case PoolType.UNIV3:
@@ -210,12 +219,18 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 
 		if (!swapEvent) throw new this.customError('Swap event not found')
 
-		const amountOut =
-			swapEvent.args.amount0 < 0n
-				? -swapEvent.args.amount0
-				: -swapEvent.args.amount1
+		const zeroForOne = this.zeroForOne(tokenIn, tokenOut)
 
-		return amountOut
+		const { amount0, amount1 } = swapEvent.args
+
+		const [amountInInteger, amountOutInteger] = zeroForOne
+			? [amount0, -amount1]
+			: [amount1, -amount0]
+
+		const amountIn = new TokenAmount(tokenIn, amountInInteger)
+		const amountOut = new TokenAmount(tokenOut, amountOutInteger)
+
+		return { amountOut, amountIn }
 	}
 
 	sqrtPriceX96ToPrice(sqrtPriceX96: bigint): number {
