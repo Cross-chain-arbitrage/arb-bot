@@ -13,6 +13,15 @@ const DEFAULT_OPTIONS = {
 const GraphOptimizerError = createCustomError('GraphOptimizerError')
 
 export class GraphOptimizer {
+	/**
+	 * Optimize arbitrage opportunity by changing amount of start token
+	 * @param startToken
+	 * @param startTokenUSDPrice
+	 * @param graph
+	 * @param options
+	 * @returns - {@link GraphArbitrageOpportunity} or null, if no opportunity found
+	 * @throws - {@link GraphOptimizerError} if all optimization attempts failed with errors
+	 */
 	static async findOpportunity(
 		startToken: GraphNode,
 		startTokenUSDPrice: number,
