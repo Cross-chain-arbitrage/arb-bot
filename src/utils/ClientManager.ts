@@ -66,12 +66,7 @@ export class ClientManager {
 
 		const transport = this.getTransport(chainId)
 
-		const client = createWalletClient<
-			FallbackTransport,
-			Chain,
-			LocalAccount,
-			undefined
-		>({
+		const client = createWalletClient({
 			account: privateKeyToAccount(getPrivateKey()),
 			chain,
 			transport,
