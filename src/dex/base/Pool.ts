@@ -1,7 +1,6 @@
 import { getAddress, TransactionReceipt } from 'viem'
 import { BaseContract } from '../../primitives/contracts/BaseContract'
 import { Token } from '../../primitives/tokens/Token'
-import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { createCustomError } from '../../utils/common'
 import { CHAIN_PERIPHERY_CONFIG } from '../periphery'
 import { POOL_ERRORS, PoolType } from '../poolVariety'
@@ -38,7 +37,7 @@ export abstract class Pool extends BaseContract {
 		swapReceipt: TransactionReceipt,
 		tokenIn: Token,
 		tokenOut: Token,
-	): { amountOut: TokenAmount; amountIn: TokenAmount }
+	): { amountOut: bigint; amountIn: bigint }
 
 	async swap(params: SwapParams) {
 		const { request } = await this.simulateSwap(params)

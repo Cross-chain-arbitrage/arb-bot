@@ -9,7 +9,6 @@ import { PANCAKE_V3_POOL_ABI } from '../../../abi/pancakeV3/pancakeV3Pool'
 import { UNIV3_POOL_ABI } from '../../../abi/uniV3/uniV3Pool'
 import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
 import { Token } from '../../../primitives/tokens/Token'
-import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
 import { shortenAddress } from '../../../utils/common'
 import { POOL_CONFIGS, PoolType } from '../../poolVariety'
 import { UniV3LikePoolStatic } from './UniV3LikePoolStatic'
@@ -183,7 +182,7 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 		swapReceipt: TransactionReceipt,
 		tokenIn: Token,
 		tokenOut: Token,
-	): { amountOut: TokenAmount; amountIn: TokenAmount } {
+	): { amountOut: bigint; amountIn: bigint } {
 		const swapEvent = swapReceipt.logs
 			.map((log) => {
 				if (!isAddressEqual(log.address, this.address)) return null
@@ -223,12 +222,9 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 
 		const { amount0, amount1 } = swapEvent.args
 
-		const [amountInInteger, amountOutInteger] = zeroForOne
+		const [amountIn, amountOut] = zeroForOne
 			? [amount0, -amount1]
 			: [amount1, -amount0]
-
-		const amountIn = new TokenAmount(tokenIn, amountInInteger)
-		const amountOut = new TokenAmount(tokenOut, amountOutInteger)
 
 		return { amountOut, amountIn }
 	}

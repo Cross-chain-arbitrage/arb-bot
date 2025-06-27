@@ -8,7 +8,6 @@ import {
 import { UNIV2_POOL_ABI } from '../../../abi/uniV2/pool'
 import { UNIV2_ROUTER_ABI } from '../../../abi/uniV2/router'
 import { Token } from '../../../primitives/tokens/Token'
-import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
 import { PoolType } from '../../poolVariety'
 import { UniV2LikePoolStatic } from './UniV2LikePoolStatic'
 
@@ -153,7 +152,7 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 		swapReceipt: TransactionReceipt,
 		tokenIn: Token,
 		tokenOut: Token,
-	): { amountOut: TokenAmount; amountIn: TokenAmount } {
+	): { amountOut: bigint; amountIn: bigint } {
 		const swapEvent = swapReceipt.logs
 			.map((log) => {
 				if (!isAddressEqual(log.address, this.address)) return null
@@ -174,12 +173,9 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 
 		const { amount0In, amount0Out, amount1In, amount1Out } = swapEvent.args
 
-		const [amountInInteger, amountOutInteger] = zeroForOne
+		const [amountIn, amountOut] = zeroForOne
 			? [amount0In, amount1Out]
 			: [amount1In, amount0Out]
-
-		const amountIn = new TokenAmount(tokenIn, amountInInteger)
-		const amountOut = new TokenAmount(tokenOut, amountOutInteger)
 
 		return { amountOut, amountIn }
 	}
