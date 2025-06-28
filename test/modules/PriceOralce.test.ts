@@ -1,12 +1,11 @@
 import { arbitrum, fuse } from 'viem/chains'
-import {
-	Currency,
-	CurrencyId,
-	PriceOracle,
-} from '../../src/modules/PriceOracle/PriceOracle'
+import { GeckoTerminalAPI } from '../../src/dataApi/geckoterminal/GeckoTerminalAPI'
+import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
+import { PriceOracleSettings } from '../../src/modules/PriceOracle/types'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
+import { wait } from '../../src/utils/common'
 import { makeSuite } from '../testUtils/makeSuite'
 
 const WETH_ARB_ADDRESS = '0x82af49447d8a07e3bd95bd0d56f35241523fbab1' // WETH on Arbitrum
@@ -14,13 +13,10 @@ const USDT_ARB_ADDRESS = '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDT on
 const WBTC_ARB_ADDRESS = '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f' // WBTC on Arbitrum
 const WETH_FUSE_ADDRESS = '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590' // WETH on Fuse
 
-class PriceOracleHarness extends PriceOracle {
-	public static prices = new Map<CurrencyId, number>()
-	public static currenciesToUpdate = new Map<CurrencyId, Currency>()
-	public static priceUpdater: NodeJS.Timeout | undefined
+const onlyFetchPrice: Partial<PriceOracleSettings> = {
+	updateInterval: false,
+	useCache: false,
 }
-
-const shouldUpdateFalse = false
 
 makeSuite('Price Oracle', () => {
 	let wethToken: Token
@@ -47,23 +43,20 @@ makeSuite('Price Oracle', () => {
 	})
 
 	beforeEach(() => {
-		PriceOracleHarness.stopPriceUpdating()
+		PriceOracle.stopPriceUpdating()
 
 		// Clear the price cache for clean tests
-		PriceOracleHarness.prices.clear()
-		PriceOracleHarness.currenciesToUpdate.clear()
+		// @ts-expect-error - private property
+		PriceOracle.currencyStates.clear()
 	})
 
 	afterEach(() => {
-		PriceOracleHarness.stopPriceUpdating()
+		PriceOracle.stopPriceUpdating()
 	})
 
 	describe('getPrice - Real GeckoTerminal API', () => {
 		it('should return price for token', async () => {
-			const price = await PriceOracleHarness.getPrice(
-				wethToken,
-				shouldUpdateFalse,
-			)
+			const price = await PriceOracle.getPrice(wethToken, onlyFetchPrice)
 
 			expect(typeof price).toBe('number')
 			expect(price).toBeGreaterThan(1000)
@@ -71,10 +64,7 @@ makeSuite('Price Oracle', () => {
 		})
 
 		it('should return price for native currency', async () => {
-			const price = await PriceOracleHarness.getPrice(
-				ethNative,
-				shouldUpdateFalse,
-			)
+			const price = await PriceOracle.getPrice(ethNative, onlyFetchPrice)
 
 			expect(typeof price).toBe('number')
 			expect(price).toBeGreaterThan(1000)
@@ -83,24 +73,11 @@ makeSuite('Price Oracle', () => {
 
 		it('should return same price for native currency and wrapped native', async () => {
 			const [nativePrice, wrappedPrice] = await Promise.all([
-				PriceOracleHarness.getPrice(ethNative, false),
-				PriceOracleHarness.getPrice(wethToken, false),
+				PriceOracle.getPrice(ethNative, onlyFetchPrice),
+				PriceOracle.getPrice(wethToken, onlyFetchPrice),
 			])
 
 			expect(nativePrice).toBe(wrappedPrice)
-		})
-
-		it('should cache prices and return cached value on second call', async () => {
-			const price1 = await PriceOracleHarness.getPrice(wethToken, false)
-
-			// Second call - should return cached value
-			const startTime = Date.now()
-			const price2 = await PriceOracleHarness.getPrice(wethToken, false)
-			const endTime = Date.now()
-
-			expect(price1).toBe(price2)
-			// Second call should be much faster (cached)
-			expect(endTime - startTime).toBeLessThan(100)
 		})
 
 		it('should return prices for 3 tokens (with wrapped native) and 2 natives', async () => {
@@ -112,9 +89,9 @@ makeSuite('Price Oracle', () => {
 				fuseNative,
 			]
 
-			const results = await PriceOracleHarness.getPrices(
+			const results = await PriceOracle.getPrices(
 				allCurrencies,
-				false,
+				onlyFetchPrice,
 			)
 
 			// Should return prices for all 6 currencies
@@ -156,8 +133,130 @@ makeSuite('Price Oracle', () => {
 			)
 
 			await expect(
-				PriceOracleHarness.getPrice(invalidToken, false),
+				PriceOracle.getPrice(invalidToken, onlyFetchPrice),
 			).rejects.toThrow('Unsupported chainId for PriceOracle: 99999')
+		})
+	})
+
+	describe('getPrices - Mock GeckoTerminal API', () => {
+		let mockGetTokenPrice: jest.SpyInstance
+		let mockGetTokenPrices: jest.SpyInstance
+
+		beforeEach(() => {
+			jest.clearAllMocks()
+
+			mockGetTokenPrice = jest
+				.spyOn(GeckoTerminalAPI, 'getTokenPrice')
+				.mockResolvedValue(3000)
+
+			mockGetTokenPrices = jest
+				.spyOn(GeckoTerminalAPI, 'getTokenPrices')
+				.mockResolvedValue([
+					{ address: wethToken.address, price: 2500 },
+				])
+		})
+
+		afterEach(() => {
+			jest.clearAllMocks()
+		})
+
+		it('should use cached prices when useCache is true', async () => {
+			// First call - should fetch from API
+			const price1 = await PriceOracle.getPrice(wethToken, onlyFetchPrice)
+			expect(mockGetTokenPrice).toHaveBeenCalledTimes(1)
+
+			// Second call with cache enabled - should NOT call API
+			const price2 = await PriceOracle.getPrice(wethToken, {
+				useCache: true,
+				updateInterval: false,
+			})
+			expect(mockGetTokenPrice).toHaveBeenCalledTimes(1) // Still only 1 call
+			expect(price1).toBe(price2)
+		})
+
+		it('should bypass cache when useCache is false', async () => {
+			// First call
+			await PriceOracle.getPrice(wethToken, onlyFetchPrice)
+			expect(mockGetTokenPrice).toHaveBeenCalledTimes(1)
+
+			// Second call with cache disabled - should call API again
+			await PriceOracle.getPrice(wethToken, onlyFetchPrice)
+			expect(mockGetTokenPrice).toHaveBeenCalledTimes(2)
+		})
+
+		it('should update cache after fetching new prices', async () => {
+			// @ts-expect-error - private property
+			expect(PriceOracle.currencyStates.size).toBe(0)
+			// Fetch price - should update cache
+			await PriceOracle.getPrice(wethToken, onlyFetchPrice)
+
+			// Check cache was updated by calling with cache enabled
+			const cachedPrice = await PriceOracle.getPrice(wethToken, {
+				useCache: true,
+				updateInterval: false,
+			})
+
+			expect(cachedPrice).toBe(3000)
+			expect(mockGetTokenPrice).toHaveBeenCalledTimes(1) // Only one API call
+		})
+
+		it('getPrice: should not start price updating when updateInterval is false', async () => {
+			// Get price with updateInterval = false
+			await PriceOracle.getPrice(wethToken, {
+				useCache: false,
+				updateInterval: false,
+			})
+
+			// Price updater should still be undefined (not started)
+			// @ts-expect-error - private property
+			expect(PriceOracle.priceUpdater).toBeUndefined()
+		})
+
+		it('getPrices: should not start price updating when updateInterval is false', async () => {
+			// Get prices with updateInterval = false
+			await PriceOracle.getPrices([wethToken], {
+				useCache: false,
+				updateInterval: false,
+			})
+
+			// Price updater should still be undefined (not started)
+			// @ts-expect-error - private property
+			expect(PriceOracle.priceUpdater).toBeUndefined()
+		})
+
+		it('getPrice: should start price updating with custom interval', async () => {
+			// Get price with custom updateInterval
+			await PriceOracle.getPrice(wethToken, {
+				useCache: false,
+				updateInterval: 50, // 1 second for testing
+			})
+
+			// Price updater should now be running
+			// @ts-expect-error - private property
+			expect(PriceOracle.priceUpdater).toBeDefined()
+
+			await wait(100)
+
+			// Should have been called again due to the interval
+			expect(mockGetTokenPrice).toHaveBeenCalledTimes(1)
+			expect(mockGetTokenPrices).toHaveBeenCalledTimes(1)
+		})
+
+		it('getPrices: should start price updating with custom interval', async () => {
+			// Get prices with custom updateInterval
+			await PriceOracle.getPrices([wethToken], {
+				useCache: false,
+				updateInterval: 50, // 1 second for testing
+			})
+
+			// Price updater should now be running
+			// @ts-expect-error - private property
+			expect(PriceOracle.priceUpdater).toBeDefined()
+
+			await wait(100)
+
+			// Should have been called again due to the interval
+			expect(mockGetTokenPrices).toHaveBeenCalledTimes(2)
 		})
 	})
 })

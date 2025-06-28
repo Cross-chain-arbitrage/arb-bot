@@ -1,56 +1,58 @@
 import { isAddressEqual } from 'viem'
 import { GeckoTerminalAPI } from '../../dataApi/geckoterminal/GeckoTerminalAPI'
 import { chainIdToGeckoChainId } from '../../dataApi/geckoterminal/chains'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { createCustomError } from '../../utils/common'
-
-export type CurrencyId = TokenId
-export type Currency = Token | NativeCurrency
+import logger from '../../utils/logger'
+import {
+	Currency,
+	CurrencyId,
+	CurrencyState,
+	PriceOracleSettings,
+} from './types'
 
 const PriceOracleError = createCustomError('PriceOracleError')
 
+const DEFAULT_SETTINGS: PriceOracleSettings = {
+	useCache: true,
+	updateInterval: 1000 * 60 * 5, // 5 minutes
+}
+
 export class PriceOracle {
-	protected static prices: Map<CurrencyId, number> = new Map()
-	protected static currenciesToUpdate: Map<CurrencyId, Currency> = new Map()
-	protected static priceUpdater: NodeJS.Timeout | undefined
+	private static currencyStates: Map<CurrencyId, CurrencyState> = new Map()
+	private static priceUpdater: NodeJS.Timeout | undefined
+
+	/* ======== PUBLIC METHODS ======== */
 
 	/**
 	 * Initialize prices for a list of currencies and start updating prices every 5 minutes
 	 * @param updateInterval - The interval to update prices, false to not update prices, undefined to use the default interval
 	 */
-	static async initializePrices(
+	static async initializePriceUpdating(
 		currencies: Currency[],
-		updateInterval: number | false | undefined = 1000 * 60 * 5,
+		updateInterval = DEFAULT_SETTINGS.updateInterval,
 	) {
-		currencies.forEach((currency) =>
-			this.currenciesToUpdate.set(currency.id, currency),
-		)
-
-		const currenciesAndPrices = await this.getPrices(
-			currencies,
+		const currencyStates = await this.getPrices(currencies, {
+			useCache: false,
 			updateInterval,
-		)
+		})
 
-		if (updateInterval) {
-			this.startPriceUpdating(updateInterval)
-		}
+		if (updateInterval) this.startPriceUpdating(updateInterval)
 
-		return currenciesAndPrices
+		return currencyStates
 	}
 
 	/**
 	 * Start updating prices every updateInterval, if there is no price updater running, it will be started
 	 */
-	static startPriceUpdating(updateInterval: number = 1000 * 60 * 5): void {
+	static startPriceUpdating(updateInterval: number): void {
 		if (this.priceUpdater) {
 			return
 		}
 
 		this.priceUpdater = setInterval(() => {
 			this.updatePrices().catch((error) =>
-				console.error('Error updating prices:', error),
+				logger.error('Error updating prices:', error),
 			)
 		}, updateInterval)
 	}
@@ -68,39 +70,27 @@ export class PriceOracle {
 	 */
 	static async getPrice(
 		currency: Currency,
-		useCache: boolean = true,
-		updateInterval: number | false | undefined = 1000 * 60 * 5,
+		settings: Partial<PriceOracleSettings> = DEFAULT_SETTINGS,
 	): Promise<number> {
-		const isCurrencyNative = currency.isNative()
+		const priceLookupCurrency = await this.getLookupCurrency(currency)
 
-		if (isCurrencyNative) {
-			const wrappedNative = await TokenUtils.getWrappedNative(
-				currency.chainId,
+		if (settings.useCache) {
+			const currencyState = this.currencyStates.get(
+				priceLookupCurrency.id,
 			)
-			currency = wrappedNative
+
+			if (currencyState) return currencyState.price
 		}
-
-		if (useCache) {
-			const price = this.prices.get(currency.id)
-
-			if (price) {
-				return price
-			}
-		}
-
-		const geckoId = this.getGeckoId(currency.chainId)
 
 		const tokenPrice = await GeckoTerminalAPI.getTokenPrice(
-			currency.address,
-			geckoId,
+			priceLookupCurrency.address,
+			this.getGeckoId(priceLookupCurrency.chainId),
 		)
 
-		this.currenciesToUpdate.set(currency.id, currency)
-		this.prices.set(currency.id, tokenPrice)
+		this.setCurrencyState(priceLookupCurrency, tokenPrice)
 
-		if (updateInterval) {
-			this.startPriceUpdating(updateInterval)
-		}
+		if (settings.updateInterval)
+			this.startPriceUpdating(settings.updateInterval)
 
 		return tokenPrice
 	}
@@ -111,156 +101,139 @@ export class PriceOracle {
 	 */
 	static async getPrices(
 		currencies: Currency[],
-		updateInterval: number | false | undefined = 1000 * 60 * 5,
-		useCache: boolean = true,
-	): Promise<{ currency: Currency; price: number }[]> {
-		const unknownCurrenciesByChain = new Map<number, Currency[]>()
-
+		settings: Partial<PriceOracleSettings> = DEFAULT_SETTINGS,
+	): Promise<CurrencyState[]> {
 		const unknownCurrencies: Currency[] = []
-		const prices: { currency: Currency; price: number }[] = []
+		const statesToReturn: CurrencyState[] = []
 
-		if (useCache) {
-			for (const currency of currencies) {
-				const isCurrencyNative = currency.isNative()
-
-				if (isCurrencyNative) {
-					const wrappedNative = await TokenUtils.getWrappedNative(
-						currency.chainId,
-					)
-
-					const currencyPrice = this.prices.get(wrappedNative.id)
-
-					if (currencyPrice) {
-						prices.push({ currency, price: currencyPrice })
-					} else {
-						unknownCurrencies.push(currency)
-					}
-				} else {
-					const currencyPrice = this.prices.get(currency.id)
-
-					if (currencyPrice) {
-						prices.push({ currency, price: currencyPrice })
-						continue
-					}
-
-					unknownCurrencies.push(currency)
-				}
-			}
+		if (settings.useCache) {
+			await this.processCachedCurrencies(
+				currencies,
+				statesToReturn,
+				unknownCurrencies,
+			)
 		} else {
 			unknownCurrencies.push(...currencies)
 		}
 
-		for (const currency of unknownCurrencies) {
-			if (!unknownCurrenciesByChain.has(currency.chainId)) {
-				unknownCurrenciesByChain.set(currency.chainId, [])
-			}
-
-			unknownCurrenciesByChain.get(currency.chainId)!.push(currency)
-		}
+		const currenciesGroupedByChain =
+			this.groupCurrenciesByChain(unknownCurrencies)
 
 		for (const [
 			chainId,
 			chainCurrencies,
-		] of unknownCurrenciesByChain.entries()) {
-			const currenciesAndPricesOnChain =
-				await this.getUnknownPricesOnChain(chainId, chainCurrencies)
+		] of currenciesGroupedByChain.entries()) {
+			const currencyStatesOnChain =
+				await this.fetchAndUpdateCurrencyStates(
+					chainId,
+					chainCurrencies,
+				)
 
-			prices.push(...currenciesAndPricesOnChain)
+			statesToReturn.push(...currencyStatesOnChain)
 		}
 
-		if (updateInterval) {
-			this.startPriceUpdating(updateInterval)
-		}
+		if (settings.updateInterval)
+			this.startPriceUpdating(settings.updateInterval)
 
-		return prices
+		return statesToReturn
 	}
 
-	/**
-	 * fetch prices, add it in cache and in currenciesToUpdate
-	 */
-	private static async getUnknownPricesOnChain(
+	private static async fetchAndUpdateCurrencyStates(
 		chainId: number,
 		currencies: Currency[],
 	) {
-		const prices: { currency: Currency; price: number }[] = []
-
-		const geckoId = this.getGeckoId(chainId)
-		const addresses: Address[] = []
+		const lookupAddresses: Address[] = []
 
 		for (const currency of currencies) {
-			const isCurrencyNative = currency.isNative()
+			const priceLookupCurrency = await this.getLookupCurrency(currency)
 
-			if (isCurrencyNative) {
-				const wrappedNative = await TokenUtils.getWrappedNative(
-					currency.chainId,
-				)
-
-				addresses.push(wrappedNative.address)
-			} else {
-				addresses.push(currency.address)
-			}
+			lookupAddresses.push(priceLookupCurrency.address)
 		}
 
-		const addressesAndPrices = await GeckoTerminalAPI.getTokensPrices(
-			addresses,
-			geckoId,
+		const addressesAndPrices = await GeckoTerminalAPI.getTokenPrices(
+			lookupAddresses,
+			this.getGeckoId(chainId),
 		)
 
+		const currencyStates: CurrencyState[] = []
+
 		for (const currency of currencies) {
-			const isCurrencyNative = currency.isNative()
+			const priceLookupCurrency = await this.getLookupCurrency(currency)
 
-			if (isCurrencyNative) {
-				const wrappedNative = await TokenUtils.getWrappedNative(
-					currency.chainId,
+			const addressAndPrice = addressesAndPrices.find((addressAndPrice) =>
+				isAddressEqual(
+					addressAndPrice.address,
+					priceLookupCurrency.address,
+				),
+			)
+
+			// should never throw, because the address MUST be in the list
+			if (!addressAndPrice) {
+				throw new PriceOracleError(
+					`Price not found for currency: ${priceLookupCurrency.toString()}`,
 				)
-
-				const addressAndPrice = addressesAndPrices.find(
-					(addressAndPrice) =>
-						isAddressEqual(
-							addressAndPrice.address,
-							wrappedNative.address,
-						),
-				)
-
-				if (!addressAndPrice) {
-					// should never throw, because we are sure that the address is in the list
-					throw new PriceOracleError(
-						`Price not found for address: ${wrappedNative.address}`,
-					)
-				}
-
-				prices.push({ currency, price: addressAndPrice.price })
-			} else {
-				const addressAndPrice = addressesAndPrices.find(
-					(addressAndPrice) =>
-						isAddressEqual(
-							addressAndPrice.address,
-							currency.address,
-						),
-				)
-
-				if (!addressAndPrice) {
-					// should never throw, because we are sure that the address is in the list
-					throw new PriceOracleError(
-						`Price not found for address: ${currency.address}`,
-					)
-				}
-
-				prices.push({ currency, price: addressAndPrice.price })
-
-				this.prices.set(currency.id, addressAndPrice.price)
-				this.currenciesToUpdate.set(currency.id, currency)
 			}
+
+			this.setCurrencyState(priceLookupCurrency, addressAndPrice.price)
+
+			currencyStates.push({
+				currency,
+				price: addressAndPrice.price,
+				lastUpdated: Date.now(),
+			})
 		}
 
-		return prices
+		return currencyStates
+	}
+
+	private static groupCurrenciesByChain(
+		currencies: Currency[],
+	): Map<number, Currency[]> {
+		const currenciesByChain = new Map<number, Currency[]>()
+
+		for (const currency of currencies) {
+			if (!currenciesByChain.has(currency.chainId)) {
+				currenciesByChain.set(currency.chainId, [])
+			}
+
+			currenciesByChain.get(currency.chainId)!.push(currency)
+		}
+
+		return currenciesByChain
+	}
+
+	/* ======== PRIVATE METHODS ======== */
+
+	private static setCurrencyState(
+		currency: Currency,
+		price: number,
+		lastUpdated?: number,
+	) {
+		this.currencyStates.set(currency.id, {
+			price,
+			lastUpdated: lastUpdated ?? Date.now(),
+			currency,
+		})
+	}
+
+	private static async getLookupCurrency(
+		currency: Currency,
+	): Promise<Currency> {
+		return currency.isNative()
+			? await TokenUtils.getWrappedNative(currency.chainId)
+			: currency
 	}
 
 	private static async updatePrices(): Promise<void> {
-		const currenciesToUpdate = Array.from(this.currenciesToUpdate.values())
+		const currencyStatesToUpdate = Array.from(this.currencyStates.values())
+
+		const currenciesToUpdate = currencyStatesToUpdate.map((c) => c.currency)
 
 		if (currenciesToUpdate.length > 0) {
-			await this.getPrices(currenciesToUpdate)
+			await this.getPrices(currenciesToUpdate, {
+				useCache: false, // we are retrieving new prices
+				updateInterval: false,
+			})
 		}
 	}
 
@@ -270,9 +243,33 @@ export class PriceOracle {
 		const geckoId = chainIdToGeckoChainId[chainIdStr]
 
 		if (!geckoId) {
-			throw new Error(`Unsupported chainId for PriceOracle: ${chainId}`)
+			throw new PriceOracleError(
+				`Unsupported chainId for PriceOracle: ${chainId}`,
+			)
 		}
 
 		return geckoId
+	}
+
+	private static async processCachedCurrencies(
+		currencies: Currency[],
+		statesToReturn: CurrencyState[],
+		unknownCurrencies: Currency[],
+	) {
+		for (const currency of currencies) {
+			const priceLookupCurrency = await this.getLookupCurrency(currency)
+			const currencyState = this.currencyStates.get(
+				priceLookupCurrency.id,
+			)
+			if (currencyState) {
+				statesToReturn.push({
+					currency,
+					price: currencyState.price,
+					lastUpdated: currencyState.lastUpdated,
+				})
+			} else {
+				unknownCurrencies.push(currency)
+			}
+		}
 	}
 }

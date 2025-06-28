@@ -54,7 +54,7 @@ export class GeckoTerminalAPI {
 		return Number(tokenData.attributes.price_usd)
 	}
 
-	static async getTokensPrices(
+	static async getTokenPrices(
 		addresses: Address[],
 		network: string,
 	): Promise<{ address: Address; price: number }[]> {

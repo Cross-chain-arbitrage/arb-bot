@@ -116,7 +116,7 @@ makeSuite('GeckoTerminalAPI', () => {
 
 	it('should receive prices for several assets', async () => {
 		const tokensToFetch = ethTokens.slice(0, 5)
-		const prices = await GeckoTerminalAPI.getTokensPrices(
+		const prices = await GeckoTerminalAPI.getTokenPrices(
 			tokensToFetch as Address[],
 			'eth',
 		)
@@ -129,7 +129,7 @@ makeSuite('GeckoTerminalAPI', () => {
 
 	it('should receive prices for more than 30 assets', async () => {
 		const tokensToFetch = ethTokens.slice(0, 35)
-		const prices = await GeckoTerminalAPI.getTokensPrices(
+		const prices = await GeckoTerminalAPI.getTokenPrices(
 			tokensToFetch as Address[],
 			'eth',
 		)
