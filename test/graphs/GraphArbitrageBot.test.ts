@@ -10,12 +10,12 @@ import { Graph } from '../../src/graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
+import { ClientManager } from '../../src/utils/ClientManager'
 import { wait } from '../../src/utils/common'
 import logger from '../../src/utils/logger'
 import { makeSuite } from '../testUtils/makeSuite'
 
 makeSuite('GraphArbitrageBot', () => {
-	const priceOracle = { getPrice: (currency: string) => 1 } as PriceOracle
 	const notifier = {
 		sendArbitrageStart: () => Promise.resolve(),
 		sendArbitrageEnd: () => Promise.resolve(),
@@ -32,6 +32,10 @@ makeSuite('GraphArbitrageBot', () => {
 	let bot: GraphArbitrageBot
 
 	beforeAll(async () => {
+		jest.spyOn(PriceOracle, 'getPrice').mockResolvedValue(3000)
+
+		ClientManager.useCustomRpcUrl(arbitrum.id)
+
 		wethWbtcFuse = await PoolUtils.createPool(
 			wethWbtcFuseAddress,
 			fuse.id,
@@ -48,6 +52,10 @@ makeSuite('GraphArbitrageBot', () => {
 			pools: [wethWbtcFuse, wethWbtcArb],
 			edgeCacheTTL: 1,
 		})
+	})
+
+	afterAll(() => {
+		ClientManager.clearClients()
 	})
 
 	beforeEach(async () => {
@@ -123,7 +131,6 @@ makeSuite('GraphArbitrageBot', () => {
 		bot = new GraphArbitrageBot({
 			name: 'Test Bot',
 			graph,
-			priceOracle,
 			TgArbitrageNotifier: notifier,
 			startToken: wethWbtcArb.token0, // WBTC arb
 		})
@@ -141,6 +148,7 @@ makeSuite('GraphArbitrageBot', () => {
 		setTimeout(() => {
 			swapWbtcToWethOnFuseRateMock.mockReturnValue(1000)
 		}, 100)
+
 		await bot.findAndExecuteArbitrage()
 
 		expect(loggerErrorFn).toHaveBeenCalledWith(

@@ -28,7 +28,6 @@ const DEFAULT_OPTIONS = {
 interface GraphArbitrageBotParams {
 	name: string
 	graph: Graph
-	priceOracle: PriceOracle
 	TgArbitrageNotifier: TgArbitrageNotifier
 	startToken: GraphNode
 	options?: Partial<{
@@ -43,7 +42,6 @@ interface GraphArbitrageBotParams {
 export class GraphArbitrageBot {
 	private isArbitrageExecuting = false
 	readonly TgArbitrageNotifier: TgArbitrageNotifier
-	readonly priceOracle: PriceOracle
 	readonly startToken: GraphNode
 	readonly graph: Graph
 	readonly graphOptimizerOptions: GraphOptimizerOptions
@@ -57,7 +55,6 @@ export class GraphArbitrageBot {
 
 	constructor(params: GraphArbitrageBotParams) {
 		this.TgArbitrageNotifier = params.TgArbitrageNotifier
-		this.priceOracle = params.priceOracle
 		this.startToken = params.startToken
 		this.graph = params.graph
 		this.graphOptimizerOptions = params.options?.graphOptimizerOptions || {}
@@ -103,7 +100,7 @@ export class GraphArbitrageBot {
 		try {
 			const findOpportunityRes = await GraphOptimizer.findOpportunity(
 				this.startToken,
-				this.startTokenPrice(),
+				await this.startTokenPrice(),
 				this.graph,
 				this.graphOptimizerOptions,
 			)
@@ -134,7 +131,7 @@ export class GraphArbitrageBot {
 		try {
 			const prettyOpportunity = GraphVisualizer.getPrettyOpportunity(
 				opportunity,
-				this.startTokenPrice(),
+				await this.startTokenPrice(),
 			)
 			logger.info(prettyOpportunity)
 			this.notifyAboutArbStart(prettyOpportunity)
@@ -148,7 +145,11 @@ export class GraphArbitrageBot {
 			logger.info(
 				`Arbitrage is finished, amount out: ${readableActualAmountOut}, profit: $${actualProfitUsd}`,
 			)
-			this.notifyAboutArbEnd(actualAmountOut, opportunity)
+			this.notifyAboutArbEnd(actualAmountOut, opportunity).catch(
+				(err) => {
+					logger.error(err, 'Error sending path to telegram')
+				},
+			)
 		} catch (err) {
 			if (err instanceof ContractFunctionExecutionError) {
 				const shortenedError = new ContractFunctionExecutionError(
@@ -182,7 +183,7 @@ export class GraphArbitrageBot {
 		const expectedProfitUsd =
 			Number(
 				this.startToken.formatUnits(arbitrageOpportunity.profitAmount),
-			) * this.startTokenPrice()
+			) * (await this.startTokenPrice())
 
 		if (expectedProfitUsd < this.minProfitUsd) {
 			logger.info(
@@ -214,17 +215,19 @@ export class GraphArbitrageBot {
 		})
 	}
 
-	private notifyAboutArbEnd(
+	private async notifyAboutArbEnd(
 		actualAmountOut: bigint,
 		opportunity: GraphArbitrageOpportunity,
 	) {
 		this.executionErrorInARow = 0
 
+		const price = await this.startTokenPrice()
+
 		this.TgArbitrageNotifier.sendArbitrageEnd(
 			this.name,
 			actualAmountOut,
 			opportunity,
-			this.startTokenPrice(),
+			price,
 		).catch((err) => {
 			logger.error(err, 'Error sending path to telegram')
 		})
@@ -254,7 +257,8 @@ export class GraphArbitrageBot {
 		const amountOut = Number(this.startToken.formatUnits(actualAmountOut))
 		const amountIn = Number(this.startToken.formatUnits(startAmount))
 
-		const actualProfitUsd = (amountOut - amountIn) * this.startTokenPrice()
+		const actualProfitUsd =
+			(amountOut - amountIn) * (await this.startTokenPrice())
 
 		this.isArbitrageExecuting = false
 
@@ -339,10 +343,7 @@ export class GraphArbitrageBot {
 		}
 	}
 
-	private startTokenPrice() {
-		return this.priceOracle.getPrice(
-			this.startToken
-				.symbol as keyof typeof this.priceOracle.currencyToUCID,
-		)
+	private async startTokenPrice() {
+		return PriceOracle.getPrice(this.startToken)
 	}
 }

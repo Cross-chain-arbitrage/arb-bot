@@ -4,6 +4,8 @@ import {
 	isAddress,
 	withRetry,
 } from 'viem'
+import { fuse } from 'viem/chains'
+import { chainIdToGeckoChainId } from './dataApi/geckoterminal/chains'
 import { GeckoTerminalAPI } from './dataApi/geckoterminal/GeckoTerminalAPI'
 import { PoolUtils } from './dex/PoolUtils'
 import { PoolType } from './dex/poolVariety'
@@ -91,6 +93,7 @@ export async function getArbitrageOpportunities(): Promise<
 		() =>
 			GeckoTerminalAPI.getTokenPrice(
 				'0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d',
+				chainIdToGeckoChainId[fuse.id],
 			),
 		retryOptions,
 	)

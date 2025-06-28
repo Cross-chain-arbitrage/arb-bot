@@ -2,7 +2,6 @@ import { PoolType } from '../dex/poolVariety'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
-import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import logger from '../utils/logger'
@@ -42,13 +41,11 @@ export class Strategy {
 	}
 
 	private async buildBot(): Promise<GraphArbitrageBot> {
-		const priceOracle = await PriceOracle.create()
 		const graph = await GraphBuilder.build(this.config.graphBuildConfig)
 
 		return new GraphArbitrageBot({
 			name: this.config.name,
 			graph,
-			priceOracle,
 			TgArbitrageNotifier: new TgArbitrageNotifier(),
 			startToken: this.config.startToken,
 			options: {
