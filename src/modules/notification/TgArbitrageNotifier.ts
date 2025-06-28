@@ -64,7 +64,7 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 	) {
 		let message = `${name}:\n\n❌<b>Arbitrage error:</b> ${error}`
 
-		if (!isLastNotification)
+		if (isLastNotification)
 			message +=
 				'\n\n⚠️ Too many execution errors in a row, next errors will not be notified'
 
