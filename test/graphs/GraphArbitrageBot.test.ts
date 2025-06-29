@@ -133,6 +133,12 @@ makeSuite('GraphArbitrageBot', () => {
 			graph,
 			TgArbitrageNotifier: notifier,
 			startToken: wethWbtcArb.token0, // WBTC arb
+			graphOptimizerOptions: {
+				initialValueUSD: 100,
+				stepUSD: 10,
+				stepsAmount: 1,
+				maxPathLength: 10,
+			},
 		})
 	})
 

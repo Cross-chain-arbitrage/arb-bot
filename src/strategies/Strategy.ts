@@ -48,8 +48,8 @@ export class Strategy {
 			graph,
 			TgArbitrageNotifier: new TgArbitrageNotifier(),
 			startToken: this.config.startToken,
+			graphOptimizerOptions: this.config.graphOptimizerOptions,
 			options: {
-				graphOptimizerOptions: this.config.graphOptimizerOptions,
 				minProfitUsd: this.config.minProfitUsd,
 				pollingInterval: this.config.pollingInterval,
 				arbitrageTimeout: this.config.arbitrageTimeout,

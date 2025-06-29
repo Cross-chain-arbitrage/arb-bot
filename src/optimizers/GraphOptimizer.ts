@@ -3,13 +3,6 @@ import { Graph } from '../graphs/primitives/Graph'
 import { createCustomError } from '../utils/common'
 import logger from '../utils/logger'
 
-const DEFAULT_OPTIONS = {
-	initialValueUSD: 15,
-	stepUSD: 15,
-	stepsAmount: 22,
-	maxPathLength: 7,
-}
-
 const GraphOptimizerError = createCustomError('GraphOptimizerError')
 
 export class GraphOptimizer {
@@ -26,12 +19,9 @@ export class GraphOptimizer {
 		startToken: GraphNode,
 		startTokenUSDPrice: number,
 		graph: Graph,
-		options: GraphOptimizerOptions = {},
+		options: GraphOptimizerOptions,
 	): Promise<GraphArbitrageOpportunity | null> {
-		const { initialValueUSD, stepUSD, stepsAmount, maxPathLength } = {
-			...DEFAULT_OPTIONS,
-			...options,
-		}
+		const { initialValueUSD, stepUSD, stepsAmount, maxPathLength } = options
 
 		const algorithmResultsPromises: Promise<GraphArbitrageOpportunity | null>[] =
 			[]

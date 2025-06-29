@@ -30,8 +30,8 @@ interface GraphArbitrageBotParams {
 	graph: Graph
 	TgArbitrageNotifier: TgArbitrageNotifier
 	startToken: GraphNode
+	graphOptimizerOptions: GraphOptimizerOptions
 	options?: Partial<{
-		graphOptimizerOptions: GraphOptimizerOptions
 		minProfitUsd: number
 		pollingInterval: number
 		arbitrageTimeout: number
@@ -57,7 +57,7 @@ export class GraphArbitrageBot {
 		this.TgArbitrageNotifier = params.TgArbitrageNotifier
 		this.startToken = params.startToken
 		this.graph = params.graph
-		this.graphOptimizerOptions = params.options?.graphOptimizerOptions || {}
+		this.graphOptimizerOptions = params.graphOptimizerOptions
 		this.minProfitUsd =
 			params.options?.minProfitUsd || DEFAULT_OPTIONS.minProfitUsd
 		this.pollingInterval =
