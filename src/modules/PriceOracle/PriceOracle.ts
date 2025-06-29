@@ -25,8 +25,9 @@ export class PriceOracle {
 	/* ======== PUBLIC METHODS ======== */
 
 	/**
-	 * Initialize prices for a list of currencies and start updating prices every 5 minutes
-	 * @param updateInterval - The interval to update prices, false to not update prices, undefined to use the default interval
+	 * Initialize prices for a list of currencies and start updating prices every updateInterval
+	 * @param currencies - Array of Token, NativeCurrency or WrappedNative
+	 * @param updateInterval - The interval to update prices, false to not update prices, undefined to use the default interval (5 minutes)
 	 */
 	static async initializePriceUpdating(
 		currencies: Currency[],
@@ -66,7 +67,7 @@ export class PriceOracle {
 
 	/**
 	 * Get the price of a currency, cache it and update it every 5 minutes
-	 * @param updateInterval - The interval to update prices, false to not update prices, undefined to use the default interval
+	 * @param currency - Token, NativeCurrency or WrappedNative
 	 */
 	static async getPrice(
 		currency: Currency,
@@ -97,7 +98,7 @@ export class PriceOracle {
 
 	/**
 	 * Get the price of a currency, cache it and update it every 5 minutes
-	 * @param updateInterval - The interval to update prices, false to not update prices, undefined to use the default interval
+	 * @param currencies - Array of Token, NativeCurrency or WrappedNative
 	 */
 	static async getPrices(
 		currencies: Currency[],
@@ -137,6 +138,8 @@ export class PriceOracle {
 
 		return statesToReturn
 	}
+
+	/* ======== PRIVATE METHODS ======== */
 
 	private static async fetchAndUpdateCurrencyStates(
 		chainId: number,
@@ -201,8 +204,6 @@ export class PriceOracle {
 
 		return currenciesByChain
 	}
-
-	/* ======== PRIVATE METHODS ======== */
 
 	private static setCurrencyState(
 		currency: Currency,

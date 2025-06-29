@@ -10,7 +10,12 @@ export interface CurrencyState {
 	currency: Currency
 }
 
+/**
+ * Settings for getting prices from the PriceOracle
+ */
 export interface PriceOracleSettings {
+	/** Whether to use the cache to store prices */
 	useCache: boolean
+	/** The interval to update prices, false to not update prices, undefined to use the default interval */
 	updateInterval: number | false | undefined
 }
