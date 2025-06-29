@@ -108,13 +108,36 @@ makeSuite('UniV3LikePool', () => {
 		})
 
 		it('should throw when balance is insufficient', async () => {
+			const largeAmount = 1000000000000000000000000n
+
+			await pool.token0.approve(pool.routerAddress, largeAmount)
+
 			await expect(
 				pool.validateSwapParams({
 					tokenIn: pool.token0,
 					tokenOut: pool.token1,
-					amountIn: 1000000000000000000000000n, // Very large amount
+					amountIn: largeAmount,
 				}),
 			).rejects.toThrow('Insufficient balance')
+
+			await walletClient.writeContract({
+				address: pool.token0.address,
+				abi: [
+					{
+						inputs: [
+							{ name: 'spender', type: 'address' },
+							{ name: 'subtractedValue', type: 'uint256' },
+						],
+						name: 'decreaseAllowance',
+						stateMutability: 'nonpayable',
+						type: 'function',
+					},
+				],
+				functionName: 'decreaseAllowance',
+				args: [pool.routerAddress, largeAmount],
+				chain: fuse,
+				account: botAddress,
+			})
 		})
 
 		it('should throw when allowance is insufficient', async () => {
