@@ -16,58 +16,37 @@ import { GraphVisualizer } from './GraphVisualizer'
 import { ActionType, Edge, SwapEdge } from './primitives/Edge'
 import { Graph } from './primitives/Graph'
 
-const MAX_EXECUTION_ERRORS_IN_A_ROW = 3
-
-const DEFAULT_OPTIONS = {
-	minProfitUsd: 3,
-	pollingInterval: 10_000,
+const DEFAULT_SETTINGS = {
 	arbitrageTimeout: 5 * 60 * 1000,
 	retryExecuteEdgeCount: 2,
+	maxExecutionErrorsInARow: 3,
 }
 
-interface GraphArbitrageBotParams {
-	name: string
-	graph: Graph
-	TgArbitrageNotifier: TgArbitrageNotifier
-	startToken: GraphNode
-	graphOptimizerOptions: GraphOptimizerOptions
-	options?: Partial<{
-		minProfitUsd: number
-		pollingInterval: number
-		arbitrageTimeout: number
-		retryExecuteEdgeCount: number
-	}>
-}
+type BotSettings = Readonly<{
+	minProfitUsd: number
+	pollingInterval: number
+	/** Timeout in milliseconds after which arbitrage execution is considered failed and reset */
+	arbitrageTimeout?: number
+	retryExecuteEdgeCount?: number
+	maxExecutionErrorsInARow?: number
+}>
 
 export class GraphArbitrageBot {
 	private isArbitrageExecuting = false
-	readonly TgArbitrageNotifier: TgArbitrageNotifier
-	readonly startToken: GraphNode
-	readonly graph: Graph
-	readonly graphOptimizerOptions: GraphOptimizerOptions
-	readonly minProfitUsd: number
-	readonly pollingInterval: number
-	readonly arbitrageTimeout: number
-	readonly retryExecuteEdgeCount: number
-	readonly name: string
-
 	private executionErrorInARow = 0
+	readonly settings: Required<BotSettings>
 
-	constructor(params: GraphArbitrageBotParams) {
-		this.TgArbitrageNotifier = params.TgArbitrageNotifier
-		this.startToken = params.startToken
-		this.graph = params.graph
-		this.graphOptimizerOptions = params.graphOptimizerOptions
-		this.minProfitUsd =
-			params.options?.minProfitUsd || DEFAULT_OPTIONS.minProfitUsd
-		this.pollingInterval =
-			params.options?.pollingInterval || DEFAULT_OPTIONS.pollingInterval
-		this.arbitrageTimeout =
-			params.options?.arbitrageTimeout || DEFAULT_OPTIONS.arbitrageTimeout
-		this.retryExecuteEdgeCount =
-			params.options?.retryExecuteEdgeCount ||
-			DEFAULT_OPTIONS.retryExecuteEdgeCount
-		this.name = params.name
+	constructor(
+		readonly name: string,
+		readonly TgArbitrageNotifier: TgArbitrageNotifier,
+		readonly graphParams: Readonly<{
+			graph: Graph
+			startToken: GraphNode
+			graphOptimizerOptions: GraphOptimizerOptions
+		}>,
+		settings: BotSettings,
+	) {
+		this.settings = { ...DEFAULT_SETTINGS, ...settings }
 	}
 
 	start() {
@@ -76,7 +55,7 @@ export class GraphArbitrageBot {
 		let message = `${this.name} started\n\nGraph:\n`
 
 		const { view, edit } = GraphVisualizer.getLinksToMermaidGraph(
-			this.graph,
+			this.graphParams.graph,
 		)
 
 		const viewLink = `\x1b]8;;${view}\x1b\\📊 View Graph\x1b]8;;\x1b\\`
@@ -92,17 +71,17 @@ export class GraphArbitrageBot {
 
 		void runFuncWithDelay(
 			this.findAndExecuteArbitrage.bind(this),
-			this.pollingInterval,
+			this.settings.pollingInterval,
 		)
 	}
 
 	async findArbitrage() {
 		try {
 			const findOpportunityRes = await GraphOptimizer.findOpportunity(
-				this.startToken,
+				this.graphParams.startToken,
 				await this.startTokenPrice(),
-				this.graph,
-				this.graphOptimizerOptions,
+				this.graphParams.graph,
+				this.graphParams.graphOptimizerOptions,
 			)
 
 			return findOpportunityRes
@@ -140,7 +119,7 @@ export class GraphArbitrageBot {
 				await this.execute(opportunity)
 
 			const readableActualAmountOut =
-				this.startToken.formatUnits(actualAmountOut)
+				this.graphParams.startToken.formatUnits(actualAmountOut)
 
 			logger.info(
 				`Arbitrage is finished, amount out: ${readableActualAmountOut}, profit: $${actualProfitUsd}`,
@@ -182,12 +161,14 @@ export class GraphArbitrageBot {
 
 		const expectedProfitUsd =
 			Number(
-				this.startToken.formatUnits(arbitrageOpportunity.profitAmount),
+				this.graphParams.startToken.formatUnits(
+					arbitrageOpportunity.profitAmount,
+				),
 			) * (await this.startTokenPrice())
 
-		if (expectedProfitUsd < this.minProfitUsd) {
+		if (expectedProfitUsd < this.settings.minProfitUsd) {
 			logger.info(
-				`Profit is too low, expectedProfitUsd: $${expectedProfitUsd.toFixed(2)}, minProfitUsd: $${this.minProfitUsd}`,
+				`Profit is too low, expectedProfitUsd: $${expectedProfitUsd.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
 			)
 			return
 		}
@@ -196,7 +177,9 @@ export class GraphArbitrageBot {
 	}
 
 	private notifyAboutArbError(error: unknown) {
-		if (this.executionErrorInARow++ > MAX_EXECUTION_ERRORS_IN_A_ROW) {
+		if (
+			this.executionErrorInARow++ > this.settings.maxExecutionErrorsInARow
+		) {
 			logger.warn(
 				'Too many execution errors in a row, skipping notification',
 			)
@@ -209,7 +192,8 @@ export class GraphArbitrageBot {
 		this.TgArbitrageNotifier.sendArbitrageError(
 			this.name,
 			errorMessage,
-			this.executionErrorInARow > MAX_EXECUTION_ERRORS_IN_A_ROW - 1,
+			this.executionErrorInARow >
+				this.settings.maxExecutionErrorsInARow - 1,
 		).catch((err) => {
 			logger.error(err, 'Error sending error to telegram')
 		})
@@ -251,11 +235,15 @@ export class GraphArbitrageBot {
 			path,
 			startAmount,
 			beforeExecuteEdgeHook: this.checkEdgeProfitability.bind(this),
-			retryExecuteEdgeCount: this.retryExecuteEdgeCount,
+			retryExecuteEdgeCount: this.settings.retryExecuteEdgeCount,
 		})
 
-		const amountOut = Number(this.startToken.formatUnits(actualAmountOut))
-		const amountIn = Number(this.startToken.formatUnits(startAmount))
+		const amountOut = Number(
+			this.graphParams.startToken.formatUnits(actualAmountOut),
+		)
+		const amountIn = Number(
+			this.graphParams.startToken.formatUnits(startAmount),
+		)
 
 		const actualProfitUsd =
 			(amountOut - amountIn) * (await this.startTokenPrice())
@@ -277,7 +265,7 @@ export class GraphArbitrageBot {
 
 		const fromToken = currentEdge.from
 
-		if (fromToken.chainId === this.startToken.chainId) return
+		if (fromToken.chainId === this.graphParams.startToken.chainId) return
 
 		const currentRate = await currentEdge.getRate(amountIn)
 
@@ -300,11 +288,11 @@ export class GraphArbitrageBot {
 		this.isArbitrageExecuting = true
 		setTimeout(() => {
 			this.isArbitrageExecuting = false
-		}, this.arbitrageTimeout)
+		}, this.settings.arbitrageTimeout)
 	}
 
 	async approveAll() {
-		for (const [edgeId, edge] of this.graph.edges) {
+		for (const [edgeId, edge] of this.graphParams.graph.edges) {
 			const { from, to } = edge
 
 			logger.info(
@@ -344,6 +332,6 @@ export class GraphArbitrageBot {
 	}
 
 	private async startTokenPrice() {
-		return PriceOracle.getPrice(this.startToken)
+		return PriceOracle.getPrice(this.graphParams.startToken)
 	}
 }

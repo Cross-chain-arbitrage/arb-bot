@@ -43,18 +43,20 @@ export class Strategy {
 	private async buildBot(): Promise<GraphArbitrageBot> {
 		const graph = await GraphBuilder.build(this.config.graphBuildConfig)
 
-		return new GraphArbitrageBot({
-			name: this.config.name,
-			graph,
-			TgArbitrageNotifier: new TgArbitrageNotifier(),
-			startToken: this.config.startToken,
-			graphOptimizerOptions: this.config.graphOptimizerOptions,
-			options: {
+		return new GraphArbitrageBot(
+			this.config.name,
+			new TgArbitrageNotifier(),
+			{
+				graph,
+				startToken: this.config.startToken,
+				graphOptimizerOptions: this.config.graphOptimizerOptions,
+			},
+			{
 				minProfitUsd: this.config.minProfitUsd,
 				pollingInterval: this.config.pollingInterval,
 				arbitrageTimeout: this.config.arbitrageTimeout,
 			},
-		})
+		)
 	}
 
 	private async prepare() {

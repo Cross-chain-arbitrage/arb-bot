@@ -128,18 +128,24 @@ makeSuite('GraphArbitrageBot', () => {
 			}
 		}
 
-		bot = new GraphArbitrageBot({
-			name: 'Test Bot',
-			graph,
-			TgArbitrageNotifier: notifier,
-			startToken: wethWbtcArb.token0, // WBTC arb
-			graphOptimizerOptions: {
-				initialValueUSD: 100,
-				stepUSD: 10,
-				stepsAmount: 1,
-				maxPathLength: 10,
+		bot = new GraphArbitrageBot(
+			'Test Bot',
+			notifier,
+			{
+				graph,
+				startToken: wethWbtcArb.token0, // WBTC arb
+				graphOptimizerOptions: {
+					initialValueUSD: 100,
+					stepUSD: 10,
+					stepsAmount: 1,
+					maxPathLength: 10,
+				},
 			},
-		})
+			{
+				minProfitUsd: 1,
+				pollingInterval: 1000,
+			},
+		)
 	})
 
 	afterEach(() => {
