@@ -115,20 +115,18 @@ export class GraphArbitrageBot {
 			logger.info(prettyOpportunity)
 			this.notifyAboutArbStart(prettyOpportunity)
 
-			const { actualAmountOut, actualProfitUsd } =
+			const { endAmount, actualProfitUsd } =
 				await this.execute(opportunity)
 
 			const readableActualAmountOut =
-				this.graphParams.startToken.formatUnits(actualAmountOut)
+				this.graphParams.startToken.formatUnits(endAmount)
 
 			logger.info(
 				`Arbitrage is finished, amount out: ${readableActualAmountOut}, profit: $${actualProfitUsd}`,
 			)
-			this.notifyAboutArbEnd(actualAmountOut, opportunity).catch(
-				(err) => {
-					logger.error(err, 'Error sending path to telegram')
-				},
-			)
+			this.notifyAboutArbEnd(endAmount, opportunity).catch((err) => {
+				logger.error(err, 'Error sending path to telegram')
+			})
 		} catch (err) {
 			if (err instanceof ContractFunctionExecutionError) {
 				const shortenedError = new ContractFunctionExecutionError(
