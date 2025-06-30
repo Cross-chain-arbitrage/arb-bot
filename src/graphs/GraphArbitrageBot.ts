@@ -159,12 +159,10 @@ export class GraphArbitrageBot {
 			return
 		}
 
-		const expectedProfitUsd =
-			Number(
-				this.graphParams.startToken.formatUnits(
-					arbitrageOpportunity.profitAmount,
-				),
-			) * (await this.startTokenPrice())
+		const expectedProfitUsd = await this.calculateProfit(
+			arbitrageOpportunity.startAmount,
+			arbitrageOpportunity.endAmount,
+		)
 
 		if (expectedProfitUsd < this.settings.minProfitUsd) {
 			logger.info(
@@ -256,26 +254,35 @@ export class GraphArbitrageBot {
 
 		const { path, startAmount } = graphArbitrageOpportunity
 
-		const actualAmountOut = await GraphExecutor.execute({
+		const endAmount = await GraphExecutor.execute({
 			path,
 			startAmount,
 			beforeExecuteEdgeHook: this.checkEdgeProfitability.bind(this),
 			retryExecuteEdgeCount: this.settings.retryExecuteEdgeCount,
 		})
 
-		const amountOut = Number(
-			this.graphParams.startToken.formatUnits(actualAmountOut),
+		const actualProfitUsd = await this.calculateProfit(
+			startAmount,
+			endAmount,
 		)
-		const amountIn = Number(
-			this.graphParams.startToken.formatUnits(startAmount),
-		)
-
-		const actualProfitUsd =
-			(amountOut - amountIn) * (await this.startTokenPrice())
 
 		this.isArbitrageExecuting = false
 
-		return { actualAmountOut, actualProfitUsd }
+		return { endAmount, actualProfitUsd }
+	}
+
+	private async calculateProfit(amountStart: bigint, amountEnd: bigint) {
+		const amountEndFormatted = Number(
+			this.graphParams.startToken.formatUnits(amountEnd),
+		)
+
+		const amountStartFormatted = Number(
+			this.graphParams.startToken.formatUnits(amountStart),
+		)
+
+		const startTokenPrice = await this.startTokenPrice()
+
+		return (amountEndFormatted - amountStartFormatted) * startTokenPrice
 	}
 
 	/**
