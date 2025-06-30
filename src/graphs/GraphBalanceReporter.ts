@@ -140,7 +140,7 @@ export class GraphBalanceReporter {
 		// Build unified message
 		let message =
 			`<b>${this.bot.name}</b>\n` +
-			`🕐 ${new Date().toLocaleString()}\n` +
+			`🕐 ${new Date().toLocaleString('ru', { timeZoneName: 'short' })}\n` +
 			`💵 <b>Total Portfolio: $${totalUsd.toFixed(2)}</b>\n\n`
 
 		for (const [chainId, chainBalances] of balancesByChain) {
