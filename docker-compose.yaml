@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+    strategy-1:
+        build: &build-strategy
+            context: .
+            dockerfile: Dockerfile.strategy
+        environment:
+            - ENTRY_POINT=FusePoolsStrategy/FusePoolsStrategy.js
+        env_file:
+            - .env.docker.local
+        container_name: fuse
+        restart: unless-stopped
+
+    strategy-2:
+        build: *build-strategy
+        environment:
+            - ENTRY_POINT=StoryWethPoolsStrategy/StoryWethPoolsStrategy.js
+        env_file:
+            - .env.docker.local
+        container_name: story-weth
+        restart: unless-stopped
+
+    strategy-3:
+        build: *build-strategy
+        environment:
+            - ENTRY_POINT=WethPoolsStrategy/WethPoolsStrategy.js
+        container_name: weth
+        env_file:
+            - .env.docker.bot
+        restart: unless-stopped
+
+    strategy-4:
+        build: *build-strategy
+        environment:
+            - ENTRY_POINT=WbtcFuseStrategy/WbtcFuseStrategy.js
+        env_file:
+            - .env.docker.bot
+        container_name: wbtc
+        restart: unless-stopped

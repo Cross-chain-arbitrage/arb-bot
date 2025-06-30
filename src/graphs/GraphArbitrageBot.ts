@@ -69,10 +69,10 @@ export class GraphArbitrageBot {
 			logger.error(err, 'Error sending message to telegram')
 		})
 
-		void runFuncWithDelay(
-			this.findAndExecuteArbitrage.bind(this),
-			this.settings.pollingInterval,
-		)
+		void runFuncWithDelay(async () => {
+			await this.findAndExecuteArbitrage()
+			this.firstRunCheck()
+		}, this.settings.pollingInterval)
 	}
 
 	async findArbitrage() {
@@ -174,12 +174,12 @@ export class GraphArbitrageBot {
 		}
 
 		await this.executeArbitrage(arbitrageOpportunity)
-
-		// check that rates are correct after first run
-		this.firstRunCheck()
 	}
 
 	private isFirstRun = true
+	/**
+	 * Check that rates are correct after first run
+	 */
 	private firstRunCheck() {
 		if (!this.isFirstRun) return
 
