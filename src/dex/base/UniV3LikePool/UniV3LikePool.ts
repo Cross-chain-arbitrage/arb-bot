@@ -15,6 +15,18 @@ import { UniV3LikePoolStatic } from './UniV3LikePoolStatic'
 
 const BASIS_POINTS = 10000n
 
+export type UniV3SwapArguments = {
+	tokenIn: Address
+	tokenOut: Address
+	fee: number
+	recipient: Address
+	/** @dev Omitted in SwapRouter02 */
+	deadline?: bigint
+	amountIn: bigint
+	amountOutMinimum: bigint
+	sqrtPriceLimitX96: bigint
+}
+
 export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 	public readonly fee: number
 	public readonly tickSpacing: number
@@ -80,7 +92,10 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 		}
 	}
 
-	async getSwapArguments(params: SwapParams) {
+	async getSwapArguments(
+		params: SwapParams,
+		is02Router?: boolean,
+	): Promise<UniV3SwapArguments> {
 		const { amountOut } = await this.quoteSwap(params)
 
 		const amountOutMinimum = this.calcMinAmountOut(
@@ -93,7 +108,7 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 			tokenOut: params.tokenOut.address,
 			fee: this.fee,
 			recipient: this.account.address,
-			deadline: this.calcDeadline(60 * 5),
+			deadline: is02Router ? undefined : this.calcDeadline(60 * 5),
 			amountIn: params.amountIn,
 			amountOutMinimum,
 			sqrtPriceLimitX96: 0n,

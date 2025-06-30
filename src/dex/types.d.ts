@@ -26,9 +26,15 @@ declare global {
 		router: Address
 	}
 
+	/**
+	 * @param quoter - address of the quoter contract (both v1 and v2 have same interface)
+	 * @param router - address of the router contract (preferably regular SwapRouter)
+	 * @param is02Router - is used to determine if the router is SwapRouter02
+	 */
 	interface UniV3PoolPeriphery {
 		quoter: Address
 		router: Address
+		is02Router?: boolean
 	}
 
 	interface V3PoolConfig {

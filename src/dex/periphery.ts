@@ -78,6 +78,7 @@ export const CHAIN_PERIPHERY_CONFIG: Record<number, PoolPeriphery> = {
 			[getAddress('0xcb2436774C3e191c85056d248EF4260ce5f27A9D')]: {
 				quoter: '0x5911cB3633e764939edc2d92b7e1ad375Bb57649',
 				router: '0xaa52bB8110fE38D0d2d2AF0B85C3A3eE622CA455',
+				is02Router: true,
 			},
 		},
 	},

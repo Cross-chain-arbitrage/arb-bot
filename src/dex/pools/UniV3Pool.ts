@@ -1,16 +1,20 @@
-import { Address } from 'viem'
+import { Abi, Address } from 'viem'
 import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
+import { UNIV3_ROUTER02_ABI } from '../../abi/uniV3/uniV3Router02'
 import { UniV3LikePool } from '../base/UniV3LikePool/UniV3LikePool'
 import { PoolType } from '../poolVariety'
 
 export class UniV3Pool extends UniV3LikePool {
+	public readonly is02Router: boolean
+
 	constructor(
 		poolAddress: Address,
 		chainId: number,
 		immutables: PoolImmutables,
-		periphery: PoolPeriphery,
+		periphery: UniV3PoolPeriphery,
 	) {
 		super(poolAddress, chainId, immutables, periphery, PoolType.UNIV3)
+		this.is02Router = periphery.is02Router ?? false
 	}
 
 	static async create(poolAddress: Address, chainId: number) {
@@ -26,12 +30,13 @@ export class UniV3Pool extends UniV3LikePool {
 	async simulateSwap(params: SwapParams) {
 		await this.validateSwapParams(params)
 
-		const args = await this.getSwapArguments(params)
+		const args = await this.getSwapArguments(params, this.is02Router)
+		const abi: Abi = this.is02Router ? UNIV3_ROUTER02_ABI : UNIV3_ROUTER_ABI
 
 		const { result: amountOut, request } =
 			await this.client.simulateContract({
 				address: this.routerAddress,
-				abi: UNIV3_ROUTER_ABI,
+				abi,
 				functionName: 'exactInputSingle',
 				account: this.account,
 				args: [args],
