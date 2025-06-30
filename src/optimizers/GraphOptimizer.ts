@@ -1,3 +1,4 @@
+import { BaseError } from 'viem'
 import { GraphOpportunityFinder } from '../graphs/GraphOpportunityFinder'
 import { Graph } from '../graphs/primitives/Graph'
 import { createCustomError } from '../utils/common'
@@ -82,8 +83,11 @@ export class GraphOptimizer {
 		logger.error('Errors occurred during graph optimization')
 
 		algorithmResultsSettled.forEach((result) => {
-			if (result.status === 'rejected') {
-				logger.error(result.reason)
+			if (
+				result.status === 'rejected' &&
+				result.reason instanceof BaseError
+			) {
+				logger.error(result.reason.shortMessage)
 			}
 		})
 	}
