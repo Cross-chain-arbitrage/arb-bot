@@ -58,6 +58,7 @@ export const chainIdToGeckoChainId = {
 	'1284': 'glmr',
 	'1285': 'movr',
 	'1329': 'sei-network',
+	'1514': 'story',
 	'1559': 'tenet',
 	'1868': 'soneium',
 	'1890': 'lightlink-phoenix',
@@ -112,14 +113,6 @@ export const CHAINS: GeckoTerminalChain[] = [
 		attributes: {
 			name: 'Polygon POS',
 			coingecko_asset_platform_id: 'polygon-pos',
-		},
-	},
-	{
-		id: 'hemi',
-		type: 'network',
-		attributes: {
-			name: 'Hemi',
-			coingecko_asset_platform_id: null,
 		},
 	},
 	{
@@ -205,10 +198,7 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'fuse',
 		type: 'network',
-		attributes: {
-			name: 'Fuse',
-			coingecko_asset_platform_id: 'fuse',
-		},
+		attributes: { name: 'Fuse', coingecko_asset_platform_id: 'fuse' },
 	},
 	{
 		id: 'kcc',
@@ -229,10 +219,7 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'celo',
 		type: 'network',
-		attributes: {
-			name: 'CELO',
-			coingecko_asset_platform_id: 'celo',
-		},
+		attributes: { name: 'CELO', coingecko_asset_platform_id: 'celo' },
 	},
 	{
 		id: 'xdai',
@@ -421,10 +408,7 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'kava',
 		type: 'network',
-		attributes: {
-			name: 'Kava',
-			coingecko_asset_platform_id: 'kava',
-		},
+		attributes: { name: 'Kava', coingecko_asset_platform_id: 'kava' },
 	},
 	{
 		id: 'bitgert',
@@ -581,10 +565,7 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'onus',
 		type: 'network',
-		attributes: {
-			name: 'ONUS',
-			coingecko_asset_platform_id: 'onus',
-		},
+		attributes: { name: 'ONUS', coingecko_asset_platform_id: 'onus' },
 	},
 	{
 		id: 'aptos',
@@ -597,10 +578,7 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'core',
 		type: 'network',
-		attributes: {
-			name: 'Core',
-			coingecko_asset_platform_id: 'core',
-		},
+		attributes: { name: 'Core', coingecko_asset_platform_id: 'core' },
 	},
 	{
 		id: 'filecoin',
@@ -733,10 +711,7 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'base',
 		type: 'network',
-		attributes: {
-			name: 'Base',
-			coingecko_asset_platform_id: 'base',
-		},
+		attributes: { name: 'Base', coingecko_asset_platform_id: 'base' },
 	},
 	{
 		id: 'bitrock',
@@ -805,10 +780,7 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'beam',
 		type: 'network',
-		attributes: {
-			name: 'Beam',
-			coingecko_asset_platform_id: 'beam',
-		},
+		attributes: { name: 'Beam', coingecko_asset_platform_id: 'beam' },
 	},
 	{
 		id: 'scroll',
@@ -845,10 +817,7 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'mode',
 		type: 'network',
-		attributes: {
-			name: 'Mode',
-			coingecko_asset_platform_id: 'mode',
-		},
+		attributes: { name: 'Mode', coingecko_asset_platform_id: 'mode' },
 	},
 	{
 		id: 'defimetachain',
@@ -897,5 +866,997 @@ export const CHAINS: GeckoTerminalChain[] = [
 			name: 'Hypra Network',
 			coingecko_asset_platform_id: 'hypra-network',
 		},
+	},
+	{
+		id: 'combo-mainnet',
+		type: 'network',
+		attributes: {
+			name: 'Combo Mainnet',
+			coingecko_asset_platform_id: 'combo',
+		},
+	},
+	{
+		id: 'blast-sepolia-testnet',
+		type: 'network',
+		attributes: {
+			name: 'Blast Sepolia (Testnet)',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'zetachain',
+		type: 'network',
+		attributes: {
+			name: 'ZetaChain',
+			coingecko_asset_platform_id: 'zetachain',
+		},
+	},
+	{
+		id: 'oasis-sapphire',
+		type: 'network',
+		attributes: {
+			name: 'Oasis Sapphire',
+			coingecko_asset_platform_id: 'oasis-sapphire',
+		},
+	},
+	{
+		id: 'merlin-chain',
+		type: 'network',
+		attributes: {
+			name: 'Merlin Chain',
+			coingecko_asset_platform_id: 'merlin-chain',
+		},
+	},
+	{
+		id: 'xai',
+		type: 'network',
+		attributes: { name: 'Xai', coingecko_asset_platform_id: 'xai' },
+	},
+	{
+		id: 'immutable-zkevm',
+		type: 'network',
+		attributes: {
+			name: 'Immutable zkEVM',
+			coingecko_asset_platform_id: 'immutable',
+		},
+	},
+	{
+		id: 'rails-network',
+		type: 'network',
+		attributes: {
+			name: 'Rails Network',
+			coingecko_asset_platform_id: 'rails-network',
+		},
+	},
+	{
+		id: 'blast',
+		type: 'network',
+		attributes: {
+			name: 'Blast',
+			coingecko_asset_platform_id: 'blast',
+		},
+	},
+	{
+		id: 'areon-network',
+		type: 'network',
+		attributes: {
+			name: 'Areon Network',
+			coingecko_asset_platform_id: 'areon-network',
+		},
+	},
+	{
+		id: 'map-protocol',
+		type: 'network',
+		attributes: {
+			name: 'MAP Protocol',
+			coingecko_asset_platform_id: 'map-protocol',
+		},
+	},
+	{
+		id: 'fraxtal',
+		type: 'network',
+		attributes: {
+			name: 'Fraxtal',
+			coingecko_asset_platform_id: 'fraxtal',
+		},
+	},
+	{
+		id: 'omax-chain',
+		type: 'network',
+		attributes: {
+			name: 'Omax Chain',
+			coingecko_asset_platform_id: 'omax',
+		},
+	},
+	{
+		id: 'zora-network',
+		type: 'network',
+		attributes: {
+			name: 'Zora',
+			coingecko_asset_platform_id: 'zora-network',
+		},
+	},
+	{
+		id: 'inevm',
+		type: 'network',
+		attributes: {
+			name: 'inEVM',
+			coingecko_asset_platform_id: 'inevm',
+		},
+	},
+	{
+		id: 'mainnetz',
+		type: 'network',
+		attributes: {
+			name: 'MainnetZ',
+			coingecko_asset_platform_id: 'mainnetz',
+		},
+	},
+	{
+		id: 'bvm-nakachain',
+		type: 'network',
+		attributes: {
+			name: 'BVM NakaChain',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'graphlinq-chain',
+		type: 'network',
+		attributes: {
+			name: 'GraphLinq Chain',
+			coingecko_asset_platform_id: 'graphlinq-chain',
+		},
+	},
+	{
+		id: 'qitmeer-network',
+		type: 'network',
+		attributes: {
+			name: 'Qitmeer Network',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'bevm',
+		type: 'network',
+		attributes: { name: 'BEVM', coingecko_asset_platform_id: 'bevm' },
+	},
+	{
+		id: 'rss3-vsl-mainnet',
+		type: 'network',
+		attributes: {
+			name: 'RSS3 VSL Mainnet',
+			coingecko_asset_platform_id: 'rss3-vsl',
+		},
+	},
+	{
+		id: 'degenchain',
+		type: 'network',
+		attributes: {
+			name: 'Degen Chain',
+			coingecko_asset_platform_id: 'degen',
+		},
+	},
+	{
+		id: 'bahamut-mainnet',
+		type: 'network',
+		attributes: {
+			name: 'Bahamut Mainnet',
+			coingecko_asset_platform_id: 'bahamut',
+		},
+	},
+	{
+		id: 'chiliz-chain',
+		type: 'network',
+		attributes: {
+			name: 'Chiliz Chain',
+			coingecko_asset_platform_id: 'chiliz',
+		},
+	},
+	{
+		id: 'lukso',
+		type: 'network',
+		attributes: {
+			name: 'Lukso',
+			coingecko_asset_platform_id: 'lukso',
+		},
+	},
+	{
+		id: 'ancient8',
+		type: 'network',
+		attributes: {
+			name: 'Ancient8',
+			coingecko_asset_platform_id: 'ancient8',
+		},
+	},
+	{
+		id: 'x-layer',
+		type: 'network',
+		attributes: {
+			name: 'x Layer',
+			coingecko_asset_platform_id: 'x-layer',
+		},
+	},
+	{
+		id: 'bsquared-network',
+		type: 'network',
+		attributes: {
+			name: 'BSquared Network',
+			coingecko_asset_platform_id: 'bsquared-network',
+		},
+	},
+	{
+		id: 'bitlayer',
+		type: 'network',
+		attributes: {
+			name: 'Bitlayer',
+			coingecko_asset_platform_id: 'bitlayer',
+		},
+	},
+	{
+		id: 'bob-network',
+		type: 'network',
+		attributes: {
+			name: 'BOB Network',
+			coingecko_asset_platform_id: 'bob-network',
+		},
+	},
+	{
+		id: 'redstone',
+		type: 'network',
+		attributes: {
+			name: 'Redstone',
+			coingecko_asset_platform_id: 'redstone',
+		},
+	},
+	{
+		id: 'cyber',
+		type: 'network',
+		attributes: {
+			name: 'Cyber',
+			coingecko_asset_platform_id: 'cyber',
+		},
+	},
+	{
+		id: 'octaspace',
+		type: 'network',
+		attributes: {
+			name: 'OctaSpace',
+			coingecko_asset_platform_id: 'octaspace',
+		},
+	},
+	{
+		id: 'zklink-nova',
+		type: 'network',
+		attributes: {
+			name: 'zkLink Nova',
+			coingecko_asset_platform_id: 'zklink-nova',
+		},
+	},
+	{
+		id: 'bouncebit',
+		type: 'network',
+		attributes: {
+			name: 'BounceBit',
+			coingecko_asset_platform_id: 'bouncebit',
+		},
+	},
+	{
+		id: 're-al',
+		type: 'network',
+		attributes: {
+			name: 're.al',
+			coingecko_asset_platform_id: 're-al',
+		},
+	},
+	{
+		id: 'zedxion-smart-chain',
+		type: 'network',
+		attributes: {
+			name: 'Zedxion Smart Chain',
+			coingecko_asset_platform_id: 'zedxion',
+		},
+	},
+	{
+		id: 'genesys-network',
+		type: 'network',
+		attributes: {
+			name: 'Genesys Network',
+			coingecko_asset_platform_id: 'genesys-network',
+		},
+	},
+	{
+		id: 'taiko',
+		type: 'network',
+		attributes: {
+			name: 'Taiko',
+			coingecko_asset_platform_id: 'taiko',
+		},
+	},
+	{
+		id: 'sanko-mainnet',
+		type: 'network',
+		attributes: {
+			name: 'Sanko',
+			coingecko_asset_platform_id: 'sanko',
+		},
+	},
+	{
+		id: 'onchain',
+		type: 'network',
+		attributes: { name: 'OnChain', coingecko_asset_platform_id: null },
+	},
+	{
+		id: 'jib-chain',
+		type: 'network',
+		attributes: {
+			name: 'JB Chain',
+			coingecko_asset_platform_id: 'jibchain',
+		},
+	},
+	{
+		id: 'sei-evm',
+		type: 'network',
+		attributes: {
+			name: 'Sei V2',
+			coingecko_asset_platform_id: 'sei-v2',
+		},
+	},
+	{
+		id: 'saakuru-mainnet',
+		type: 'network',
+		attributes: {
+			name: 'Saakuru',
+			coingecko_asset_platform_id: 'saakuru',
+		},
+	},
+	{
+		id: 'larissa-mainnet',
+		type: 'network',
+		attributes: {
+			name: 'Larissa',
+			coingecko_asset_platform_id: 'larissa',
+		},
+	},
+	{
+		id: 'boba-bnb',
+		type: 'network',
+		attributes: {
+			name: 'Boba BNB',
+			coingecko_asset_platform_id: 'boba-bnb',
+		},
+	},
+	{
+		id: 'haqq-network',
+		type: 'network',
+		attributes: {
+			name: 'Haqq Network',
+			coingecko_asset_platform_id: 'haqq-network',
+		},
+	},
+	{
+		id: 'ham',
+		type: 'network',
+		attributes: { name: 'Ham', coingecko_asset_platform_id: 'ham' },
+	},
+	{
+		id: 'rootstock',
+		type: 'network',
+		attributes: {
+			name: 'Rootstock',
+			coingecko_asset_platform_id: 'rootstock',
+		},
+	},
+	{
+		id: 'endurance',
+		type: 'network',
+		attributes: {
+			name: 'Endurance',
+			coingecko_asset_platform_id: 'endurance',
+		},
+	},
+	{
+		id: 'iota-evm',
+		type: 'network',
+		attributes: {
+			name: 'IOTA EVM',
+			coingecko_asset_platform_id: 'iota-evm',
+		},
+	},
+	{
+		id: 'alienx',
+		type: 'network',
+		attributes: {
+			name: 'AlienX',
+			coingecko_asset_platform_id: 'alienx',
+		},
+	},
+	{
+		id: 'etherlink',
+		type: 'network',
+		attributes: {
+			name: 'Etherlink',
+			coingecko_asset_platform_id: 'etherlink',
+		},
+	},
+	{
+		id: 'skale-europa',
+		type: 'network',
+		attributes: {
+			name: 'SKALE Europa',
+			coingecko_asset_platform_id: 'skale',
+		},
+	},
+	{
+		id: 'rari',
+		type: 'network',
+		attributes: { name: 'Rari', coingecko_asset_platform_id: 'rari' },
+	},
+	{
+		id: 'nahmii',
+		type: 'network',
+		attributes: {
+			name: 'Nahmii',
+			coingecko_asset_platform_id: 'nahmii',
+		},
+	},
+	{
+		id: 'bomechain',
+		type: 'network',
+		attributes: {
+			name: 'BomeChain',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'zircuit',
+		type: 'network',
+		attributes: {
+			name: 'Zircuit',
+			coingecko_asset_platform_id: 'zircuit',
+		},
+	},
+	{
+		id: 'cronos-zkevm',
+		type: 'network',
+		attributes: {
+			name: 'Cronos zkEVM',
+			coingecko_asset_platform_id: 'cronos-zkevm',
+		},
+	},
+	{
+		id: 'q-mainnet',
+		type: 'network',
+		attributes: {
+			name: 'Q Mainnet',
+			coingecko_asset_platform_id: 'q-mainnet',
+		},
+	},
+	{
+		id: 'gravity-alpha',
+		type: 'network',
+		attributes: {
+			name: 'Gravity',
+			coingecko_asset_platform_id: 'gravity-alpha',
+		},
+	},
+	{
+		id: 'tron',
+		type: 'network',
+		attributes: { name: 'Tron', coingecko_asset_platform_id: 'tron' },
+	},
+	{
+		id: 'mint',
+		type: 'network',
+		attributes: { name: 'Mint', coingecko_asset_platform_id: 'mint' },
+	},
+	{
+		id: 'swanchain',
+		type: 'network',
+		attributes: {
+			name: 'Swanchain',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'flow-evm',
+		type: 'network',
+		attributes: {
+			name: 'Flow EVM',
+			coingecko_asset_platform_id: 'flow-evm',
+		},
+	},
+	{
+		id: 'canxium',
+		type: 'network',
+		attributes: { name: 'Canxium', coingecko_asset_platform_id: null },
+	},
+	{
+		id: 'shape',
+		type: 'network',
+		attributes: { name: 'Shape', coingecko_asset_platform_id: null },
+	},
+	{
+		id: 'world-chain',
+		type: 'network',
+		attributes: {
+			name: 'World Chain',
+			coingecko_asset_platform_id: 'world-chain',
+		},
+	},
+	{
+		id: 'apechain',
+		type: 'network',
+		attributes: {
+			name: 'ApeChain',
+			coingecko_asset_platform_id: 'apechain',
+		},
+	},
+	{
+		id: 'meld',
+		type: 'network',
+		attributes: { name: 'Meld', coingecko_asset_platform_id: 'meld' },
+	},
+	{
+		id: 'morph-l2',
+		type: 'network',
+		attributes: {
+			name: 'Morph L2',
+			coingecko_asset_platform_id: 'morph-l2',
+		},
+	},
+	{
+		id: 'cardano',
+		type: 'network',
+		attributes: {
+			name: 'Cardano',
+			coingecko_asset_platform_id: 'cardano',
+		},
+	},
+	{
+		id: 'icp',
+		type: 'network',
+		attributes: {
+			name: 'Internet Computer',
+			coingecko_asset_platform_id: 'internet-computer',
+		},
+	},
+	{
+		id: 'defiverse',
+		type: 'network',
+		attributes: {
+			name: 'DefiVerse',
+			coingecko_asset_platform_id: 'defiverse',
+		},
+	},
+	{
+		id: 'laika',
+		type: 'network',
+		attributes: {
+			name: 'Laika',
+			coingecko_asset_platform_id: 'laikachain',
+		},
+	},
+	{
+		id: 'kroma',
+		type: 'network',
+		attributes: {
+			name: 'Kroma',
+			coingecko_asset_platform_id: 'kroma',
+		},
+	},
+	{
+		id: 'planq',
+		type: 'network',
+		attributes: {
+			name: 'Planq',
+			coingecko_asset_platform_id: 'planq-network',
+		},
+	},
+	{
+		id: 'zero-network',
+		type: 'network',
+		attributes: {
+			name: 'Zero Network',
+			coingecko_asset_platform_id: 'zero-network',
+		},
+	},
+	{
+		id: 'ql1',
+		type: 'network',
+		attributes: { name: 'QL1', coingecko_asset_platform_id: 'ql1' },
+	},
+	{
+		id: 'duckchain',
+		type: 'network',
+		attributes: {
+			name: 'DuckChain',
+			coingecko_asset_platform_id: 'duckchain',
+		},
+	},
+	{
+		id: 'vanarchain',
+		type: 'network',
+		attributes: {
+			name: 'Vanar Chain',
+			coingecko_asset_platform_id: 'vanar-chain',
+		},
+	},
+	{
+		id: 'eclipse',
+		type: 'network',
+		attributes: {
+			name: 'Eclipse',
+			coingecko_asset_platform_id: 'eclipse',
+		},
+	},
+	{
+		id: 'airdao',
+		type: 'network',
+		attributes: {
+			name: 'AirDAO',
+			coingecko_asset_platform_id: 'airdao',
+		},
+	},
+	{
+		id: 'units-network',
+		type: 'network',
+		attributes: {
+			name: 'Units Network',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'zilliqa-evm',
+		type: 'network',
+		attributes: {
+			name: 'Zilliqa EVM',
+			coingecko_asset_platform_id: 'zilliqa EVM',
+		},
+	},
+	{
+		id: 'sonic',
+		type: 'network',
+		attributes: {
+			name: 'Sonic',
+			coingecko_asset_platform_id: 'sonic',
+		},
+	},
+	{
+		id: 'ink',
+		type: 'network',
+		attributes: { name: 'Ink', coingecko_asset_platform_id: 'ink' },
+	},
+	{
+		id: 'vana',
+		type: 'network',
+		attributes: { name: 'Vana', coingecko_asset_platform_id: 'vana' },
+	},
+	{
+		id: 'electroneum',
+		type: 'network',
+		attributes: {
+			name: 'Electroneum',
+			coingecko_asset_platform_id: 'electroneum',
+		},
+	},
+	{
+		id: 'funki',
+		type: 'network',
+		attributes: {
+			name: 'Funki',
+			coingecko_asset_platform_id: 'funki',
+		},
+	},
+	{
+		id: 'matchain',
+		type: 'network',
+		attributes: {
+			name: 'Matchain',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'swellchain',
+		type: 'network',
+		attributes: {
+			name: 'Swellchain',
+			coingecko_asset_platform_id: 'swellchain',
+		},
+	},
+	{
+		id: 'soneium',
+		type: 'network',
+		attributes: {
+			name: 'Soneium',
+			coingecko_asset_platform_id: 'soneium',
+		},
+	},
+	{
+		id: 'lisk',
+		type: 'network',
+		attributes: { name: 'Lisk', coingecko_asset_platform_id: 'lisk' },
+	},
+	{
+		id: 'educhain',
+		type: 'network',
+		attributes: {
+			name: 'EDU Chain',
+			coingecko_asset_platform_id: 'edu-chain',
+		},
+	},
+	{
+		id: 'xrpl',
+		type: 'network',
+		attributes: { name: 'XRPL', coingecko_asset_platform_id: 'xrp' },
+	},
+	{
+		id: 'ao',
+		type: 'network',
+		attributes: { name: 'AO', coingecko_asset_platform_id: null },
+	},
+	{
+		id: 'shido-network',
+		type: 'network',
+		attributes: {
+			name: 'Shido Network',
+			coingecko_asset_platform_id: 'shido',
+		},
+	},
+	{
+		id: 'abstract',
+		type: 'network',
+		attributes: {
+			name: 'Abstract',
+			coingecko_asset_platform_id: 'abstract',
+		},
+	},
+	{
+		id: 'artela',
+		type: 'network',
+		attributes: { name: 'Artela', coingecko_asset_platform_id: null },
+	},
+	{
+		id: 'parex',
+		type: 'network',
+		attributes: {
+			name: 'Parex',
+			coingecko_asset_platform_id: 'parex-network',
+		},
+	},
+	{
+		id: 'berachain',
+		type: 'network',
+		attributes: {
+			name: 'Berachain',
+			coingecko_asset_platform_id: 'berachain',
+		},
+	},
+	{
+		id: 'treasure',
+		type: 'network',
+		attributes: {
+			name: 'Treasure',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'taraxa',
+		type: 'network',
+		attributes: {
+			name: 'Taraxa',
+			coingecko_asset_platform_id: 'taraxa',
+		},
+	},
+	{
+		id: 'unichain',
+		type: 'network',
+		attributes: {
+			name: 'Unichain',
+			coingecko_asset_platform_id: 'unichain',
+		},
+	},
+	{
+		id: 'story',
+		type: 'network',
+		attributes: {
+			name: 'Story',
+			coingecko_asset_platform_id: 'story',
+		},
+	},
+	{
+		id: 'hela',
+		type: 'network',
+		attributes: { name: 'Hela', coingecko_asset_platform_id: 'hela' },
+	},
+	{
+		id: 'hyperevm',
+		type: 'network',
+		attributes: {
+			name: 'HyperEVM',
+			coingecko_asset_platform_id: 'hyperevm',
+		},
+	},
+	{
+		id: 'monad-testnet',
+		type: 'network',
+		attributes: {
+			name: 'Monad Testnet',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'corn',
+		type: 'network',
+		attributes: { name: 'Corn', coingecko_asset_platform_id: 'corn' },
+	},
+	{
+		id: 'hyperliquid',
+		type: 'network',
+		attributes: {
+			name: 'Hyperliquid',
+			coingecko_asset_platform_id: 'hyperliquid',
+		},
+	},
+	{
+		id: 'pundi-aifx-omnilayer',
+		type: 'network',
+		attributes: {
+			name: 'Pundi AIFX Omnilayer',
+			coingecko_asset_platform_id: 'pundi-aifx-omnilayer',
+		},
+	},
+	{
+		id: 'movement',
+		type: 'network',
+		attributes: {
+			name: 'Movement',
+			coingecko_asset_platform_id: 'movement',
+		},
+	},
+	{
+		id: 'form-network',
+		type: 'network',
+		attributes: {
+			name: 'Form Network',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'saga',
+		type: 'network',
+		attributes: { name: 'Saga', coingecko_asset_platform_id: 'saga' },
+	},
+	{
+		id: 'superseed',
+		type: 'network',
+		attributes: {
+			name: 'Superseed',
+			coingecko_asset_platform_id: 'superseed',
+		},
+	},
+	{
+		id: 'shine-chain',
+		type: 'network',
+		attributes: {
+			name: 'Shine Chain',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'sx-rollup',
+		type: 'network',
+		attributes: {
+			name: 'SX Rollup',
+			coingecko_asset_platform_id: 'sx-rollup',
+		},
+	},
+	{
+		id: 'goat',
+		type: 'network',
+		attributes: { name: 'Goat', coingecko_asset_platform_id: null },
+	},
+	{
+		id: 'sonic-svm',
+		type: 'network',
+		attributes: {
+			name: 'Sonic SVM',
+			coingecko_asset_platform_id: 'sonic-svm',
+		},
+	},
+	{
+		id: 'superposition',
+		type: 'network',
+		attributes: {
+			name: 'Superposition',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'lens',
+		type: 'network',
+		attributes: { name: 'Lens', coingecko_asset_platform_id: null },
+	},
+	{
+		id: 'plume-network',
+		type: 'network',
+		attributes: {
+			name: 'Plume Network',
+			coingecko_asset_platform_id: 'plume-network',
+		},
+	},
+	{
+		id: 'hemi',
+		type: 'network',
+		attributes: { name: 'Hemi', coingecko_asset_platform_id: 'hemi' },
+	},
+	{
+		id: 'sophon',
+		type: 'network',
+		attributes: {
+			name: 'Sophon',
+			coingecko_asset_platform_id: 'sophon',
+		},
+	},
+	{
+		id: 'bittensor',
+		type: 'network',
+		attributes: {
+			name: 'Bittensor',
+			coingecko_asset_platform_id: 'bittensor',
+		},
+	},
+	{
+		id: 'tokchain',
+		type: 'network',
+		attributes: {
+			name: 'Tokchain',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'mantra',
+		type: 'network',
+		attributes: {
+			name: 'Mantra',
+			coingecko_asset_platform_id: 'mantra',
+		},
+	},
+	{
+		id: 'bitcichain',
+		type: 'network',
+		attributes: {
+			name: 'Bitcichain',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'haven1',
+		type: 'network',
+		attributes: {
+			name: 'Haven1',
+			coingecko_asset_platform_id: 'haven1',
+		},
+	},
+	{
+		id: 'initia',
+		type: 'network',
+		attributes: {
+			name: 'Initia',
+			coingecko_asset_platform_id: 'initia',
+		},
+	},
+	{
+		id: 'pepe-unchained',
+		type: 'network',
+		attributes: {
+			name: 'Pepe Unchained',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'wax',
+		type: 'network',
+		attributes: { name: 'Wax', coingecko_asset_platform_id: null },
 	},
 ]

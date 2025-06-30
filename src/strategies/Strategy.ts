@@ -1,6 +1,8 @@
 import { PoolType } from '../dex/poolVariety'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
+import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
+import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
@@ -27,22 +29,21 @@ export class Strategy {
 	constructor(private readonly config: StrategyConfig) {}
 
 	async run() {
-		if (this.config.giveApprovals) {
-			await this.prepare()
-		}
+		logger.info('Building Graph')
+		const graph = await GraphBuilder.build(this.config.graphBuildConfig)
+
+		const bot = this.buildBot(graph)
+
+		if (this.config.giveApprovals) await this.prepare(bot)
+
+		const balanceReporter = new GraphBalanceReporter(bot)
+		balanceReporter.start()
 
 		logger.info('Starting Graph Arbitrage Bot')
-
-		const bot = await this.buildBot()
-
-		logger.info('Starting searching for arbitrage')
-
 		bot.start()
 	}
 
-	private async buildBot(): Promise<GraphArbitrageBot> {
-		const graph = await GraphBuilder.build(this.config.graphBuildConfig)
-
+	private buildBot(graph: Graph): GraphArbitrageBot {
 		return new GraphArbitrageBot(
 			this.config.name,
 			new TgArbitrageNotifier(),
@@ -59,10 +60,8 @@ export class Strategy {
 		)
 	}
 
-	private async prepare() {
+	private async prepare(bot: GraphArbitrageBot) {
 		logger.info('Starting WethPoolsStrategy')
-
-		const bot = await this.buildBot()
 
 		await bot.approveAll()
 	}
