@@ -174,6 +174,31 @@ export class GraphArbitrageBot {
 		}
 
 		await this.executeArbitrage(arbitrageOpportunity)
+
+		// check that rates are correct after first run
+		this.firstRunCheck()
+	}
+
+	private isFirstRun = true
+	private firstRunCheck() {
+		if (!this.isFirstRun) return
+
+		try {
+			const { view, edit } = GraphVisualizer.getLinksToMermaidGraph(
+				this.graphParams.graph,
+			)
+
+			const viewLink = `\x1b]8;;${view}\x1b\\📊 View Graph\x1b]8;;\x1b\\`
+			const editLink = `\x1b]8;;${edit}\x1b\\✏️ Edit Graph\x1b]8;;\x1b\\`
+
+			logger.info(
+				`Graph with rates after first run: ${viewLink} | ${editLink}`,
+			)
+		} catch (error) {
+			logger.error(error, 'Error checking first run')
+		} finally {
+			this.isFirstRun = false
+		}
 	}
 
 	private notifyAboutArbError(error: unknown) {
