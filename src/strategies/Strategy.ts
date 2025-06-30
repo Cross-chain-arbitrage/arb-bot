@@ -4,6 +4,7 @@ import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
 import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
+import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import logger from '../utils/logger'
@@ -36,7 +37,10 @@ export class Strategy {
 
 		if (this.config.giveApprovals) await this.prepare(bot)
 
-		const balanceReporter = new GraphBalanceReporter(bot)
+		const balanceReporter = new GraphBalanceReporter(
+			bot,
+			new TgBalancesNotifier(),
+		)
 		balanceReporter.start()
 
 		logger.info('Starting Graph Arbitrage Bot')

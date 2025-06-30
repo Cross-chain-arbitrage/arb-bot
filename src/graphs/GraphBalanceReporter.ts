@@ -1,3 +1,4 @@
+import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { ChainUtils } from '../primitives/chains/ChainUtils'
 import { getAccountAddress } from '../utils/common'
@@ -17,8 +18,9 @@ export class GraphBalanceReporter {
 	private readonly updateInterval: number
 
 	constructor(
-		private readonly bot: GraphArbitrageBot,
-		updateInterval: number = 30000, // 30 seconds default
+		readonly bot: GraphArbitrageBot,
+		readonly tgNotifier: TgBalancesNotifier,
+		updateInterval: number = 60000, // 60 seconds default
 	) {
 		this.addressToCheck = getAccountAddress()
 		this.updateInterval = updateInterval
@@ -72,7 +74,14 @@ export class GraphBalanceReporter {
 			const balances = await this.getBalances()
 			const balancesByChain = this.groupBalancesByChain(balances)
 
-			this.logBalances(balancesByChain)
+			const message = this.buildBalanceReport(balancesByChain)
+
+			logger.info(message)
+
+			await this.tgNotifier.sendOrEditBalanceReport(
+				message,
+				this.bot.name,
+			)
 		} catch (error) {
 			logger.error('Failed to report balances:', error)
 		}
@@ -115,13 +124,6 @@ export class GraphBalanceReporter {
 		return balancesByChain
 	}
 
-	private logBalances(balancesByChain: Map<number, Array<NodeWithBalance>>) {
-		const message = this.buildBalanceReport(balancesByChain)
-
-		// Log to console
-		logger.info(message)
-	}
-
 	private buildBalanceReport(
 		balancesByChain: Map<number, Array<NodeWithBalance>>,
 	) {
@@ -137,7 +139,7 @@ export class GraphBalanceReporter {
 
 		// Build unified message
 		let message =
-			`💰 <b>${this.bot.name}</b>\n` +
+			`<b>${this.bot.name}</b>\n` +
 			`🕐 ${new Date().toLocaleString()}\n` +
 			`💵 <b>Total Portfolio: $${totalUsd.toFixed(2)}</b>\n\n`
 
@@ -176,7 +178,7 @@ export class GraphBalanceReporter {
 				}
 
 				const nativeLabel = isNative ? `${colorEmoji}` : ''
-				message += `  ${isNative ? colorEmoji : '  '} ${node.symbol}: ${Number(balanceFormatted).toFixed(4)} ($${usdValue.toFixed(2)}) ${nativeLabel}\n`
+				message += `  ${node.symbol}: ${Number(balanceFormatted).toFixed(4)} ($${usdValue.toFixed(2)}) ${nativeLabel}\n`
 			}
 
 			message += '\n'
