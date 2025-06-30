@@ -5,6 +5,7 @@ import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
 import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
+import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import logger from '../utils/logger'
@@ -32,6 +33,11 @@ export class Strategy {
 	async run() {
 		logger.info('Building Graph')
 		const graph = await GraphBuilder.build(this.config.graphBuildConfig)
+
+		logger.info('Initializing PriceOracle')
+		await PriceOracle.initializePriceUpdating(
+			Array.from(graph.nodes.values()),
+		)
 
 		const bot = this.buildBot(graph)
 
