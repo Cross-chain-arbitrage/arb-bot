@@ -115,16 +115,20 @@ export class GraphArbitrageBot {
 			logger.info(prettyOpportunity)
 			this.notifyAboutArbStart(prettyOpportunity)
 
-			const { endAmount, actualProfitUsd } =
+			const { endAmount, revenue, executionCostInUsd } =
 				await this.execute(opportunity)
 
 			const readableActualAmountOut =
 				this.graphParams.startToken.formatUnits(endAmount)
 
 			logger.info(
-				`Arbitrage is finished, amount out: ${readableActualAmountOut}, profit: $${actualProfitUsd}`,
+				`Arbitrage is finished, amount out: ${readableActualAmountOut}, revenue: $${revenue}, execution cost: $${executionCostInUsd}`,
 			)
-			this.notifyAboutArbEnd(endAmount, opportunity).catch((err) => {
+			this.notifyAboutArbEnd(
+				executionCostInUsd,
+				endAmount,
+				opportunity,
+			).catch((err) => {
 				logger.error(err, 'Error sending path to telegram')
 			})
 		} catch (err) {
@@ -157,7 +161,7 @@ export class GraphArbitrageBot {
 			return
 		}
 
-		const expectedProfitUsd = await this.calculateProfit(
+		const expectedProfitUsd = await this.calculateRevenue(
 			arbitrageOpportunity.startAmount,
 			arbitrageOpportunity.endAmount,
 		)
@@ -221,6 +225,7 @@ export class GraphArbitrageBot {
 	}
 
 	private async notifyAboutArbEnd(
+		executionCostInUsd: number,
 		actualAmountOut: bigint,
 		opportunity: GraphArbitrageOpportunity,
 	) {
@@ -230,6 +235,7 @@ export class GraphArbitrageBot {
 
 		this.TgArbitrageNotifier.sendArbitrageEnd(
 			this.name,
+			executionCostInUsd,
 			actualAmountOut,
 			opportunity,
 			price,
@@ -252,24 +258,29 @@ export class GraphArbitrageBot {
 
 		const { path, startAmount } = graphArbitrageOpportunity
 
-		const endAmount = await GraphExecutor.execute({
-			path,
-			startAmount,
-			beforeExecuteEdgeHook: this.checkEdgeProfitability.bind(this),
-			retryExecuteEdgeCount: this.settings.retryExecuteEdgeCount,
-		})
+		const { actualEndAmount, totalTxsCostInUsd } =
+			await GraphExecutor.execute({
+				path,
+				startAmount,
+				beforeExecuteEdgeHook: this.checkEdgeProfitability.bind(this),
+				retryExecuteEdgeCount: this.settings.retryExecuteEdgeCount,
+			})
 
-		const actualProfitUsd = await this.calculateProfit(
+		const revenue = await this.calculateRevenue(
 			startAmount,
-			endAmount,
+			actualEndAmount,
 		)
 
 		this.isArbitrageExecuting = false
 
-		return { endAmount, actualProfitUsd }
+		return {
+			endAmount: actualEndAmount,
+			revenue,
+			executionCostInUsd: totalTxsCostInUsd,
+		}
 	}
 
-	private async calculateProfit(amountStart: bigint, amountEnd: bigint) {
+	private async calculateRevenue(amountStart: bigint, amountEnd: bigint) {
 		const amountEndFormatted = Number(
 			this.graphParams.startToken.formatUnits(amountEnd),
 		)

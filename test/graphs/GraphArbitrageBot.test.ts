@@ -1,3 +1,4 @@
+import { TransactionReceipt } from 'viem'
 import { arbitrum, fuse } from 'viem/chains'
 import { Pool } from '../../src/dex/base/Pool'
 import { PoolUtils } from '../../src/dex/PoolUtils'
@@ -66,11 +67,21 @@ makeSuite('GraphArbitrageBot', () => {
 					edge.actionType === ActionType.FUSE_BRIDGE
 				) {
 					await wait(500)
+					return {
+						amountOut: 10n * 22n,
+						actionType: edge.actionType,
+						srcTxReceipt: {
+							transactionHash: '0x1',
+						} as Partial<TransactionReceipt> as TransactionReceipt,
+						dstTxHash: '0x1',
+					}
 				}
 				return {
 					amountOut: 10n * 22n,
-					srcTxHash: '0x1',
-					dstTxHash: '0x1',
+					actionType: edge.actionType,
+					txReceipt: {
+						transactionHash: '0x1',
+					} as Partial<TransactionReceipt> as TransactionReceipt,
 				}
 			},
 		)

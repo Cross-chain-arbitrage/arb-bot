@@ -10,6 +10,7 @@ import { PoolType } from '../../src/dex/poolVariety'
 import { UniV3Pool } from '../../src/dex/pools/UniV3Pool'
 import { GraphExecutor } from '../../src/graphs/GraphExecutor'
 import {
+	ActionType,
 	FuseBridgeEdge,
 	StargateBridgeEdge,
 	SwapEdge,
@@ -17,6 +18,7 @@ import {
 	WrapEdge,
 } from '../../src/graphs/primitives/Edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
+import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
@@ -121,9 +123,10 @@ makeSuite('GraphExecutor', () => {
 			const usdtBalanceAfter = await usdtToken.balanceOf(botAddress)
 
 			expect(usdtBalanceAfter).toBe(usdtBalanceBefore + result.amountOut)
-			expect(result.srcTxHash).toBeDefined()
-			expect(result.dstTxHash).toBeDefined()
-			expect(result.srcTxHash).toBe(result.dstTxHash) // Same chain swap
+			expect(result.txReceipt.transactionHash).toBeDefined()
+			expect(result.txReceipt.transactionHash).toBe(
+				result.txReceipt.transactionHash,
+			)
 		})
 
 		it('should throw error if swap fails', async () => {
@@ -182,9 +185,10 @@ makeSuite('GraphExecutor', () => {
 
 			expect(balanceAfter).toBe(balanceBefore + amountIn)
 			expect(result.amountOut).toBe(amountIn)
-			expect(result.srcTxHash).toBeDefined()
-			expect(result.dstTxHash).toBeDefined()
-			expect(result.srcTxHash).toBe(result.dstTxHash)
+			expect(result.txReceipt.transactionHash).toBeDefined()
+			expect(result.txReceipt.transactionHash).toBe(
+				result.txReceipt.transactionHash,
+			)
 		})
 
 		it('should throw error when trying to wrap non-WETH token', async () => {
@@ -223,7 +227,7 @@ makeSuite('GraphExecutor', () => {
 			const receipt = await ClientManager.getClient(
 				arbitrum.id,
 			).getTransactionReceipt({
-				hash: result.srcTxHash,
+				hash: result.txReceipt.transactionHash,
 			})
 
 			const balanceAfter = await nativeCurrency.balanceOf(botAddress)
@@ -234,9 +238,10 @@ makeSuite('GraphExecutor', () => {
 					receipt.gasUsed * receipt.effectiveGasPrice,
 			)
 			expect(result.amountOut).toBe(amountIn)
-			expect(result.srcTxHash).toBeDefined()
-			expect(result.dstTxHash).toBeDefined()
-			expect(result.srcTxHash).toBe(result.dstTxHash)
+			expect(result.txReceipt.transactionHash).toBeDefined()
+			expect(result.txReceipt.transactionHash).toBe(
+				result.txReceipt.transactionHash,
+			)
 		})
 
 		it('should throw error when trying to unwrap non-WETH token', async () => {
@@ -286,14 +291,14 @@ makeSuite('GraphExecutor', () => {
 			const result = await GraphExecutor.executeFuseBridge(edge, amountIn)
 
 			expect(result.amountOut).toBe(amountIn)
-			expect(result.srcTxHash).toBe(
-				'0x1234567890abcdef1234567890abcdef12345678',
-			)
+			expect(result.srcTxReceipt).toBeDefined()
 			expect(result.dstTxHash).toBe(
 				'0xabcdef1234567890abcdef1234567890abcdef12',
 			)
 			// For cross-chain bridges, srcTxHash and dstTxHash are different
-			expect(result.srcTxHash).not.toBe(result.dstTxHash)
+			expect(result.srcTxReceipt.transactionHash).not.toBe(
+				result.dstTxHash,
+			)
 		})
 	})
 
@@ -331,13 +336,43 @@ makeSuite('GraphExecutor', () => {
 			)
 
 			expect(result.amountOut).toBe(amountIn)
-			expect(result.srcTxHash).toBe(
-				'0x1234567890abcdef1234567890abcdef12345678',
-			)
+			expect(result.srcTxReceipt).toBeDefined()
 			expect(result.dstTxHash).toBe(
 				'0xabcdef1234567890abcdef1234567890abcdef12',
 			)
-			expect(result.srcTxHash).not.toBe(result.dstTxHash)
+			expect(result.srcTxReceipt.transactionHash).not.toBe(
+				result.dstTxHash,
+			)
 		})
+	})
+
+	it('should calculate gas cost', async () => {
+		const ethPrice = 3000
+
+		jest.spyOn(PriceOracle, 'getPrice').mockResolvedValue(ethPrice)
+
+		const edge = new WrapEdge(nativeCurrency, wethToken, graph)
+
+		const txWithWrap =
+			'0xa8e300c58eb7a3282c05b65e028e21a2216860fd1734d87dd51a1ac11c556cd2'
+
+		const receipt = await ClientManager.getClient(
+			arbitrum.id,
+		).getTransactionReceipt({
+			hash: txWithWrap,
+		})
+
+		const result = await GraphExecutor.handleExecutionResult(edge, {
+			actionType: ActionType.WRAP,
+			amountOut: wethToken.parseUnits('0.0002'),
+			txReceipt: receipt,
+		})
+
+		expect(result.txCostInNative).toBe(560980000000n)
+		expect(result.txCostInUsd).toBe(
+			(Number(560980000000n) * ethPrice) / 10 ** 18,
+		)
+
+		jest.clearAllMocks()
 	})
 })

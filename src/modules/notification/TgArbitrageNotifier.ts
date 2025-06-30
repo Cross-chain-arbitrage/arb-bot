@@ -14,6 +14,7 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 
 	async sendArbitrageEnd(
 		name: string,
+		executionCostInUsd: number,
 		actualAmountOut: bigint,
 		arbitrageOpportunity: GraphArbitrageOpportunity,
 		startTokenPrice: number,
@@ -27,12 +28,16 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 		const expectedAmountOutFormatted = startToken.formatUnits(
 			arbitrageOpportunity.endAmount,
 		)
-		const profitAmount = actualAmountOut - arbitrageOpportunity.startAmount
-		const profitAmountFormatted = startToken.formatUnits(profitAmount)
+		const differenceAmount =
+			actualAmountOut - arbitrageOpportunity.startAmount
+		const differenceAmountFormatted =
+			startToken.formatUnits(differenceAmount)
 		const profitPercentage =
-			(Number(profitAmount) / Number(arbitrageOpportunity.startAmount)) *
+			(Number(differenceAmount) /
+				Number(arbitrageOpportunity.startAmount)) *
 			100
-		const profitUsd = Number(profitAmountFormatted) * startTokenPrice
+		const revenue = Number(differenceAmountFormatted) * startTokenPrice
+		const profitUsd = revenue - executionCostInUsd
 
 		// Calculate expected vs actual comparison
 		const expectedProfitAmount =
@@ -49,7 +54,9 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 			`💰 <b>Results</b>\n` +
 			`Input: ${startAmountFormatted} ${startToken.toString()}\n` +
 			`Output: ${actualAmountOutFormatted} ${startToken.toString()}\n` +
-			`Profit: ${profitAmountFormatted} ${startToken.symbol} (${profitPercentage.toFixed(2)}%)\n\n` +
+			`Difference: ${differenceAmountFormatted} ${startToken.symbol} (${profitPercentage.toFixed(2)}%)\n` +
+			`Revenue: $${revenue.toFixed(2)}\n` +
+			`Execution cost: $${executionCostInUsd.toFixed(2)}\n\n` +
 			`📊 <b>Expected</b>\n` +
 			`Output: ${expectedAmountOutFormatted} ${startToken.symbol} ($${expectedProfitUsd.toFixed(2)})\n` +
 			`Profit USD: $${expectedProfitUsd.toFixed(2)}`
