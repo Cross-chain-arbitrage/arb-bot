@@ -1,4 +1,3 @@
-import TTLCache from '@isaacs/ttlcache'
 import { getContract, zeroAddress, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
@@ -16,19 +15,9 @@ import { STARGATE_CHAINS } from './dumped/chains'
 
 export const StargateError = createCustomError('StargateError')
 
-/**
- * @dev LZ fee is changing periodically, so the fee change can occur while our tx would be inflight
- */
-const QUOTE_CACHE_TTL = 1000 * 15 // 15 seconds
 const BRIDGE_GAS_COST = 400_000n
 
-type RequestId = string
-
 export class Stargate {
-	private static quoteCache = new TTLCache<RequestId, QuoteResult>({
-		ttl: QUOTE_CACHE_TTL,
-	})
-
 	/**
 	 * Bridges `tokenIn` to `recipient` on `toChainId`
 	 * @param tokenIn - Token or NativeCurrency to bridge
@@ -231,16 +220,6 @@ export class Stargate {
 		toChainId: number,
 		fromChainId: number,
 	): Promise<QuoteResult> {
-		const cacheKey = this.getCacheKey(
-			await TokenUtils.fromAddress(metadata.token.address, fromChainId),
-			toChainId,
-			amount,
-		)
-
-		const cachedQuote = this.quoteCache.get(cacheKey)
-
-		if (cachedQuote) return cachedQuote
-
 		const messagingFee = await Stargate.quoteSend(
 			metadata.address,
 			amount,
@@ -275,8 +254,6 @@ export class Stargate {
 			oftFeeDetails,
 			oftReceipt,
 		}
-
-		this.quoteCache.set(cacheKey, result)
 
 		return result
 	}
@@ -427,14 +404,6 @@ export class Stargate {
 			lzFee,
 			gas: BRIDGE_GAS_COST,
 		}
-	}
-
-	private static getCacheKey(
-		token: Token | NativeCurrency,
-		toChainId: number,
-		amount: bigint,
-	): string {
-		return `${token.chainId}:${token.address}:${toChainId}:${amount}`
 	}
 
 	private static validateRecipient(chainId: number, recipient: Address) {
