@@ -151,29 +151,40 @@ export class GraphArbitrageBot {
 		}
 	}
 
-	async findAndExecuteArbitrage() {
-		if (this.isArbitrageExecuting) return
-
-		const arbitrageOpportunity = await this.findArbitrage()
-
-		if (!arbitrageOpportunity || !arbitrageOpportunity.path) {
+	async checkOpportunity(
+		opportunity: GraphArbitrageOpportunity | null,
+	): Promise<boolean> {
+		if (!opportunity || !opportunity.path) {
 			logger.info('No arbitrage found')
-			return
+			return false
 		}
 
 		const expectedProfitUsd = await this.calculateRevenue(
-			arbitrageOpportunity.startAmount,
-			arbitrageOpportunity.endAmount,
+			opportunity.startAmount,
+			opportunity.endAmount,
 		)
 
 		if (expectedProfitUsd < this.settings.minProfitUsd) {
 			logger.info(
 				`Profit is too low, expectedProfitUsd: $${expectedProfitUsd.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
 			)
-			return
+			return false
 		}
 
-		await this.executeArbitrage(arbitrageOpportunity)
+		return true
+	}
+
+	async findAndExecuteArbitrage() {
+		if (this.isArbitrageExecuting) return
+
+		const arbitrageOpportunity = await this.findArbitrage()
+
+		const isOpportunityValid =
+			await this.checkOpportunity(arbitrageOpportunity)
+
+		if (!isOpportunityValid) return
+
+		await this.executeArbitrage(arbitrageOpportunity!)
 	}
 
 	private isFirstRun = true
@@ -316,7 +327,7 @@ export class GraphArbitrageBot {
 			if (edge.from === currentEdge.from && edge.to === currentEdge.to) {
 				distance += currentRate.rate
 			} else {
-				distance += edge.lastRate!
+				distance += edge.lastQuote!.rate
 			}
 		}
 

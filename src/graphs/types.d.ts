@@ -1,7 +1,7 @@
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
-import { Edge } from './primitives/Edge'
+import { ActionType, Edge } from './primitives/Edge'
 
 declare global {
 	type GraphNode = Token | NativeCurrency | WrappedNative
@@ -22,4 +22,10 @@ declare global {
 	}
 
 	type EdgeId = `${GraphNodeId}-${GraphNodeId}-${string}`
+
+	type InchainActionType =
+		| ActionType.SWAP
+		| ActionType.WRAP
+		| ActionType.UNWRAP
+	type BridgeActionType = ActionType.STARGATE_BRIDGE | ActionType.FUSE_BRIDGE
 }

@@ -122,9 +122,9 @@ export class GraphVisualizer {
 			const { from, to, actionType } = edge
 
 			const edgeLabel =
-				edge.lastRate === undefined
+				edge.lastQuote === undefined
 					? `|"${actionType}"|`
-					: `|"${actionType} ${edge.lastRate.toFixed(2)}"|`
+					: `|"${actionType} ${edge.lastQuote.rate.toFixed(2)}"|`
 
 			str += `\n\t${this.getNodeId(from.id)} --> ${edgeLabel} ${this.getNodeId(to.id)}`
 		}

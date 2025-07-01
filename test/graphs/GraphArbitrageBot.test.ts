@@ -99,48 +99,66 @@ makeSuite('GraphArbitrageBot', () => {
 				const from = await TokenUtils.fromId(edge.from.id)
 
 				if (from.symbol === 'WETH' && from.chainId === fuse.id) {
-					edge.getRateWithoutCache = (amountIn: bigint) => {
+					edge.quote = (amountIn: bigint) => {
 						return Promise.resolve({
 							amountOut: amountIn / 100n,
 							rate: 100,
+							cost: {
+								gas: 0n,
+							},
 						})
 					}
 					continue
 				}
 
 				if (from.symbol === 'WBTC' && from.chainId === fuse.id) {
-					edge.getRateWithoutCache = (amountIn: bigint) => {
+					edge.quote = (amountIn: bigint) => {
 						return Promise.resolve({
 							amountOut: amountIn * 100n,
 							rate: swapWbtcToWethOnFuseRateMock(),
+							cost: {
+								gas: 0n,
+							},
 						})
 					}
 					continue
 				}
 
 				if (from.symbol === 'WETH' && from.chainId === arbitrum.id) {
-					edge.getRateWithoutCache = (amountIn: bigint) => {
+					edge.quote = (amountIn: bigint) => {
 						return Promise.resolve({
 							amountOut: amountIn / 10n,
 							rate: swapWethToWbtcOnArbitrumRateMock(),
+							cost: {
+								gas: 0n,
+							},
 						})
 					}
 					continue
 				}
 
 				if (from.symbol === 'WBTC' && from.chainId === arbitrum.id) {
-					edge.getRateWithoutCache = (amountIn: bigint) => {
+					edge.quote = (amountIn: bigint) => {
 						return Promise.resolve({
 							amountOut: amountIn * 10n,
 							rate: -10,
+							cost: {
+								gas: 0n,
+							},
 						})
 					}
 					continue
 				}
 			}
 
-			edge.getRateWithoutCache = (amountIn: bigint) => {
-				return Promise.resolve({ amountOut: amountIn, rate: 0 })
+			edge.quote = (amountIn: bigint) => {
+				return Promise.resolve({
+					amountOut: amountIn,
+					rate: 0,
+					cost: {
+						gas: 0n,
+					},
+				})
 			}
 		}
 

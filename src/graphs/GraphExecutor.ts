@@ -35,9 +35,6 @@ export interface GraphExecutorConfig {
 	) => unknown
 }
 
-type InchainActionType = ActionType.SWAP | ActionType.WRAP | ActionType.UNWRAP
-type BridgeActionType = ActionType.STARGATE_BRIDGE | ActionType.FUSE_BRIDGE
-
 type ExecutionResult<T extends ActionType> = {
 	amountOut: bigint
 	actionType: T
