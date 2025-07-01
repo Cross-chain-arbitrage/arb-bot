@@ -90,7 +90,10 @@ export class FuseBridge {
 		recipient: Address,
 		amount: bigint,
 		simulateOnly: boolean = false,
-	): Promise<FuseBridgeTx> {
+	): Promise<{
+		bridgeTx: FuseBridgeTx
+		lzFee: TokenAmount
+	}> {
 		const unwrapWeth = false
 
 		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
@@ -122,23 +125,35 @@ export class FuseBridge {
 		)
 
 		if (tokenIn instanceof NativeCurrency) {
-			return await this.executeNativeBridge(
-				tokenIn,
-				address,
-				amount,
-				quote,
-				args as HomeFuseBridgeFunctionArgs,
-				simulateOnly,
-			)
+			return {
+				bridgeTx: await this.executeNativeBridge(
+					tokenIn,
+					address,
+					amount,
+					quote,
+					args as HomeFuseBridgeFunctionArgs,
+					simulateOnly,
+				),
+				lzFee: new TokenAmount(
+					TokenUtils.getNative(tokenIn.chainId),
+					quote[0],
+				),
+			}
 		} else {
-			return await this.executeForeignBridge(
-				tokenIn,
-				address,
-				abi,
-				quote,
-				args as FuseForeignBridgeFunctionArgs,
-				simulateOnly,
-			)
+			return {
+				bridgeTx: await this.executeForeignBridge(
+					tokenIn,
+					address,
+					abi,
+					quote,
+					args as FuseForeignBridgeFunctionArgs,
+					simulateOnly,
+				),
+				lzFee: new TokenAmount(
+					TokenUtils.getNative(tokenIn.chainId),
+					quote[0],
+				),
+			}
 		}
 	}
 
