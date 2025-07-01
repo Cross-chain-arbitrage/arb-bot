@@ -28,9 +28,9 @@ async function main() {
 			slippage: 30,
 		},
 		graphOptimizerOptions: {
-			initialValueUSD: 200,
+			initialValueUSD: 100,
 			stepUSD: 200,
-			stepsAmount: 5,
+			stepsAmount: 4,
 			maxPathLength: 6,
 		},
 	}
