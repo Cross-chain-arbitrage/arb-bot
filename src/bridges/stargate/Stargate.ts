@@ -16,7 +16,10 @@ import { STARGATE_CHAINS } from './dumped/chains'
 
 export const StargateError = createCustomError('StargateError')
 
-const QUOTE_CACHE_TTL = 1000 * 60 * 1 // 1 minute
+/**
+ * @dev LZ fee is changing periodically, so the fee change can occur while our tx would be inflight
+ */
+const QUOTE_CACHE_TTL = 1000 * 15 // 15 seconds
 const BRIDGE_GAS_COST = 400_000n
 
 type RequestId = string
