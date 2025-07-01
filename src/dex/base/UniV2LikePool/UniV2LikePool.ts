@@ -68,7 +68,7 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 		return reserve1 / reserve0
 	}
 
-	async quoteSwap(params: SwapParams) {
+	async quoteSwapAmountOut(params: SwapParams) {
 		this.validateMismatchSwapParams(params)
 
 		const reserves = await this.getReserves()
@@ -80,10 +80,7 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 			isAddressEqual(params.tokenIn.address, this.token0.address),
 		)
 
-		return {
-			amountOut,
-			fee: this.fee / Number(BASIS_POINTS),
-		}
+		return amountOut
 	}
 
 	private calculateAmountOut(

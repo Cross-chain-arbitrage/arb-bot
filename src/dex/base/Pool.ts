@@ -23,10 +23,16 @@ export abstract class Pool extends BaseContract {
 
 	abstract getPrices(): Promise<{ price: number; sqrtPriceX96: bigint }>
 
-	abstract quoteSwap(params: SwapParams): Promise<{
+	async quoteSwap(params: SwapParams): Promise<{
 		amountOut: bigint
-		fee: number
-	}>
+		gas: bigint
+	}> {
+		const amountOut = await this.quoteSwapAmountOut(params)
+
+		return { amountOut, gas: 200_000n } //average gas for swap
+	}
+
+	protected abstract quoteSwapAmountOut(params: SwapParams): Promise<bigint>
 
 	abstract simulateSwap(params: SwapParams): Promise<{
 		amountOut: bigint

@@ -67,7 +67,7 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 		])
 	}
 
-	async quoteSwap(params: SwapParams) {
+	async quoteSwapAmountOut(params: SwapParams) {
 		this.validateMismatchSwapParams(params)
 
 		const { result } = await this.client.simulateContract({
@@ -86,10 +86,7 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 			],
 		})
 
-		return {
-			amountOut: result[0],
-			fee: this.fee,
-		}
+		return result[0]
 	}
 
 	async getSwapArguments(

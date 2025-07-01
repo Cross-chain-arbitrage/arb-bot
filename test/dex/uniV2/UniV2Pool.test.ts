@@ -77,25 +77,23 @@ makeSuite('Uniswap V2 Pool', () => {
 		it('should quote swap WETH to FUSE', async () => {
 			const amountIn = pool.token1.parseUnits('1')
 
-			const { amountOut, fee } = await pool.quoteSwap({
+			const { amountOut } = await pool.quoteSwap({
 				tokenIn: pool.token1,
 				tokenOut: pool.token0,
 				amountIn,
 			})
 			expect(amountOut).toBeDefined()
-			expect(fee).toBe(0.003) // 0.3% fee
 		})
 
 		it('should quote swap FUSE to WETH', async () => {
 			const amountIn = pool.token0.parseUnits('1000')
 
-			const { amountOut, fee } = await pool.quoteSwap({
+			const { amountOut } = await pool.quoteSwap({
 				tokenIn: pool.token0,
 				tokenOut: pool.token1,
 				amountIn,
 			})
 			expect(amountOut).toBeDefined()
-			expect(fee).toBe(0.003)
 		})
 	})
 
@@ -133,7 +131,7 @@ makeSuite('Uniswap V2 Pool', () => {
 
 			const balanceBefore = await FUSE.read.balanceOf([botAddress])
 
-			const { amountOut: amountOutQuote, fee } = await pool.quoteSwap({
+			const { amountOut: amountOutQuote } = await pool.quoteSwap({
 				tokenIn: pool.token1,
 				tokenOut: pool.token0,
 				amountIn,

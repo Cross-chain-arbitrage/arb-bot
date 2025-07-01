@@ -76,25 +76,23 @@ makeSuite('Pancake V2 Pool', () => {
 		it('should quote swap WBNB to FUSE', async () => {
 			const amountIn = pool.token1.parseUnits('1')
 
-			const { amountOut, fee } = await pool.quoteSwap({
+			const { amountOut } = await pool.quoteSwap({
 				tokenIn: pool.token1,
 				tokenOut: pool.token0,
 				amountIn,
 			})
 			expect(amountOut).toBeDefined()
-			expect(fee).toBe(0.0025) // 0.25% fee
 		})
 
 		it('should quote swap FUSE to WBNB', async () => {
 			const amountIn = pool.token0.parseUnits('1000')
 
-			const { amountOut, fee } = await pool.quoteSwap({
+			const { amountOut } = await pool.quoteSwap({
 				tokenIn: pool.token0,
 				tokenOut: pool.token1,
 				amountIn,
 			})
 			expect(amountOut).toBeDefined()
-			expect(fee).toBe(0.0025)
 		})
 	})
 
@@ -132,7 +130,7 @@ makeSuite('Pancake V2 Pool', () => {
 
 			const balanceBefore = await FUSE.read.balanceOf([botAddress])
 
-			const { amountOut: amountOutQuote, fee } = await pool.quoteSwap({
+			const { amountOut: amountOutQuote } = await pool.quoteSwap({
 				tokenIn: pool.token1,
 				tokenOut: pool.token0,
 				amountIn,
