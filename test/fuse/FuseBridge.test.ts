@@ -77,7 +77,7 @@ makeSuite('FuseBridge', () => {
 
 			await WBTC.approve(bridgeAddr, amount)
 
-			const bridgeTx = await FuseBridge.bridge(
+			const { bridgeTx } = await FuseBridge.bridge(
 				WBTC,
 				arbitrum.id,
 				getAccountAddress(),
@@ -136,7 +136,7 @@ makeSuite('FuseBridge', () => {
 
 			await WBTC.approve(bridgeAddr, amount)
 
-			const bridgeTx = await FuseBridge.bridge(
+			const { bridgeTx } = await FuseBridge.bridge(
 				WBTC,
 				fuse.id,
 				wallet.account.address,
@@ -171,7 +171,7 @@ makeSuite('FuseBridge', () => {
 			it('MUST bridge FUSE to BSC', async () => {
 				const FUSE = TokenUtils.getNative(fuse.id)
 
-				const bridgeTx = await FuseBridge.bridge(
+				const { bridgeTx } = await FuseBridge.bridge(
 					FUSE,
 					bsc.id,
 					getAccountAddress(),
@@ -185,7 +185,7 @@ makeSuite('FuseBridge', () => {
 			it('MUST bridge FUSE to Ethereum', async () => {
 				const FUSE = TokenUtils.getNative(fuse.id)
 
-				const bridgeTx = await FuseBridge.bridge(
+				const { bridgeTx } = await FuseBridge.bridge(
 					FUSE,
 					mainnet.id,
 					getAccountAddress(),
@@ -228,7 +228,7 @@ makeSuite('FuseBridge', () => {
 
 				await FUSE.approve(bridgeAddr, amount)
 
-				const bridgeTx = await FuseBridge.bridge(
+				const { bridgeTx } = await FuseBridge.bridge(
 					FUSE,
 					fuse.id,
 					getAccountAddress(),
@@ -274,7 +274,7 @@ makeSuite('FuseBridge', () => {
 
 				await FUSE.approve(bridgeAddr, amount)
 
-				const bridgeTx = await FuseBridge.bridge(
+				const { bridgeTx } = await FuseBridge.bridge(
 					FUSE,
 					fuse.id,
 					getAccountAddress(),

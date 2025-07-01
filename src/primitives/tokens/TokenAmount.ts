@@ -8,10 +8,7 @@ export const TokenAmountError = createCustomError('TokenAmountError')
 
 export class TokenAmount extends TokenBase {
 	constructor(
-		protected readonly underlyingToken:
-			| Token
-			| NativeCurrency
-			| WrappedNative,
+		readonly underlyingToken: Token | NativeCurrency | WrappedNative,
 		public amount: bigint,
 	) {
 		super(

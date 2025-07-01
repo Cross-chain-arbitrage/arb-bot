@@ -10,6 +10,7 @@ import { ActionType, Edge } from '../../src/graphs/primitives/Edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
+import { TokenAmount } from '../../src/primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { ClientManager } from '../../src/utils/ClientManager'
 import { wait } from '../../src/utils/common'
@@ -73,6 +74,10 @@ makeSuite('GraphArbitrageBot', () => {
 						srcTxReceipt: {
 							transactionHash: '0x1',
 						} as Partial<TransactionReceipt> as TransactionReceipt,
+						bridgeFee: new TokenAmount(
+							TokenUtils.getNative(edge.from.chainId),
+							10n,
+						),
 						dstTxHash: '0x1',
 					}
 				}

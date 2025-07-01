@@ -369,7 +369,8 @@ makeSuite('GraphExecutor', () => {
 		})
 
 		expect(result.txCostInNative).toBe(560980000000n)
-		expect(result.txCostInUsd).toBe(
+
+		expect(result.executionCostInUsd).toBe(
 			(Number(560980000000n) * ethPrice) / 10 ** 18,
 		)
 
