@@ -46,6 +46,7 @@ export class Stargate {
 		bridgeTx: StargateBridgeTx
 		amountOut: bigint
 		tokenOut: Token | NativeCurrency
+		lzFee: TokenAmount
 	}> {
 		if (amount <= 0n)
 			throw new StargateError('Amount must be greater than 0')
@@ -125,6 +126,10 @@ export class Stargate {
 				),
 				amountOut,
 				tokenOut,
+				lzFee: new TokenAmount(
+					TokenUtils.getNative(tokenIn.chainId),
+					quote.messagingFee.lzTokenFee,
+				),
 			}
 		}
 
@@ -134,6 +139,10 @@ export class Stargate {
 			bridgeTx: new StargateBridgeTx(txHash, tokenIn, tokenOut, amount),
 			amountOut,
 			tokenOut,
+			lzFee: new TokenAmount(
+				TokenUtils.getNative(tokenIn.chainId),
+				quote.messagingFee.lzTokenFee,
+			),
 		}
 	}
 
