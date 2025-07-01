@@ -9,8 +9,11 @@ import { getPrivateKey } from '../../src/utils/common'
 const testPk =
 	'0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
+const testMnemonic =
+	'test test test test test test test test test test test junk'
+
 /**
- * Starts anvil in describe and replace viem rpc url and private key
+ * Starts anvil in describe() and replace viem rpc url and private key
  */
 export function useAnvil(anvilConfig: AnvilConfig) {
 	const chain = ClientManager.findChainById(anvilConfig.chainId)
@@ -104,7 +107,7 @@ class Anvil {
 	private buildCommand(fallbackRpcUrl: string) {
 		const rpcUrlToUse = this.config.rpcUrl ?? fallbackRpcUrl
 
-		let command = `anvil --fork-url "${rpcUrlToUse}" --port ${this.port}`
+		let command = `anvil --fork-url "${rpcUrlToUse}" --port ${this.port} --mnemonic "${testMnemonic}"`
 
 		if (typeof this.config.blockNumber === 'number') {
 			command += ` --fork-block-number ${this.config.blockNumber}`

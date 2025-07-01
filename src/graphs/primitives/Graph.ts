@@ -1,7 +1,7 @@
 import TTLCache from '@isaacs/ttlcache'
 import { Pool } from '../../dex/base/Pool'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { Edge, SwapEdge } from './Edge'
+import { ActionType, Edge, SwapEdge } from './Edge'
 
 export class GraphError extends Error {
 	constructor(message: string) {
@@ -12,7 +12,7 @@ export class GraphError extends Error {
 }
 
 export class Graph {
-	edges: Map<EdgeId, Edge> = new Map()
+	edges: Map<EdgeId, Edge<ActionType>> = new Map()
 	nodes: Map<GraphNodeId, GraphNode> = new Map()
 
 	private edgeCache: TTLCache<string, GetRateResult>

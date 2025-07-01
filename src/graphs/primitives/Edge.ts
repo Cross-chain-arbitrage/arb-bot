@@ -1,10 +1,9 @@
-import { Hash, TransactionReceipt } from 'viem'
+import { Hash } from 'viem'
 import { FuseBridge } from '../../bridges/FuseBridge/FuseBridge'
 import { Stargate } from '../../bridges/stargate/Stargate'
 import { Pool } from '../../dex/base/Pool'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
-import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../primitives/tokens/WrappedNative'
 import { ClientManager } from '../../utils/ClientManager'
@@ -19,39 +18,15 @@ export enum ActionType {
 	UNWRAP = 'UNWRAP',
 }
 
-type ExecutionCost<T extends ActionType> = {
-	gas: bigint
-} & (T extends BridgeActionType
-	? {
-			bridgeFee: TokenAmount
-		}
-	: object)
-
-type QuoteResult = GetRateResult & {
-	cost: ExecutionCost<ActionType>
-}
-
-type ExecutionResult<T extends ActionType> = {
-	amountOut: bigint
-} & (T extends BridgeActionType
-	? {
-			srcTxReceipt: TransactionReceipt
-			bridgeFee: TokenAmount
-			dstTxHash: Hash
-		}
-	: {
-			txReceipt: TransactionReceipt
-		})
-
-export abstract class Edge {
+export abstract class Edge<T extends ActionType = ActionType> {
 	abstract id: EdgeId
 
-	lastQuote: QuoteResult | undefined
+	lastQuote: EdgeQuoteResult | undefined
 
 	constructor(
 		readonly from: GraphNode,
 		readonly to: GraphNode,
-		readonly actionType: ActionType,
+		readonly actionType: T,
 		readonly graph?: Graph,
 	) {}
 
@@ -76,9 +51,9 @@ export abstract class Edge {
 		return -Math.log(Number(amountOut) / Number(amountIn))
 	}
 
-	abstract quote(amountIn: bigint): Promise<QuoteResult>
+	abstract quote(amountIn: bigint): Promise<EdgeQuoteResult>
 
-	abstract execute(amountIn: bigint): Promise<ExecutionResult<ActionType>>
+	abstract execute(amountIn: bigint): Promise<EdgeExecutionResult<T>>
 }
 
 export class SwapEdge extends Edge {
@@ -94,7 +69,7 @@ export class SwapEdge extends Edge {
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}-${this.pool.address}`
 	}
 
-	async quote(amountIn: bigint): Promise<QuoteResult> {
+	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
 		const { amountOut, gas } = await this.pool.quoteSwap({
 			tokenIn: this.from,
 			tokenOut: this.to,
@@ -113,7 +88,9 @@ export class SwapEdge extends Edge {
 		}
 	}
 
-	async execute(amountIn: bigint): Promise<ExecutionResult<ActionType>> {
+	async execute(
+		amountIn: bigint,
+	): Promise<EdgeExecutionResult<ActionType.SWAP>> {
 		if (this.from.isNative()) {
 			throw new Error(
 				`Cannot swap from native currency: ${this.from.symbol} ${this.from.chainId} ${shortenAddress(this.from.address)}`,
@@ -139,7 +116,7 @@ export class SwapEdge extends Edge {
 	}
 }
 
-export class StargateBridgeEdge extends Edge {
+export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 	readonly id: EdgeId
 
 	constructor(
@@ -151,7 +128,7 @@ export class StargateBridgeEdge extends Edge {
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
 	}
 
-	async quote(amountIn: bigint): Promise<QuoteResult> {
+	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
 		const { amountOut, lzFee, gas } = await Stargate.quoteBridge(
 			this.from,
 			amountIn,
@@ -170,7 +147,9 @@ export class StargateBridgeEdge extends Edge {
 		}
 	}
 
-	async execute(amountIn: bigint): Promise<ExecutionResult<ActionType>> {
+	async execute(
+		amountIn: bigint,
+	): Promise<EdgeExecutionResult<ActionType.STARGATE_BRIDGE>> {
 		const fromToken = await TokenUtils.fromAddress(
 			this.from.address,
 			this.from.chainId,
@@ -200,7 +179,7 @@ export class StargateBridgeEdge extends Edge {
 	}
 }
 
-export class FuseBridgeEdge extends Edge {
+export class FuseBridgeEdge extends Edge<ActionType.FUSE_BRIDGE> {
 	readonly id: EdgeId
 
 	constructor(
@@ -212,7 +191,9 @@ export class FuseBridgeEdge extends Edge {
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
 	}
 
-	async execute(amountIn: bigint): Promise<ExecutionResult<ActionType>> {
+	async execute(
+		amountIn: bigint,
+	): Promise<EdgeExecutionResult<ActionType.FUSE_BRIDGE>> {
 		const { bridgeTx, lzFee } = await FuseBridge.bridge(
 			this.from as Token,
 			this.to.chainId,
@@ -236,7 +217,7 @@ export class FuseBridgeEdge extends Edge {
 		}
 	}
 
-	async quote(amountIn: bigint): Promise<QuoteResult> {
+	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
 		const { amountOut, lzFee, gas } = await FuseBridge.quoteBridge(
 			this.from,
 			this.to.chainId,
@@ -256,20 +237,22 @@ export class FuseBridgeEdge extends Edge {
 	}
 }
 
-abstract class CommonEdge extends Edge {
+abstract class CommonEdge<
+	T extends ActionType.WRAP | ActionType.UNWRAP,
+> extends Edge<T> {
 	readonly id: EdgeId
 
 	constructor(
 		readonly from: GraphNode,
 		readonly to: GraphNode,
-		readonly actionType: ActionType,
+		readonly actionType: T,
 		graph: Graph,
 	) {
 		super(from, to, actionType, graph)
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
 	}
 
-	async quote(amountIn: bigint): Promise<QuoteResult> {
+	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
 		return Promise.resolve({
 			rate: 0,
 			amountOut: amountIn,
@@ -281,7 +264,7 @@ abstract class CommonEdge extends Edge {
 	}
 }
 
-export class WrapEdge extends CommonEdge {
+export class WrapEdge extends CommonEdge<ActionType.WRAP> {
 	constructor(
 		readonly from: NativeCurrency,
 		readonly to: Token,
@@ -290,7 +273,9 @@ export class WrapEdge extends CommonEdge {
 		super(from, to, ActionType.WRAP, graph)
 	}
 
-	async execute(amountIn: bigint): Promise<ExecutionResult<ActionType>> {
+	async execute(
+		amountIn: bigint,
+	): Promise<EdgeExecutionResult<ActionType.WRAP>> {
 		if (!(this.to instanceof WrappedNative)) {
 			throw new Error(
 				`Cannot wrap non-WETH token: ${this.to.symbol} ${this.to.chainId} ${shortenAddress(this.to.address)}`,
@@ -307,7 +292,7 @@ export class WrapEdge extends CommonEdge {
 	}
 }
 
-export class UnwrapEdge extends CommonEdge {
+export class UnwrapEdge extends CommonEdge<ActionType.UNWRAP> {
 	constructor(
 		readonly from: Token,
 		readonly to: NativeCurrency,
@@ -316,7 +301,9 @@ export class UnwrapEdge extends CommonEdge {
 		super(from, to, ActionType.UNWRAP, graph)
 	}
 
-	async execute(amountIn: bigint): Promise<ExecutionResult<ActionType>> {
+	async execute(
+		amountIn: bigint,
+	): Promise<EdgeExecutionResult<ActionType.UNWRAP>> {
 		if (!(this.from instanceof WrappedNative)) {
 			throw new Error(
 				`Cannot unwrap non-WETH token: ${this.from.symbol} ${this.from.chainId} ${shortenAddress(this.from.address)}`,

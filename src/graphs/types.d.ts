@@ -1,5 +1,7 @@
+import { Hash, TransactionReceipt } from 'viem'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
+import { TokenAmount } from '../primitives/tokens/TokenAmount'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import { ActionType, Edge } from './primitives/Edge'
 
@@ -28,4 +30,28 @@ declare global {
 		| ActionType.WRAP
 		| ActionType.UNWRAP
 	type BridgeActionType = ActionType.STARGATE_BRIDGE | ActionType.FUSE_BRIDGE
+
+	type EdgeExecutionCost<T extends ActionType> = {
+		gas: bigint
+	} & (T extends BridgeActionType
+		? {
+				bridgeFee: TokenAmount
+			}
+		: object)
+
+	type EdgeQuoteResult = GetRateResult & {
+		cost: EdgeExecutionCost<ActionType>
+	}
+
+	type EdgeExecutionResult<T extends ActionType> = {
+		amountOut: bigint
+	} & (T extends BridgeActionType
+		? {
+				srcTxReceipt: TransactionReceipt
+				bridgeFee: TokenAmount
+				dstTxHash: Hash
+			}
+		: {
+				txReceipt: TransactionReceipt
+			})
 }

@@ -1,23 +1,9 @@
-import { Hash, TransactionReceipt } from 'viem'
-import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
-import { Stargate } from '../bridges/stargate/Stargate'
+import { TransactionReceipt } from 'viem'
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
-import { Token } from '../primitives/tokens/Token'
-import { TokenAmount } from '../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { WrappedNative } from '../primitives/tokens/WrappedNative'
-import { ClientManager } from '../utils/ClientManager'
-import { runFnWithRetry, shortenAddress } from '../utils/common'
+import { runFnWithRetry } from '../utils/common'
 import logger from '../utils/logger'
-import {
-	ActionType,
-	Edge,
-	FuseBridgeEdge,
-	StargateBridgeEdge,
-	SwapEdge,
-	UnwrapEdge,
-	WrapEdge,
-} from './primitives/Edge'
+import { ActionType, Edge } from './primitives/Edge'
 
 export interface GraphExecutorConfig {
 	path: Edge[]
@@ -34,19 +20,6 @@ export interface GraphExecutorConfig {
 		amountOut: bigint,
 	) => unknown
 }
-
-type ExecutionResult<T extends ActionType> = {
-	amountOut: bigint
-	actionType: T
-} & (T extends BridgeActionType
-	? {
-			srcTxReceipt: TransactionReceipt
-			bridgeFee: TokenAmount
-			dstTxHash: Hash
-		}
-	: {
-			txReceipt: TransactionReceipt
-		})
 
 export class GraphExecutor {
 	/**
@@ -74,7 +47,7 @@ export class GraphExecutor {
 			logger.info(beforeExecuteLogMsg)
 
 			const executionResult = await runFnWithRetry(
-				() => this.executeEdge(edge, nextAmountIn),
+				() => edge.execute(nextAmountIn),
 				retryExecuteEdgeCount,
 			)
 
@@ -101,7 +74,7 @@ export class GraphExecutor {
 	 */
 	static async handleExecutionResult(
 		edge: Edge,
-		executionResult: ExecutionResult<ActionType>,
+		executionResult: EdgeExecutionResult<ActionType>,
 	) {
 		let executionResultLogMsg = `\n┌─ ${edge.actionType} COMPLETED ─────────────────────\n`
 		executionResultLogMsg += `│ Output Amount: ${edge.to.formatUnits(executionResult.amountOut)} ${edge.to.symbol}\n`
@@ -109,11 +82,11 @@ export class GraphExecutor {
 		let botTxReceipt
 		let executionCostInUsd = 0
 		if (
-			executionResult.actionType === ActionType.STARGATE_BRIDGE ||
-			executionResult.actionType === ActionType.FUSE_BRIDGE
+			edge.actionType === ActionType.STARGATE_BRIDGE ||
+			edge.actionType === ActionType.FUSE_BRIDGE
 		) {
 			const { srcTxReceipt, dstTxHash, bridgeFee } =
-				executionResult as ExecutionResult<BridgeActionType>
+				executionResult as EdgeExecutionResult<BridgeActionType>
 
 			const bridgeFeeTokenPrice = await PriceOracle.getPrice(
 				bridgeFee.underlyingToken,
@@ -132,7 +105,7 @@ export class GraphExecutor {
 			botTxReceipt = srcTxReceipt
 		} else {
 			const { txReceipt } =
-				executionResult as ExecutionResult<InchainActionType>
+				executionResult as EdgeExecutionResult<InchainActionType>
 
 			executionResultLogMsg += `│ Transaction:   ${txReceipt.transactionHash}\n`
 
@@ -171,157 +144,6 @@ export class GraphExecutor {
 			nativeCurrency,
 			txCostInNative,
 			txCostInUsd,
-		}
-	}
-
-	static async executeEdge(
-		edge: Edge,
-		amountIn: bigint,
-	): Promise<ExecutionResult<typeof edge.actionType>> {
-		switch (edge.actionType) {
-			case ActionType.SWAP:
-				return await this.executeSwap(edge as SwapEdge, amountIn)
-
-			case ActionType.STARGATE_BRIDGE:
-				return await this.executeStargateBridge(edge, amountIn)
-
-			case ActionType.FUSE_BRIDGE:
-				return await this.executeFuseBridge(edge, amountIn)
-
-			case ActionType.WRAP:
-				return await this.executeWrap(edge as WrapEdge, amountIn)
-
-			case ActionType.UNWRAP:
-				return await this.executeUnwrap(edge as UnwrapEdge, amountIn)
-		}
-	}
-
-	static async executeSwap(edge: SwapEdge, amountIn: bigint) {
-		const { from, to } = edge
-		const { pool } = edge
-
-		if (from.isNative()) {
-			throw new Error(
-				`Cannot swap from native currency: ${from.symbol} ${from.chainId} ${shortenAddress(from.address)}`,
-			)
-		}
-
-		if (to.isNative()) {
-			throw new Error(
-				`Cannot swap to native currency: ${to.symbol} ${to.chainId} ${shortenAddress(to.address)}`,
-			)
-		}
-
-		const { amountOut, receipt } = await pool.swap({
-			amountIn: amountIn,
-			tokenIn: from,
-			tokenOut: to,
-		})
-
-		return {
-			amountOut,
-			txReceipt: receipt,
-			actionType: ActionType.SWAP,
-		}
-	}
-
-	static async executeWrap(edge: WrapEdge, amountIn: bigint) {
-		const { to } = edge
-
-		if (!(to instanceof WrappedNative)) {
-			throw new Error(
-				`Cannot wrap non-WETH token: ${to.symbol} ${to.chainId} ${shortenAddress(to.address)}`,
-			)
-		}
-
-		const receipt = await to.deposit(amountIn)
-
-		// output amount is the same as input amount
-		return {
-			amountOut: amountIn,
-			txReceipt: receipt,
-			actionType: ActionType.WRAP,
-		}
-	}
-
-	static async executeUnwrap(edge: UnwrapEdge, amountIn: bigint) {
-		const { from } = edge
-
-		if (!(from instanceof WrappedNative)) {
-			throw new Error(
-				`Cannot unwrap non-WETH token: ${from.symbol} ${from.chainId} ${shortenAddress(from.address)}`,
-			)
-		}
-
-		const receipt = await from.withdraw(amountIn)
-
-		// output amount is the same as input amount
-		return {
-			amountOut: amountIn,
-			txReceipt: receipt,
-			actionType: ActionType.UNWRAP,
-		}
-	}
-
-	static async executeFuseBridge(edge: FuseBridgeEdge, amountIn: bigint) {
-		const { from, to } = edge
-		const { bridgeTx, lzFee } = await FuseBridge.bridge(
-			from as Token,
-			to.chainId,
-			ClientManager.getWalletClient(to.chainId).account.address,
-			amountIn,
-		)
-
-		const srcTxReceipt = await ClientManager.getClient(
-			from.chainId,
-		).waitForTransactionReceipt({ hash: bridgeTx.srcTxHash as Hash })
-
-		const message = await bridgeTx.waitForBridgeToFinish()
-
-		// output amount is the same as input amount
-		// TODO: retrieve amount out from dst tx, because decimals could be different
-		return {
-			amountOut: amountIn,
-			srcTxReceipt,
-			dstTxHash: message.dstTxHash as Hash,
-			actionType: ActionType.FUSE_BRIDGE,
-			bridgeFee: lzFee,
-		}
-	}
-
-	static async executeStargateBridge(
-		edge: StargateBridgeEdge,
-		amountIn: bigint,
-	) {
-		const { from, to } = edge
-
-		const fromChainId = from.chainId
-		const fromAddress = from.address
-		const toChainId = to.chainId
-
-		const fromToken = await TokenUtils.fromAddress(fromAddress, fromChainId)
-
-		const result = await Stargate.bridge(
-			fromToken,
-			toChainId,
-			ClientManager.getWalletClient(fromChainId).account.address,
-			amountIn,
-		)
-
-		const srcTxReceipt = await ClientManager.getClient(
-			fromChainId,
-		).waitForTransactionReceipt({
-			hash: result.bridgeTx.srcTxHash as Hash,
-		})
-
-		const message = await result.bridgeTx.waitForBridgeToFinish()
-
-		return {
-			amountOut: result.amountOut,
-			srcTxReceipt,
-			dstTxHash: message.dstTxHash as Hash,
-			actionType: ActionType.STARGATE_BRIDGE,
-			bridgeFee: result.lzFee,
 		}
 	}
 }

@@ -5,8 +5,14 @@ import { PoolUtils } from '../../src/dex/PoolUtils'
 import { PoolType } from '../../src/dex/poolVariety'
 import { GraphArbitrageBot } from '../../src/graphs/GraphArbitrageBot'
 import { GraphBuilder } from '../../src/graphs/GraphBuilder'
-import { GraphExecutor } from '../../src/graphs/GraphExecutor'
-import { ActionType, Edge } from '../../src/graphs/primitives/Edge'
+import {
+	ActionType,
+	FuseBridgeEdge,
+	StargateBridgeEdge,
+	SwapEdge,
+	UnwrapEdge,
+	WrapEdge,
+} from '../../src/graphs/primitives/Edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
@@ -61,34 +67,46 @@ makeSuite('GraphArbitrageBot', () => {
 	})
 
 	beforeEach(async () => {
-		jest.spyOn(GraphExecutor, 'executeEdge').mockImplementation(
-			async (edge: Edge) => {
-				if (
-					edge.actionType === ActionType.STARGATE_BRIDGE ||
-					edge.actionType === ActionType.FUSE_BRIDGE
-				) {
-					await wait(500)
-					return {
-						amountOut: 10n * 22n,
-						actionType: edge.actionType,
-						srcTxReceipt: {
-							transactionHash: '0x1',
-						} as Partial<TransactionReceipt> as TransactionReceipt,
-						bridgeFee: new TokenAmount(
-							TokenUtils.getNative(edge.from.chainId),
-							10n,
-						),
-						dstTxHash: '0x1',
-					}
-				}
-				return {
-					amountOut: 10n * 22n,
-					actionType: edge.actionType,
-					txReceipt: {
-						transactionHash: '0x1',
-					} as Partial<TransactionReceipt> as TransactionReceipt,
-				}
-			},
+		const bridgeExecuteImpl = async (): Promise<
+			EdgeExecutionResult<BridgeActionType>
+		> => {
+			await wait(500)
+			return {
+				amountOut: 10n * 22n,
+				srcTxReceipt: {
+					transactionHash: '0x1',
+				} as Partial<TransactionReceipt> as TransactionReceipt,
+				bridgeFee: new TokenAmount(
+					TokenUtils.getNative(fuse.id), // doesn't matter, it could be any token
+					10n,
+				),
+				dstTxHash: '0x1',
+			}
+		}
+		jest.spyOn(StargateBridgeEdge.prototype, 'execute').mockImplementation(
+			bridgeExecuteImpl,
+		)
+		jest.spyOn(FuseBridgeEdge.prototype, 'execute').mockImplementation(
+			bridgeExecuteImpl,
+		)
+
+		const inchainExecuteResolvedValue = {
+			amountOut: 10n * 22n,
+			txReceipt: {
+				transactionHash: '0x1',
+			} as Partial<TransactionReceipt> as TransactionReceipt,
+		}
+
+		jest.spyOn(SwapEdge.prototype, 'execute').mockResolvedValue(
+			inchainExecuteResolvedValue,
+		)
+
+		jest.spyOn(WrapEdge.prototype, 'execute').mockResolvedValue(
+			inchainExecuteResolvedValue,
+		)
+
+		jest.spyOn(UnwrapEdge.prototype, 'execute').mockResolvedValue(
+			inchainExecuteResolvedValue,
 		)
 
 		swapWbtcToWethOnFuseRateMock = jest.fn().mockReturnValue(-100)
