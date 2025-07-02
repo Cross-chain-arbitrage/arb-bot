@@ -120,7 +120,7 @@ export class Stargate {
 				tokenOut,
 				lzFee: new TokenAmount(
 					TokenUtils.getNative(tokenIn.chainId),
-					quote.messagingFee.lzTokenFee,
+					quote.messagingFee.nativeFee,
 				),
 			}
 		}
@@ -133,7 +133,7 @@ export class Stargate {
 			tokenOut,
 			lzFee: new TokenAmount(
 				TokenUtils.getNative(tokenIn.chainId),
-				quote.messagingFee.lzTokenFee,
+				quote.messagingFee.nativeFee,
 			),
 		}
 	}
@@ -394,7 +394,7 @@ export class Stargate {
 
 		const lzFee = new TokenAmount(
 			TokenUtils.getNative(tokenIn.chainId),
-			quote.messagingFee.lzTokenFee,
+			quote.messagingFee.nativeFee,
 		)
 
 		return {
