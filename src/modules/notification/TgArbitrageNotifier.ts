@@ -1,15 +1,36 @@
+import { GraphVisualizer } from '../../graphs/GraphVisualizer'
 import { getEnvSafe } from '../../utils/common'
 import { TgBaseNotifier } from './TgBaseNotifier'
 
 export class TgArbitrageNotifier extends TgBaseNotifier {
+	// Store message references by opportunity name for editing
+	private lastMessage: {
+		messageResponse: MessageResponse
+		prettyOpportunity: string
+	} | null = null
+
 	constructor() {
 		const messageThreadId = getEnvSafe('TG_BOT_MESSAGE_THREAD_ID')
-
 		super(messageThreadId)
 	}
 
 	async sendArbitrageStart(name: string, prettyOpportunity: string) {
-		await this.sendMessage(`${name}:\n\n${prettyOpportunity}`)
+		const statusPart = '🔍 <b>Opportunity found, executing...</b>'
+
+		const fullMessage = this.buildMessage(
+			name,
+			statusPart,
+			prettyOpportunity,
+		)
+
+		const messageResponse = await this.sendMessage(fullMessage)
+
+		if (messageResponse) {
+			this.lastMessage = {
+				messageResponse,
+				prettyOpportunity,
+			}
+		}
 	}
 
 	async sendArbitrageEnd(
@@ -19,62 +40,104 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 		arbitrageOpportunity: GraphArbitrageOpportunity,
 		startTokenPrice: number,
 	) {
-		const startToken = arbitrageOpportunity.path[0]?.from
+		// Get the start token from the first edge of the path
+		const startToken = arbitrageOpportunity.path[0].from
+		const startAmount = arbitrageOpportunity.startAmount
 
-		const startAmountFormatted = startToken.formatUnits(
-			arbitrageOpportunity.startAmount,
+		// Calculate actual revenue and profit using proper token formatting
+		const actualAmountOutFormatted = Number(
+			startToken.formatUnits(actualAmountOut),
 		)
-		const actualAmountOutFormatted = startToken.formatUnits(actualAmountOut)
-		const expectedAmountOutFormatted = startToken.formatUnits(
-			arbitrageOpportunity.endAmount,
+		const startAmountFormatted = Number(startToken.formatUnits(startAmount))
+		const actualRevenue =
+			(actualAmountOutFormatted - startAmountFormatted) * startTokenPrice
+		const actualProfit = actualRevenue - executionCostInUsd
+
+		let statusPart = `✅ <b>Successfully executed!</b>\n\n`
+		statusPart += `Profit: $${actualProfit.toFixed(2)}\n`
+		statusPart += `Revenue: $${actualRevenue.toFixed(2)}\n`
+		statusPart += `Execution Cost: $${executionCostInUsd.toFixed(2)}\n`
+		statusPart += `Amount Out: ${actualAmountOutFormatted.toFixed(6)} ${startToken.symbol}`
+
+		await this.editOrSendMessage(
+			name,
+			statusPart,
+			arbitrageOpportunity,
+			startTokenPrice,
 		)
-		const differenceAmount =
-			actualAmountOut - arbitrageOpportunity.startAmount
-		const differenceAmountFormatted =
-			startToken.formatUnits(differenceAmount)
-		const profitPercentage =
-			(Number(differenceAmount) /
-				Number(arbitrageOpportunity.startAmount)) *
-			100
-		const revenue = Number(differenceAmountFormatted) * startTokenPrice
-		const profitUsd = revenue - executionCostInUsd
-
-		// Calculate expected vs actual comparison
-		const expectedProfitAmount =
-			arbitrageOpportunity.endAmount - arbitrageOpportunity.startAmount
-		const expectedProfitAmountFormatted =
-			startToken.formatUnits(expectedProfitAmount)
-		const expectedProfitUsd =
-			Number(expectedProfitAmountFormatted) * startTokenPrice
-
-		const message =
-			`${name}:\n\n` +
-			`✅ <b>Arbitrage Completed!</b>\n\n` +
-			`Profit USD: $${profitUsd.toFixed(2)}\n\n` +
-			`💰 <b>Results</b>\n` +
-			`Input: ${startAmountFormatted} ${startToken.toString()}\n` +
-			`Output: ${actualAmountOutFormatted} ${startToken.toString()}\n` +
-			`Difference: ${differenceAmountFormatted} ${startToken.symbol} (${profitPercentage.toFixed(2)}%)\n` +
-			`Revenue: $${revenue.toFixed(2)}\n` +
-			`Execution cost: $${executionCostInUsd.toFixed(2)}\n\n` +
-			`📊 <b>Expected</b>\n` +
-			`Output: ${expectedAmountOutFormatted} ${startToken.symbol} ($${expectedProfitUsd.toFixed(2)})\n` +
-			`Profit USD: $${expectedProfitUsd.toFixed(2)}`
-
-		await this.sendMessage(message)
 	}
 
 	async sendArbitrageError(
 		name: string,
 		error: string,
 		isLastNotification: boolean,
+		opportunity: GraphArbitrageOpportunity,
+		startTokenPrice: number,
 	) {
-		let message = `${name}:\n\n❌<b>Arbitrage error:</b> ${error}`
+		let statusPart = `❌ <b>Execution error:</b> ${error}`
 
-		if (isLastNotification)
-			message +=
+		if (isLastNotification) {
+			statusPart +=
 				'\n\n⚠️ Too many execution errors in a row, next errors will not be notified'
+		}
 
-		await this.sendMessage(message)
+		await this.editOrSendMessage(
+			name,
+			statusPart,
+			opportunity,
+			startTokenPrice,
+		)
+	}
+
+	async editOrSendMessage(
+		name: string,
+		statusPart: string,
+		arbitrageOpportunity: GraphArbitrageOpportunity,
+		startTokenPrice: number,
+	) {
+		const prettyOpportunity = this.lastMessage
+			? this.lastMessage.prettyOpportunity
+			: GraphVisualizer.getPrettyOpportunity(
+					arbitrageOpportunity,
+					startTokenPrice,
+				)
+
+		const fullMessage = this.buildMessage(
+			name,
+			statusPart,
+			prettyOpportunity,
+		)
+
+		try {
+			if (this.lastMessage) {
+				await this.editMessage(
+					this.lastMessage.messageResponse,
+					fullMessage,
+				)
+			} else {
+				await this.sendMessage(fullMessage)
+			}
+		} finally {
+			this.lastMessage = null
+		}
+	}
+
+	private buildMessage(
+		botName: string,
+		statusPart: string,
+		prettyOpportunity: string,
+	): string {
+		const currentDate = new Date().toLocaleString('ru', {
+			timeZoneName: 'short',
+		})
+
+		let message = `🤖 <b>${botName}</b>\n`
+		message += `🕐 ${currentDate}\n\n`
+		message += '━━━━━━━━━━━━━━━━\n\n'
+		message += `${statusPart}\n\n`
+		message += '━━━━━━━━━━━━━━━━\n\n'
+		message += `${prettyOpportunity}`
+
+		return message
 	}
 }

@@ -149,7 +149,9 @@ export class GraphArbitrageBot {
 			} else {
 				logger.error(err, 'Error executing arbitrage')
 			}
-			this.notifyAboutArbError(err)
+			this.notifyAboutArbError(err, opportunity).catch((err) => {
+				logger.error(err, 'Error sending error to telegram')
+			})
 		}
 	}
 
@@ -262,7 +264,10 @@ export class GraphArbitrageBot {
 		}
 	}
 
-	private notifyAboutArbError(error: unknown) {
+	private async notifyAboutArbError(
+		error: unknown,
+		opportunity: GraphArbitrageOpportunity,
+	) {
 		if (
 			this.executionErrorInARow++ > this.settings.maxExecutionErrorsInARow
 		) {
@@ -275,11 +280,15 @@ export class GraphArbitrageBot {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error'
 
+		const startTokenPrice = await this.startTokenPrice()
+
 		this.TgArbitrageNotifier.sendArbitrageError(
 			this.name,
 			errorMessage,
 			this.executionErrorInARow >
 				this.settings.maxExecutionErrorsInARow - 1,
+			opportunity,
+			startTokenPrice,
 		).catch((err) => {
 			logger.error(err, 'Error sending error to telegram')
 		})
