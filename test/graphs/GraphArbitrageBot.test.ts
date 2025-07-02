@@ -175,6 +175,10 @@ makeSuite('GraphArbitrageBot', () => {
 					rate: 0,
 					cost: {
 						gas: 0n,
+						bridgeFee: new TokenAmount(
+							TokenUtils.getNative(fuse.id),
+							0n,
+						),
 					},
 				})
 			}

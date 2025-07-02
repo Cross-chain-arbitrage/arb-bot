@@ -9,6 +9,8 @@ import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { ClientManager } from '../utils/ClientManager'
 import logger from '../utils/logger'
 import { runFuncWithDelay } from '../utils/polling'
 import { GraphExecutor } from './GraphExecutor'
@@ -159,14 +161,62 @@ export class GraphArbitrageBot {
 			return false
 		}
 
-		const expectedProfitUsd = await this.calculateRevenue(
+		const expectedRevenue = await this.calculateRevenue(
 			opportunity.startAmount,
 			opportunity.endAmount,
 		)
 
-		if (expectedProfitUsd < this.settings.minProfitUsd) {
+		if (expectedRevenue < this.settings.minProfitUsd) {
 			logger.info(
-				`Profit is too low, expectedProfitUsd: $${expectedProfitUsd.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
+				`Revenue is too low, expectedRevenue: $${expectedRevenue.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
+			)
+			return false
+		}
+
+		let executionCostInUsd = 0
+
+		for (const edge of opportunity.path) {
+			const nativeOnFromChain = TokenUtils.getNative(edge.from.chainId)
+			const nativePrice = await PriceOracle.getPrice(nativeOnFromChain)
+			const gasPrice = await ClientManager.getClient(
+				edge.from.chainId,
+			).getGasPrice()
+
+			const txCostInUsd =
+				Number(
+					nativeOnFromChain.formatUnits(
+						gasPrice * edge.lastQuote!.cost.gas,
+					),
+				) * nativePrice
+
+			executionCostInUsd += txCostInUsd
+
+			if (
+				edge.actionType === ActionType.STARGATE_BRIDGE ||
+				edge.actionType === ActionType.FUSE_BRIDGE
+			) {
+				const bridgeFee = (
+					edge.lastQuote!.cost as EdgeExecutionCost<BridgeActionType>
+				).bridgeFee
+
+				const tokenPrice = await PriceOracle.getPrice(
+					bridgeFee.underlyingToken,
+				)
+
+				const txCostInUsd =
+					Number(
+						bridgeFee.underlyingToken.formatUnits(bridgeFee.amount),
+					) * tokenPrice
+
+				executionCostInUsd += txCostInUsd
+			}
+		}
+
+		const expectedProfit = expectedRevenue - executionCostInUsd
+
+		if (expectedProfit < this.settings.minProfitUsd) {
+			logger.info(
+				`Profit is too low, expectedProfit: $${expectedProfit.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
 			)
 			return false
 		}

@@ -31,7 +31,7 @@ declare global {
 		| ActionType.UNWRAP
 	type BridgeActionType = ActionType.STARGATE_BRIDGE | ActionType.FUSE_BRIDGE
 
-	type EdgeExecutionCost<T extends ActionType> = {
+	type EdgeExecutionCost<T extends ActionType = ActionType> = {
 		gas: bigint
 	} & (T extends BridgeActionType
 		? {
@@ -39,8 +39,8 @@ declare global {
 			}
 		: object)
 
-	type EdgeQuoteResult = GetRateResult & {
-		cost: EdgeExecutionCost<ActionType>
+	type EdgeQuoteResult<T extends ActionType = ActionType> = GetRateResult & {
+		cost: EdgeExecutionCost<T>
 	}
 
 	type EdgeExecutionResult<T extends ActionType> = {
