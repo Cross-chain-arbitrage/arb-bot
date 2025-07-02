@@ -16,7 +16,7 @@ async function main() {
 		name: 'Fuse Pools Bot',
 		giveApprovals: false,
 		startToken: usdt,
-		minProfitUsd: 2.5,
+		minProfitUsd: 0.8,
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
 		graphBuildConfig: {

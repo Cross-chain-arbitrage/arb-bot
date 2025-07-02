@@ -16,7 +16,7 @@ async function main() {
 		name: 'Story Weth Pools Bot',
 		giveApprovals: false,
 		startToken: wethStory,
-		minProfitUsd: 2,
+		minProfitUsd: 1,
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
 		graphBuildConfig: {
