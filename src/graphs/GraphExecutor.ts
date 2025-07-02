@@ -131,7 +131,16 @@ export class GraphExecutor {
 	static async getTxCost(chainId: number, txReceipt: TransactionReceipt) {
 		const nativeCurrency = TokenUtils.getNative(chainId)
 
-		const txCostInNative = txReceipt.gasUsed * txReceipt.effectiveGasPrice
+		let txCostInNative = 0n
+		try {
+			// viem returns not bigint for one of the values (probably effectiveGasPrice)
+			txCostInNative = txReceipt.gasUsed * txReceipt.effectiveGasPrice
+		} catch (error) {
+			logger.error(
+				`Error calculating tx cost in native for tx ${txReceipt.transactionHash}, gasUsed: ${txReceipt.gasUsed}, effectiveGasPrice: ${txReceipt.effectiveGasPrice}`,
+				error,
+			)
+		}
 
 		const txCostInNativeFormatted =
 			nativeCurrency.formatUnits(txCostInNative)
