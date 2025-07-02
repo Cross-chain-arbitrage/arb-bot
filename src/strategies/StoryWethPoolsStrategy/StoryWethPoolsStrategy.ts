@@ -1,4 +1,4 @@
-import { arbitrum, story } from 'viem/chains'
+import { arbitrum } from 'viem/chains'
 import { PoolUtils } from '../../dex/PoolUtils'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
@@ -9,13 +9,13 @@ import { WETH_POOLS } from './wethPools'
 
 async function main() {
 	ClientManager.useCustomRpcUrl(arbitrum.id)
-	const wethStoryAddress = '0xBAb93B7ad7fE8692A878B95a8e689423437cc500'
-	const wethStory = await TokenUtils.fromAddress(wethStoryAddress, story.id)
+	const usdcArbAddress = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
+	const usdcArb = await TokenUtils.fromAddress(usdcArbAddress, arbitrum.id)
 
 	const config: StrategyConfig = {
 		name: 'Story Weth Pools Bot',
 		giveApprovals: false,
-		startToken: wethStory,
+		startToken: usdcArb,
 		minProfitUsd: 1,
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
@@ -28,9 +28,9 @@ async function main() {
 			slippage: 30,
 		},
 		graphOptimizerOptions: {
-			initialValueUSD: 100,
+			initialValueUSD: 400,
 			stepUSD: 200,
-			stepsAmount: 4,
+			stepsAmount: 5,
 			maxPathLength: 6,
 		},
 	}
