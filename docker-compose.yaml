@@ -1,15 +1,15 @@
 version: '3.8'
 
 services:
-    fuse:
+    fuse-fuse:
         build: &build-strategy
             context: .
             dockerfile: Dockerfile.strategy
         environment:
             - ENTRY_POINT=FusePoolsStrategy/FusePoolsStrategy.js
         env_file:
-            - .env.docker.local
-        container_name: fuse
+            - .env.docker.fuse-fuse
+        container_name: fuse-fuse
         restart: unless-stopped
 
     story-weth:
@@ -17,24 +17,33 @@ services:
         environment:
             - ENTRY_POINT=StoryWethPoolsStrategy/StoryWethPoolsStrategy.js
         env_file:
-            - .env.docker.local
+            - .env.docker.story-weth
         container_name: story-weth
         restart: unless-stopped
 
-    weth:
+    lightlink-weth:
         build: *build-strategy
         environment:
-            - ENTRY_POINT=WethPoolsStrategy/WethPoolsStrategy.js
-        container_name: weth
+            - ENTRY_POINT=LightlinkWethPoolsStrategy.js
+        container_name: lightlink-weth
         env_file:
-            - .env.docker.bot
+            - .env.docker.lightlink-weth
         restart: unless-stopped
 
-    wbtc:
+    fuse-wbtc:
         build: *build-strategy
         environment:
-            - ENTRY_POINT=WbtcFuseStrategy/WbtcFuseStrategy.js
+            - ENTRY_POINT=FuseWbtcStrategy.js
         env_file:
-            - .env.docker.bot
-        container_name: wbtc
+            - .env.docker.fuse-wbtc
+        container_name: fuse-wbtc
+        restart: unless-stopped
+
+    fuse-weth:
+        build: *build-strategy
+        environment:
+            - ENTRY_POINT=FuseWethStrategy.js
+        env_file:
+            - .env.docker.fuse-weth
+        container_name: fuse-weth
         restart: unless-stopped
