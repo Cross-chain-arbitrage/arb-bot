@@ -1,9 +1,23 @@
-import { arbitrum } from 'viem/chains'
-import { PoolUtils } from '../../dex/PoolUtils'
-import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ClientManager } from '../../utils/ClientManager'
-import { Strategy, StrategyConfig } from '../Strategy'
-import { WBTC_POOLS } from './wbtcPools'
+import { arbitrum, fuse } from 'viem/chains'
+import { PoolUtils } from '../dex/PoolUtils'
+import { PoolType } from '../dex/poolVariety'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { ClientManager } from '../utils/ClientManager'
+import { PoolData, Strategy, StrategyConfig } from './Strategy'
+
+export const WBTC_POOLS: PoolData[] = [
+	{
+		address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992', // WETH/WBTC
+		type: PoolType.ALGEBRA,
+		chainId: fuse.id,
+	},
+
+	{
+		type: PoolType.UNIV3,
+		address: '0x2f5e87C9312fa29aed5c179E456625D79015299c', // WETH/WBTC
+		chainId: arbitrum.id,
+	},
+]
 
 /* ============ Strategy Config ============ */
 
@@ -14,7 +28,7 @@ async function main() {
 		name: 'WBTC Fuse Bot',
 		giveApprovals: false,
 		startToken: TokenUtils.getNative(arbitrum.id),
-		minProfitUsd: 1,
+		minProfitUsd: 0.5,
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
 		graphBuildConfig: {
