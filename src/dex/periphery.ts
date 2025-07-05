@@ -3,6 +3,7 @@ import {
 	arbitrum,
 	bsc,
 	fuse,
+	gravity,
 	hemi,
 	lightlinkPhoenix,
 	mainnet,
@@ -100,6 +101,14 @@ export const CHAIN_PERIPHERY_CONFIG: Record<number, PoolPeriphery> = {
 			[getAddress('0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865')]: {
 				quoter: '0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997',
 				router: '0x1b81D678ffb9C0263b24A97847620C99d213eB14',
+			},
+		},
+	},
+	[gravity.id]: {
+		[PoolType.ALGEBRA]: {
+			[getAddress('0x10aA510d94E094Bd643677bd2964c3EE085Daffc')]: {
+				router: '0x60A186019F81bFD04aFc16c9C01804a04E79e68B',
+				quoter: '0x52CFD1d72A64f8D13711bb7Dc3899653dbd4191B',
 			},
 		},
 	},
