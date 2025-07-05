@@ -10,6 +10,7 @@
 		"lint": "npx eslint src",
 		"lint:fix": "npx eslint src --fix",
 		"check-types": "npx tsc --noEmit",
+		"check-pool": "sh test/dex/checkPool/checkPool.sh",
 		"build": "npx tsc --project tsconfig.build.json",
 		"getPoolStats": "npx tsx src/getPoolStats.ts",
 		"monitor": "npx tsx src/monitor.ts",

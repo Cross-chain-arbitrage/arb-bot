@@ -32,17 +32,10 @@ makeSuite('Stargate', () => {
 
 		it('MUST simulate sending Token', async () => {
 			const amount = USDT.parseUnits('1')
-			const balanceSlot = 51n
 			const wallet = ClientManager.getWalletClient(arbitrum.id)
 			const recipient = wallet.account.address
 
-			await setTokenBalance(
-				recipient,
-				USDT.address,
-				balanceSlot,
-				amount,
-				wallet,
-			)
+			await setTokenBalance(recipient, USDT.address, amount, wallet)
 
 			const bridgeAddr = await Stargate.getBridgeAddress(USDT)
 
@@ -195,16 +188,12 @@ makeSuite('Stargate', () => {
 					if (token instanceof NativeCurrency) {
 						await setNativeBalance(wallet, recipient, amount * 2n)
 					} else {
-						// const balanceSlot = token.symbol === 'USDT' ? 4n : 8n
-						for (let i = 0; i < 100; i++) {
-							await setTokenBalance(
-								recipient,
-								token.address,
-								BigInt(i),
-								amount,
-								wallet,
-							)
-						}
+						await setTokenBalance(
+							recipient,
+							token.address,
+							amount,
+							wallet,
+						)
 					}
 
 					const bridgeAddr = await Stargate.getBridgeAddress(token)

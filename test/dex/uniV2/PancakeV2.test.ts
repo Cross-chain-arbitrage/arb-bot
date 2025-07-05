@@ -103,21 +103,9 @@ makeSuite('Pancake V2 Pool', () => {
 			// Set up test balances
 			await setNativeBalance(client, botAddress, 10n ** 18n)
 
-			await setTokenBalance(
-				botAddress,
-				wbnbAddress,
-				3n,
-				10n ** 25n,
-				client,
-			)
+			await setTokenBalance(botAddress, wbnbAddress, 10n ** 25n, client)
 
-			await setTokenBalance(
-				botAddress,
-				fuseAddress,
-				0n,
-				10n ** 25n,
-				client,
-			)
+			await setTokenBalance(botAddress, fuseAddress, 10n ** 25n, client)
 		})
 
 		it('should swap WBNB to FUSE', async () => {

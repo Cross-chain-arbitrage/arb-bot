@@ -106,7 +106,6 @@ makeSuite('Edge', () => {
 			await setTokenBalance(
 				botAddress,
 				wethToken.address,
-				51n,
 				amountIn,
 				ClientManager.getClient(arbitrum.id),
 			)
@@ -205,7 +204,6 @@ makeSuite('Edge', () => {
 			await setTokenBalance(
 				botAddress,
 				wethToken.address,
-				51n,
 				amountIn,
 				ClientManager.getClient(arbitrum.id),
 			)
@@ -267,7 +265,6 @@ makeSuite('Edge', () => {
 			await setTokenBalance(
 				botAddress,
 				wbtcArbToken.address,
-				51n, // WBTC balance slot on Arbitrum
 				amountIn,
 				ClientManager.getClient(arbitrum.id),
 			)

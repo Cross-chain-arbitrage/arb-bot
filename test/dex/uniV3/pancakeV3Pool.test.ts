@@ -60,8 +60,8 @@ makeSuite('Pancake V3 pool test', () => {
 		})
 
 		await setNativeBalance(client, botAddress, 10n ** 18n)
-		await setTokenBalance(botAddress, wbnbAddress, 3n, 10n ** 18n, client)
-		await setTokenBalance(botAddress, usdtAddress, 1n, 10n ** 18n, client)
+		await setTokenBalance(botAddress, wbnbAddress, 10n ** 18n, client)
+		await setTokenBalance(botAddress, usdtAddress, 10n ** 18n, client)
 	})
 
 	it('should create pool with correct tokens', () => {
