@@ -56,25 +56,11 @@ makeSuite('algebra pool test', () => {
 			client: walletClient,
 		})
 
-		const balanceSlotIndex = 1n
-
 		await setNativeBalance(client, botAddress, 10n ** 18n)
 
-		await setTokenBalance(
-			botAddress,
-			wethAddress,
-			balanceSlotIndex,
-			10n ** 18n,
-			client,
-		)
+		await setTokenBalance(botAddress, wethAddress, 10n ** 18n, client)
 
-		await setTokenBalance(
-			botAddress,
-			usdtAddress,
-			balanceSlotIndex,
-			10n ** 18n,
-			client,
-		)
+		await setTokenBalance(botAddress, usdtAddress, 10n ** 18n, client)
 	})
 
 	it('should quote swap', async () => {

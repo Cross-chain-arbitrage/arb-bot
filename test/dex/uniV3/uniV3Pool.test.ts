@@ -41,20 +41,8 @@ makeSuite('Uniswap V3 pool test', () => {
 			WETH = await TokenUtils.fromAddress<Token>(wethAddress, hemi.id)
 
 			await setNativeBalance(client, botAddress, 10n ** 18n)
-			await setTokenBalance(
-				botAddress,
-				wethAddress,
-				3n,
-				10n ** 18n,
-				client,
-			)
-			await setTokenBalance(
-				botAddress,
-				usdcAddress,
-				1n,
-				10n ** 18n,
-				client,
-			)
+			await setTokenBalance(botAddress, wethAddress, 10n ** 18n, client)
+			await setTokenBalance(botAddress, usdcAddress, 10n ** 18n, client)
 		})
 
 		it('should create pool with correct tokens', () => {
@@ -190,7 +178,7 @@ makeSuite('Uniswap V3 pool test', () => {
 		it('should swap USDC to WETH', async () => {
 			const amount = USDC.parseUnits('5000')
 
-			await setTokenBalance(botAddress, USDC.address, 9n, amount, client)
+			await setTokenBalance(botAddress, USDC.address, amount, client)
 
 			await USDC.approve(pool.routerAddress, amount)
 

@@ -1,6 +1,6 @@
 import { ChildProcess, exec } from 'child_process'
 import getPort from 'get-port'
-import { Chain, Client, encodeAbiParameters, keccak256, toHex } from 'viem'
+import { Chain, Client, toHex } from 'viem'
 import { ClientManager } from '../../src/utils/ClientManager'
 import { getPrivateKey } from '../../src/utils/common'
 
@@ -123,9 +123,9 @@ class Anvil {
 
 	private onAnvilStart() {
 		return new Promise<void>((resolve, reject) => {
-			const process = this.process
+			const anvilProcess = this.process
 
-			process?.stdout?.on('data', (data) => {
+			anvilProcess?.stdout?.on('data', (data) => {
 				if (
 					(data as string).includes(
 						`Listening on 127.0.0.1:${this.port}`,
@@ -135,9 +135,11 @@ class Anvil {
 				}
 			})
 
-			process?.stderr?.on('data', (data) => {
+			anvilProcess?.stderr?.on('data', (data) => {
 				if ((data as string).includes('Error:')) {
+					console.log(data)
 					reject(new Error('Anvil failed to start'))
+					process.exit(1)
 				}
 			})
 
@@ -145,35 +147,23 @@ class Anvil {
 				reject(new Error('Anvil failed to start'))
 			}, this.config.timeoutStartAnvil || 5000)
 
-			process?.stdout?.on('data', () => clearTimeout(timer))
+			anvilProcess?.stdout?.on('data', () => clearTimeout(timer))
 		})
 	}
 }
 
 /* ======== storage helpers ======== */
 
-/**
- * @param balanceSlotIndex 0 for standard ERC20, 1 for OFT
- * @dev WBTC ARB has balance slot 51!!! WTF?
- */
 export async function setTokenBalance(
 	userAddress: Address,
 	tokenAddress: Address,
-	balanceSlotIndex: bigint,
 	balance: bigint,
 	client: Client,
 ) {
-	const balanceSlot = keccak256(
-		encodeAbiParameters(
-			[{ type: 'address' }, { type: 'uint256' }],
-			[userAddress, balanceSlotIndex],
-		),
-	)
-
 	await client.request({
 		// @ts-expect-error viem doesn't know about this method
-		method: 'anvil_setStorageAt',
-		params: [tokenAddress, balanceSlot, toHex(balance, { size: 32 })],
+		method: 'anvil_dealERC20',
+		params: [userAddress, tokenAddress, toHex(balance, { size: 32 })],
 	})
 }
 

@@ -65,7 +65,6 @@ makeSuite('FuseBridge', () => {
 			await setTokenBalance(
 				wallet.account.address,
 				WBTC_FUSE_ADDRESS,
-				0n,
 				amount,
 				wallet,
 			)
@@ -122,12 +121,9 @@ makeSuite('FuseBridge', () => {
 
 			const wallet = ClientManager.getWalletClient(arbitrum.id)
 
-			const balanceSlot = 51n
-
 			await setTokenBalance(
 				wallet.account.address,
 				WBTC_ARB_ADDRESS,
-				balanceSlot,
 				amount,
 				wallet,
 			)
@@ -216,7 +212,6 @@ makeSuite('FuseBridge', () => {
 				await setTokenBalance(
 					wallet.account.address,
 					FUSE.address,
-					0n,
 					amount,
 					wallet,
 				)
@@ -257,15 +252,12 @@ makeSuite('FuseBridge', () => {
 
 				const amount = FUSE.parseUnits('100')
 
-				for (let i = 0; i < 100; i++) {
-					await setTokenBalance(
-						wallet.account.address,
-						FUSE.address,
-						BigInt(i),
-						amount,
-						wallet,
-					)
-				}
+				await setTokenBalance(
+					wallet.account.address,
+					FUSE.address,
+					amount,
+					wallet,
+				)
 
 				const { address: bridgeAddr } = FuseBridge.getBridge(
 					FUSE,

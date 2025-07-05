@@ -145,7 +145,6 @@ makeSuite('UniV3LikePool', () => {
 			await setTokenBalance(
 				botAddress,
 				pool.token0.address,
-				1n,
 				1000000n,
 				client,
 			)
