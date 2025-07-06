@@ -1,4 +1,12 @@
-import { arbitrum, bsc, fuse, hemi, lightlinkPhoenix, story } from 'viem/chains'
+import {
+	arbitrum,
+	bsc,
+	fuse,
+	gravity,
+	hemi,
+	lightlinkPhoenix,
+	story,
+} from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
 import { getAccountAddress } from '../../utils/common'
 import { NativeCurrency } from './NativeCurrency'
@@ -13,6 +21,7 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[fuse.id]: '0x0BE9e53fd7EDaC9F859882AfdDa116645287C629',
 	[story.id]: '0x1514000000000000000000000000000000000000',
 	[bsc.id]: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+	[gravity.id]: '0xBB859E225ac8Fb6BE1C7e38D87b767e95Fef0EbD',
 }
 
 export class WrappedNative extends Token {

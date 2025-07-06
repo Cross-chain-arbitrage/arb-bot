@@ -41,7 +41,10 @@ export class GraphOptimizer {
 					tokenAmount,
 					graph,
 					maxPathLength,
-				),
+				).catch((error) => {
+					logger.error(error)
+					return null
+				}),
 			)
 		}
 
