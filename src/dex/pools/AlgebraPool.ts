@@ -44,10 +44,7 @@ export class AlgebraPool extends UniV3LikePool {
 		}
 	}
 
-	/**
-	 * @dev override the quoteSwapAmountOut method to use the AlgebraQuoter ABI and unique arguments
-	 */
-	async quoteSwapAmountOut(params: SwapParams) {
+	override async quoteSwapAmountOut(params: SwapParams) {
 		this.validateMismatchSwapParams(params)
 
 		const { result } = await this.client.simulateContract({

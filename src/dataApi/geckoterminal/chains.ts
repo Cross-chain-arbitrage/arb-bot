@@ -60,6 +60,7 @@ export const chainIdToGeckoChainId = {
 	'1329': 'sei-network',
 	'1514': 'story',
 	'1559': 'tenet',
+	'1625': 'gravity-alpha',
 	'1868': 'soneium',
 	'1890': 'lightlink-phoenix',
 	'1994': 'bitgert',

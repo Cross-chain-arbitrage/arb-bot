@@ -4,6 +4,7 @@ import { PoolData } from '../strategies/Strategy'
 import { ClientManager } from '../utils/ClientManager'
 import { Pool } from './base/Pool'
 import { AlgebraPool } from './pools/AlgebraPool'
+import { AlgebraV1_9Pool } from './pools/AlgebraV1_9Pool'
 import { PancakeV2Pool } from './pools/PancakeV2Pool'
 import { PancakeV3Pool } from './pools/PancakeV3Pool'
 import { UniV2Pool } from './pools/UniV2Pool'
@@ -27,8 +28,8 @@ export class PoolUtils {
 				return PancakeV2Pool.create(poolAddress, chainId)
 			case PoolType.PANCAKEV3:
 				return PancakeV3Pool.create(poolAddress, chainId)
-			default:
-				throw new Error('Unknown pool type')
+			case PoolType.ALGEBRA_V1_9:
+				return AlgebraV1_9Pool.create(poolAddress, chainId)
 		}
 	}
 

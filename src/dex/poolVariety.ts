@@ -1,4 +1,5 @@
 import { ALGEBRA_POOL_ABI } from '../abi/algebra/algebraPool'
+import { ALGEBRA_V1_9_POOL_ABI } from '../abi/algebraV1_9/algebraV1_9Pool'
 import { PANCAKE_V3_POOL_ABI } from '../abi/pancakeV3/pancakeV3Pool'
 import { UNIV2_POOL_ABI } from '../abi/uniV2/pool'
 import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
@@ -10,6 +11,7 @@ export enum PoolType {
 	PANCAKEV2 = 'pancakeV2',
 	PANCAKEV3 = 'pancakeV3',
 	ALGEBRA = 'algebra',
+	ALGEBRA_V1_9 = 'algebraV1_9',
 }
 
 export const POOL_ERRORS: Record<
@@ -21,6 +23,7 @@ export const POOL_ERRORS: Record<
 	[PoolType.PANCAKEV2]: createCustomError('PancakeV2PoolError'),
 	[PoolType.PANCAKEV3]: createCustomError('PancakeV3PoolError'),
 	[PoolType.ALGEBRA]: createCustomError('AlgebraPoolError'),
+	[PoolType.ALGEBRA_V1_9]: createCustomError('AlgebraV1_9PoolError'),
 }
 
 export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
@@ -43,6 +46,14 @@ export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
 	[PoolType.ALGEBRA]: {
 		type: 'v3-like',
 		abi: ALGEBRA_POOL_ABI,
+		slotFunction: 'globalState',
+		sqrtPriceX96Index: 0,
+		feeFunction: 'fee',
+		tickSpacingFunction: 'tickSpacing',
+	},
+	[PoolType.ALGEBRA_V1_9]: {
+		type: 'v3-like',
+		abi: ALGEBRA_V1_9_POOL_ABI,
 		slotFunction: 'globalState',
 		sqrtPriceX96Index: 0,
 		feeFunction: 'fee',

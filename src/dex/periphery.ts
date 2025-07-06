@@ -20,6 +20,7 @@ export interface PoolPeriphery {
 	[PoolType.PANCAKEV3]?: Record<FactoryAddress, UniV3PoolPeriphery>
 	[PoolType.PANCAKEV2]?: Record<FactoryAddress, UniV2PoolPeriphery>
 	[PoolType.ALGEBRA]?: Record<FactoryAddress, UniV3PoolPeriphery>
+	[PoolType.ALGEBRA_V1_9]?: Record<FactoryAddress, UniV3PoolPeriphery>
 }
 
 /**
@@ -105,7 +106,7 @@ export const CHAIN_PERIPHERY_CONFIG: Record<number, PoolPeriphery> = {
 		},
 	},
 	[gravity.id]: {
-		[PoolType.ALGEBRA]: {
+		[PoolType.ALGEBRA_V1_9]: {
 			[getAddress('0x10aA510d94E094Bd643677bd2964c3EE085Daffc')]: {
 				router: '0x60A186019F81bFD04aFc16c9C01804a04E79e68B',
 				quoter: '0x52CFD1d72A64f8D13711bb7Dc3899653dbd4191B',

@@ -5,6 +5,7 @@ import {
 	TransactionReceipt,
 } from 'viem'
 import { ALGEBRA_POOL_ABI } from '../../../abi/algebra/algebraPool'
+import { ALGEBRA_V1_9_POOL_ABI } from '../../../abi/algebraV1_9/algebraV1_9Pool'
 import { PANCAKE_V3_POOL_ABI } from '../../../abi/pancakeV3/pancakeV3Pool'
 import { UNIV3_POOL_ABI } from '../../../abi/uniV3/uniV3Pool'
 import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
@@ -203,6 +204,7 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 					| typeof UNIV3_POOL_ABI
 					| typeof PANCAKE_V3_POOL_ABI
 					| typeof ALGEBRA_POOL_ABI
+					| typeof ALGEBRA_V1_9_POOL_ABI
 
 				switch (this.poolType) {
 					case PoolType.UNIV3:
@@ -213,6 +215,9 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 						break
 					case PoolType.ALGEBRA:
 						abi = ALGEBRA_POOL_ABI
+						break
+					case PoolType.ALGEBRA_V1_9:
+						abi = ALGEBRA_V1_9_POOL_ABI
 						break
 					default:
 						throw new this.customError('Unsupported pool type')
