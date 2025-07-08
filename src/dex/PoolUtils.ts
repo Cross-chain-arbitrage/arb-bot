@@ -9,6 +9,7 @@ import { PancakeV2Pool } from './pools/PancakeV2Pool'
 import { PancakeV3Pool } from './pools/PancakeV3Pool'
 import { UniV2Pool } from './pools/UniV2Pool'
 import { UniV3Pool } from './pools/UniV3Pool'
+import { VelodromeV1Pool } from './pools/VelodromeV1'
 import { VelodromeV2Pool } from './pools/VelodromeV2Pool'
 import { PoolType } from './poolVariety'
 
@@ -33,6 +34,8 @@ export class PoolUtils {
 				return AlgebraV1_9Pool.create(poolAddress, chainId)
 			case PoolType.VELODROME_V2:
 				return VelodromeV2Pool.create(poolAddress, chainId)
+			case PoolType.VELODROME_V1:
+				return VelodromeV1Pool.create(poolAddress, chainId)
 		}
 	}
 

@@ -9,6 +9,7 @@ import { ALGEBRA_V1_9_POOL_ABI } from '../../../abi/algebraV1_9/algebraV1_9Pool'
 import { PANCAKE_V3_POOL_ABI } from '../../../abi/pancakeV3/pancakeV3Pool'
 import { UNIV3_POOL_ABI } from '../../../abi/uniV3/uniV3Pool'
 import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
+import { VELODROME_V1_POOL_ABI } from '../../../abi/velodrome/velodromeV1Pool'
 import { Token } from '../../../primitives/tokens/Token'
 import { shortenAddress } from '../../../utils/common'
 import { POOL_CONFIGS, PoolType } from '../../poolVariety'
@@ -205,6 +206,7 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 					| typeof PANCAKE_V3_POOL_ABI
 					| typeof ALGEBRA_POOL_ABI
 					| typeof ALGEBRA_V1_9_POOL_ABI
+					| typeof VELODROME_V1_POOL_ABI
 
 				switch (this.poolType) {
 					case PoolType.UNIV3:
@@ -218,6 +220,9 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 						break
 					case PoolType.ALGEBRA_V1_9:
 						abi = ALGEBRA_V1_9_POOL_ABI
+						break
+					case PoolType.VELODROME_V1:
+						abi = VELODROME_V1_POOL_ABI
 						break
 					default:
 						throw new this.customError('Unsupported pool type')

@@ -23,6 +23,7 @@ export interface PoolPeriphery {
 	[PoolType.ALGEBRA]?: Record<FactoryAddress, UniV3PoolPeriphery>
 	[PoolType.ALGEBRA_V1_9]?: Record<FactoryAddress, UniV3PoolPeriphery>
 	[PoolType.VELODROME_V2]?: Record<FactoryAddress, UniV2PoolPeriphery>
+	[PoolType.VELODROME_V1]?: Record<FactoryAddress, UniV3PoolPeriphery>
 }
 
 /**
@@ -120,6 +121,12 @@ export const CHAIN_PERIPHERY_CONFIG: Record<number, PoolPeriphery> = {
 			// Velodrome Universal Router
 			[getAddress('0x31832f2a97Fd20664D76Cc421207669b55CE4BC0')]: {
 				router: '0x01D40099fCD87C018969B0e8D4aB1633Fb34763C',
+			},
+		},
+		[PoolType.VELODROME_V1]: {
+			[getAddress('0x04625B046C69577EfC40e6c0Bb83CDBAfab5a55F')]: {
+				router: '0x01D40099fCD87C018969B0e8D4aB1633Fb34763C',
+				quoter: '0x846B5Cec4B4C3f7B95b3321D01e38a72D358F5C0', //mixed quoter v2
 			},
 		},
 	},
