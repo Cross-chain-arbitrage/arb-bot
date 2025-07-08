@@ -73,6 +73,12 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 
 		const reserves = await this.getReserves()
 
+		console.log('token0', this.token0.symbol)
+		console.log('tokenIn', params.tokenIn.symbol)
+		console.log('amountIn', params.amountIn)
+		console.log('reserves', reserves)
+		console.log('fee', this.fee)
+
 		const amountOut = this.calculateAmountOut(
 			params.amountIn,
 			reserves[0],
@@ -92,9 +98,11 @@ export abstract class UniV2LikePool extends UniV2LikePoolStatic {
 		const reserveIn = isFromToken0 ? reserve0 : reserve1
 		const reserveOut = isFromToken0 ? reserve1 : reserve0
 
-		const amountInWithFee = amountIn * (BASIS_POINTS - BigInt(this.fee))
+		const amountInWithFee =
+			amountIn - (amountIn * BigInt(this.fee)) / 10000n
+
 		const numerator = amountInWithFee * reserveOut
-		const denominator = reserveIn * BASIS_POINTS + amountInWithFee
+		const denominator = reserveIn + amountInWithFee
 
 		return numerator / denominator
 	}

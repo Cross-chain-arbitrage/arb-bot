@@ -26,7 +26,7 @@ export type PoolTestConfig = {
 export function testPool(context: PoolTestConfig) {
 	const { chain, poolAddress, rpcUrl, poolType, assertPoolCreation } = context
 
-	const AMOUNT_IN_USD = 500
+	const AMOUNT_IN_USD = 1000
 
 	let client: Client
 	let walletClient: WalletClient

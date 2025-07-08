@@ -33,6 +33,11 @@ export class VelodromeV2Pool extends UniV2LikePool {
 			factory,
 		)
 
+		if (isStable) {
+			throw new Error(
+				'Velodrome V2 stable pools are not supported (need to implement calculateAmountOut for another curve type)',
+			)
+		}
 		this.isStable = isStable
 	}
 
