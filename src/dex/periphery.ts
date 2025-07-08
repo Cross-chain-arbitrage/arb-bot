@@ -9,6 +9,7 @@ import {
 	mainnet,
 	rootstock,
 	story,
+	swellchain,
 } from 'viem/chains'
 import { PoolType } from './poolVariety'
 
@@ -21,6 +22,7 @@ export interface PoolPeriphery {
 	[PoolType.PANCAKEV2]?: Record<FactoryAddress, UniV2PoolPeriphery>
 	[PoolType.ALGEBRA]?: Record<FactoryAddress, UniV3PoolPeriphery>
 	[PoolType.ALGEBRA_V1_9]?: Record<FactoryAddress, UniV3PoolPeriphery>
+	[PoolType.VELODROME_V2]?: Record<FactoryAddress, UniV2PoolPeriphery>
 }
 
 /**
@@ -110,6 +112,14 @@ export const CHAIN_PERIPHERY_CONFIG: Record<number, PoolPeriphery> = {
 			[getAddress('0x10aA510d94E094Bd643677bd2964c3EE085Daffc')]: {
 				router: '0x60A186019F81bFD04aFc16c9C01804a04E79e68B',
 				quoter: '0x52CFD1d72A64f8D13711bb7Dc3899653dbd4191B',
+			},
+		},
+	},
+	[swellchain.id]: {
+		[PoolType.VELODROME_V2]: {
+			// Velodrome Universal Router
+			[getAddress('0x31832f2a97Fd20664D76Cc421207669b55CE4BC0')]: {
+				router: '0x01D40099fCD87C018969B0e8D4aB1633Fb34763C',
 			},
 		},
 	},

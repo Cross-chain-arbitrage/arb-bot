@@ -64,6 +64,7 @@ export const chainIdToGeckoChainId = {
 	'1868': 'soneium',
 	'1890': 'lightlink-phoenix',
 	'1994': 'bitgert',
+	'1923': 'swellchain',
 	'2000': 'dogechain',
 	'2020': 'ronin',
 	'2222': 'kava',

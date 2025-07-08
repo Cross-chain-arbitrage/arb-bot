@@ -1,4 +1,4 @@
-import { encodeAbiParameters, parseAbiParameters } from 'viem'
+import { encodeAbiParameters, type AbiParameter, type Address } from 'viem'
 
 /**
  * CommandTypes
@@ -7,168 +7,105 @@ import { encodeAbiParameters, parseAbiParameters } from 'viem'
  */
 export enum CommandType {
 	V3_SWAP_EXACT_IN = 0x00,
-	V3_SWAP_EXACT_OUT = 0x01,
-	PERMIT2_TRANSFER_FROM = 0x02,
-	PERMIT2_PERMIT_BATCH = 0x03,
-	SWEEP = 0x04,
-	TRANSFER = 0x05,
-	PAY_PORTION = 0x06,
-
 	V2_SWAP_EXACT_IN = 0x08,
-	V2_SWAP_EXACT_OUT = 0x09,
-	PERMIT2_PERMIT = 0x0a,
 	WRAP_ETH = 0x0b,
 	UNWRAP_WETH = 0x0c,
-	PERMIT2_TRANSFER_FROM_BATCH = 0x0d,
-	BALANCE_CHECK_ERC20 = 0x0e,
-
-	V4_SWAP = 0x10,
-	V4_INITIALIZE_POOL = 0x11,
-	BRIDGE_TOKEN = 0x12,
-
-	EXECUTE_SUB_PLAN = 0x21,
 }
 
-const ALLOW_REVERT_FLAG = 0x80
+// ABI parameter with required name
+type NamedAbiParameter = AbiParameter & { name: string }
 
-const REVERTIBLE_COMMANDS = new Set<CommandType>([
-	CommandType.EXECUTE_SUB_PLAN,
-	CommandType.PERMIT2_PERMIT,
-	CommandType.PERMIT2_PERMIT_BATCH,
-])
-
-const PERMIT_STRUCT =
-	'((address token,uint160 amount,uint48 expiration,uint48 nonce) details, address spender, uint256 sigDeadline)'
-
-const POOL_KEY_STRUCT =
-	'(address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks)'
-
-const PERMIT_BATCH_STRUCT =
-	'((address token,uint160 amount,uint48 expiration,uint48 nonce)[] details, address spender, uint256 sigDeadline)'
-
-const PERMIT2_TRANSFER_FROM_STRUCT =
-	'(address from,address to,uint160 amount,address token)'
-const PERMIT2_TRANSFER_FROM_BATCH_STRUCT = PERMIT2_TRANSFER_FROM_STRUCT + '[]'
-
-const ABI_DEFINITION: { [key in CommandType]: string[] } = {
-	// Batch Reverts
-	[CommandType.EXECUTE_SUB_PLAN]: ['bytes', 'bytes[]'],
-
-	// Permit2 Actions
-	[CommandType.PERMIT2_PERMIT]: [PERMIT_STRUCT, 'bytes'],
-	[CommandType.PERMIT2_PERMIT_BATCH]: [PERMIT_BATCH_STRUCT, 'bytes'],
-	[CommandType.PERMIT2_TRANSFER_FROM]: ['address', 'address', 'uint160'],
-	[CommandType.PERMIT2_TRANSFER_FROM_BATCH]: [
-		PERMIT2_TRANSFER_FROM_BATCH_STRUCT,
-	],
-
-	// Uniswap Actions
+const ABI_DEFINITION = {
 	[CommandType.V3_SWAP_EXACT_IN]: [
-		'address',
-		'uint256',
-		'uint256',
-		'bytes',
-		'bool',
-		'bool',
-	],
-	[CommandType.V3_SWAP_EXACT_OUT]: [
-		'address',
-		'uint256',
-		'uint256',
-		'bytes',
-		'bool',
-		'bool',
+		{ type: 'address', name: 'recipient' },
+		{ type: 'uint256', name: 'amountIn' },
+		{ type: 'uint256', name: 'amountOutMinimum' },
+		{ type: 'bytes', name: 'path' },
+		{ type: 'bool', name: 'payerIsUser' },
+		{ type: 'bool', name: 'isUni' },
 	],
 	[CommandType.V2_SWAP_EXACT_IN]: [
-		'address',
-		'uint256',
-		'uint256',
-		'bytes',
-		'bool',
-		'bool',
+		{ type: 'address', name: 'recipient' },
+		{ type: 'uint256', name: 'amountIn' },
+		{ type: 'uint256', name: 'amountOutMinimum' },
+		{ type: 'bytes', name: 'path' },
+		{ type: 'bool', name: 'payerIsUser' },
+		{ type: 'bool', name: 'isUni' },
 	],
-	[CommandType.V2_SWAP_EXACT_OUT]: [
-		'address',
-		'uint256',
-		'uint256',
-		'bytes',
-		'bool',
-		'bool',
+	[CommandType.WRAP_ETH]: [
+		{ type: 'address', name: 'recipient' },
+		{ type: 'uint256', name: 'amountMinimum' },
 	],
-
-	// Token Actions and Checks
-	[CommandType.WRAP_ETH]: ['address', 'uint256'],
-	[CommandType.UNWRAP_WETH]: ['address', 'uint256'],
-	[CommandType.SWEEP]: ['address', 'address', 'uint256'],
-	[CommandType.TRANSFER]: ['address', 'address', 'uint256'],
-	[CommandType.PAY_PORTION]: ['address', 'address', 'uint256'],
-	[CommandType.BALANCE_CHECK_ERC20]: ['address', 'address', 'uint256'],
-
-	// V4 Actions
-	[CommandType.V4_SWAP]: ['bytes', 'bytes[]'],
-	[CommandType.V4_INITIALIZE_POOL]: [POOL_KEY_STRUCT, 'uint160'],
-
-	// Bridge Actions
-	[CommandType.BRIDGE_TOKEN]: [
-		'address',
-		'address',
-		'uint256',
-		'uint32',
-		'uint8',
+	[CommandType.UNWRAP_WETH]: [
+		{ type: 'address', name: 'recipient' },
+		{ type: 'uint256', name: 'amountMinimum' },
 	],
+} as const satisfies Record<CommandType, readonly NamedAbiParameter[]>
+
+// Type magic to automatically infer parameter types from ABI
+type AbiParameterToPrimitiveType<TAbiParameter extends NamedAbiParameter> =
+	TAbiParameter['type'] extends 'address'
+		? Address
+		: TAbiParameter['type'] extends 'uint256'
+			? bigint
+			: TAbiParameter['type'] extends 'bytes'
+				? `0x${string}`
+				: TAbiParameter['type'] extends 'bool'
+					? boolean
+					: never
+
+type AbiParametersToObject<
+	TAbiParameters extends readonly NamedAbiParameter[],
+> = {
+	[K in TAbiParameters[number] as K['name']]: AbiParameterToPrimitiveType<K>
+}
+
+// Automatically generate parameter types for each command
+export type CommandParameters = {
+	[K in CommandType]: AbiParametersToObject<(typeof ABI_DEFINITION)[K]>
 }
 
 export class RoutePlanner {
-	commands: string
-	inputs: string[]
+	commands: Bytes
+	inputs: Bytes[]
 
 	constructor() {
 		this.commands = '0x'
 		this.inputs = []
 	}
 
-	addSubPlan(subplan: RoutePlanner): void {
-		this.addCommand(
-			CommandType.EXECUTE_SUB_PLAN,
-			[subplan.commands, subplan.inputs],
-			true,
-		)
-	}
-
-	addCommand(
-		type: CommandType,
-		parameters: unknown[],
-		allowRevert = false,
+	addCommand<T extends CommandType>(
+		commandType: T,
+		parameters: CommandParameters[T],
 	): void {
-		const command = createCommand(type, parameters)
+		const command = createCommand(commandType, parameters)
 		this.inputs.push(command.encodedInput)
-		if (allowRevert) {
-			if (!REVERTIBLE_COMMANDS.has(command.type)) {
-				throw new Error(
-					`command type: ${command.type} cannot be allowed to revert`,
-				)
-			}
-			command.type = command.type | ALLOW_REVERT_FLAG
-		}
 
 		this.commands = this.commands.concat(
 			command.type.toString(16).padStart(2, '0'),
-		)
+		) as Bytes
 	}
 }
 
 export type RouterCommand = {
 	type: CommandType
-	encodedInput: string
+	encodedInput: Bytes
 }
 
-export function createCommand(
-	type: CommandType,
-	parameters: unknown[],
+export function createCommand<T extends CommandType>(
+	commandType: T,
+	parameters: CommandParameters[T],
 ): RouterCommand {
+	const abiParams = ABI_DEFINITION[commandType]
+	const values = abiParams.map((param) => {
+		const paramObject = parameters as Record<string, unknown>
+		return paramObject[param.name]
+	})
+
 	const encodedInput = encodeAbiParameters(
-		parseAbiParameters(ABI_DEFINITION[type].join(', ')),
-		parameters,
+		abiParams as readonly AbiParameter[],
+		values as readonly unknown[],
 	)
-	return { type, encodedInput }
+
+	return { type: commandType, encodedInput }
 }

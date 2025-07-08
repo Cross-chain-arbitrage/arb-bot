@@ -3,6 +3,7 @@ import { ALGEBRA_V1_9_POOL_ABI } from '../abi/algebraV1_9/algebraV1_9Pool'
 import { PANCAKE_V3_POOL_ABI } from '../abi/pancakeV3/pancakeV3Pool'
 import { UNIV2_POOL_ABI } from '../abi/uniV2/pool'
 import { UNIV3_POOL_ABI } from '../abi/uniV3/uniV3Pool'
+import { VELODROME_V2_POOL_ABI } from '../abi/velodrome/velodromeV2Pool'
 import { createCustomError } from '../utils/common'
 
 export enum PoolType {
@@ -12,6 +13,8 @@ export enum PoolType {
 	PANCAKEV3 = 'pancakeV3',
 	ALGEBRA = 'algebra',
 	ALGEBRA_V1_9 = 'algebraV1_9',
+	// VELODROME_V1 = 'velodromeV1',
+	VELODROME_V2 = 'velodromeV2',
 }
 
 export const POOL_ERRORS: Record<
@@ -24,6 +27,7 @@ export const POOL_ERRORS: Record<
 	[PoolType.PANCAKEV3]: createCustomError('PancakeV3PoolError'),
 	[PoolType.ALGEBRA]: createCustomError('AlgebraPoolError'),
 	[PoolType.ALGEBRA_V1_9]: createCustomError('AlgebraV1_9PoolError'),
+	[PoolType.VELODROME_V2]: createCustomError('VelodromeV2PoolError'),
 }
 
 export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
@@ -67,6 +71,11 @@ export const POOL_CONFIGS: Record<PoolType, PoolConfig> = {
 	[PoolType.PANCAKEV2]: {
 		type: 'v2-like',
 		abi: UNIV2_POOL_ABI,
+		defaultFee: 25, // 0.25%
+	},
+	[PoolType.VELODROME_V2]: {
+		type: 'v2-like',
+		abi: VELODROME_V2_POOL_ABI,
 		defaultFee: 25, // 0.25%
 	},
 }
