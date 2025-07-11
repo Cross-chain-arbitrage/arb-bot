@@ -11,7 +11,6 @@ import { UNIV3_POOL_ABI } from '../../../abi/uniV3/uniV3Pool'
 import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
 import { VELODROME_V1_POOL_ABI } from '../../../abi/velodrome/velodromeV1Pool'
 import { Token } from '../../../primitives/tokens/Token'
-import { shortenAddress } from '../../../utils/common'
 import { POOL_CONFIGS, PoolType } from '../../poolVariety'
 import { UniV3LikePoolStatic } from './UniV3LikePoolStatic'
 
@@ -114,36 +113,6 @@ export abstract class UniV3LikePool extends UniV3LikePoolStatic {
 		}
 
 		return args
-	}
-
-	validateMismatchSwapParams(params: SwapParams) {
-		if (isAddressEqual(params.tokenIn.address, params.tokenOut.address)) {
-			throw new this.customError(
-				'tokenIn and tokenOut cannot be the same',
-			)
-		}
-
-		if (
-			!isAddressEqual(params.tokenIn.address, this.token0.address) &&
-			!isAddressEqual(params.tokenIn.address, this.token1.address)
-		) {
-			throw new this.customError('tokenIn must be token0 or token1')
-		}
-
-		if (
-			!isAddressEqual(params.tokenOut.address, this.token0.address) &&
-			!isAddressEqual(params.tokenOut.address, this.token1.address)
-		) {
-			throw new this.customError(
-				`tokenOut must be ${this.token0.symbol} (${this.token0.chainId}:${shortenAddress(this.token0.address)}) ` +
-					`or ${this.token1.symbol} (${this.token1.chainId}:${shortenAddress(this.token1.address)}), ` +
-					`got ${params.tokenOut.symbol} (${params.tokenOut.chainId}:${shortenAddress(params.tokenOut.address)})`,
-			)
-		}
-
-		if (params.amountIn <= 0n) {
-			throw new this.customError('amountIn cannot be 0 or negative')
-		}
 	}
 
 	async validateBalance(swapParams: SwapParams) {

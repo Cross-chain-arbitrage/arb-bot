@@ -5,7 +5,8 @@ import {
 	WalletClient,
 } from 'viem'
 import { mainnet } from 'viem/chains'
-import { UniV2Pool } from '../../../src/dex/pools/UniV2Pool'
+import { PoolUtils } from '../../../src/dex/PoolUtils'
+import { UniV2Pool } from '../../../src/dex/UniV2/Pool'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import {
@@ -39,7 +40,11 @@ makeSuite('Uniswap V2 Pool', () => {
 	beforeAll(async () => {
 		walletClient = ClientManager.getWalletClient(mainnet.id)
 		botAddress = walletClient.account!.address
-		pool = await UniV2Pool.create(poolAddress, mainnet.id)
+		pool = (await PoolUtils.createPool(
+			poolAddress,
+			mainnet.id,
+			'UNIV2',
+		)) as UniV2Pool
 		FUSE = getContract({
 			address: pool.token0.address,
 			abi: erc20Abi,
@@ -68,7 +73,7 @@ makeSuite('Uniswap V2 Pool', () => {
 
 	describe('Price Calculations', () => {
 		it('should calculate correct price from reserves', async () => {
-			const { price } = await pool.getPrices()
+			const { price } = await pool.getPrice()
 			expect(price).toBeGreaterThan(0)
 		})
 	})
@@ -206,7 +211,7 @@ makeSuite('Uniswap V2 Pool', () => {
 					tokenOut: pool.token0,
 					amountIn: 10n ** 18n,
 				}),
-			).toThrow('Token in and token out cannot be the same')
+			).toThrow('tokenIn and tokenOut cannot be the same')
 		})
 	})
 })
