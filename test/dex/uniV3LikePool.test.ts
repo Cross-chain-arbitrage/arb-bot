@@ -7,7 +7,7 @@ import {
 	WalletClient,
 } from 'viem'
 import { fuse, story } from 'viem/chains'
-import { UniV3LikePool } from '../../src/dex/base/UniV3LikePool/UniV3LikePool'
+import { UniV3LikePool } from '../../src/dex/base/uniV3Bricks/UniV3LikePool'
 import { CHAIN_PERIPHERY_CONFIG } from '../../src/dex/periphery'
 import { PoolUtils } from '../../src/dex/PoolUtils'
 import { PoolType } from '../../src/dex/poolVariety'

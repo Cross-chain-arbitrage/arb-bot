@@ -1,7 +1,7 @@
 import { UniV2PoolCreator } from './UniV2/PoolCreator'
-
+import { UniV3PoolCreator } from './UniV3/PoolCreator'
 export const DexRegistry = {
-	// UNIV3: 'uniV3',
+	UNIV3: new UniV3PoolCreator(),
 	UNIV2: new UniV2PoolCreator(),
 	// PANCAKEV2: 'pancakeV2',
 	// PANCAKEV3: 'pancakeV3',

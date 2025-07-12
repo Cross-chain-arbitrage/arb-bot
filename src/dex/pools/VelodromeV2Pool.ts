@@ -4,7 +4,7 @@ import { VELODROME_V2_FACTORY_ABI } from '../../abi/velodrome/velodromeV2Factory
 import { VELODROME_V2_POOL_ABI } from '../../abi/velodrome/velodromeV2Pool'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
-import { UniV2LikePool } from '../base/UniV2Like/UniV2LikePool'
+import { UniV2LikePool } from '../base/uniV2Bricks/UniV2LikePool'
 import { POOL_ERRORS, PoolType } from '../poolVariety'
 import { CommandType, RoutePlanner } from '../velodromeUniversalRouterPlanner'
 

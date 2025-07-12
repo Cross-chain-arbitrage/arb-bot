@@ -1,7 +1,7 @@
 import { Abi, Address } from 'viem'
 import { UNIV3_ROUTER_ABI } from '../../abi/uniV3/uniV3Router'
 import { UNIV3_ROUTER02_ABI } from '../../abi/uniV3/uniV3Router02'
-import { UniV3LikePool } from '../base/UniV3LikePool/UniV3LikePool'
+import { UniV3LikePool } from '../base/uniV3Bricks/UniV3LikePool'
 import { PoolType } from '../poolVariety'
 
 export class UniV3Pool extends UniV3LikePool {

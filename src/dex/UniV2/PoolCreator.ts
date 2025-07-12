@@ -1,92 +1,42 @@
-import { getAddress, isAddressEqual, PublicClient } from 'viem'
-import { UNIV2_POOL_ABI } from '../../abi/uniV2/pool'
-import { UNIV2_ROUTER_ABI } from '../../abi/uniV2/router'
-import { createCustomError } from '../../utils/common'
+import { getAddress } from 'viem'
+import {
+	callFactoryFunction,
+	callToken0Function,
+	callToken1Function,
+	isRouterFactoryMatch,
+} from '../base/bricks/commonBricks'
+import { PoolConstructorParams } from '../base/Pool'
 import { PoolCreator } from '../base/PoolCreator'
 import { UNIV2_PERIPHERY_CONFIG } from './periphery'
 import { UniV2Pool } from './Pool'
 
-async function getToken0AddressUniV2(
-	poolAddress: Address,
-	client: PublicClient,
-) {
-	return client.readContract({
-		address: poolAddress,
-		abi: UNIV2_POOL_ABI,
-		functionName: 'token0',
-	})
-}
-
 export class UniV2PoolCreator extends PoolCreator {
-	override readonly customError = createCustomError('UniV2PoolCreatorError')
+	override _getToken0Address = callToken0Function
+	override _getToken1Address = callToken1Function
+	override _getPoolFactoryAddress = callFactoryFunction
+	override _isPeripheryValid = isRouterFactoryMatch
 
-	override async getToken0Address(
-		poolAddress: Address,
-		client: PublicClient,
-	) {
-		return client.readContract({
-			address: poolAddress,
-			abi: UNIV2_POOL_ABI,
-			functionName: 'token0',
-		})
-	}
-
-	override async getToken1Address(
-		poolAddress: Address,
-		client: PublicClient,
-	) {
-		return client.readContract({
-			address: poolAddress,
-			abi: UNIV2_POOL_ABI,
-			functionName: 'token1',
-		})
-	}
-
-	override async getFactoryAddress(
-		poolAddress: Address,
-		client: PublicClient,
-	) {
-		return client.readContract({
-			address: poolAddress,
-			abi: UNIV2_ROUTER_ABI,
-			functionName: 'factory',
-		})
-	}
-
-	override async isPeripheryValid(
-		periphery: {
-			router: Address
-		},
-		poolFactory: Address,
-		client: PublicClient,
-	) {
-		const routerFactoryAddress = await client.readContract({
-			address: periphery.router,
-			abi: UNIV2_ROUTER_ABI,
-			functionName: 'factory',
-		})
-
-		return isAddressEqual(routerFactoryAddress, poolFactory)
-	}
-
-	override getPeripheryFromCollection(
+	override _getPeripheryFromCollection(
 		chainId: number,
-		factory: Address,
-	): {
-		router: Address
-	} {
-		return UNIV2_PERIPHERY_CONFIG[chainId]?.[getAddress(factory)]
+		poolFactory: Address,
+	) {
+		return UNIV2_PERIPHERY_CONFIG[chainId]?.[getAddress(poolFactory)]
 	}
 
-	override async create(poolAddress: Address, chainId: number) {
-		const { periphery, immutables } =
-			await this.getPeripheryAndImmutablesSafe(poolAddress, chainId)
-
-		return new UniV2Pool({
+	override _create(
+		poolAddress: Address,
+		chainId: number,
+		periphery: { router: Address },
+		immutables: PoolConstructorParams['immutables'],
+	) {
+		const pool = new UniV2Pool({
 			immutables,
 			poolAddress,
 			chainId,
 			routerAddress: periphery.router,
 		})
+
+		// abstract _create must return a promise
+		return Promise.resolve(pool)
 	}
 }

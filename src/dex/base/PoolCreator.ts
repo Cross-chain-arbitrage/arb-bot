@@ -5,6 +5,10 @@ import { ClientManager } from '../../utils/ClientManager'
 import { createCustomError } from '../../utils/common'
 import { Pool, PoolConstructorParams } from './Pool'
 
+type Periphery = {
+	router: Address
+} & object
+
 export abstract class PoolCreator {
 	readonly customError: ReturnType<typeof createCustomError>
 
@@ -21,9 +25,9 @@ export abstract class PoolCreator {
 		const client = ClientManager.getClient(chainId)
 
 		const [token0Address, token1Address, factory] = await Promise.all([
-			this.getToken0Address(poolAddress, client),
-			this.getToken1Address(poolAddress, client),
-			this.getFactoryAddress(poolAddress, client),
+			this._getToken0Address(poolAddress, client),
+			this._getToken1Address(poolAddress, client),
+			this._getPoolFactoryAddress(poolAddress, client),
 		])
 
 		const [token0, token1] = await Promise.all([
@@ -36,14 +40,12 @@ export abstract class PoolCreator {
 
 	async validatePeriphery(
 		chainId: number,
-		periphery: {
-			router: Address
-		},
+		periphery: Periphery,
 		poolFactory: Address,
 	) {
 		const client = ClientManager.getClient(chainId)
 
-		const isPeripheryValid = await this.isPeripheryValid(
+		const isPeripheryValid = await this._isPeripheryValid(
 			periphery,
 			poolFactory,
 			client,
@@ -60,9 +62,7 @@ export abstract class PoolCreator {
 		poolAddress: Address,
 		chainId: number,
 	): Promise<{
-		periphery: {
-			router: Address
-		}
+		periphery: Periphery
 		immutables: PoolConstructorParams['immutables']
 	}> {
 		const [token0, token1, factory] = await this.getPoolImmutables(
@@ -79,13 +79,8 @@ export abstract class PoolCreator {
 		}
 	}
 
-	getPeripherySafe(
-		chainId: number,
-		factory: Address,
-	): {
-		router: Address
-	} & object {
-		const periphery = this.getPeripheryFromCollection(chainId, factory)
+	getPeripherySafe(chainId: number, factory: Address): Periphery {
+		const periphery = this._getPeripheryFromCollection(chainId, factory)
 
 		if (!periphery) {
 			throw new this.customError(
@@ -96,41 +91,59 @@ export abstract class PoolCreator {
 		return periphery
 	}
 
+	async create(poolAddress: Address, chainId: number) {
+		const { periphery, immutables } =
+			await this.getPeripheryAndImmutablesSafe(poolAddress, chainId)
+
+		return this._create(poolAddress, chainId, periphery, immutables)
+	}
+
 	/* ======== FUNCTIONS TO IMPLEMENT IN DERIVED CLASSES ======== */
 
-	abstract isPeripheryValid(
-		periphery: {
-			router: Address
-		},
+	/**
+	 * In most cases, this checks whether the factory address of the router (and quoter, for UniV3) matches the pool's factory address.
+	 * @param periphery - The router for all pools, or the quoter for UniV3.
+	 * @param client - The client for the chain where the pool is deployed. You do not need to create a new client in every implementation.
+	 */
+	abstract _isPeripheryValid(
+		periphery: Periphery,
 		poolFactory: Address,
 		client: PublicClient,
 	): Promise<boolean>
 
-	abstract getPeripheryFromCollection(
+	/**
+	 * Retrieves the periphery from the collection of all pools of this type.
+	 * @returns should return undefined if not found
+	 */
+	abstract _getPeripheryFromCollection(
 		chainId: number,
-		factory: Address,
-	):
-		| ({
-				router: Address
-		  } & object)
-		| undefined
+		poolFactory: Address,
+	): Periphery | undefined
 
-	abstract create(
+	/**
+	 * In most cases, this function returns a new instance of the derived pool class, but you may need to add additional logic here.
+	 * @param periphery - The periphery obtained from getPeripheryFromCollection, after passing isPeripheryValid.
+	 * @param immutables - The immutables obtained from getPoolImmutables.
+	 * @returns The derived pool instance, e.g., a new UniV2Pool.
+	 */
+	abstract _create(
 		poolAddress: Address,
 		chainId: number,
+		periphery: Periphery,
+		immutables: PoolConstructorParams['immutables'],
 	): Promise<Pool & object>
 
-	abstract getToken0Address(
+	abstract _getToken0Address(
 		poolAddress: Address,
 		client: PublicClient,
 	): Promise<Address>
 
-	abstract getToken1Address(
+	abstract _getToken1Address(
 		poolAddress: Address,
 		client: PublicClient,
 	): Promise<Address>
 
-	abstract getFactoryAddress(
+	abstract _getPoolFactoryAddress(
 		poolAddress: Address,
 		client: PublicClient,
 	): Promise<Address>

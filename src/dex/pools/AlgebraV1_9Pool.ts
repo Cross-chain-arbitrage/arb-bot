@@ -5,7 +5,7 @@ import { ALGEBRA_V1_9_ROUTER_ABI } from '../../abi/algebraV1_9/algebraV1_9Router
 import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ClientManager } from '../../utils/ClientManager'
-import { UniV3LikePool } from '../base/UniV3LikePool/UniV3LikePool'
+import { UniV3LikePool } from '../base/uniV3Bricks/UniV3LikePool'
 import { PoolType } from '../poolVariety'
 
 export class AlgebraV1_9Pool extends UniV3LikePool {

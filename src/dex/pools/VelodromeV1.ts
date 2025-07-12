@@ -3,7 +3,7 @@ import { VELODROME_MIXED_QUOTER } from '../../abi/velodrome/velodromeMixedQuoter
 import { VELODROME_UNIVERSAL_ROUTER_ABI } from '../../abi/velodrome/velodromeUniversalRouter'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
-import { UniV3LikePool } from '../base/UniV3LikePool/UniV3LikePool'
+import { UniV3LikePool } from '../base/uniV3Bricks/UniV3LikePool'
 import { POOL_ERRORS, PoolType } from '../poolVariety'
 import { CommandType, RoutePlanner } from '../velodromeUniversalRouterPlanner'
 

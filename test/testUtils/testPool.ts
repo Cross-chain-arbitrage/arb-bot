@@ -1,7 +1,6 @@
 import { Chain, Client, erc20Abi, getContract, WalletClient } from 'viem'
 import { Pool } from '../../src/dex/base/Pool'
-import { PoolUtils } from '../../src/dex/PoolUtils'
-import { PoolType } from '../../src/dex/poolVariety'
+import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
 import { Token } from '../../src/primitives/tokens/Token'
 import { ClientManager } from '../../src/utils/ClientManager'

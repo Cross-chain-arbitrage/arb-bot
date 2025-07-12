@@ -32,6 +32,8 @@ export interface PoolConstructorParams {
 
 export abstract class Pool extends BaseContract {
 	readonly customError: ReturnType<typeof createCustomError>
+	readonly DEFAULT_SLIPPAGE: bigint = 50n
+	readonly BASIS_POINTS: bigint = 10000n
 
 	readonly token0: Token
 	readonly token1: Token
@@ -173,7 +175,7 @@ export abstract class Pool extends BaseContract {
 
 	/**
 	 * Determines tokenOut and tokenIn amounts from a decoded swap event.
-	 * @param swapEvent In derived classes, it is recommended to use the type DecodeEventLogReturnType<typeof EVENT_ABI> for better type safety.
+	 * @param swapEvent In derived classes, it is recommended to use the type DecodeEventLogReturnType\<typeof EVENT_ABI> for better type safety.
 	 */
 	protected abstract _defineAmountsFromEvent(
 		swapEvent: DecodedEvent,
@@ -269,5 +271,11 @@ export abstract class Pool extends BaseContract {
 			)
 
 		return tokenIn.address.toLowerCase() < tokenOut.address.toLowerCase()
+	}
+
+	calcMinAmountOut(expectedAmountOut: bigint, slippage: bigint): bigint {
+		const BASIS_POINTS = 10000n
+
+		return (expectedAmountOut * (BASIS_POINTS - slippage)) / BASIS_POINTS
 	}
 }

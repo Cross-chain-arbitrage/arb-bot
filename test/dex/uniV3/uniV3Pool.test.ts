@@ -1,5 +1,4 @@
 import { hemi } from 'viem/chains'
-import { PoolType } from '../../../src/dex/poolVariety'
 import { makeSuite } from '../../testUtils/makeSuite'
 import { testPool } from '../../testUtils/testPool'
 
@@ -10,7 +9,7 @@ makeSuite('Uniswap V3 pool test', () => {
 
 	testPool({
 		chain: hemi,
-		poolType: PoolType.UNIV3,
+		poolType: 'UNIV3',
 		poolAddress,
 		assertPoolCreation: {
 			token0Address: wethAddress,

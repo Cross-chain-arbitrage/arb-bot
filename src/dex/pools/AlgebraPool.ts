@@ -1,7 +1,7 @@
 import { Address, zeroAddress } from 'viem'
 import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
 import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
-import { UniV3LikePool } from '../base/UniV3LikePool/UniV3LikePool'
+import { UniV3LikePool } from '../base/uniV3Bricks/UniV3LikePool'
 import { PoolType } from '../poolVariety'
 
 export class AlgebraPool extends UniV3LikePool {

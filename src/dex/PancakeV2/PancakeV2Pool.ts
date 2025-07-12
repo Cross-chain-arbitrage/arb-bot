@@ -1,6 +1,6 @@
 import { Address } from 'viem'
 import { Token } from '../../primitives/tokens/Token'
-import { UniV2LikePool } from '../base/UniV2Like/UniV2LikePool'
+import { UniV2LikePool } from '../base/uniV2Bricks/UniV2LikePool'
 import { PoolType } from '../poolVariety'
 
 export class PancakeV2Pool extends UniV2LikePool {

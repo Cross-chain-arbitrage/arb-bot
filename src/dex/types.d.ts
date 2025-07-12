@@ -6,7 +6,7 @@ declare global {
 		tokenIn: Token
 		tokenOut: Token
 		amountIn: bigint
-		slippage?: number // in basis points (e.g., 50 = 0.5%)
+		slippage?: bigint // in basis points (e.g., 50 = 0.5%)
 	}
 
 	interface PoolImmutables {

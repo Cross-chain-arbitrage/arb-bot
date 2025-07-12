@@ -25,15 +25,15 @@ export abstract class BaseContract {
 		}
 	}
 
-	protected get client() {
+	get client() {
 		return ClientManager.getClient(this.chainId)
 	}
 
-	protected get wallet() {
+	get wallet() {
 		return ClientManager.getWalletClient(this.chainId)
 	}
 
-	protected get account() {
+	get account() {
 		return this.wallet.account
 	}
 }
