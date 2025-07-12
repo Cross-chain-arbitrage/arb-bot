@@ -1,4 +1,4 @@
-export const ALGEBRA_QUOTER_ABI = [
+export const ALGEBRA_V1_2_QUOTER_ABI = [
 	{
 		inputs: [
 			{

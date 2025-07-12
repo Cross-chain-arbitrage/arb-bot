@@ -7,14 +7,8 @@ import { Token } from '../../../primitives/tokens/Token'
 import { ClientManager } from '../../../utils/ClientManager'
 import { Pool } from '../Pool'
 
-type UniV3LikePool = Pool & {
-	quoterAddress: Address
-	is02Router: boolean
-	fee: number
-}
-
 export async function getPriceFromSlot(
-	this: UniV3LikePool,
+	this: Pool,
 	slotFunctionName: string,
 	sqrtPriceX96Index: number,
 ): Promise<{ price: number; sqrtPriceX96: bigint }> {
@@ -47,7 +41,10 @@ export function priceToSqrtPriceX96(this: Pool, price: number): bigint {
 }
 
 export async function quoteSwapUniV3(
-	this: UniV3LikePool,
+	this: Pool & {
+		quoterAddress: Address
+		fee: number
+	},
 	params: SwapParams,
 ): Promise<bigint> {
 	const { result } = await this.client.simulateContract({
@@ -70,7 +67,11 @@ export async function quoteSwapUniV3(
 }
 
 export async function simulateSwapUniV3(
-	this: UniV3LikePool,
+	this: Pool & {
+		routerAddress: Address
+		fee: number
+		is02Router: boolean
+	},
 	params: SwapParams,
 ): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
 	const abi: Abi = this.is02Router ? UNIV3_ROUTER02_ABI : UNIV3_ROUTER_ABI
@@ -110,7 +111,7 @@ export async function simulateSwapUniV3(
 }
 
 export function defineAmountsFromEventUniV3(
-	this: UniV3LikePool,
+	this: Pool,
 	swapEvent: DecodeEventLogReturnType<typeof UNIV3_POOL_SWAP_EVENT_ABI>,
 	tokenIn: Token,
 	tokenOut: Token,

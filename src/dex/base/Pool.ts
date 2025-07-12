@@ -175,7 +175,7 @@ export abstract class Pool extends BaseContract {
 
 	/**
 	 * Determines tokenOut and tokenIn amounts from a decoded swap event.
-	 * @param swapEvent In derived classes, it is recommended to use the type DecodeEventLogReturnType\<typeof EVENT_ABI> for better type safety.
+	 * @param swapEvent The decoded event from viem's decodeEventLog. In derived classes, it is recommended to use the type DecodeEventLogReturnType\<typeof EVENT_ABI> for better type safety.
 	 */
 	protected abstract _defineAmountsFromEvent(
 		swapEvent: DecodedEvent,

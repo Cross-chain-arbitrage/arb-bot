@@ -1,4 +1,4 @@
-export const ALGEBRA_POOL_ABI = [
+export const ALGEBRA_V1_2_POOL_ABI = [
 	{
 		inputs: [],
 		name: 'alreadyInitialized',
@@ -1377,5 +1377,69 @@ export const ALGEBRA_POOL_ABI = [
 		],
 		stateMutability: 'view',
 		type: 'function',
+	},
+] as const
+
+export const ALGEBRA_V1_2_SWAP_EVENT_ABI = [
+	{
+		anonymous: false,
+		inputs: [
+			{
+				indexed: true,
+				internalType: 'address',
+				name: 'sender',
+				type: 'address',
+			},
+			{
+				indexed: true,
+				internalType: 'address',
+				name: 'recipient',
+				type: 'address',
+			},
+			{
+				indexed: false,
+				internalType: 'int256',
+				name: 'amount0',
+				type: 'int256',
+			},
+			{
+				indexed: false,
+				internalType: 'int256',
+				name: 'amount1',
+				type: 'int256',
+			},
+			{
+				indexed: false,
+				internalType: 'uint160',
+				name: 'price',
+				type: 'uint160',
+			},
+			{
+				indexed: false,
+				internalType: 'uint128',
+				name: 'liquidity',
+				type: 'uint128',
+			},
+			{
+				indexed: false,
+				internalType: 'int24',
+				name: 'tick',
+				type: 'int24',
+			},
+			{
+				indexed: false,
+				internalType: 'uint24',
+				name: 'overrideFee',
+				type: 'uint24',
+			},
+			{
+				indexed: false,
+				internalType: 'uint24',
+				name: 'pluginFee',
+				type: 'uint24',
+			},
+		],
+		name: 'Swap',
+		type: 'event',
 	},
 ] as const

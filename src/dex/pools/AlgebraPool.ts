@@ -1,6 +1,6 @@
 import { Address, zeroAddress } from 'viem'
-import { ALGEBRA_QUOTER_ABI } from '../../abi/algebra/algebraQuoter'
-import { ALGEBRA_ROUTER_ABI } from '../../abi/algebra/algebraRouter'
+import { ALGEBRA_QUOTER_ABI } from '../../abi/algebraV1_2/quoter'
+import { ALGEBRA_ROUTER_ABI } from '../../abi/algebraV1_2/router'
 import { UniV3LikePool } from '../base/uniV3Bricks/UniV3LikePool'
 import { PoolType } from '../poolVariety'
 

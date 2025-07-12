@@ -1,4 +1,4 @@
-export const ALGEBRA_ROUTER_ABI = [
+export const ALGEBRA_V1_2_ROUTER_ABI = [
 	{
 		inputs: [
 			{ internalType: 'address', name: '_factory', type: 'address' },

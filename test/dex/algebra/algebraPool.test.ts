@@ -1,5 +1,4 @@
 import { fuse } from 'viem/chains'
-import { PoolType } from '../../../src/dex/poolVariety'
 import { makeSuite } from '../../testUtils/makeSuite'
 import { testPool } from '../../testUtils/testPool'
 
@@ -10,7 +9,7 @@ makeSuite('algebra pool test', () => {
 
 	testPool({
 		chain: fuse,
-		poolType: PoolType.ALGEBRA,
+		poolType: 'ALGEBRA_V1_2',
 		poolAddress: wethUsdtPoolAddress,
 		assertPoolCreation: {
 			token0Address: wethAddress,

@@ -1,4 +1,4 @@
-export const ALGEBRA_FACTORY_ABI = [
+export const ALGEBRA_V1_2_FACTORY_ABI = [
 	{
 		inputs: [
 			{
