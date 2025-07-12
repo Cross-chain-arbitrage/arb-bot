@@ -9,7 +9,7 @@ makeSuite('Uniswap V3 pool test', () => {
 
 	testPool({
 		chain: hemi,
-		poolType: 'UNIV3',
+		poolType: 'UNI_V3',
 		poolAddress,
 		assertPoolCreation: {
 			token0Address: wethAddress,

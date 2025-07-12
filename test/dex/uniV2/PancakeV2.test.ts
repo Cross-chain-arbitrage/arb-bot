@@ -39,7 +39,7 @@ makeSuite('Pancake V2 Pool', () => {
 	beforeAll(async () => {
 		walletClient = ClientManager.getWalletClient(bsc.id)
 		botAddress = walletClient.account!.address
-		pool = await PoolUtils.createPool(poolAddress, bsc.id, 'PANCAKEV2')
+		pool = await PoolUtils.createPool(poolAddress, bsc.id, 'PANCAKE_V2')
 		FUSE = getContract({
 			address: pool.token0.address,
 			abi: erc20Abi,

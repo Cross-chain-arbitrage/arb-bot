@@ -1,5 +1,4 @@
 import { bsc } from 'viem/chains'
-import { PoolType } from '../../../src/dex/poolVariety'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { makeSuite } from '../../testUtils/makeSuite'
 import { testPool } from '../../testUtils/testPool'
@@ -11,7 +10,7 @@ makeSuite('Pancake V3 pool test', () => {
 
 	testPool({
 		chain: bsc,
-		poolType: PoolType.PANCAKEV3,
+		poolType: 'PANCAKE_V3',
 		poolAddress,
 		rpcUrl: getAlchemyRpcUrl(bsc.id),
 		assertPoolCreation: {

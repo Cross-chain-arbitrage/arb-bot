@@ -40,7 +40,7 @@ makeSuite('Uniswap V2 Pool', () => {
 	beforeAll(async () => {
 		walletClient = ClientManager.getWalletClient(mainnet.id)
 		botAddress = walletClient.account!.address
-		pool = await PoolUtils.createPool(poolAddress, mainnet.id, 'UNIV2')
+		pool = await PoolUtils.createPool(poolAddress, mainnet.id, 'UNI_V2')
 		FUSE = getContract({
 			address: pool.token0.address,
 			abi: erc20Abi,
