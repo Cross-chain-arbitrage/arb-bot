@@ -131,7 +131,7 @@ export abstract class PoolCreator {
 		chainId: number,
 		periphery: Periphery,
 		immutables: PoolConstructorParams['immutables'],
-	): Promise<Pool & object>
+	): Promise<Pool>
 
 	abstract _getToken0Address(
 		poolAddress: Address,

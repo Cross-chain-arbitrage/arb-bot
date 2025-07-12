@@ -6,12 +6,14 @@ import { DexRegistry } from './poolVariety'
 export type PoolType = keyof typeof DexRegistry
 
 export class PoolUtils {
-	static async createPool(
+	static async createPool<T extends Pool = Pool>(
 		poolAddress: Address,
 		chainId: number,
 		poolType: PoolType,
-	): Promise<Pool> {
-		return DexRegistry[poolType].create(poolAddress, chainId)
+	): Promise<T> {
+		const pool = await DexRegistry[poolType].create(poolAddress, chainId)
+
+		return pool as T
 		// switch (poolType) {
 		// 	case PoolType.ALGEBRA:
 		// 		return AlgebraPool.create(poolAddress, chainId)
