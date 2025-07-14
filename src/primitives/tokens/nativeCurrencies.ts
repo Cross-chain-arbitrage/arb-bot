@@ -10,4 +10,6 @@ export const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
 	[chains.lightlinkPhoenix.id]: ETH(chains.lightlinkPhoenix.id),
 	[chains.story.id]: new NativeCurrency(chains.story.id, 'IP', 'IP'),
 	[chains.bsc.id]: new NativeCurrency(chains.bsc.id, 'BNB', 'BNB'),
+	[chains.swellchain.id]: ETH(chains.swellchain.id),
+	[chains.base.id]: ETH(chains.base.id),
 } as const
