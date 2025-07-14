@@ -1,16 +1,16 @@
 import { getAddress } from 'viem'
+import { PoolConstructorParams } from '../../../base/Pool'
+import { PoolCreator } from '../../../base/PoolCreator'
 import {
 	callFactoryFunction,
 	callToken0Function,
 	callToken1Function,
 	isRouterFactoryMatch,
-} from '../base/bricks/commonBricks'
-import { PoolConstructorParams } from '../base/Pool'
-import { PoolCreator } from '../base/PoolCreator'
-import { UNIV2_PERIPHERY_CONFIG } from './periphery'
-import { UniV2Pool } from './Pool'
+} from '../../../base/bricks/commonBricks'
+import { PancakeV2Pool } from './Pool'
+import { PANCAKE_V2_PERIPHERY } from './periphery'
 
-export class UniV2PoolCreator extends PoolCreator {
+export class PancakeV2PoolCreator extends PoolCreator {
 	override _getToken0Address = callToken0Function
 	override _getToken1Address = callToken1Function
 	override _getPoolFactoryAddress = callFactoryFunction
@@ -20,7 +20,7 @@ export class UniV2PoolCreator extends PoolCreator {
 		chainId: number,
 		poolFactory: Address,
 	) {
-		return UNIV2_PERIPHERY_CONFIG[chainId]?.[getAddress(poolFactory)]
+		return PANCAKE_V2_PERIPHERY[chainId]?.[getAddress(poolFactory)]
 	}
 
 	override _create(
@@ -29,7 +29,7 @@ export class UniV2PoolCreator extends PoolCreator {
 		periphery: { router: Address },
 		immutables: PoolConstructorParams['immutables'],
 	) {
-		const pool = new UniV2Pool({
+		const pool = new PancakeV2Pool({
 			immutables,
 			poolAddress,
 			chainId,

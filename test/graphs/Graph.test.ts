@@ -1,6 +1,6 @@
 import { arbitrum, fuse } from 'viem/chains'
 import { Pool } from '../../src/dex/base/Pool'
-import { UniV3Pool } from '../../src/dex/pools/UniV3Pool'
+import { PoolUtils } from '../../src/dex/PoolUtils'
 import {
 	ActionType,
 	FuseBridgeEdge,
@@ -199,9 +199,10 @@ makeSuite('Graph', () => {
 		})
 
 		it('MUST be able to add `DexPool`s as an edge', async () => {
-			const pool = await UniV3Pool.create(
+			const pool = await PoolUtils.createPool(
 				'0x2f5e87C9312fa29aed5c179E456625D79015299c',
 				arbitrum.id,
+				'UNI_V3',
 			)
 
 			graph.addDexPool(pool)

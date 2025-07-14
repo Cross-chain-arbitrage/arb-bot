@@ -1,7 +1,6 @@
 import { arbitrum, fuse, hemi } from 'viem/chains'
 import { Pool } from '../../src/dex/base/Pool'
-import { PoolUtils } from '../../src/dex/PoolUtils'
-import { PoolType } from '../../src/dex/poolVariety'
+import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { GraphBuilder, GraphBuilderError } from '../../src/graphs/GraphBuilder'
 import { ActionType } from '../../src/graphs/primitives/Edge'
 import { WrappedNative } from '../../src/primitives/tokens/WrappedNative'
@@ -15,17 +14,17 @@ const POOLS: {
 	{
 		address: '0x2f5e87C9312fa29aed5c179E456625D79015299c',
 		chainId: arbitrum.id,
-		poolType: PoolType.UNIV3,
+		poolType: 'UNI_V3',
 	},
 	{
 		address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992',
 		chainId: fuse.id,
-		poolType: PoolType.ALGEBRA,
+		poolType: 'ALGEBRA_V1_2',
 	},
 	{
 		address: '0xdA44564DF732dECfd93Ba8539803C5a8dF241954',
 		chainId: hemi.id,
-		poolType: PoolType.UNIV3,
+		poolType: 'UNI_V3',
 	},
 ]
 
@@ -219,7 +218,7 @@ makeSuite('GraphBuilder', () => {
 			const arbUsdcPool = await PoolUtils.createPool(
 				'0xC6962004f452bE9203591991D15f6b388e09E8D0',
 				arbitrum.id,
-				PoolType.UNIV3,
+				'UNI_V3',
 			)
 
 			const graph = await GraphBuilder.build({

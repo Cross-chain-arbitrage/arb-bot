@@ -2,19 +2,16 @@ import { arbitrum, gravity } from 'viem/chains'
 import { PoolUtils } from '../dex/PoolUtils'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { ClientManager } from '../utils/ClientManager'
-import { Strategy, StrategyConfig } from './Strategy'
-
-import { PoolType } from '../dex/poolVariety'
-import { PoolData } from './Strategy'
+import { PoolData, Strategy, StrategyConfig } from './Strategy'
 
 export const GRAVITY_WETH_POOLS: PoolData[] = [
 	{
-		type: PoolType.ALGEBRA_V1_9,
+		type: 'ALGEBRA_V1_9',
 		address: '0xd1607a5a4b8e26ba0dd66a3b79f9f8ed048c1a0b', // WETH/USDC
 		chainId: gravity.id,
 	},
 	{
-		type: PoolType.UNIV3,
+		type: 'UNI_V3',
 		address: '0xC6962004f452bE9203591991D15f6b388e09E8D0', // WETH/USDC
 		chainId: arbitrum.id,
 	},

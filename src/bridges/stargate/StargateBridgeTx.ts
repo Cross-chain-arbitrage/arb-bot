@@ -15,7 +15,7 @@ export class StargateBridgeTx extends LZBridgeTx {
 	constructor(
 		srcTxHash: Hash,
 		srcToken: Token | NativeCurrency,
-		public readonly dstToken: Token | NativeCurrency,
+		override readonly dstToken: Token | NativeCurrency,
 		amount: bigint,
 	) {
 		super(srcTxHash, srcToken.chainId, srcToken, dstToken, amount)

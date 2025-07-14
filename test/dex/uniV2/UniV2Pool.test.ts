@@ -6,7 +6,7 @@ import {
 } from 'viem'
 import { mainnet } from 'viem/chains'
 import { PoolUtils } from '../../../src/dex/PoolUtils'
-import { UniV2Pool } from '../../../src/dex/UniV2/Pool'
+import { UniV2Pool } from '../../../src/dex/protocols/Uni/UniV2/Pool'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { ClientManager } from '../../../src/utils/ClientManager'
 import {

@@ -7,8 +7,7 @@ import {
 import { fuse } from 'viem/chains'
 import { chainIdToGeckoChainId } from './dataApi/geckoterminal/chains'
 import { GeckoTerminalAPI } from './dataApi/geckoterminal/GeckoTerminalAPI'
-import { PoolUtils } from './dex/PoolUtils'
-import { PoolType } from './dex/poolVariety'
+import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { findArbOpportunity } from './optimize'
 import { poolsByChain } from './pools'
 import { Token } from './primitives/tokens/Token'
@@ -134,7 +133,7 @@ async function updatePoolsPriceData(pools: Pool[], chainId: number) {
 				chainId,
 				pool.type,
 			)
-			const { price } = await Pool.getPrices()
+			const { price } = await Pool.getPrice()
 			const [reserve0, reserve1] = await Promise.all([
 				Pool.token0.balanceOf(Pool.address),
 				Pool.token1.balanceOf(Pool.address),

@@ -1,4 +1,4 @@
-import { PoolType } from '../dex/poolVariety'
+import { PoolType } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'

@@ -1,5 +1,5 @@
 import * as chains from 'viem/chains'
-import { PoolType } from './dex/poolVariety'
+import { PoolType } from './dex/PoolUtils'
 
 export const poolsByChain: Record<
 	number,
@@ -25,53 +25,53 @@ export const poolsByChain: Record<
 	// ],
 	// [unichain.id]: [
 	// 	// {
-	// 	// 	type: PoolType.UNIV3,
+	// 	// 	type: 'UNI_V3',
 	// 	// 	address:
 	// 	// 		'0x3258f413c7a88cda2fa8709a589d221a80f6574f63df5a5b6774485d8acc39d9',
 	// 	// },
 	// ],
 	[chains.hemi.id]: [
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0xdA44564DF732dECfd93Ba8539803C5a8dF241954',
 		},
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0x3EcabBa99bEF583B58b8f0af6dD853CD9ED75ce3',
 		},
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0x9580D4519C9F27642e21085E763E761a74eF3735',
 		},
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0x3e014A9EF5F45454d9BdDb15741ce8A04e7d96F5',
 		},
 		// Low liquidity
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0',
 		},
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0xc36a310BD93E2927452de563fAAA89A86822a21f',
 		},
 	],
 	// [chains.arbitrum.id]: [
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0xbE3aD6a5669Dc0B8b12FeBC03608860C31E2eef6', // USDT/USDC
 	// 	},
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0x641C00A822e8b671738d32a431a4Fb6074E5c79d', // WETH/USDT
 	// 	},
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0x2f5e87C9312fa29aed5c179E456625D79015299c', // WETH/WBTC
 	// 	},
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0xC6962004f452bE9203591991D15f6b388e09E8D0', // WETH/USDC
 	// 	},
 	// ],
@@ -83,33 +83,33 @@ export const poolsByChain: Record<
 	// ],
 	[chains.lightlinkPhoenix.id]: [
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0x2288627C696010049f6D98a84fC10F9C5F7b3Ce2',
 		},
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0x1125452469E9B9A36FE69249309fCe8925C3eEDa',
 		},
 	],
 	[chains.fuse.id]: [
 		{
-			type: PoolType.ALGEBRA,
+			type: 'ALGEBRA_V1_2',
 			address: '0x677409B2393E2ca19b454fB904F5E634E21D3D89',
 		},
 		{
-			type: PoolType.ALGEBRA,
+			type: 'ALGEBRA_V1_2',
 			address: '0x23518Ca19447E7ABB8C6f6eb215A1D663c53Ea21',
 		},
 		{
-			type: PoolType.ALGEBRA,
+			type: 'ALGEBRA_V1_2',
 			address: '0x5E174874C5bc45Ba96bD859A6edA4D34EE9f4424',
 		},
 		{
-			type: PoolType.ALGEBRA,
+			type: 'ALGEBRA_V1_2',
 			address: '0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6',
 		},
 		{
-			type: PoolType.ALGEBRA,
+			type: 'ALGEBRA_V1_2',
 			address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992',
 		},
 	],
@@ -145,47 +145,47 @@ export const poolsByChain: Record<
 	// ],
 	[chains.story.id]: [
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0x0012dc8daed76fd687b51ad6a4683aa151d3d59d',
 		},
 		{
-			type: PoolType.UNIV3,
+			type: 'UNI_V3',
 			address: '0x3dd013fddf4daa3b642a1538e274d85e8e54ae8b',
 		},
 	],
 	// [rootstock.id]: [
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0xD022Cee10c5Cf25c50311c426536Eb8E313030b2',
 	// 	},
 	// 	// RIF/USDT pool
 	// 	// {
-	// 	// 	type: PoolType.UNIV3,
+	// 	// 	type: 'UNI_V3',
 	// 	// 	address: '0xa89a86d3d9481a741833208676fa57d0f1d5C6Cb',
 	// 	// },
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0xE4Aad3D85ddc67cc2BB57599d27914C43DC89FE7',
 	// 	},
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0xe54D5c25Aad95CDa8979eE502D4f3d70892444D1',
 	// 	},
 	// 	// USDRIF/USDT
 	// 	// {
-	// 	// 	type: PoolType.UNIV3,
+	// 	// 	type: 'UNI_V3',
 	// 	// 	address: '0x69c4D1FcD58CBDd7f9857aC4F8d56A1Cc6B598Fe',
 	// 	// },
 	// 	// MSTRs/USDT
 	// 	// {
-	// 	// 	type: PoolType.UNIV3,
+	// 	// 	type: 'UNI_V3',
 	// 	// 	address: '0xC7EBDeDc369858e7032Aa72833964b82f1fC1c31',
 	// 	// },
 	// ],
 	// Bullshit Etherscan instead of BlockScout
 	// [taiko.id]: [
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0x7c38E9389B27668280E5aaAc372eBCb2ECc1c5E0',
 	// 	},
 	// 	{
@@ -193,7 +193,7 @@ export const poolsByChain: Record<
 	// 		address: '0xAc8f44ceCa92b2a4b30360E5bd3043850a0FFcbE',
 	// 	},
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0xafEABAAbe0DFc504D56dFF53bf6b218BAFB76123',
 	// 	},
 	// ],
@@ -215,23 +215,23 @@ export const poolsByChain: Record<
 	// Fucking Black Market, tons of money, almost no verified pools (or they are proxies 💀)
 	// [flare.id]: [
 	// 	{
-	// 		type: PoolType.UNIV3,
+	// 		type: 'UNI_V3',
 	// 		address: '0x0B40111B4Cf6dD1001F36f9c631956FefA56BC3b',
 	// 	},
 	// 	{
-	// 		type: PoolType.UNIV3, // EnosysDexV3
+	// 		type: 'UNI_V3', // EnosysDexV3
 	// 		address: '0xa4a4182219258c707253fdFD5C4aee2774c02C68',
 	// 	},
 	// 	{
-	// 		type: PoolType.UNIV3, // BlazeSwap
+	// 		type: 'UNI_V3', // BlazeSwap
 	// 		address: '0xdF4b31b81D59EcA0CFc30ecb2beb36EAEbaf7A49',
 	// 	},
 	// 	{
-	// 		type: PoolType.UNIV3, // Not verified
+	// 		type: 'UNI_V3', // Not verified
 	// 		address: '0x8CD69c359806af83120bc4b4e77663f1E31553e7',
 	// 	},
 	// 	{
-	// 		type: PoolType.UNIV3, // Not verified
+	// 		type: 'UNI_V3', // Not verified
 	// 		address: '0x724bD6413925Dd4D513B35b1cf9c6f1C378e3691',
 	// 	},
 	// ],

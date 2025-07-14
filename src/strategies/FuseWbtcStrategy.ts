@@ -1,6 +1,5 @@
 import { arbitrum, fuse } from 'viem/chains'
 import { PoolUtils } from '../dex/PoolUtils'
-import { PoolType } from '../dex/poolVariety'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { ClientManager } from '../utils/ClientManager'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
@@ -8,12 +7,12 @@ import { PoolData, Strategy, StrategyConfig } from './Strategy'
 export const WBTC_POOLS: PoolData[] = [
 	{
 		address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992', // WETH/WBTC
-		type: PoolType.ALGEBRA,
+		type: 'ALGEBRA_V1_2',
 		chainId: fuse.id,
 	},
 
 	{
-		type: PoolType.UNIV3,
+		type: 'UNI_V3',
 		address: '0x2f5e87C9312fa29aed5c179E456625D79015299c', // WETH/WBTC
 		chainId: arbitrum.id,
 	},

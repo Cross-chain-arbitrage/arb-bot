@@ -1,12 +1,12 @@
-import { UNIV3_POOL_ABI } from '../../abi/uniV3/uniV3Pool'
-import { isEventNameEqualSwap } from '../base/bricks/commonBricks'
+import { UNIV3_POOL_ABI } from '../../../../abi/uniV3/uniV3Pool'
+import { isEventNameEqualSwap } from '../../../base/bricks/commonBricks'
 import {
 	defineAmountsFromEventUniV3,
 	getPriceFromSlot,
 	quoteSwapUniV3,
 	simulateSwapUniV3,
-} from '../base/bricks/uniV3Bricks'
-import { Pool, PoolConstructorParams } from '../base/Pool'
+} from '../../../base/bricks/uniV3Bricks'
+import { Pool, PoolConstructorParams } from '../../../base/Pool'
 
 export class UniV3Pool extends Pool {
 	public readonly fee: number

@@ -6,8 +6,7 @@ import { FuseBridgeTx } from '../../src/bridges/FuseBridge/FuseBridgeTx'
 import { StargateBridgeTx } from '../../src/bridges/stargate/StargateBridgeTx'
 import { PoolUtils } from '../../src/dex/PoolUtils'
 import { Pool } from '../../src/dex/base/Pool'
-import { PoolType } from '../../src/dex/poolVariety'
-import { UniV3Pool } from '../../src/dex/pools/UniV3Pool'
+import { UniV3Pool } from '../../src/dex/protocols/Uni/UniV3/Pool'
 import {
 	FuseBridgeEdge,
 	StargateBridgeEdge,
@@ -63,7 +62,7 @@ makeSuite('Edge', () => {
 		pool = await PoolUtils.createPool(
 			poolWethUsdtAddress,
 			arbitrum.id,
-			PoolType.UNIV3,
+			'UNI_V3',
 		)
 
 		nativeCurrency = TokenUtils.getNative(arbitrum.id)

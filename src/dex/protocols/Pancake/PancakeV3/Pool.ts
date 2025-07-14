@@ -1,12 +1,12 @@
-import { PANCAKE_V3_POOL_ABI } from '../../abi/pancakeV3/pancakeV3Pool'
-import { isEventNameEqualSwap } from '../base/bricks/commonBricks'
+import { PANCAKE_V3_POOL_ABI } from '../../../../abi/pancakeV3/pancakeV3Pool'
+import { isEventNameEqualSwap } from '../../../base/bricks/commonBricks'
 import {
 	defineAmountsFromEventUniV3,
 	getPriceFromSlot,
 	quoteSwapUniV3,
 	simulateSwapUniV3,
-} from '../base/bricks/uniV3Bricks'
-import { Pool, PoolConstructorParams } from '../base/Pool'
+} from '../../../base/bricks/uniV3Bricks'
+import { Pool, PoolConstructorParams } from '../../../base/Pool'
 
 export class PancakeV3Pool extends Pool {
 	public readonly fee: number

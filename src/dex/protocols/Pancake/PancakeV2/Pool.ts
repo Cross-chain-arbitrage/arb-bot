@@ -1,12 +1,12 @@
-import { UNIV2_POOL_ABI } from '../../abi/uniV2/pool'
-import { isEventNameEqualSwap } from '../base/bricks/commonBricks'
+import { UNIV2_POOL_ABI } from '../../../../abi/uniV2/pool'
+import { isEventNameEqualSwap } from '../../../base/bricks/commonBricks'
 import {
 	defineAmountsFromEventUniV2,
 	getPriceUniV2,
 	quoteSwapUniV2,
 	simulateSwapUniV2,
-} from '../base/bricks/uniV2Bricks'
-import { Pool, PoolConstructorParams } from '../base/Pool'
+} from '../../../base/bricks/uniV2Bricks'
+import { Pool, PoolConstructorParams } from '../../../base/Pool'
 
 export class PancakeV2Pool extends Pool {
 	readonly fee: number = 25

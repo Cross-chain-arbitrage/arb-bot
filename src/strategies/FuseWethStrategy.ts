@@ -1,17 +1,16 @@
 import { arbitrum, fuse } from 'viem/chains'
 import { PoolUtils } from '../dex/PoolUtils'
-import { PoolType } from '../dex/poolVariety'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
 
 export const FUSE_WETH_POOLS: PoolData[] = [
 	{
 		address: '0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6', // WETH/USDT
-		type: PoolType.ALGEBRA,
+		type: 'ALGEBRA_V1_2',
 		chainId: fuse.id,
 	},
 	{
-		type: PoolType.UNIV3,
+		type: 'UNI_V3',
 		address: '0x641C00A822e8b671738d32a431a4Fb6074E5c79d', // WETH/USDT
 		chainId: arbitrum.id,
 	},

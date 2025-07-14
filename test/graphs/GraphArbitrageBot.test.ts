@@ -2,7 +2,6 @@ import { TransactionReceipt } from 'viem'
 import { arbitrum, fuse } from 'viem/chains'
 import { Pool } from '../../src/dex/base/Pool'
 import { PoolUtils } from '../../src/dex/PoolUtils'
-import { PoolType } from '../../src/dex/poolVariety'
 import { GraphArbitrageBot } from '../../src/graphs/GraphArbitrageBot'
 import { GraphBuilder } from '../../src/graphs/GraphBuilder'
 import {
@@ -47,13 +46,13 @@ makeSuite('GraphArbitrageBot', () => {
 		wethWbtcFuse = await PoolUtils.createPool(
 			wethWbtcFuseAddress,
 			fuse.id,
-			PoolType.ALGEBRA,
+			'ALGEBRA_V1_2',
 		)
 
 		wethWbtcArb = await PoolUtils.createPool(
 			wethWbtcArbAddress,
 			arbitrum.id,
-			PoolType.UNIV3,
+			'UNI_V3',
 		)
 
 		graph = await GraphBuilder.build({

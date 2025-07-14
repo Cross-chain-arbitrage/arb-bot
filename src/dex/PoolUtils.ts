@@ -14,24 +14,6 @@ export class PoolUtils {
 		const pool = await DexRegistry[poolType].create(poolAddress, chainId)
 
 		return pool as T
-		// switch (poolType) {
-		// 	case PoolType.ALGEBRA:
-		// 		return AlgebraPool.create(poolAddress, chainId)
-		// 	case PoolType.UNIV3:
-		// 		return UniV3Pool.create(poolAddress, chainId)
-		// 	case PoolType.UNIV2:
-		// 		return UniV2Pool.create(poolAddress, chainId)
-		// 	case PoolType.PANCAKEV2:
-		// 		return PancakeV2Pool.create(poolAddress, chainId)
-		// 	case PoolType.PANCAKEV3:
-		// 		return PancakeV3Pool.create(poolAddress, chainId)
-		// 	case PoolType.ALGEBRA_V1_9:
-		// 		return AlgebraV1_9Pool.create(poolAddress, chainId)
-		// 	case PoolType.VELODROME_V2:
-		// 		return VelodromeV2Pool.create(poolAddress, chainId)
-		// 	case PoolType.VELODROME_V1:
-		// 		return VelodromeV1Pool.create(poolAddress, chainId)
-		// }
 	}
 
 	static async createPools(pools: PoolData[]): Promise<Pool[]> {

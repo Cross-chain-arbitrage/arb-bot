@@ -1,13 +1,13 @@
 import { zeroAddress } from 'viem'
-import { ALGEBRA_V1_2_POOL_ABI } from '../../abi/algebraV1_2/pool'
-import { ALGEBRA_V1_2_QUOTER_ABI } from '../../abi/algebraV1_2/quoter'
-import { ALGEBRA_V1_2_ROUTER_ABI } from '../../abi/algebraV1_2/router'
-import { isEventNameEqualSwap } from '../base/bricks/commonBricks'
+import { ALGEBRA_V1_2_POOL_ABI } from '../../../../abi/algebraV1_2/pool'
+import { ALGEBRA_V1_2_QUOTER_ABI } from '../../../../abi/algebraV1_2/quoter'
+import { ALGEBRA_V1_2_ROUTER_ABI } from '../../../../abi/algebraV1_2/router'
+import { isEventNameEqualSwap } from '../../../base/bricks/commonBricks'
 import {
 	defineAmountsFromEventUniV3,
 	getPriceFromSlot,
-} from '../base/bricks/uniV3Bricks'
-import { Pool, PoolConstructorParams } from '../base/Pool'
+} from '../../../base/bricks/uniV3Bricks'
+import { Pool, PoolConstructorParams } from '../../../base/Pool'
 
 export class AlgebraV1_2Pool extends Pool {
 	public readonly fee: number

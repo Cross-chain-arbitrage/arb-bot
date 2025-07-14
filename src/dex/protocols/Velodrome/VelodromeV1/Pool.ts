@@ -1,14 +1,14 @@
 import { toHex } from 'viem'
-import { VELODROME_MIXED_QUOTER_ABI } from '../../abi/velodrome/velodromeMixedQuoter'
-import { VELODROME_UNIVERSAL_ROUTER_ABI } from '../../abi/velodrome/velodromeUniversalRouter'
-import { VELODROME_V1_POOL_ABI } from '../../abi/velodrome/velodromeV1Pool'
-import { Token } from '../../primitives/tokens/Token'
-import { isEventNameEqualSwap } from '../base/bricks/commonBricks'
+import { VELODROME_MIXED_QUOTER_ABI } from '../../../../abi/velodrome/velodromeMixedQuoter'
+import { VELODROME_UNIVERSAL_ROUTER_ABI } from '../../../../abi/velodrome/velodromeUniversalRouter'
+import { VELODROME_V1_POOL_ABI } from '../../../../abi/velodrome/velodromeV1Pool'
+import { Token } from '../../../../primitives/tokens/Token'
+import { isEventNameEqualSwap } from '../../../base/bricks/commonBricks'
 import {
 	defineAmountsFromEventUniV3,
 	getPriceFromSlot,
-} from '../base/bricks/uniV3Bricks'
-import { Pool, PoolConstructorParams } from '../base/Pool'
+} from '../../../base/bricks/uniV3Bricks'
+import { Pool, PoolConstructorParams } from '../../../base/Pool'
 import { CommandType, RoutePlanner } from '../velodromeUniversalRouterPlanner'
 
 export class VelodromeV1Pool extends Pool {

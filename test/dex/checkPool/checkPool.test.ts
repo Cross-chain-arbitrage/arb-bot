@@ -1,6 +1,6 @@
 import { Chain, getAddress } from 'viem'
 import * as viemChains from 'viem/chains'
-import { PoolType } from '../../../src/dex/poolVariety'
+import { PoolType } from '../../../src/dex/PoolUtils'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { makeSuite } from '../../testUtils/makeSuite'
 import { testPool } from '../../testUtils/testPool'
@@ -78,9 +78,9 @@ function getAndValidatePoolType() {
 		throw new Error('pool type is not set')
 	}
 
-	if (!Object.values(PoolType).includes(poolType as PoolType)) {
+	if (!Object.values(poolType).includes(poolType as PoolType)) {
 		throw new Error(
-			`Pool type ${poolType} is not valid, use one of the following: ${Object.values(PoolType).join(', ')}`,
+			`Pool type ${poolType} is not valid, use one of the following: ${Object.values(poolType).join(', ')}`,
 		)
 	}
 

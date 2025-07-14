@@ -1,13 +1,13 @@
 import { zeroAddress } from 'viem'
-import { ALGEBRA_V1_9_POOL_ABI } from '../../abi/algebraV1_9/algebraV1_9Pool'
-import { ALGEBRA_V1_9_QUOTER_ABI } from '../../abi/algebraV1_9/algebraV1_9Quoter'
-import { ALGEBRA_V1_9_ROUTER_ABI } from '../../abi/algebraV1_9/algebraV1_9Router'
-import { isEventNameEqualSwap } from '../base/bricks/commonBricks'
+import { ALGEBRA_V1_9_POOL_ABI } from '../../../../abi/algebraV1_9/algebraV1_9Pool'
+import { ALGEBRA_V1_9_QUOTER_ABI } from '../../../../abi/algebraV1_9/algebraV1_9Quoter'
+import { ALGEBRA_V1_9_ROUTER_ABI } from '../../../../abi/algebraV1_9/algebraV1_9Router'
+import { isEventNameEqualSwap } from '../../../base/bricks/commonBricks'
 import {
 	defineAmountsFromEventUniV3,
 	getPriceFromSlot,
-} from '../base/bricks/uniV3Bricks'
-import { Pool, PoolConstructorParams } from '../base/Pool'
+} from '../../../base/bricks/uniV3Bricks'
+import { Pool, PoolConstructorParams } from '../../../base/Pool'
 
 export class AlgebraV1_9Pool extends Pool {
 	constructor(

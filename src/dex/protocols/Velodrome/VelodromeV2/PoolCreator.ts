@@ -1,15 +1,15 @@
 import { getAddress, PublicClient } from 'viem'
-import { VELODROME_V2_FACTORY_ABI } from '../../abi/velodrome/velodromeV2Factory'
-import { VELODROME_V2_POOL_ABI } from '../../abi/velodrome/velodromeV2Pool'
-import { ClientManager } from '../../utils/ClientManager'
+import { VELODROME_V2_FACTORY_ABI } from '../../../../abi/velodrome/velodromeV2Factory'
+import { VELODROME_V2_POOL_ABI } from '../../../../abi/velodrome/velodromeV2Pool'
+import { ClientManager } from '../../../../utils/ClientManager'
 import {
 	callFactoryFunction,
 	callToken0Function,
 	callToken1Function,
 	isContractFactoryMatch,
-} from '../base/bricks/commonBricks'
-import { Pool, PoolConstructorParams } from '../base/Pool'
-import { PoolCreator } from '../base/PoolCreator'
+} from '../../../base/bricks/commonBricks'
+import { Pool, PoolConstructorParams } from '../../../base/Pool'
+import { PoolCreator } from '../../../base/PoolCreator'
 import { VELODROME_V2_PERIPHERY } from './periphery'
 import { VelodromeV2Pool } from './Pool'
 

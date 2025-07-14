@@ -8,7 +8,7 @@ export async function findArbOpportunity(
 	actualPrice0USD: number,
 	actualPrice1USD: number,
 ) {
-	const { price } = await pool.getPrices()
+	const { price } = await pool.getPrice()
 	const priceRatio = actualPrice0USD / actualPrice1USD
 
 	// logger.info(`price: ${price}`)

@@ -1,13 +1,13 @@
-import { VELODROME_UNIVERSAL_ROUTER_ABI } from '../../abi/velodrome/velodromeUniversalRouter'
-import { VELODROME_V2_POOL_ABI } from '../../abi/velodrome/velodromeV2Pool'
-import { Token } from '../../primitives/tokens/Token'
-import { isEventNameEqualSwap } from '../base/bricks/commonBricks'
+import { VELODROME_UNIVERSAL_ROUTER_ABI } from '../../../../abi/velodrome/velodromeUniversalRouter'
+import { VELODROME_V2_POOL_ABI } from '../../../../abi/velodrome/velodromeV2Pool'
+import { Token } from '../../../../primitives/tokens/Token'
+import { isEventNameEqualSwap } from '../../../base/bricks/commonBricks'
 import {
 	defineAmountsFromEventUniV2,
 	getPriceUniV2,
 	quoteSwapUniV2,
-} from '../base/bricks/uniV2Bricks'
-import { Pool, PoolConstructorParams } from '../base/Pool'
+} from '../../../base/bricks/uniV2Bricks'
+import { Pool, PoolConstructorParams } from '../../../base/Pool'
 import { CommandType, RoutePlanner } from '../velodromeUniversalRouterPlanner'
 
 export class VelodromeV2Pool extends Pool {

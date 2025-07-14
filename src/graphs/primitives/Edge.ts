@@ -60,8 +60,8 @@ export class SwapEdge extends Edge {
 	readonly id: EdgeId
 
 	constructor(
-		readonly from: Token,
-		readonly to: Token,
+		override readonly from: Token,
+		override readonly to: Token,
 		readonly pool: Pool,
 		graph: Graph,
 	) {
@@ -74,7 +74,7 @@ export class SwapEdge extends Edge {
 			tokenIn: this.from,
 			tokenOut: this.to,
 			amountIn,
-			slippage: 0.01,
+			slippage: 10n,
 		})
 
 		const rate = this.calcRate(amountIn, amountOut)
@@ -120,8 +120,8 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 	readonly id: EdgeId
 
 	constructor(
-		readonly from: GraphNode,
-		readonly to: GraphNode,
+		override readonly from: GraphNode,
+		override readonly to: GraphNode,
 		graph: Graph,
 	) {
 		super(from, to, ActionType.STARGATE_BRIDGE, graph)
@@ -183,8 +183,8 @@ export class FuseBridgeEdge extends Edge<ActionType.FUSE_BRIDGE> {
 	readonly id: EdgeId
 
 	constructor(
-		readonly from: GraphNode,
-		readonly to: GraphNode,
+		override readonly from: GraphNode,
+		override readonly to: GraphNode,
 		graph: Graph,
 	) {
 		super(from, to, ActionType.FUSE_BRIDGE, graph)
@@ -243,9 +243,9 @@ abstract class CommonEdge<
 	readonly id: EdgeId
 
 	constructor(
-		readonly from: GraphNode,
-		readonly to: GraphNode,
-		readonly actionType: T,
+		override readonly from: GraphNode,
+		override readonly to: GraphNode,
+		override readonly actionType: T,
 		graph: Graph,
 	) {
 		super(from, to, actionType, graph)
@@ -266,8 +266,8 @@ abstract class CommonEdge<
 
 export class WrapEdge extends CommonEdge<ActionType.WRAP> {
 	constructor(
-		readonly from: NativeCurrency,
-		readonly to: Token,
+		override readonly from: NativeCurrency,
+		override readonly to: Token,
 		graph: Graph,
 	) {
 		super(from, to, ActionType.WRAP, graph)
@@ -294,8 +294,8 @@ export class WrapEdge extends CommonEdge<ActionType.WRAP> {
 
 export class UnwrapEdge extends CommonEdge<ActionType.UNWRAP> {
 	constructor(
-		readonly from: Token,
-		readonly to: NativeCurrency,
+		override readonly from: Token,
+		override readonly to: NativeCurrency,
 		graph: Graph,
 	) {
 		super(from, to, ActionType.UNWRAP, graph)
