@@ -29,7 +29,11 @@ declare global {
 		| ActionType.SWAP
 		| ActionType.WRAP
 		| ActionType.UNWRAP
-	type BridgeActionType = ActionType.STARGATE_BRIDGE | ActionType.FUSE_BRIDGE
+
+	type BridgeActionType =
+		| ActionType.STARGATE_BRIDGE
+		| ActionType.FUSE_BRIDGE
+		| ActionType.RELAY_BRIDGE
 
 	type EdgeExecutionCost<T extends ActionType = ActionType> = {
 		gas: bigint

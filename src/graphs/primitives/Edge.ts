@@ -1,9 +1,11 @@
 import { Hash } from 'viem'
 import { FuseBridge } from '../../bridges/FuseBridge/FuseBridge'
+import { Relay } from '../../bridges/relay/Relay'
 import { Stargate } from '../../bridges/stargate/Stargate'
 import { Pool } from '../../dex/base/Pool'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
+import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../primitives/tokens/WrappedNative'
 import { ClientManager } from '../../utils/ClientManager'
@@ -14,6 +16,7 @@ export enum ActionType {
 	SWAP = 'SWAP',
 	STARGATE_BRIDGE = 'STARGATE_BRIDGE',
 	FUSE_BRIDGE = 'FUSE_BRIDGE',
+	RELAY_BRIDGE = 'RELAY_BRIDGE',
 	WRAP = 'WRAP',
 	UNWRAP = 'UNWRAP',
 }
@@ -116,7 +119,7 @@ export class SwapEdge extends Edge {
 	}
 }
 
-export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
+export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
 	readonly id: EdgeId
 
 	constructor(
@@ -124,15 +127,15 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 		override readonly to: GraphNode,
 		graph: Graph,
 	) {
-		super(from, to, ActionType.STARGATE_BRIDGE, graph)
+		super(from, to, ActionType.RELAY_BRIDGE, graph)
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
 	}
 
 	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
-		const { amountOut, lzFee, gas } = await Stargate.quoteBridge(
+		const { amountOut, gas } = await Relay.quote(
 			this.from,
+			this.to,
 			amountIn,
-			this.to.chainId,
 		)
 
 		const rate = this.calcRate(amountIn, amountOut)
@@ -142,39 +145,20 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 			amountOut,
 			cost: {
 				gas,
-				bridgeFee: lzFee,
 			},
 		}
 	}
 
 	async execute(
 		amountIn: bigint,
-	): Promise<EdgeExecutionResult<ActionType.STARGATE_BRIDGE>> {
-		const fromToken = await TokenUtils.fromAddress(
-			this.from.address,
-			this.from.chainId,
-		)
-
-		const result = await Stargate.bridge(
-			fromToken,
-			this.to.chainId,
-			ClientManager.getWalletClient(this.from.chainId).account.address,
-			amountIn,
-		)
-
-		const srcTxReceipt = await ClientManager.getClient(
-			this.from.chainId,
-		).waitForTransactionReceipt({
-			hash: result.bridgeTx.srcTxHash as Hash,
-		})
-
-		const message = await result.bridgeTx.waitForBridgeToFinish()
+	): Promise<EdgeExecutionResult<ActionType.RELAY_BRIDGE>> {
+		const result = await Relay.bridge(this.from, this.to, amountIn)
 
 		return {
 			amountOut: result.amountOut,
-			srcTxReceipt,
-			dstTxHash: message.dstTxHash as Hash,
-			bridgeFee: result.lzFee,
+			srcTxReceipt: result.srcTxReceipt,
+			dstTxHash: result.dstTxHash,
+			bridgeFee: new TokenAmount(this.from, 0n), //TODO: remove useless returning 0
 		}
 	}
 }
@@ -316,6 +300,69 @@ export class UnwrapEdge extends CommonEdge<ActionType.UNWRAP> {
 		return {
 			amountOut: amountIn,
 			txReceipt: receipt,
+		}
+	}
+}
+
+export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
+	readonly id: EdgeId
+
+	constructor(
+		override readonly from: GraphNode,
+		override readonly to: GraphNode,
+		graph: Graph,
+	) {
+		super(from, to, ActionType.STARGATE_BRIDGE, graph)
+		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
+	}
+
+	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
+		const { amountOut, lzFee, gas } = await Stargate.quoteBridge(
+			this.from,
+			amountIn,
+			this.to.chainId,
+		)
+
+		const rate = this.calcRate(amountIn, amountOut)
+
+		return {
+			rate,
+			amountOut,
+			cost: {
+				gas,
+				bridgeFee: lzFee,
+			},
+		}
+	}
+
+	async execute(
+		amountIn: bigint,
+	): Promise<EdgeExecutionResult<ActionType.STARGATE_BRIDGE>> {
+		const fromToken = await TokenUtils.fromAddress(
+			this.from.address,
+			this.from.chainId,
+		)
+
+		const result = await Stargate.bridge(
+			fromToken,
+			this.to.chainId,
+			ClientManager.getWalletClient(this.from.chainId).account.address,
+			amountIn,
+		)
+
+		const srcTxReceipt = await ClientManager.getClient(
+			this.from.chainId,
+		).waitForTransactionReceipt({
+			hash: result.bridgeTx.srcTxHash as Hash,
+		})
+
+		const message = await result.bridgeTx.waitForBridgeToFinish()
+
+		return {
+			amountOut: result.amountOut,
+			srcTxReceipt,
+			dstTxHash: message.dstTxHash as Hash,
+			bridgeFee: result.lzFee,
 		}
 	}
 }
