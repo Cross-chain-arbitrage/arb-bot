@@ -1,4 +1,4 @@
-export const VELODROME_MIXED_QUOTER = [
+export const VELODROME_MIXED_QUOTER_ABI = [
 	{
 		inputs: [
 			{ internalType: 'address', name: '_factory', type: 'address' },

@@ -51,7 +51,7 @@ export abstract class TokenBase extends BaseContract {
 		return `${this.chainId}:${this.address.toLowerCase() as Address}`
 	}
 
-	toString(): string {
+	override toString(): string {
 		const chainName = ChainUtils.getChainNameById(this.chainId)
 
 		return `${this.symbol} (${chainName ?? this.chainId})`

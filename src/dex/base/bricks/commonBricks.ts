@@ -41,19 +41,20 @@ export async function callToken1Function(
 export async function callFactoryFunction(
 	address: Address,
 	client: PublicClient,
+	functionName?: string,
 ) {
 	return client.readContract({
 		address: address,
 		abi: [
 			{
 				inputs: [],
-				name: 'factory',
+				name: functionName ?? 'factory',
 				outputs: [{ type: 'address' }],
 				stateMutability: 'view',
 				type: 'function',
 			},
 		],
-		functionName: 'factory',
+		functionName: functionName ?? 'factory',
 	})
 }
 
@@ -61,8 +62,13 @@ export async function isContractFactoryMatch(
 	contractToCheck: Address,
 	poolFactory: Address,
 	client: PublicClient,
+	functionName?: string,
 ) {
-	const contractFactory = await callFactoryFunction(contractToCheck, client)
+	const contractFactory = await callFactoryFunction(
+		contractToCheck,
+		client,
+		functionName,
+	)
 
 	return isAddressEqual(contractFactory, poolFactory)
 }

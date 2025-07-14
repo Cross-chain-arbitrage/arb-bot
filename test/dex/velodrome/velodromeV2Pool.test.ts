@@ -1,5 +1,4 @@
 import { swellchain } from 'viem/chains'
-import { PoolType } from '../../../src/dex/poolVariety'
 import { makeSuite } from '../../testUtils/makeSuite'
 import { testPool } from '../../testUtils/testPool'
 
@@ -10,7 +9,7 @@ makeSuite('Velodrome V2 pool test', () => {
 
 	testPool({
 		chain: swellchain,
-		poolType: PoolType.VELODROME_V2,
+		poolType: 'VELODROME_V2',
 		poolAddress,
 		assertPoolCreation: {
 			token0Address: wethAddress,
