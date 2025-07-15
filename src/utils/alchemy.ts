@@ -1,4 +1,4 @@
-import { arbitrum, bsc, mainnet, story } from 'viem/chains'
+import { arbitrum, base, bsc, mainnet, story } from 'viem/chains'
 
 export function getAlchemyApiKey() {
 	const apiKey = process.env.ALCHEMY_API_KEY
@@ -23,6 +23,9 @@ export function getAlchemyRpcUrl(chainId: number) {
 			break
 		case story.id:
 			chainKey = 'story-mainnet'
+			break
+		case base.id:
+			chainKey = 'base-mainnet'
 			break
 	}
 
