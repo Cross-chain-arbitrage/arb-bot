@@ -1,6 +1,7 @@
 import { Hash } from 'viem'
 import { FuseBridge } from '../../bridges/FuseBridge/FuseBridge'
 import { Relay } from '../../bridges/relay/Relay'
+import { SimpleStargate } from '../../bridges/stargate/SimpleStargate'
 import { Stargate } from '../../bridges/stargate/Stargate'
 import { Pool } from '../../dex/base/Pool'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
@@ -19,6 +20,7 @@ export enum ActionType {
 	RELAY_BRIDGE = 'RELAY_BRIDGE',
 	WRAP = 'WRAP',
 	UNWRAP = 'UNWRAP',
+	SIMPLE_STARGATE_BRIDGE = 'SIMPLE_STARGATE_BRIDGE',
 }
 
 export abstract class Edge<T extends ActionType = ActionType> {
@@ -349,6 +351,64 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 			ClientManager.getWalletClient(this.from.chainId).account.address,
 			amountIn,
 		)
+
+		const srcTxReceipt = await ClientManager.getClient(
+			this.from.chainId,
+		).waitForTransactionReceipt({
+			hash: result.bridgeTx.srcTxHash as Hash,
+		})
+
+		const message = await result.bridgeTx.waitForBridgeToFinish()
+
+		return {
+			amountOut: result.amountOut,
+			srcTxReceipt,
+			dstTxHash: message.dstTxHash as Hash,
+			bridgeFee: result.lzFee,
+		}
+	}
+}
+
+export class SimpleStargateBridgeEdge extends Edge<ActionType.SIMPLE_STARGATE_BRIDGE> {
+	readonly id: EdgeId
+
+	constructor(
+		override readonly from: GraphNode,
+		override readonly to: GraphNode,
+		graph: Graph,
+	) {
+		super(from, to, ActionType.SIMPLE_STARGATE_BRIDGE, graph)
+		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
+	}
+
+	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
+		const { amountOut, lzFee, gas } = await SimpleStargate.quote(
+			this.from,
+			this.to,
+			amountIn,
+		)
+
+		const rate = this.calcRate(amountIn, amountOut)
+
+		return {
+			rate,
+			amountOut,
+			cost: {
+				gas,
+				bridgeFee: lzFee,
+			},
+		}
+	}
+
+	async execute(
+		amountIn: bigint,
+	): Promise<EdgeExecutionResult<ActionType.SIMPLE_STARGATE_BRIDGE>> {
+		const fromToken = await TokenUtils.fromAddress(
+			this.from.address,
+			this.from.chainId,
+		)
+
+		const result = await SimpleStargate.bridge(fromToken, this.to, amountIn)
 
 		const srcTxReceipt = await ClientManager.getClient(
 			this.from.chainId,

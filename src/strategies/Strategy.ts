@@ -2,6 +2,11 @@ import { PoolType } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
+import {
+	ActionType,
+	RelayBridgeEdge,
+	SimpleStargateBridgeEdge,
+} from '../graphs/primitives/Edge'
 import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
@@ -21,7 +26,13 @@ export interface StrategyConfig {
 	giveApprovals: boolean
 	startToken: Token | NativeCurrency
 	minProfitUsd: number
-	graphBuildConfig: GraphBuildConfig
+	graphBuildConfig: GraphBuildConfig & {
+		edgeConstructors?: {
+			from: Token | NativeCurrency
+			to: Token | NativeCurrency
+			type: ActionType
+		}[]
+	}
 	graphOptimizerOptions: GraphOptimizerOptions
 	pollingInterval: number
 	arbitrageTimeout: number
@@ -33,6 +44,37 @@ export class Strategy {
 	async run() {
 		logger.info('Building Graph')
 		const graph = await GraphBuilder.build(this.config.graphBuildConfig)
+
+		if (this.config.graphBuildConfig.edgeConstructors) {
+			for (const edgeConstructor of this.config.graphBuildConfig
+				.edgeConstructors) {
+				switch (edgeConstructor.type) {
+					case ActionType.SIMPLE_STARGATE_BRIDGE:
+						graph.addEdge(
+							new SimpleStargateBridgeEdge(
+								edgeConstructor.from,
+								edgeConstructor.to,
+								graph,
+							),
+						)
+						break
+
+					case ActionType.RELAY_BRIDGE:
+						graph.addEdge(
+							new RelayBridgeEdge(
+								edgeConstructor.from,
+								edgeConstructor.to,
+								graph,
+							),
+						)
+						break
+					default:
+						throw new Error(
+							`${edgeConstructor.type} can be added by more convenient way`,
+						)
+				}
+			}
+		}
 
 		logger.info('Initializing PriceOracle')
 		await PriceOracle.initializePriceUpdating(

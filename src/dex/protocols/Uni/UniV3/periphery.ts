@@ -1,5 +1,12 @@
 import { getAddress } from 'viem'
-import { arbitrum, hemi, lightlinkPhoenix, rootstock, story } from 'viem/chains'
+import {
+	arbitrum,
+	base,
+	hemi,
+	lightlinkPhoenix,
+	rootstock,
+	story,
+} from 'viem/chains'
 
 export const UNIV3_PERIPHERY_CONFIG: Record<
 	number,
@@ -50,6 +57,13 @@ export const UNIV3_PERIPHERY_CONFIG: Record<
 		[getAddress('0xcb2436774C3e191c85056d248EF4260ce5f27A9D')]: {
 			quoter: '0x5911cB3633e764939edc2d92b7e1ad375Bb57649',
 			router: '0xaa52bB8110fE38D0d2d2AF0B85C3A3eE622CA455',
+			is02Router: true,
+		},
+	},
+	[base.id]: {
+		[getAddress('0x33128a8fC17869897dcE68Ed026d694621f6FDfD')]: {
+			quoter: '0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a',
+			router: '0x2626664c2603336E57B271c5C0b26F421741e481',
 			is02Router: true,
 		},
 	},
