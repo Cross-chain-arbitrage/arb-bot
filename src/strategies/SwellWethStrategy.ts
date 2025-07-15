@@ -66,7 +66,7 @@ async function main() {
 	const config: StrategyConfig = {
 		name: 'Swellchain Weth Pools Bot',
 		giveApprovals: false,
-		startToken: TokenUtils.getNative(base.id),
+		startToken: usdeOnBase,
 		minProfitUsd: 5,
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
@@ -80,7 +80,7 @@ async function main() {
 		},
 		graphOptimizerOptions: {
 			initialValueUSD: 200,
-			stepUSD: 100,
+			stepUSD: 150,
 			stepsAmount: 5,
 			maxPathLength: 7,
 		},
