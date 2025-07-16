@@ -445,4 +445,88 @@ export class GraphArbitrageBot {
 	private async startTokenPrice() {
 		return PriceOracle.getPrice(this.graphParams.startToken)
 	}
+
+	logOpp(log: BaseOpportunityLog, msg: string) {
+		this.oppLogger.info(log, msg)
+	}
+
+	logSkippedOpp(
+		arbitrageOpportunity: GraphArbitrageOpportunity,
+		msg: string,
+	) {
+		const expectedProfitUsd =
+			Number(
+				this.startToken.formatUnits(arbitrageOpportunity.profitAmount),
+			) * this.startTokenPrice()
+
+		const readableProfitAmount = Number(
+			this.startToken.formatUnits(arbitrageOpportunity.profitAmount),
+		)
+
+		const log: SkippedOpportunityLog = {
+			type: 'skipped',
+			module: 'opportunity-finder',
+			reason: msg,
+			profitAmount: arbitrageOpportunity.profitAmount.toString(),
+			profitAmountUsd: expectedProfitUsd,
+			readableProfitAmount,
+			amountIn: arbitrageOpportunity.startAmount.toString(),
+			amountOut: arbitrageOpportunity.endAmount.toString(),
+		}
+		this.oppLogger.info(log, msg)
+	}
+
+	logSuccessOpp(
+		arbitrageOpportunity: GraphArbitrageOpportunity,
+		msg: string,
+	) {
+		const expectedProfitUsd =
+			Number(
+				this.startToken.formatUnits(arbitrageOpportunity.profitAmount),
+			) * this.startTokenPrice()
+
+		const readableProfitAmount = Number(
+			this.startToken.formatUnits(arbitrageOpportunity.profitAmount),
+		)
+
+		const log: SuccessOpportunityLog = {
+			type: 'success-finding',
+			module: 'opportunity-finder',
+			profitAmount: arbitrageOpportunity.profitAmount.toString(),
+			profitAmountUsd: expectedProfitUsd,
+			readableProfitAmount,
+			amountIn: arbitrageOpportunity.startAmount.toString(),
+			amountOut: arbitrageOpportunity.endAmount.toString(),
+			path: arbitrageOpportunity.path.map((edge) => edge.id),
+		}
+
+		this.oppLogger.info(log, msg)
+	}
+
+	logSuccessExecutionOpp(
+		arbitrageOpportunity: GraphArbitrageOpportunity,
+		actualAmountOut: bigint,
+		executionTime: number,
+		msg: string,
+	) {
+		const profit = actualAmountOut - arbitrageOpportunity.startAmount
+		const actualProfitUsd =
+			Number(this.startToken.formatUnits(profit)) * this.startTokenPrice()
+
+		const readableProfitAmount = Number(this.startToken.formatUnits(profit))
+
+		const log: SuccessExecutionOpportunityLog = {
+			type: 'success-execution',
+			module: 'opportunity-finder',
+			profitAmount: profit.toString(),
+			profitAmountUsd: actualProfitUsd,
+			readableProfitAmount,
+			amountIn: arbitrageOpportunity.startAmount.toString(),
+			amountOut: actualAmountOut.toString(),
+			path: arbitrageOpportunity.path.map((edge) => edge.id),
+			executionTime,
+		}
+
+		this.oppLogger.info(log, msg)
+	}
 }
