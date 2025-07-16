@@ -29,7 +29,7 @@ export class Relay {
 	}> {
 		const walletClient = ClientManager.getWalletClient(tokenIn.chainId)
 
-		const quote = await this.client.actions.getQuote({
+		const quoteArgs = {
 			chainId: tokenIn.chainId,
 			currency: tokenIn.address,
 			toChainId: tokenOut.chainId,
@@ -41,7 +41,9 @@ export class Relay {
 			},
 			user: walletClient.account.address,
 			recipient: walletClient.account.address,
-		})
+		} as const
+
+		const quote = await this.client.actions.getQuote(quoteArgs)
 
 		const amountOut = this.ensureVariable(
 			quote.details?.currencyOut?.amount,
