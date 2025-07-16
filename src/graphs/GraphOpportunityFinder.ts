@@ -37,7 +37,7 @@ export class GraphOpportunityFinder {
 				edge: Edge
 			}[] = []
 
-			for (const [edgeId, edge] of graph.edges) {
+			for (const [, edge] of graph.edges) {
 				const from = edge.from
 
 				const currentAmount = amounts.get(from.id)
@@ -52,7 +52,6 @@ export class GraphOpportunityFinder {
 				})
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			const quotePromises = quotes.map(({ quote }) => quote)
 			await Promise.all(quotePromises)
 
@@ -61,8 +60,6 @@ export class GraphOpportunityFinder {
 				const to = edge.to
 
 				const { rate, amountOut } = await quote
-
-				const fromTo = `${from.toString()} -> ${to.toString()}`
 
 				const fromDistance = distances.get(from.id)
 				if (fromDistance === undefined) continue
@@ -133,6 +130,9 @@ export class GraphOpportunityFinder {
 			if (edges.length > maxEdges) {
 				throw new GraphOpportunityFinderError(
 					'Cycle length is too long. Probably a loop appeared on path',
+					{
+						edges,
+					},
 				)
 			}
 
