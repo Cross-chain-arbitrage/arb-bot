@@ -5,6 +5,12 @@ import {
 } from 'viem'
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Stargate } from '../bridges/stargate/Stargate'
+import {
+	BaseOpportunityLog,
+	SkippedOpportunityLog,
+	SuccessExecutionOpportunityLog,
+	SuccessOpportunityLog,
+} from '../logging/OpportunityLog'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
@@ -456,7 +462,9 @@ export class GraphArbitrageBot {
 	) {
 		const expectedProfitUsd =
 			Number(
-				this.startToken.formatUnits(arbitrageOpportunity.profitAmount),
+				this.graphParams.startToken.formatUnits(
+					arbitrageOpportunity.profitAmount,
+				),
 			) * this.startTokenPrice()
 
 		const readableProfitAmount = Number(
@@ -482,7 +490,9 @@ export class GraphArbitrageBot {
 	) {
 		const expectedProfitUsd =
 			Number(
-				this.startToken.formatUnits(arbitrageOpportunity.profitAmount),
+				this.graphParams.startToken.formatUnits(
+					arbitrageOpportunity.profitAmount,
+				),
 			) * this.startTokenPrice()
 
 		const readableProfitAmount = Number(
@@ -511,9 +521,12 @@ export class GraphArbitrageBot {
 	) {
 		const profit = actualAmountOut - arbitrageOpportunity.startAmount
 		const actualProfitUsd =
-			Number(this.startToken.formatUnits(profit)) * this.startTokenPrice()
+			Number(this.graphParams.startToken.formatUnits(profit)) *
+			this.startTokenPrice()
 
-		const readableProfitAmount = Number(this.startToken.formatUnits(profit))
+		const readableProfitAmount = Number(
+			this.graphParams.startToken.formatUnits(profit),
+		)
 
 		const log: SuccessExecutionOpportunityLog = {
 			type: 'success-execution',
