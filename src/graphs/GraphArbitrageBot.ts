@@ -7,7 +7,6 @@ import {
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Stargate } from '../bridges/stargate/Stargate'
 import {
-	BaseOpportunityLog,
 	OpportunityLog,
 	OpportunityLogType,
 	SuccessExecutionOpportunityLog,
@@ -176,7 +175,7 @@ export class GraphArbitrageBot {
 		opportunity: GraphArbitrageOpportunity | null,
 	): Promise<boolean> {
 		if (!opportunity || !opportunity.path) {
-			logger.info('No arbitrage found')
+			await this.logAbsenceOfArbitrage('No arbitrage found')
 			return false
 		}
 
@@ -459,10 +458,6 @@ export class GraphArbitrageBot {
 		return PriceOracle.getPrice(this.graphParams.startToken)
 	}
 
-	logOpp(log: BaseOpportunityLog, msg: string) {
-		this.oppLogger.info(log, msg)
-	}
-
 	async logSkippedOpp(
 		arbitrageOpportunity: GraphArbitrageOpportunity,
 		msg: string,
@@ -475,6 +470,20 @@ export class GraphArbitrageBot {
 		msg: string,
 	) {
 		await this.logOpportunity(arbitrageOpportunity, 'success-finding', msg)
+	}
+
+	async logAbsenceOfArbitrage(msg: string) {
+		await this.logOpportunity(
+			{
+				path: [],
+				startAmount: 0n,
+				endAmount: 0n,
+				profitAmount: 0n,
+				profitPercentage: 0,
+			},
+			'no-arbitrage',
+			msg,
+		)
 	}
 
 	async logSuccessExecutionOpp(
@@ -513,11 +522,13 @@ export class GraphArbitrageBot {
 		msg: string,
 	) {
 		const expectedProfitUsd =
-			Number(
-				this.graphParams.startToken.formatUnits(
-					opportunity.profitAmount,
-				),
-			) * (await this.startTokenPrice())
+			opportunity.profitAmount > 0n
+				? Number(
+						this.graphParams.startToken.formatUnits(
+							opportunity.profitAmount,
+						),
+					) * (await this.startTokenPrice())
+				: 0
 
 		const readableProfitAmount = Number(
 			this.graphParams.startToken.formatUnits(opportunity.profitAmount),

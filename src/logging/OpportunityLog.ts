@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 
 export type OpportunityLogType =
-	| 'success-finding'
-	| 'success-execution'
+	| 'no-arbitrage'
 	| 'skipped'
-	| 'info'
+	| 'success-finding'
 	| 'error-finding'
+	| 'success-execution'
 	| 'error-executing'
+	| 'info'
 
 export interface BaseOpportunityLog {
 	type: OpportunityLogType
