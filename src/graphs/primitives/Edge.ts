@@ -1,4 +1,6 @@
+import TTLCache from '@isaacs/ttlcache'
 import { Hash } from 'viem'
+import z from 'zod'
 import { FuseBridge } from '../../bridges/FuseBridge/FuseBridge'
 import { Relay } from '../../bridges/relay/Relay'
 import { SimpleStargate } from '../../bridges/stargate/SimpleStargate'
@@ -121,34 +123,100 @@ export class SwapEdge extends Edge {
 	}
 }
 
+const feeSchema = z.object({
+	currency: z.object({
+		chainId: z.number(),
+		address: z.string(),
+	}),
+	amount: z.string(),
+})
+const relayQuoteSchema = z.object({
+	fees: z.object({
+		gas: feeSchema,
+		relayerGas: feeSchema,
+		relayerService: feeSchema,
+		app: feeSchema,
+		relayer: feeSchema,
+	}),
+})
+
 export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
+	// amountOut = k * amountIn + b
+	getRelayRateFunction(
+		amountIn: bigint,
+		relayQuote: z.infer<typeof relayQuoteSchema>,
+		gas: bigint,
+	) {
+		const k =
+			1 -
+			(Number(relayQuote.fees.relayer.amount) +
+				Number(relayQuote.fees.relayerService.amount)) /
+				Number(amountIn)
+
+		const b = -Number(relayQuote.fees.relayerGas.amount)
+
+		return (amountIn: bigint) => {
+			const amountOut = k * Number(amountIn) + b
+			return {
+				rate: this.calcRate(amountIn, BigInt(amountOut)),
+				amountOut: BigInt(amountOut),
+				gas: gas,
+			}
+		}
+	}
+
 	readonly id: EdgeId
+
+	private rateFunction: TTLCache<
+		'rateFunction',
+		(amountIn: bigint) => { rate: number; amountOut: bigint; gas: bigint }
+	>
 
 	constructor(
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,
+		readonly rateFunctionTTL: number = 5000,
 	) {
 		super(from, to, ActionType.RELAY_BRIDGE, graph)
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
+
+		this.rateFunction = new TTLCache({
+			ttl: this.rateFunctionTTL,
+		})
 	}
 
 	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
-		const { amountOut, gas } = await Relay.quote(
-			this.from,
-			this.to,
-			amountIn,
-		)
+		const cachedRateFunction = this.rateFunction.get('rateFunction')
 
-		const rate = this.calcRate(amountIn, amountOut)
+		let rate: number
+		let amountOut: bigint
+		let gas: bigint
 
-		return {
-			rate,
-			amountOut,
-			cost: {
-				gas,
-			},
+		if (cachedRateFunction) {
+			;({ rate, amountOut, gas } = cachedRateFunction(amountIn))
+		} else {
+			const quote = await Relay.quote(this.from, this.to, amountIn)
+
+			rate = this.calcRate(amountIn, quote.amountOut)
+			amountOut = quote.amountOut
+			gas = quote.gas
+
+			const relayQuote = relayQuoteSchema.parse(quote.rawResult)
+
+			this.rateFunction.set(
+				'rateFunction',
+				this.getRelayRateFunction(amountIn, relayQuote, gas),
+			)
 		}
+
+		return Promise.resolve({
+			rate: rate,
+			amountOut: amountOut,
+			cost: {
+				gas: gas,
+			},
+		})
 	}
 
 	async execute(
