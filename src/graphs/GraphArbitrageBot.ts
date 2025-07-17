@@ -168,6 +168,14 @@ export class GraphArbitrageBot {
 			opportunity.endAmount,
 		)
 
+		if (expectedRevenue < 0) {
+			logger.warn(
+				opportunity,
+				`Revenue is negative, expectedRevenue: $${expectedRevenue.toFixed(2)}`,
+			)
+			return false
+		}
+
 		if (expectedRevenue < this.settings.minProfitUsd) {
 			logger.info(
 				`Revenue is too low, expectedRevenue: $${expectedRevenue.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
