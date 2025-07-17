@@ -42,6 +42,8 @@ export class Strategy {
 	constructor(private readonly config: StrategyConfig) {}
 
 	async run() {
+		logger.info(this.config, 'Strategy initialized')
+
 		logger.info('Building Graph')
 		const graph = await GraphBuilder.build(this.config.graphBuildConfig)
 
