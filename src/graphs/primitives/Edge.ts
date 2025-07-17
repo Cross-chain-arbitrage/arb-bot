@@ -172,6 +172,8 @@ export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
 		(amountIn: bigint) => { rate: number; amountOut: bigint; gas: bigint }
 	>
 
+	private pendingQuoteRequest: Promise<void> | null = null
+
 	constructor(
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
@@ -196,18 +198,45 @@ export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
 		if (cachedRateFunction) {
 			;({ rate, amountOut, gas } = cachedRateFunction(amountIn))
 		} else {
-			const quote = await Relay.quote(this.from, this.to, amountIn)
+			// If there's already a pending request, wait for it to complete
+			if (this.pendingQuoteRequest) {
+				await this.pendingQuoteRequest
 
-			rate = this.calcRate(amountIn, quote.amountOut)
-			amountOut = quote.amountOut
-			gas = quote.gas
+				// After waiting, check cache again
+				const cachedRateFunctionAfterWait =
+					this.rateFunction.get('rateFunction')
+				if (cachedRateFunctionAfterWait) {
+					;({ rate, amountOut, gas } =
+						cachedRateFunctionAfterWait(amountIn))
+				} else {
+					throw new Error(
+						'Rate function should be cached after pending request completion',
+					)
+				}
+			} else {
+				// Make the request and cache it for other concurrent calls
+				this.pendingQuoteRequest =
+					this.fetchAndCacheRateFunction(amountIn)
 
-			const relayQuote = relayQuoteSchema.parse(quote.rawResult)
+				try {
+					await this.pendingQuoteRequest
 
-			this.rateFunction.set(
-				'rateFunction',
-				this.getRelayRateFunction(amountIn, relayQuote, gas),
-			)
+					// Get the cached rate function that was just set
+					const newCachedRateFunction =
+						this.rateFunction.get('rateFunction')
+					if (!newCachedRateFunction) {
+						throw new Error(
+							'Rate function should be cached after fetch',
+						)
+					}
+
+					;({ rate, amountOut, gas } =
+						newCachedRateFunction(amountIn))
+				} finally {
+					// Clear the pending request
+					this.pendingQuoteRequest = null
+				}
+			}
 		}
 
 		return Promise.resolve({
@@ -217,6 +246,16 @@ export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
 				gas: gas,
 			},
 		})
+	}
+
+	private async fetchAndCacheRateFunction(amountIn: bigint): Promise<void> {
+		const quote = await Relay.quote(this.from, this.to, amountIn)
+		const relayQuote = relayQuoteSchema.parse(quote.rawResult)
+
+		this.rateFunction.set(
+			'rateFunction',
+			this.getRelayRateFunction(amountIn, relayQuote, quote.gas),
+		)
 	}
 
 	async execute(
