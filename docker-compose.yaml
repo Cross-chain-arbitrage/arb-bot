@@ -26,38 +26,38 @@ services:
         networks:
             - loki
 
-    # lightlink-weth:
-    #     build: *build-strategy
-    #     environment:
-    #         - ENTRY_POINT=LightlinkWethPoolsStrategy.js
-    #     container_name: lightlink-weth
-    #     env_file:
-    #         - .env.docker.lightlink-weth
-    #     restart: unless-stopped
-    #     networks:
-    #         - loki
+    lightlink-weth:
+        build: *build-strategy
+        environment:
+            - ENTRY_POINT=LightlinkWethPoolsStrategy.js
+        container_name: lightlink-weth
+        env_file:
+            - .env.docker.lightlink-weth
+        restart: unless-stopped
+        networks:
+            - loki
 
-    # fuse-wbtc:
-    #     build: *build-strategy
-    #     environment:
-    #         - ENTRY_POINT=FuseWbtcStrategy.js
-    #     env_file:
-    #         - .env.docker.fuse-wbtc
-    #     container_name: fuse-wbtc
-    #     restart: unless-stopped
-    #     networks:
-    #         - loki
+    fuse-wbtc:
+        build: *build-strategy
+        environment:
+            - ENTRY_POINT=FuseWbtcStrategy.js
+        env_file:
+            - .env.docker.fuse-wbtc
+        container_name: fuse-wbtc
+        restart: unless-stopped
+        networks:
+            - loki
 
-    # fuse-weth:
-    #     build: *build-strategy
-    #     environment:
-    #         - ENTRY_POINT=FuseWethStrategy.js
-    #     env_file:
-    #         - .env.docker.fuse-weth
-    #     container_name: fuse-weth
-    #     restart: unless-stopped
-    #     networks:
-    #         - loki
+    fuse-weth:
+        build: *build-strategy
+        environment:
+            - ENTRY_POINT=FuseWethStrategy.js
+        env_file:
+            - .env.docker.fuse-weth
+        container_name: fuse-weth
+        restart: unless-stopped
+        networks:
+            - loki
 
     read:
         container_name: loki-read
