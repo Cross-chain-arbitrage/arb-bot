@@ -129,10 +129,7 @@ export class GraphOpportunityFinder {
 
 			if (edges.length > maxEdges) {
 				throw new GraphOpportunityFinderError(
-					'Cycle length is too long. Probably a loop appeared on path',
-					{
-						edges,
-					},
+					'Cycle length is too long. Probably a loop appeared on path or nodes refer to each other',
 				)
 			}
 
