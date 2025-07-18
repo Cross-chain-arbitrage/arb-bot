@@ -47,3 +47,12 @@ services:
             - .env.docker.fuse-weth
         container_name: fuse-weth
         restart: unless-stopped
+
+    swell-weth:
+        build: *build-strategy
+        environment:
+            - ENTRY_POINT=SwellWethStrategy.js
+        env_file:
+            - .env.docker.swell-weth
+        container_name: swell-weth
+        restart: unless-stopped

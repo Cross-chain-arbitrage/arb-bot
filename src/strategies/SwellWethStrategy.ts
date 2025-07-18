@@ -64,7 +64,7 @@ async function main() {
 	]
 
 	const config: StrategyConfig = {
-		name: '🤞 Swellchain Weth Pools Bot',
+		name: 'Swellchain Weth Pools Bot',
 		giveApprovals: false,
 		startToken: usdeOnBase,
 		minProfitUsd: 0.5,
