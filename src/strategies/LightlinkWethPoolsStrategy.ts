@@ -20,7 +20,10 @@ export const LIGHTLINK_WETH_POOLS: PoolData[] = [
 /* ============ Strategy Config ============ */
 
 async function main() {
-	ClientManager.useCustomRpcUrl(arbitrum.id)
+	ClientManager.useCustomRpcUrl(
+		arbitrum.id,
+		'https://arbitrum-mainnet.infura.io/v3/REDACTED_API_KEY',
+	)
 
 	const config: StrategyConfig = {
 		name: 'LightlinkWeth Pools Bot',
