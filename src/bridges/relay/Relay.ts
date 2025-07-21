@@ -24,7 +24,7 @@ export class Relay {
 		slippage: bigint = 10n,
 	): Promise<{
 		amountOut: bigint
-		gas: bigint
+		gasInNative: bigint
 		rawResult: Execute
 	}> {
 		const walletClient = ClientManager.getWalletClient(tokenIn.chainId)
@@ -59,7 +59,7 @@ export class Relay {
 
 		return {
 			amountOut: BigInt(amountOut),
-			gas: BigInt(gas),
+			gasInNative: BigInt(gas),
 			rawResult: quote,
 		}
 	}

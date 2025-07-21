@@ -254,7 +254,7 @@ export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
 
 		this.rateFunction.set(
 			'rateFunction',
-			this.getRelayRateFunction(amountIn, relayQuote, quote.gas),
+			this.getRelayRateFunction(amountIn, relayQuote, quote.gasInNative),
 		)
 	}
 
