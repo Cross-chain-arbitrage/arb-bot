@@ -18,7 +18,7 @@
 	"editable": true,
 	"fiscalYearStartMonth": 0,
 	"graphTooltip": 0,
-	"id": 2,
+	"id": 3,
 	"links": [],
 	"panels": [
 		{
@@ -173,7 +173,7 @@
 					},
 					"direction": "backward",
 					"editorMode": "code",
-					"expr": "rate({service_name=\"fuse-fuse\"} | detected_level=\"info\" [5m])",
+					"expr": "rate({service_name=\"$service\"} | detected_level=\"info\" [5m])",
 					"queryType": "range",
 					"refId": "Info"
 				},
@@ -293,7 +293,7 @@
 					},
 					"direction": "backward",
 					"editorMode": "code",
-					"expr": "{service_name=\"fuse-fuse\"} |= \"profitAmountUsd\" | json profitAmountUsd=\"profitAmountUsd\"",
+					"expr": "{service_name=\"$service\"} |= \"profitAmountUsd\" | json profitAmountUsd=\"profitAmountUsd\"",
 					"queryType": "range",
 					"refId": "A"
 				}
@@ -345,6 +345,7 @@
 						"mode": "thresholds"
 					},
 					"mappings": [],
+					"noValue": "0",
 					"thresholds": {
 						"mode": "absolute",
 						"steps": [
@@ -395,7 +396,7 @@
 					},
 					"direction": "backward",
 					"editorMode": "code",
-					"expr": "count_over_time({service_name=\"fuse-fuse\"} | detected_level=\"error\" != \"telegram\" != \"Failed to send/edit balance message\" [15m])",
+					"expr": "count_over_time({service_name=\"$service\"} | detected_level=\"error\" != \"telegram\" != \"Failed to send/edit balance message\" [15m])",
 					"queryType": "range",
 					"refId": "A"
 				}
@@ -473,7 +474,7 @@
 					},
 					"direction": "backward",
 					"editorMode": "code",
-					"expr": "{service_name=\"fuse-fuse\"} | detected_level=\"info\" |= \"strategy-config\" | json",
+					"expr": "{service_name=\"$service\"} | detected_level=\"info\" |= \"strategy-config\" | json",
 					"queryType": "range",
 					"refId": "A"
 				}
@@ -574,15 +575,48 @@
 	"schemaVersion": 41,
 	"tags": [],
 	"templating": {
-		"list": []
+		"list": [
+			{
+				"current": {
+					"text": "fuse-wbtc",
+					"value": "fuse-wbtc"
+				},
+				"label": "service",
+				"name": "service",
+				"options": [
+					{
+						"selected": false,
+						"text": "fuse-weth",
+						"value": "fuse-weth"
+					},
+					{
+						"selected": false,
+						"text": "fuse-fuse",
+						"value": "fuse-fuse"
+					},
+					{
+						"selected": false,
+						"text": "lightlink-weth",
+						"value": "lightlink-weth"
+					},
+					{
+						"selected": true,
+						"text": "fuse-wbtc",
+						"value": "fuse-wbtc"
+					}
+				],
+				"query": "fuse-weth, fuse-fuse, lightlink-weth, fuse-wbtc",
+				"type": "custom"
+			}
+		]
 	},
 	"time": {
-		"from": "now-15m",
+		"from": "now-1h",
 		"to": "now"
 	},
 	"timepicker": {},
 	"timezone": "browser",
-	"title": "Fuse / Fuse",
-	"uid": "ee76b56c-05f4-4621-befb-d9fac1b2850b",
-	"version": 18
+	"title": "Strategies",
+	"uid": "a10b42b6-024d-4927-a86e-04784425c880",
+	"version": 12
 }
