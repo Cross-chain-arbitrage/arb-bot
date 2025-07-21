@@ -10,11 +10,12 @@ import {
 	swellchain,
 } from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
+import { ChainClientService } from '../../utils/ClientManager'
 import { getAccountAddress } from '../../utils/common'
 import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'
+import { TokenMetadata } from './TokenBase'
 import { WrappedNativeError } from './TokenErrors'
-import { TokenUtils } from './TokenUtils'
 
 export const wrappedTokens: Record<number, Address | undefined> = {
 	[arbitrum.id]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
@@ -29,13 +30,11 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 }
 
 export class WrappedNative extends Token {
-	readonly native: NativeCurrency
-
 	constructor(
+		chainClientService: ChainClientService,
+		readonly native: NativeCurrency,
 		chainId: number,
-		symbol: string,
-		decimals: number,
-		name: string,
+		tokenMetadata: TokenMetadata,
 	) {
 		const address = wrappedTokens[chainId]
 
@@ -43,8 +42,7 @@ export class WrappedNative extends Token {
 			throw new Error(`Wrapped token not found for chain ${chainId}`)
 		}
 
-		super(address, chainId, symbol, decimals, name)
-		this.native = TokenUtils.getNative(chainId)
+		super(chainClientService, address, chainId, tokenMetadata)
 	}
 
 	async deposit(amount: bigint) {

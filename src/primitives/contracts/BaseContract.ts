@@ -1,5 +1,5 @@
 import { Address, getAddress, isAddress } from 'viem'
-import { ClientManager } from '../../utils/ClientManager'
+import { ChainClientService } from '../../utils/ClientManager'
 
 export class BaseContractError extends Error {
 	constructor(message: string) {
@@ -12,6 +12,7 @@ export class BaseContractError extends Error {
 export abstract class BaseContract {
 	public readonly address: Address
 	constructor(
+		public readonly chainClientService: ChainClientService,
 		address: Address,
 		public readonly chainId: number,
 	) {
@@ -26,11 +27,11 @@ export abstract class BaseContract {
 	}
 
 	get client() {
-		return ClientManager.getClient(this.chainId)
+		return this.chainClientService.getClient(this.chainId)
 	}
 
 	get wallet() {
-		return ClientManager.getWalletClient(this.chainId)
+		return this.chainClientService.getWalletClient(this.chainId)
 	}
 
 	get account() {

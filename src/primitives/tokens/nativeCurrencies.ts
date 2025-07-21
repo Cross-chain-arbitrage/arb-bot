@@ -1,15 +1,31 @@
 import * as chains from 'viem/chains'
-import { NativeCurrency } from './NativeCurrency'
+import { TokenMetadata } from './TokenBase'
 
-const ETH = (chainId: number) => new NativeCurrency(chainId, 'ETH', 'ETH')
+export const ETH_METADATA = {
+	symbol: 'ETH',
+	name: 'ETH',
+	decimals: 18,
+}
 
-export const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
-	[chains.arbitrum.id]: ETH(chains.arbitrum.id),
-	[chains.fuse.id]: new NativeCurrency(chains.fuse.id, 'FUSE', 'FUSE'),
-	[chains.hemi.id]: ETH(chains.hemi.id),
-	[chains.lightlinkPhoenix.id]: ETH(chains.lightlinkPhoenix.id),
-	[chains.story.id]: new NativeCurrency(chains.story.id, 'IP', 'IP'),
-	[chains.bsc.id]: new NativeCurrency(chains.bsc.id, 'BNB', 'BNB'),
-	[chains.swellchain.id]: ETH(chains.swellchain.id),
-	[chains.base.id]: ETH(chains.base.id),
+function createMetadata(
+	symbol: string,
+	name: string,
+	decimals = 18,
+): TokenMetadata {
+	return {
+		symbol,
+		name,
+		decimals,
+	}
+}
+
+export const NATIVE_CURRENCIES: Record<number, TokenMetadata> = {
+	[chains.arbitrum.id]: ETH_METADATA,
+	[chains.swellchain.id]: ETH_METADATA,
+	[chains.base.id]: ETH_METADATA,
+	[chains.hemi.id]: ETH_METADATA,
+	[chains.lightlinkPhoenix.id]: ETH_METADATA,
+	[chains.fuse.id]: createMetadata('FUSE', 'FUSE', 18),
+	[chains.story.id]: createMetadata('IP', 'IP', 18),
+	[chains.bsc.id]: createMetadata('BNB', 'BNB', 18),
 } as const
