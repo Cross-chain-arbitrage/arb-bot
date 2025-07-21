@@ -19,7 +19,7 @@ jobs:
     - name: Login to Google Artifact Registry
       uses: docker/login-action@v3
       with:
-        registry: europe-north2-docker.pkg.dev
+        registry: us-west2-docker.pkg.dev
         username: _json_key
         password: ${{ secrets.GCP_SA_KEY }}
     
@@ -30,8 +30,8 @@ jobs:
         file: ./Dockerfile.strategy
         push: true
         tags: |
-          europe-north2-docker.pkg.dev/crypto-galaxy-385309/docker-registry/swag-bot:latest
-          europe-north2-docker.pkg.dev/crypto-galaxy-385309/docker-registry/swag-bot:${{ github.sha }}
+          us-west2-docker.pkg.dev/my-gcp-project/docker-registry/swag-bot:latest
+          us-west2-docker.pkg.dev/my-gcp-project/docker-registry/swag-bot:${{ github.sha }}
     
     - name: Checkout helm charts repo
       uses: actions/checkout@v4
