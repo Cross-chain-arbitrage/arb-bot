@@ -144,7 +144,7 @@ export class ClientManager {
 		/* ======== Build Fallback Transport ======== */
 
 		return fallback(transports, {
-			retryCount: 3,
+			retryCount: 5,
 			retryDelay: 1000,
 			// rank: true results in strange behavior
 			// significantly slows down process while doing many requests
