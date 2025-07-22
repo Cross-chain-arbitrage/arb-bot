@@ -1,1 +1,0 @@
-docker run -d --name fuse-pools --env-file .env -e ENTRY_POINT=FusePoolsStrategy/FusePoolsStrategy.js strategy
