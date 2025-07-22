@@ -140,7 +140,7 @@ makeSuite('GasZip ~ quote()', () => {
 	it('MUST throw on inadequately big amountIn', async () => {
 		const tokenIn = TokenUtils.getNative(arbitrum.id)
 		const dstChainId = superposition.id
-		const amount = tokenIn.parseUnits('1000')
+		const amount = tokenIn.parseUnits('0.375')
 
 		await expect(
 			GasZipBridge.quote(
