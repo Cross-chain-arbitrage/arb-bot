@@ -5,7 +5,7 @@ import { PoolData, Strategy, StrategyConfig } from './Strategy'
 
 export const SUPERPOSITION_WETH_POOLS: PoolData[] = [
 	{
-		type: 'ALGEBRA_V1_2',
+		type: 'ALGEBRA_V1_9',
 		address: '0x7FC956a5C0Aef46AA25b8911f4cb4619CbB7d90F', // WETH/USDC
 		chainId: superposition.id,
 	},
@@ -21,6 +21,7 @@ export const SUPERPOSITION_WETH_POOLS: PoolData[] = [
 async function main() {
 	const config: StrategyConfig = {
 		name: 'Superposition Weth Pools Bot',
+		dryRun: true,
 		giveApprovals: false,
 		startToken: TokenUtils.getNative(arbitrum.id),
 		minProfitUsd: 0.4,

@@ -32,7 +32,8 @@ export interface PoolData {
 }
 
 export interface StrategyConfig {
-	botName: string
+	name: string
+	dryRun?: boolean
 	giveApprovals: boolean
 	startToken: Token | NativeCurrency
 	minProfitUsd: number
