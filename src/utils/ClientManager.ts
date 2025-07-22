@@ -109,7 +109,7 @@ export class ClientManager {
 
 		const defaultTransportConfig: HttpTransportConfig = {
 			timeout: 6_000,
-			batch: false,
+			batch: true,
 			// onFetchRequest(request, init) {
 			// },
 		}
@@ -145,7 +145,7 @@ export class ClientManager {
 
 		return fallback(transports, {
 			retryCount: 3,
-			retryDelay: 500,
+			retryDelay: 1000,
 			// rank: true results in strange behavior
 			// significantly slows down process while doing many requests
 			rank: false,

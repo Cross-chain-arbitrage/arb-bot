@@ -1,7 +1,6 @@
 import { arbitrum, lightlinkPhoenix } from 'viem/chains'
 import { PoolUtils } from '../dex/PoolUtils'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ClientManager } from '../utils/ClientManager'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
 
 export const LIGHTLINK_WETH_POOLS: PoolData[] = [
@@ -20,11 +19,6 @@ export const LIGHTLINK_WETH_POOLS: PoolData[] = [
 /* ============ Strategy Config ============ */
 
 async function main() {
-	ClientManager.useCustomRpcUrl(
-		arbitrum.id,
-		'https://arbitrum-mainnet.infura.io/v3/REDACTED_API_KEY',
-	)
-
 	const config: StrategyConfig = {
 		name: 'LightlinkWeth Pools Bot',
 		giveApprovals: false,
