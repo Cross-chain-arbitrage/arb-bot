@@ -31,6 +31,7 @@ export class AlgebraV1_9PoolCreator extends PoolCreator {
 	) {
 		const pool = new AlgebraV1_9Pool(
 			{
+				chainClientService: this.chainClientService,
 				immutables,
 				poolAddress,
 				chainId,

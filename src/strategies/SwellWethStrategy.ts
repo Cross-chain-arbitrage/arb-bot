@@ -2,7 +2,7 @@ import { base, swellchain } from 'viem/chains'
 import { PoolUtils } from '../dex/PoolUtils'
 import { ActionType } from '../graphs/primitives/Edge'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ClientManager } from '../utils/ClientManager'
+import { ClientManager } from '../utils/ChainClientService'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
 
 export const SWELLCHAIN_WETH_POOLS: PoolData[] = [

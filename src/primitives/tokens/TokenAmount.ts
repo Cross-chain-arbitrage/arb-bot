@@ -1,4 +1,4 @@
-import { ChainClientService } from '../../utils/ClientManager'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'

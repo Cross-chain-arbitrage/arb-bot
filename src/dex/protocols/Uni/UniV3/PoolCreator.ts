@@ -1,5 +1,4 @@
 import { getAddress } from 'viem'
-import { ClientManager } from '../../../../utils/ClientManager'
 import {
 	callFactoryFunction,
 	callFeeFunction,
@@ -31,12 +30,13 @@ export class UniV3PoolCreator extends PoolCreator {
 		periphery: (typeof UNIV3_PERIPHERY_CONFIG)[number][Address],
 		immutables: PoolConstructorParams['immutables'],
 	) {
-		const client = ClientManager.getClient(chainId)
+		const client = this.chainClientService.getClient(chainId)
 
 		const fee = await callFeeFunction(poolAddress, client)
 
 		return new UniV3Pool(
 			{
+				chainClientService: this.chainClientService,
 				immutables,
 				poolAddress,
 				chainId,

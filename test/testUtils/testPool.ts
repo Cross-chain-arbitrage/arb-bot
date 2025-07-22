@@ -3,7 +3,7 @@ import { Pool } from '../../src/dex/base/Pool'
 import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
 import { Token } from '../../src/primitives/tokens/Token'
-import { ClientManager } from '../../src/utils/ClientManager'
+import { ClientManager } from '../../src/utils/ChainClientService'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'
 
 export type PoolTestConfig = {

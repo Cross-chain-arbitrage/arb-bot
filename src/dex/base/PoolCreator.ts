@@ -1,7 +1,8 @@
+import { Injectable } from '@nestjs/common'
 import { PublicClient } from 'viem'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ClientManager } from '../../utils/ClientManager'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import { Pool, PoolConstructorParams } from './Pool'
 
@@ -9,12 +10,14 @@ type Periphery = {
 	router: Address
 } & object
 
+@Injectable()
 export abstract class PoolCreator {
-	readonly customError: ReturnType<typeof createCustomError>
+	readonly customError = createCustomError(`${this.constructor.name}Error`)
 
-	constructor() {
-		this.customError = createCustomError(`${this.constructor.name}Error`)
-	}
+	constructor(
+		protected readonly chainClientService: ChainClientService,
+		protected readonly tokenUtils: TokenUtils,
+	) {}
 
 	/* ======== CORE FUNCTIONS, SUPPOSE TO BE NOT OVERRIDDEN ======== */
 
@@ -22,7 +25,7 @@ export abstract class PoolCreator {
 		poolAddress: Address,
 		chainId: number,
 	): Promise<[Token, Token, Address]> {
-		const client = ClientManager.getClient(chainId)
+		const client = this.chainClientService.getClient(chainId)
 
 		const [token0Address, token1Address, factory] = await Promise.all([
 			this._getToken0Address(poolAddress, client),
@@ -31,8 +34,8 @@ export abstract class PoolCreator {
 		])
 
 		const [token0, token1] = await Promise.all([
-			TokenUtils.fromAddress<Token>(token0Address, chainId),
-			TokenUtils.fromAddress<Token>(token1Address, chainId),
+			this.tokenUtils.fromAddress<Token>(token0Address, chainId),
+			this.tokenUtils.fromAddress<Token>(token1Address, chainId),
 		])
 
 		return [token0, token1, factory]
@@ -43,7 +46,7 @@ export abstract class PoolCreator {
 		periphery: Periphery,
 		poolFactory: Address,
 	) {
-		const client = ClientManager.getClient(chainId)
+		const client = this.chainClientService.getClient(chainId)
 
 		const isPeripheryValid = await this._isPeripheryValid(
 			periphery,

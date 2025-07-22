@@ -7,7 +7,7 @@ import {
 import { Hash, TransactionReceipt } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
-import { ClientManager } from '../../utils/ClientManager'
+import { ClientManager } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 
 //TODO: add validation and write tests

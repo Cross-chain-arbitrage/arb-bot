@@ -10,7 +10,7 @@ import {
 	swellchain,
 } from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
-import { ChainClientService } from '../../utils/ClientManager'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { getAccountAddress } from '../../utils/common'
 import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'

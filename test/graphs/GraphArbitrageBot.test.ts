@@ -17,7 +17,7 @@ import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageN
 import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
 import { TokenAmount } from '../../src/primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
-import { ClientManager } from '../../src/utils/ClientManager'
+import { ClientManager } from '../../src/utils/ChainClientService'
 import { wait } from '../../src/utils/common'
 import logger from '../../src/utils/logger'
 import { makeSuite } from '../testUtils/makeSuite'

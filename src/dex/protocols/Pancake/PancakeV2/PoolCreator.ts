@@ -30,6 +30,7 @@ export class PancakeV2PoolCreator extends PoolCreator {
 		immutables: PoolConstructorParams['immutables'],
 	) {
 		const pool = new PancakeV2Pool({
+			chainClientService: this.chainClientService,
 			immutables,
 			poolAddress,
 			chainId,

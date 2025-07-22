@@ -1,5 +1,4 @@
 import { getAddress } from 'viem'
-import { ClientManager } from '../../../../utils/ClientManager'
 import {
 	callFactoryFunction,
 	callFeeFunction,
@@ -31,12 +30,13 @@ export class PancakeV3PoolCreator extends PoolCreator {
 		periphery: (typeof PANCAKE_V3_PERIPHERY)[number][Address],
 		immutables: PoolConstructorParams['immutables'],
 	) {
-		const client = ClientManager.getClient(chainId)
+		const client = this.chainClientService.getClient(chainId)
 
 		const fee = await callFeeFunction(poolAddress, client)
 
 		return new PancakeV3Pool(
 			{
+				chainClientService: this.chainClientService,
 				immutables,
 				poolAddress,
 				chainId,

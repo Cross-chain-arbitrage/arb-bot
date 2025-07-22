@@ -1,7 +1,7 @@
 import { arbitrum } from 'viem/chains'
 import { PoolUtils } from '../../dex/PoolUtils'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ClientManager } from '../../utils/ClientManager'
+import { ClientManager } from '../../utils/ChainClientService'
 import { Strategy, StrategyConfig } from '../Strategy'
 import { WETH_POOLS } from './wethPools'
 

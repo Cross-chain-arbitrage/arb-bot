@@ -7,6 +7,7 @@ import {
 } from 'viem'
 import { BaseContract } from '../../primitives/contracts/BaseContract'
 import { Token } from '../../primitives/tokens/Token'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 
 /**
@@ -19,6 +20,7 @@ type DecodedEvent = object & {
 }
 
 export interface PoolConstructorParams {
+	chainClientService: ChainClientService
 	immutables: {
 		token0: Token
 		token1: Token
@@ -42,7 +44,7 @@ export abstract class Pool extends BaseContract {
 	readonly poolAbi: Abi
 
 	constructor(params: PoolConstructorParams) {
-		super(params.poolAddress, params.chainId)
+		super(params.chainClientService, params.poolAddress, params.chainId)
 
 		this.customError = createCustomError(`${this.constructor.name}Error`)
 

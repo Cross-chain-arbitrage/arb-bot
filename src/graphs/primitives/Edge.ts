@@ -11,7 +11,7 @@ import { Token } from '../../primitives/tokens/Token'
 import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../primitives/tokens/WrappedNative'
-import { ClientManager } from '../../utils/ClientManager'
+import { ClientManager } from '../../utils/ChainClientService'
 import { shortenAddress } from '../../utils/common'
 import { Graph } from './Graph'
 

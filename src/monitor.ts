@@ -4,7 +4,7 @@ import {
 	getArbitrageOpportunities,
 } from './getArbitrageOpportunities'
 import { TgOpportunityNotifier } from './modules/notification/TgOpportunityNotifier'
-import { ClientManager } from './utils/ClientManager'
+import { ClientManager } from './utils/ChainClientService'
 import { runFuncWithDelay } from './utils/polling'
 
 const MIN_DIFFERENCE_TO_NOTIFY = 2

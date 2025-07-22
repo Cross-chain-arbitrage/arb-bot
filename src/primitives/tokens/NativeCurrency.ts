@@ -1,5 +1,5 @@
 import { Address, isAddressEqual } from 'viem'
-import { ChainClientService } from '../../utils/ClientManager'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { TokenBase, TokenMetadata } from './TokenBase'
 import { NativeCurrencyError } from './TokenErrors'
 

@@ -8,12 +8,14 @@ import { VelodromeV1PoolCreator } from './protocols/Velodrome/VelodromeV1/PoolCr
 import { VelodromeV2PoolCreator } from './protocols/Velodrome/VelodromeV2/PoolCreator'
 
 export const DexRegistry = {
-	ALGEBRA_V1_9: new AlgebraV1_9PoolCreator(),
-	VELODROME_V2: new VelodromeV2PoolCreator(),
-	VELODROME_V1: new VelodromeV1PoolCreator(),
-	ALGEBRA_V1_2: new AlgebraV1_2PoolCreator(),
-	PANCAKE_V3: new PancakeV3PoolCreator(),
-	UNI_V3: new UniV3PoolCreator(),
-	PANCAKE_V2: new PancakeV2PoolCreator(),
-	UNI_V2: new UniV2PoolCreator(),
+	ALGEBRA_V1_9: AlgebraV1_9PoolCreator,
+	VELODROME_V2: VelodromeV2PoolCreator,
+	VELODROME_V1: VelodromeV1PoolCreator,
+	ALGEBRA_V1_2: AlgebraV1_2PoolCreator,
+	PANCAKE_V3: PancakeV3PoolCreator,
+	UNI_V3: UniV3PoolCreator,
+	PANCAKE_V2: PancakeV2PoolCreator,
+	UNI_V2: UniV2PoolCreator,
 } as const
+
+export const DEX_REGISTRY_TOKEN = 'DEX_REGISTRY'

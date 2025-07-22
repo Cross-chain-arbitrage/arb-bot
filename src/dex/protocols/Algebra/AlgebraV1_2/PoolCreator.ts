@@ -1,5 +1,5 @@
+import { Injectable } from '@nestjs/common'
 import { getAddress } from 'viem'
-import { ClientManager } from '../../../../utils/ClientManager'
 import {
 	callFactoryFunction,
 	callFeeFunction,
@@ -12,6 +12,7 @@ import { PoolCreator } from '../../../base/PoolCreator'
 import { ALGEBRA_V1_2_PERIPHERY } from './periphery'
 import { AlgebraV1_2Pool } from './Pool'
 
+@Injectable()
 export class AlgebraV1_2PoolCreator extends PoolCreator {
 	override _isPeripheryValid = isRouterAndQuoterFactoryMatch
 	override _getToken0Address = callToken0Function
@@ -31,12 +32,13 @@ export class AlgebraV1_2PoolCreator extends PoolCreator {
 		periphery: (typeof ALGEBRA_V1_2_PERIPHERY)[number][Address],
 		immutables: PoolConstructorParams['immutables'],
 	): Promise<Pool> {
-		const client = ClientManager.getClient(chainId)
+		const client = this.chainClientService.getClient(chainId)
 
 		const fee = await callFeeFunction(poolAddress, client)
 
 		return new AlgebraV1_2Pool(
 			{
+				chainClientService: this.chainClientService,
 				poolAddress,
 				chainId,
 				immutables,

@@ -4,7 +4,7 @@ import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
 import { UNIV3_ROUTER_ABI } from '../../../abi/uniV3/uniV3Router'
 import { UNIV3_ROUTER02_ABI } from '../../../abi/uniV3/uniV3Router02'
 import { Token } from '../../../primitives/tokens/Token'
-import { ClientManager } from '../../../utils/ClientManager'
+import { ClientManager } from '../../../utils/ChainClientService'
 import { Pool } from '../Pool'
 
 export async function getPriceFromSlot(

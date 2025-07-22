@@ -30,6 +30,7 @@ export class UniV2PoolCreator extends PoolCreator {
 		immutables: PoolConstructorParams['immutables'],
 	) {
 		const pool = new UniV2Pool({
+			chainClientService: this.chainClientService,
 			immutables,
 			poolAddress,
 			chainId,

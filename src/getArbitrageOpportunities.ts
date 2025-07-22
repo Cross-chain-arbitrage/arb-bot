@@ -11,7 +11,7 @@ import { PoolType, PoolUtils } from './dex/PoolUtils'
 import { findArbOpportunity } from './optimize'
 import { poolsByChain } from './pools'
 import { Token } from './primitives/tokens/Token'
-import { ClientManager } from './utils/ClientManager'
+import { ClientManager } from './utils/ChainClientService'
 
 interface PoolPriceData {
 	token0: Token

@@ -1,7 +1,7 @@
 import { arbitrum, gravity } from 'viem/chains'
 import { PoolUtils } from '../dex/PoolUtils'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ClientManager } from '../utils/ClientManager'
+import { ClientManager } from '../utils/ChainClientService'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
 
 export const GRAVITY_WETH_POOLS: PoolData[] = [

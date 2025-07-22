@@ -1,6 +1,5 @@
 import { getAddress, PublicClient } from 'viem'
 import { VELODROME_V1_POOL_ABI } from '../../../../abi/velodrome/velodromeV1Pool'
-import { ClientManager } from '../../../../utils/ClientManager'
 import { PoolConstructorParams } from '../../../base/Pool'
 import { PoolCreator } from '../../../base/PoolCreator'
 import {
@@ -48,7 +47,7 @@ export class VelodromeV1PoolCreator extends PoolCreator {
 		periphery: (typeof VELODROME_V1_PERIPHERY)[number][Address],
 		immutables: PoolConstructorParams['immutables'],
 	) {
-		const client = ClientManager.getClient(chainId)
+		const client = this.chainClientService.getClient(chainId)
 
 		const tickSpacing = await client.readContract({
 			address: poolAddress,
@@ -58,6 +57,7 @@ export class VelodromeV1PoolCreator extends PoolCreator {
 
 		return new VelodromeV1Pool(
 			{
+				chainClientService: this.chainClientService,
 				immutables,
 				poolAddress,
 				chainId,
