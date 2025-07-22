@@ -14,7 +14,7 @@ import {
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
 
-import { base, bsc, fuse, lightlinkPhoenix, mainnet, story } from 'viem/chains'
+import { base, bsc, lightlinkPhoenix, mainnet, story } from 'viem/chains'
 import { getAlchemyRpcUrl } from './alchemy'
 import { getPrivateKey } from './common'
 
@@ -24,7 +24,7 @@ const CUSTOM_RPC_URLS: Record<number, string> = {
 	[bsc.id]: getAlchemyRpcUrl(bsc.id),
 	[story.id]: getAlchemyRpcUrl(story.id),
 	[lightlinkPhoenix.id]: `https://endpoints.omniatech.io/v1/lightlink/phoenix/bcd6910e361449d088886a7bfe37586c`,
-	[fuse.id]: `https://lb.drpc.org/ogrpc?network=fuse&dkey=REDACTED_API_KEY`,
+	// [fuse.id]: `https://lb.drpc.org/ogrpc?network=fuse&dkey=REDACTED_API_KEY`,
 	// [hemi.id]: `https://endpoints.omniatech.io/v1/hemi/mainnet/0292053309264c18932589701ab5020a`,
 	[base.id]: getAlchemyRpcUrl(base.id),
 } as const
