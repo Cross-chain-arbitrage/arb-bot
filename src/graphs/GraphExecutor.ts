@@ -83,7 +83,9 @@ export class GraphExecutor {
 		let executionCostInUsd = 0
 		if (
 			edge.actionType === ActionType.STARGATE_BRIDGE ||
-			edge.actionType === ActionType.FUSE_BRIDGE
+			edge.actionType === ActionType.FUSE_BRIDGE ||
+			edge.actionType === ActionType.SIMPLE_STARGATE_BRIDGE ||
+			edge.actionType === ActionType.RELAY_BRIDGE
 		) {
 			const { srcTxReceipt, dstTxHash, bridgeFee } =
 				executionResult as EdgeExecutionResult<BridgeActionType>
