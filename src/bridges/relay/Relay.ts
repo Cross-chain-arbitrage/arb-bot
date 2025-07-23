@@ -7,17 +7,21 @@ import {
 import { Hash, TransactionReceipt } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
-import { ClientManager } from '../../utils/ChainClientService'
+
+import { Injectable } from '@nestjs/common'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 
 //TODO: add validation and write tests
+@Injectable()
 export class Relay {
-	static customError = createCustomError('RelayError')
-	static client: RelayClient = createClient({
+	constructor(private readonly chainClientService: ChainClientService) {}
+	customError = createCustomError('RelayError')
+	client: RelayClient = createClient({
 		baseApiUrl: MAINNET_RELAY_API,
 	})
 
-	static async quote(
+	async quote(
 		tokenIn: Token | NativeCurrency,
 		tokenOut: Token | NativeCurrency,
 		amountIn: bigint,
@@ -27,7 +31,9 @@ export class Relay {
 		gasInNative: bigint
 		rawResult: Execute
 	}> {
-		const walletClient = ClientManager.getWalletClient(tokenIn.chainId)
+		const walletClient = this.chainClientService.getWalletClient(
+			tokenIn.chainId,
+		)
 
 		const quoteArgs = {
 			chainId: tokenIn.chainId,
@@ -64,7 +70,7 @@ export class Relay {
 		}
 	}
 
-	static async bridge(
+	async bridge(
 		tokenIn: Token | NativeCurrency,
 		tokenOut: Token | NativeCurrency,
 		amountIn: bigint,
@@ -79,7 +85,7 @@ export class Relay {
 
 		const executionResult = await this.client.actions.execute({
 			quote: quote.rawResult,
-			wallet: ClientManager.getWalletClient(tokenIn.chainId),
+			wallet: this.chainClientService.getWalletClient(tokenIn.chainId),
 		})
 
 		const progressState = this.ensureVariable(
@@ -118,7 +124,7 @@ export class Relay {
 		}
 	}
 
-	private static ensureVariable<T>(
+	private ensureVariable<T>(
 		variable: T | undefined,
 		errorMessage: string,
 		trace: object,

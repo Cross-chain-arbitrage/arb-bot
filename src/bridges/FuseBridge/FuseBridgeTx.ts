@@ -5,12 +5,16 @@ import { Tx } from '../../primitives/transactions/Tx'
 export class FuseBridgeTx extends Tx {
 	dstTxHash?: Hash
 
-	constructor(hash: string, chainId: number) {
+	constructor(
+		private readonly layerZeroScanAPI: LayerZeroScanAPI,
+		hash: string,
+		chainId: number,
+	) {
 		super(hash, chainId)
 	}
 
 	async waitForBridgeToFinish() {
-		const message = await LayerZeroScanAPI.waitForDeliveryStatus(
+		const message = await this.layerZeroScanAPI.waitForDeliveryStatus(
 			this.hash as Hash,
 		)
 

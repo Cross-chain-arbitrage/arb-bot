@@ -19,6 +19,7 @@ export class LZBridgeTx implements BridgeTx {
 	public dstTx?: Tx
 
 	constructor(
+		private readonly layerZeroScanAPI: LayerZeroScanAPI,
 		hash: string,
 		chainId: number,
 		public readonly srcToken: Token | NativeCurrency,
@@ -29,7 +30,7 @@ export class LZBridgeTx implements BridgeTx {
 	}
 
 	async waitForBridgeToFinish(): Promise<Message> {
-		const message = await LayerZeroScanAPI.waitForDeliveryStatus(
+		const message = await this.layerZeroScanAPI.waitForDeliveryStatus(
 			this.srcTx.hash as Hash,
 		)
 

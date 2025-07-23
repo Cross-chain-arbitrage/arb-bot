@@ -1,13 +1,15 @@
+import { Injectable } from '@nestjs/common'
 import { isAddressEqual, zeroAddress, zeroHash } from 'viem'
 import { arbitrum, base, bsc, fuse, mainnet, optimism } from 'viem/chains'
 import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20BridgeForeign'
 import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
 import { FUSE_BRIDGE_HOME_ABI } from '../../abi/fuse/fuseBridgeHome'
+import { LayerZeroScanAPI } from '../../dataApi/layerzeroscan/LayerZeroScanAPI'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ClientManager } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import { FuseBridgeTx } from './FuseBridgeTx'
 import { FUSE_BRIDGE_SUPPORTED_CHAINS } from './supportedChain'
@@ -83,8 +85,15 @@ const ADAPTER_PARAMS =
 
 const BRIDGE_GAS_COST = 400_000n
 
+@Injectable()
 export class FuseBridge {
-	static async bridge(
+	constructor(
+		private readonly chainClientService: ChainClientService,
+		private readonly tokenUtils: TokenUtils,
+		private readonly layerZeroScanAPI: LayerZeroScanAPI,
+	) {}
+
+	async bridge(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		recipient: Address,
@@ -96,7 +105,7 @@ export class FuseBridge {
 	}> {
 		const unwrapWeth = false
 
-		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 
 		await this.validateBalance(tokenIn, wallet.account.address, amount)
 
@@ -135,7 +144,8 @@ export class FuseBridge {
 					simulateOnly,
 				),
 				lzFee: new TokenAmount(
-					TokenUtils.getNative(tokenIn.chainId),
+					this.chainClientService,
+					this.tokenUtils.getNative(tokenIn.chainId),
 					quote[0],
 				),
 			}
@@ -150,14 +160,15 @@ export class FuseBridge {
 					simulateOnly,
 				),
 				lzFee: new TokenAmount(
-					TokenUtils.getNative(tokenIn.chainId),
+					this.chainClientService,
+					this.tokenUtils.getNative(tokenIn.chainId),
 					quote[0],
 				),
 			}
 		}
 	}
 
-	private static async executeNativeBridge(
+	private async executeNativeBridge(
 		tokenIn: Token | NativeCurrency,
 		bridgeAddress: Address,
 		amount: bigint,
@@ -165,8 +176,8 @@ export class FuseBridge {
 		args: HomeFuseBridgeFunctionArgs,
 		simulateOnly: boolean = false,
 	) {
-		const client = ClientManager.getClient(fuse.id)
-		const wallet = ClientManager.getWalletClient(fuse.id)
+		const client = this.chainClientService.getClient(fuse.id)
+		const wallet = this.chainClientService.getWalletClient(fuse.id)
 
 		const { request } = await client.simulateContract({
 			address: bridgeAddress,
@@ -178,15 +189,19 @@ export class FuseBridge {
 		})
 
 		if (simulateOnly) {
-			return new FuseBridgeTx(zeroHash, tokenIn.chainId)
+			return new FuseBridgeTx(
+				this.layerZeroScanAPI,
+				zeroHash,
+				tokenIn.chainId,
+			)
 		}
 
 		const txHash = await wallet.writeContract(request)
 
-		return new FuseBridgeTx(txHash, fuse.id)
+		return new FuseBridgeTx(this.layerZeroScanAPI, txHash, fuse.id)
 	}
 
-	private static async executeForeignBridge(
+	private async executeForeignBridge(
 		tokenIn: Token | NativeCurrency,
 		bridgeAddress: Address,
 		abi:
@@ -196,8 +211,8 @@ export class FuseBridge {
 		args: FuseForeignBridgeFunctionArgs,
 		simulateOnly: boolean = false,
 	) {
-		const client = ClientManager.getClient(tokenIn.chainId)
-		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+		const client = this.chainClientService.getClient(tokenIn.chainId)
+		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 
 		const result = await client.simulateContract({
 			address: bridgeAddress,
@@ -209,15 +224,19 @@ export class FuseBridge {
 		})
 
 		if (simulateOnly) {
-			return new FuseBridgeTx(zeroHash, tokenIn.chainId)
+			return new FuseBridgeTx(
+				this.layerZeroScanAPI,
+				zeroHash,
+				tokenIn.chainId,
+			)
 		}
 
 		const txHash = await wallet.writeContract(result.request)
 
-		return new FuseBridgeTx(txHash, tokenIn.chainId)
+		return new FuseBridgeTx(this.layerZeroScanAPI, txHash, tokenIn.chainId)
 	}
 
-	static async approveToBridge(
+	async approveToBridge(
 		tokenIn: Token | NativeCurrency,
 		amount: bigint,
 		toChainId: number,
@@ -226,7 +245,7 @@ export class FuseBridge {
 
 		const bridge = this.getBridge(tokenIn, toChainId)
 
-		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 		const userAddr = wallet.account.address
 
 		const allowance = await tokenIn.allowance(userAddr, bridge.address)
@@ -238,7 +257,7 @@ export class FuseBridge {
 		return tx
 	}
 
-	private static getBridgeArgs(
+	private getBridgeArgs(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		recipient: Address,
@@ -298,7 +317,7 @@ export class FuseBridge {
 		] as FuseForeignBridgeFunctionArgs
 	}
 
-	static async quoteBridge(
+	async quoteBridge(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		amountIn: bigint,
@@ -309,7 +328,7 @@ export class FuseBridge {
 		lzFee: TokenAmount
 		gas: bigint
 	}> {
-		const client = ClientManager.getClient(tokenIn.chainId)
+		const client = this.chainClientService.getClient(tokenIn.chainId)
 
 		this.validateToken(tokenIn)
 		this.validateChain(tokenIn.chainId)
@@ -338,7 +357,8 @@ export class FuseBridge {
 		}
 
 		const lzFee = new TokenAmount(
-			TokenUtils.getNative(tokenIn.chainId),
+			this.chainClientService,
+			this.tokenUtils.getNative(tokenIn.chainId),
 			feeQuote[0],
 		)
 
@@ -350,7 +370,7 @@ export class FuseBridge {
 		}
 	}
 
-	private static getEstimateArgs(
+	private getEstimateArgs(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		useZro: boolean = false,
@@ -366,12 +386,12 @@ export class FuseBridge {
 		return [useZro, ADAPTER_PARAMS]
 	}
 
-	private static async getTvlOnRemoteChain(
+	private async getTvlOnRemoteChain(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 	) {
 		const sourceChainId = fuse.id
-		const client = ClientManager.getClient(sourceChainId)
+		const client = this.chainClientService.getClient(sourceChainId)
 
 		const { address } = this.getBridge(tokenIn, toChainId)
 
@@ -385,7 +405,7 @@ export class FuseBridge {
 		return result
 	}
 
-	static getBridge(
+	getBridge(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 	): {
@@ -433,12 +453,12 @@ export class FuseBridge {
 
 	/* ================ Validations ================ */
 
-	protected static validateRecipient(chainId: number, recipient: Address) {
+	protected validateRecipient(chainId: number, recipient: Address) {
 		if (recipient === zeroAddress) {
 			throw new FuseBridgeError('Recipient cannot be the zero address')
 		}
 
-		const wallet = ClientManager.getWalletClient(chainId)
+		const wallet = this.chainClientService.getWalletClient(chainId)
 
 		if (wallet.account.address !== recipient) {
 			throw new FuseBridgeError(
@@ -447,13 +467,13 @@ export class FuseBridge {
 		}
 	}
 
-	protected static validateChain(chainId: number) {
+	protected validateChain(chainId: number) {
 		if (!FUSE_BRIDGE_SUPPORTED_CHAINS.includes(chainId)) {
 			throw new FuseBridgeError(`Unsupported chain: ${chainId}`)
 		}
 	}
 
-	protected static validateToken(token: Token | NativeCurrency) {
+	protected validateToken(token: Token | NativeCurrency) {
 		const tokenInfo = FUSE_BRIDGE_SUPPORTED_TOKENS.find(
 			(t) =>
 				token.chainId === t.chainId &&
@@ -467,7 +487,7 @@ export class FuseBridge {
 		}
 	}
 
-	protected static async validateBalance(
+	protected async validateBalance(
 		token: Token | NativeCurrency,
 		recipient: Address,
 		amount: bigint,
@@ -481,7 +501,7 @@ export class FuseBridge {
 		}
 	}
 
-	protected static async validateAllowance(
+	protected async validateAllowance(
 		recipient: Address,
 		bridge: Address,
 		amount: bigint,
@@ -496,7 +516,7 @@ export class FuseBridge {
 		)
 	}
 
-	private static async validateBridgingLimit(
+	private async validateBridgingLimit(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		amount: bigint,
@@ -515,11 +535,11 @@ export class FuseBridge {
 
 	/* ================ Utils ================ */
 
-	private static isFuse(token: Token | NativeCurrency) {
+	private isFuse(token: Token | NativeCurrency) {
 		return isAddressEqual(token.address, FUSE_ADDRESSES[token.chainId])
 	}
 
-	private static getLzV1ChainEid(chainId: number) {
+	private getLzV1ChainEid(chainId: number) {
 		if (!LZ_V1_CHAIN_EIDS[chainId]) {
 			throw new FuseBridgeError(`Unsupported chain: ${chainId}`)
 		}

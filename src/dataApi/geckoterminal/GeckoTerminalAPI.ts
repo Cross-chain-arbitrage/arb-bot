@@ -27,16 +27,15 @@ interface GeckoTerminalTokenData {
 const BATCH_SIZE = 30
 
 export class GeckoTerminalAPI {
-	private static readonly baseUrl: string =
-		'https://api.geckoterminal.com/api/v2'
+	private readonly baseUrl: string = 'https://api.geckoterminal.com/api/v2'
 
-	static async getTokenData(
+	async getTokenData(
 		address: Address,
 		network: string,
 	): Promise<GeckoTerminalTokenData> {
 		this.validateChain(network)
 
-		const tokenDataUrl = `${GeckoTerminalAPI.baseUrl}/networks/${network}/tokens/${address}`
+		const tokenDataUrl = `${this.baseUrl}/networks/${network}/tokens/${address}`
 		const { data } = await axios.get<{ data: GeckoTerminalTokenData }>(
 			tokenDataUrl,
 		)
@@ -44,17 +43,14 @@ export class GeckoTerminalAPI {
 		return data.data
 	}
 
-	static async getTokenPrice(
-		address: Address,
-		network: string,
-	): Promise<number> {
+	async getTokenPrice(address: Address, network: string): Promise<number> {
 		this.validateChain(network)
 
 		const tokenData = await this.getTokenData(address, network)
 		return Number(tokenData.attributes.price_usd)
 	}
 
-	static async getTokenPrices(
+	async getTokenPrices(
 		addresses: Address[],
 		network: string,
 	): Promise<{ address: Address; price: number }[]> {
@@ -67,7 +63,7 @@ export class GeckoTerminalAPI {
 			const batch = addresses.slice(i, i + BATCH_SIZE)
 			const addressesString = batch.join(',')
 
-			const tokensDataUrl = `${GeckoTerminalAPI.baseUrl}/networks/${network}/tokens/multi/${addressesString}`
+			const tokensDataUrl = `${this.baseUrl}/networks/${network}/tokens/multi/${addressesString}`
 
 			const { data } = await axios.get<{
 				data: GeckoTerminalTokenData[]
@@ -82,21 +78,21 @@ export class GeckoTerminalAPI {
 		}))
 	}
 
-	static async getTokenPriceETH(): Promise<number> {
+	async getTokenPriceETH(): Promise<number> {
 		return this.getTokenPrice(
 			'0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
 			'eth',
 		)
 	}
 
-	static async getTokenPriceBTC(): Promise<number> {
+	async getTokenPriceBTC(): Promise<number> {
 		return this.getTokenPrice(
 			'0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
 			'eth',
 		)
 	}
 
-	static validateChain(chain: string) {
+	validateChain(chain: string) {
 		const some = CHAINS.some((c) => c.id === chain)
 		if (!some) throw new Error(`Chain ${chain} not found`)
 	}

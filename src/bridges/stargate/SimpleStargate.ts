@@ -1,9 +1,10 @@
 import axios from 'axios'
+import { LayerZeroScanAPI } from '../../dataApi/layerzeroscan/LayerZeroScanAPI'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ClientManager } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import { STARGATE_CHAINS } from './dumped/chains'
 import { StargateBridgeTx } from './StargateBridgeTx'
@@ -59,10 +60,16 @@ export interface Transaction {
 const BRIDGE_GAS_COST = 400_000n
 
 export class SimpleStargate {
-	static baseUrl = 'https://stargate.finance/api/v1'
-	static customError = createCustomError('SimpleStargateError')
+	constructor(
+		private readonly chainClientService: ChainClientService,
+		private readonly tokenUtils: TokenUtils,
+		private readonly layerZeroScanAPI: LayerZeroScanAPI,
+	) {}
 
-	static async quote(
+	baseUrl = 'https://stargate.finance/api/v1'
+	customError = createCustomError('SimpleStargateError')
+
+	async quote(
 		tokenIn: Token | NativeCurrency,
 		tokenOut: Token | NativeCurrency,
 		amountIn: bigint,
@@ -72,7 +79,9 @@ export class SimpleStargate {
 		gas: bigint
 		rawQuoteResult: Quote
 	}> {
-		const walletClient = ClientManager.getWalletClient(tokenIn.chainId)
+		const walletClient = this.chainClientService.getWalletClient(
+			tokenIn.chainId,
+		)
 
 		const response = await axios.get<QuoteResponse>('/quotes', {
 			baseURL: this.baseUrl,
@@ -96,11 +105,12 @@ export class SimpleStargate {
 			throw error
 		}
 
-		const nativeCurrency = TokenUtils.getNative(tokenIn.chainId)
+		const nativeCurrency = this.tokenUtils.getNative(tokenIn.chainId)
 
 		return {
 			amountOut: BigInt(quote.srcAmount), //TODO: consider fee
 			lzFee: new TokenAmount(
+				this.chainClientService,
 				nativeCurrency,
 				BigInt(quote.fees[0].amount),
 			),
@@ -109,7 +119,7 @@ export class SimpleStargate {
 		}
 	}
 
-	static async bridge(
+	async bridge(
 		tokenIn: Token | NativeCurrency,
 		tokenOut: Token | NativeCurrency,
 		amountIn: bigint,
@@ -124,7 +134,9 @@ export class SimpleStargate {
 			amountIn,
 		)
 
-		const walletClient = ClientManager.getWalletClient(tokenIn.chainId)
+		const walletClient = this.chainClientService.getWalletClient(
+			tokenIn.chainId,
+		)
 
 		const tx = await walletClient.sendTransaction({
 			to: rawQuoteResult.steps[0].transaction.to as `0x${string}`,
@@ -135,11 +147,17 @@ export class SimpleStargate {
 		return {
 			amountOut,
 			lzFee,
-			bridgeTx: new StargateBridgeTx(tx, tokenIn, tokenOut, amountIn),
+			bridgeTx: new StargateBridgeTx(
+				this.layerZeroScanAPI,
+				tx,
+				tokenIn,
+				tokenOut,
+				amountIn,
+			),
 		}
 	}
 
-	static chainIdToChainKey(chainId: number) {
+	chainIdToChainKey(chainId: number) {
 		const chain = STARGATE_CHAINS.find((chain) => chain.chainId === chainId)
 
 		if (!chain) {

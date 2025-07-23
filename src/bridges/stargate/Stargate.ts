@@ -1,23 +1,31 @@
 import { getContract, zeroAddress, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
+import { LayerZeroScanAPI } from '../../dataApi/layerzeroscan/LayerZeroScanAPI'
 import { getChainEIdByNativeChainId } from '../../dataApi/layerzeroscan/utils'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../primitives/tokens/WrappedNative'
-import { ClientManager } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError, padAddressToBytes32 } from '../../utils/common'
 import { StargateAPI } from './StargateAPI'
 import { StargateBridgeTx } from './StargateBridgeTx'
-import { STARGATE_CHAINS } from './dumped/chains'
+import { getStargateChainKey } from './helpers'
 
 export const StargateError = createCustomError('StargateError')
 
 const BRIDGE_GAS_COST = 400_000n
 
 export class Stargate {
+	constructor(
+		private readonly chainClientService: ChainClientService,
+		private readonly tokenUtils: TokenUtils,
+		private readonly stargateAPI: StargateAPI,
+		private readonly layerZeroScanAPI: LayerZeroScanAPI,
+	) {}
+
 	/**
 	 * Bridges `tokenIn` to `recipient` on `toChainId`
 	 * @param tokenIn - Token or NativeCurrency to bridge
@@ -28,7 +36,7 @@ export class Stargate {
 	 * @returns {bridgeTx: StargateBridgeTx, expectedAmountOut: bigint}
 	 * @dev Bridging amount is affected by following factors: bridge fee, src vs dst token decimals diff, etc.
 	 */
-	static async bridge(
+	async bridge(
 		tokenIn: Token | NativeCurrency | WrappedNative,
 		toChainId: number,
 		recipient: Address,
@@ -51,7 +59,7 @@ export class Stargate {
 
 		this.validateRecipient(tokenIn.chainId, recipient)
 
-		const tokenMetadata = await StargateAPI.getTokenMetadata(tokenIn)
+		const tokenMetadata = await this.stargateAPI.getTokenMetadata(tokenIn)
 
 		const poolOrOFT = tokenMetadata.address
 
@@ -67,7 +75,7 @@ export class Stargate {
 			await this.validateAllowance(recipient, poolOrOFT, amount, tokenIn)
 		}
 
-		const { quote, amountOut, tokenOut } = await Stargate.quoteBridge(
+		const { quote, amountOut, tokenOut } = await this.quoteBridge(
 			tokenIn,
 			amount,
 			toChainId,
@@ -89,8 +97,8 @@ export class Stargate {
 			oftCmd: '0x' as Hex,
 		}
 
-		const client = ClientManager.getClient(tokenIn.chainId)
-		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+		const client = this.chainClientService.getClient(tokenIn.chainId)
+		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 
 		const isNative = tokenIn instanceof NativeCurrency
 		const value = quote.messagingFee.nativeFee + (isNative ? amount : 0n)
@@ -111,6 +119,7 @@ export class Stargate {
 		if (simulateOnly) {
 			return {
 				bridgeTx: new StargateBridgeTx(
+					this.layerZeroScanAPI,
 					zeroHash,
 					tokenIn,
 					tokenOut,
@@ -119,7 +128,8 @@ export class Stargate {
 				amountOut,
 				tokenOut,
 				lzFee: new TokenAmount(
-					TokenUtils.getNative(tokenIn.chainId),
+					this.chainClientService,
+					this.tokenUtils.getNative(tokenIn.chainId),
 					quote.messagingFee.nativeFee,
 				),
 			}
@@ -128,25 +138,30 @@ export class Stargate {
 		const txHash = await wallet.writeContract(request)
 
 		return {
-			bridgeTx: new StargateBridgeTx(txHash, tokenIn, tokenOut, amount),
+			bridgeTx: new StargateBridgeTx(
+				this.layerZeroScanAPI,
+				txHash,
+				tokenIn,
+				tokenOut,
+				amount,
+			),
 			amountOut,
 			tokenOut,
 			lzFee: new TokenAmount(
-				TokenUtils.getNative(tokenIn.chainId),
+				this.chainClientService,
+				this.tokenUtils.getNative(tokenIn.chainId),
 				quote.messagingFee.nativeFee,
 			),
 		}
 	}
 
-	static async getBridgeAddress(
-		token: Token | NativeCurrency,
-	): Promise<Address> {
-		const tokenMetadata = await StargateAPI.getTokenMetadata(token)
+	async getBridgeAddress(token: Token | NativeCurrency): Promise<Address> {
+		const tokenMetadata = await this.stargateAPI.getTokenMetadata(token)
 
 		return tokenMetadata.address
 	}
 
-	private static async validateAllowance(
+	private async validateAllowance(
 		recipient: Address,
 		poolOrOFT: Address,
 		amount: bigint,
@@ -161,12 +176,12 @@ export class Stargate {
 		)
 	}
 
-	private static async quote(
+	private async quote(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		amount: bigint,
 	): Promise<QuoteResult> {
-		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 
 		return this.quoteWithRecipient(
 			tokenIn,
@@ -176,15 +191,15 @@ export class Stargate {
 		)
 	}
 
-	private static async quoteWithRecipient(
+	private async quoteWithRecipient(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
 		recipient: Address,
 		amount: bigint,
 	): Promise<QuoteResult> {
-		const tokenMetadata = await StargateAPI.getTokenMetadata(tokenIn)
+		const tokenMetadata = await this.stargateAPI.getTokenMetadata(tokenIn)
 
-		return await Stargate._quote(
+		return await this._quote(
 			tokenMetadata,
 			amount,
 			recipient,
@@ -193,15 +208,12 @@ export class Stargate {
 		)
 	}
 
-	static async approveToBridge(
-		tokenIn: Token | NativeCurrency,
-		amount: bigint,
-	) {
+	async approveToBridge(tokenIn: Token | NativeCurrency, amount: bigint) {
 		if (tokenIn instanceof NativeCurrency) return
 
-		const poolOrOFT = await Stargate.getBridgeAddress(tokenIn)
+		const poolOrOFT = await this.getBridgeAddress(tokenIn)
 
-		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 		const userAddr = wallet.account.address
 
 		const allowance = await tokenIn.allowance(userAddr, poolOrOFT)
@@ -213,14 +225,14 @@ export class Stargate {
 		return tx
 	}
 
-	private static async _quote(
+	private async _quote(
 		metadata: StargateTokenMetadata,
 		amount: bigint,
 		recipient: Address,
 		toChainId: number,
 		fromChainId: number,
 	): Promise<QuoteResult> {
-		const messagingFee = await Stargate.quoteSend(
+		const messagingFee = await this.quoteSend(
 			metadata.address,
 			amount,
 			recipient,
@@ -228,7 +240,7 @@ export class Stargate {
 			fromChainId,
 		)
 
-		const [oftLimit, oftFeeDetails, oftReceipt] = await Stargate.quoteOFT(
+		const [oftLimit, oftFeeDetails, oftReceipt] = await this.quoteOFT(
 			metadata.address,
 			amount,
 			recipient,
@@ -258,7 +270,7 @@ export class Stargate {
 		return result
 	}
 
-	private static async quoteSend(
+	private async quoteSend(
 		token: Address,
 		amount: bigint,
 		recipient: Address,
@@ -280,7 +292,7 @@ export class Stargate {
 			oftCmd: '0x' as Hex,
 		}
 
-		const client = ClientManager.getClient(fromChainId)
+		const client = this.chainClientService.getClient(fromChainId)
 
 		const messagingFee = await client.readContract({
 			address: token,
@@ -292,7 +304,7 @@ export class Stargate {
 		return messagingFee as MessagingFee
 	}
 
-	private static async quoteOFT(
+	private async quoteOFT(
 		token: Address,
 		amount: bigint,
 		recipient: Address,
@@ -302,7 +314,7 @@ export class Stargate {
 		const toChainEId = getChainEIdByNativeChainId(toChainId)
 		const recipientBytes32 = padAddressToBytes32(recipient)
 
-		const wallet = ClientManager.getWalletClient(fromChainId)
+		const wallet = this.chainClientService.getWalletClient(fromChainId)
 
 		const contract = getContract({
 			address: token,
@@ -325,27 +337,15 @@ export class Stargate {
 		return result as [OFTLimit, OFTFeeDetail[], OFTReceipt]
 	}
 
-	static getChainKey(chainId: number): string {
-		const chain = STARGATE_CHAINS.find((chain) => chain.chainId === chainId)
-
-		if (!chain) {
-			throw new StargateError(
-				`Chain with id ${chainId} not found in Stargate chain registry`,
-			)
-		}
-
-		return chain.chainKey
-	}
-
-	private static async getDstToken(
+	private async getDstToken(
 		srcToken: Token | NativeCurrency,
 		toChainId: number,
 	): Promise<Token | NativeCurrency> {
 		const assetMetadata =
-			await StargateAPI.getSameAssetMetadataAcrossChains(srcToken)
+			await this.stargateAPI.getSameAssetMetadataAcrossChains(srcToken)
 
 		const dstTokens = assetMetadata.filter(
-			(token) => token.chainKey === Stargate.getChainKey(toChainId),
+			(token) => token.chainKey === getStargateChainKey(toChainId),
 		)
 
 		if (dstTokens.length > 1) {
@@ -362,7 +362,7 @@ export class Stargate {
 
 		const dstToken = dstTokens[0].token
 
-		return TokenUtils.fromAddress(dstToken.address, toChainId)
+		return this.tokenUtils.fromAddress(dstToken.address, toChainId)
 	}
 
 	/**
@@ -371,7 +371,7 @@ export class Stargate {
 	 * @param amountIn
 	 * @returns expectedAmountOut
 	 */
-	static async quoteBridge(
+	async quoteBridge(
 		tokenIn: Token | NativeCurrency,
 		amountIn: bigint,
 		toChainId: number,
@@ -383,7 +383,7 @@ export class Stargate {
 		gas: bigint
 	}> {
 		const quote = await this.quote(tokenIn, toChainId, amountIn)
-		const tokenOut = await Stargate.getDstToken(tokenIn, toChainId)
+		const tokenOut = await this.getDstToken(tokenIn, toChainId)
 
 		const sharedDecimals = 6
 		const amountSD =
@@ -393,7 +393,8 @@ export class Stargate {
 			amountSD * 10n ** BigInt(tokenOut.decimals - sharedDecimals)
 
 		const lzFee = new TokenAmount(
-			TokenUtils.getNative(tokenIn.chainId),
+			this.chainClientService,
+			this.tokenUtils.getNative(tokenIn.chainId),
 			quote.messagingFee.nativeFee,
 		)
 
@@ -406,12 +407,12 @@ export class Stargate {
 		}
 	}
 
-	private static validateRecipient(chainId: number, recipient: Address) {
+	private validateRecipient(chainId: number, recipient: Address) {
 		if (recipient === zeroAddress) {
 			throw new StargateError('Recipient cannot be the zero address')
 		}
 
-		const wallet = ClientManager.getWalletClient(chainId)
+		const wallet = this.chainClientService.getWalletClient(chainId)
 
 		if (wallet.account.address !== recipient) {
 			throw new StargateError(
@@ -420,7 +421,7 @@ export class Stargate {
 		}
 	}
 
-	private static validateBridgingAmount(oftLimit: OFTLimit, amount: bigint) {
+	private validateBridgingAmount(oftLimit: OFTLimit, amount: bigint) {
 		if (oftLimit.minAmountLD > amount) {
 			throw new StargateError(
 				`Expected amount out is less than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
