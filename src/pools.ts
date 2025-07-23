@@ -30,33 +30,33 @@ export const poolsByChain: Record<
 	// 	// 		'0x3258f413c7a88cda2fa8709a589d221a80f6574f63df5a5b6774485d8acc39d9',
 	// 	// },
 	// ],
-	[chains.hemi.id]: [
-		{
-			type: 'UNI_V3',
-			address: '0xdA44564DF732dECfd93Ba8539803C5a8dF241954',
-		},
-		{
-			type: 'UNI_V3',
-			address: '0x3EcabBa99bEF583B58b8f0af6dD853CD9ED75ce3',
-		},
-		{
-			type: 'UNI_V3',
-			address: '0x9580D4519C9F27642e21085E763E761a74eF3735',
-		},
-		{
-			type: 'UNI_V3',
-			address: '0x3e014A9EF5F45454d9BdDb15741ce8A04e7d96F5',
-		},
-		// Low liquidity
-		{
-			type: 'UNI_V3',
-			address: '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0',
-		},
-		{
-			type: 'UNI_V3',
-			address: '0xc36a310BD93E2927452de563fAAA89A86822a21f',
-		},
-	],
+	// [chains.hemi.id]: [
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0xdA44564DF732dECfd93Ba8539803C5a8dF241954',
+	// 	},
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0x3EcabBa99bEF583B58b8f0af6dD853CD9ED75ce3',
+	// 	},
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0x9580D4519C9F27642e21085E763E761a74eF3735',
+	// 	},
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0x3e014A9EF5F45454d9BdDb15741ce8A04e7d96F5',
+	// 	},
+	// 	// Low liquidity
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0xB46335cAcCccb3fDC2A3F40D9Fd253F5F76919A0',
+	// 	},
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0xc36a310BD93E2927452de563fAAA89A86822a21f',
+	// 	},
+	// ],
 	// [chains.arbitrum.id]: [
 	// 	{
 	// 		type: 'UNI_V3',
@@ -81,38 +81,44 @@ export const poolsByChain: Record<
 	// 		address: '0x4ce3687fed17e19324f23e305593ab13bbd55c4d',
 	// 	},
 	// ],
-	[chains.lightlinkPhoenix.id]: [
+	[chains.superposition.id]: [
 		{
-			type: 'UNI_V3',
-			address: '0x2288627C696010049f6D98a84fC10F9C5F7b3Ce2',
-		},
-		{
-			type: 'UNI_V3',
-			address: '0x1125452469E9B9A36FE69249309fCe8925C3eEDa',
+			type: 'ALGEBRA_V1_9',
+			address: '0x7FC956a5C0Aef46AA25b8911f4cb4619CbB7d90F',
 		},
 	],
-	[chains.fuse.id]: [
-		{
-			type: 'ALGEBRA_V1_2',
-			address: '0x677409B2393E2ca19b454fB904F5E634E21D3D89',
-		},
-		{
-			type: 'ALGEBRA_V1_2',
-			address: '0x23518Ca19447E7ABB8C6f6eb215A1D663c53Ea21',
-		},
-		{
-			type: 'ALGEBRA_V1_2',
-			address: '0x5E174874C5bc45Ba96bD859A6edA4D34EE9f4424',
-		},
-		{
-			type: 'ALGEBRA_V1_2',
-			address: '0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6',
-		},
-		{
-			type: 'ALGEBRA_V1_2',
-			address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992',
-		},
-	],
+	// [chains.lightlinkPhoenix.id]: [
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0x2288627C696010049f6D98a84fC10F9C5F7b3Ce2',
+	// 	},
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0x1125452469E9B9A36FE69249309fCe8925C3eEDa',
+	// 	},
+	// ],
+	// [chains.fuse.id]: [
+	// 	{
+	// 		type: 'ALGEBRA_V1_2',
+	// 		address: '0x677409B2393E2ca19b454fB904F5E634E21D3D89',
+	// 	},
+	// 	{
+	// 		type: 'ALGEBRA_V1_2',
+	// 		address: '0x23518Ca19447E7ABB8C6f6eb215A1D663c53Ea21',
+	// 	},
+	// 	{
+	// 		type: 'ALGEBRA_V1_2',
+	// 		address: '0x5E174874C5bc45Ba96bD859A6edA4D34EE9f4424',
+	// 	},
+	// 	{
+	// 		type: 'ALGEBRA_V1_2',
+	// 		address: '0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6',
+	// 	},
+	// 	{
+	// 		type: 'ALGEBRA_V1_2',
+	// 		address: '0x35E6083f8Fc3a5698942fa02Ebbf1E5D44a71992',
+	// 	},
+	// ],
 	// [bsc.id]: [
 	// Fuse/WBNB
 	// {
@@ -143,16 +149,16 @@ export const poolsByChain: Record<
 	// 	address: '0xC444d2219A7C6E39ffe467c2BFB6415060DC499C',
 	// },
 	// ],
-	[chains.story.id]: [
-		{
-			type: 'UNI_V3',
-			address: '0x0012dc8daed76fd687b51ad6a4683aa151d3d59d',
-		},
-		{
-			type: 'UNI_V3',
-			address: '0x3dd013fddf4daa3b642a1538e274d85e8e54ae8b',
-		},
-	],
+	// [chains.story.id]: [
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0x0012dc8daed76fd687b51ad6a4683aa151d3d59d',
+	// 	},
+	// 	{
+	// 		type: 'UNI_V3',
+	// 		address: '0x3dd013fddf4daa3b642a1538e274d85e8e54ae8b',
+	// 	},
+	// ],
 	// [rootstock.id]: [
 	// 	{
 	// 		type: 'UNI_V3',
