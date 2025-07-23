@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { getAddress } from 'viem'
 import {
 	callFactoryFunction,
@@ -10,6 +11,7 @@ import { PoolCreator } from '../../../base/PoolCreator'
 import { UNIV2_PERIPHERY_CONFIG } from './periphery'
 import { UniV2Pool } from './Pool'
 
+@Injectable()
 export class UniV2PoolCreator extends PoolCreator {
 	override _getToken0Address = callToken0Function
 	override _getToken1Address = callToken1Function

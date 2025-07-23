@@ -3,7 +3,7 @@ import { Address } from 'viem'
 import { PoolData } from '../strategies/Strategy'
 import { Pool } from './base/Pool'
 import { PoolCreator } from './base/PoolCreator'
-import { DEX_REGISTRY_TOKEN, DexRegistry } from './poolVariety'
+import { DEX_REGISTRY_TOKEN, DexRegistry } from './DexRegistry'
 
 export type PoolType = keyof typeof DexRegistry
 

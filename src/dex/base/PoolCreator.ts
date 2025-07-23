@@ -17,7 +17,9 @@ export abstract class PoolCreator {
 	constructor(
 		protected readonly chainClientService: ChainClientService,
 		protected readonly tokenUtils: TokenUtils,
-	) {}
+	) {
+		console.log(this.constructor.name, this.chainClientService)
+	}
 
 	/* ======== CORE FUNCTIONS, SUPPOSE TO BE NOT OVERRIDDEN ======== */
 

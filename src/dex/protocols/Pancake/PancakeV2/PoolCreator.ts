@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { getAddress } from 'viem'
 import { PoolConstructorParams } from '../../../base/Pool'
 import { PoolCreator } from '../../../base/PoolCreator'
@@ -10,6 +11,7 @@ import {
 import { PancakeV2Pool } from './Pool'
 import { PANCAKE_V2_PERIPHERY } from './periphery'
 
+@Injectable()
 export class PancakeV2PoolCreator extends PoolCreator {
 	override _getToken0Address = callToken0Function
 	override _getToken1Address = callToken1Function

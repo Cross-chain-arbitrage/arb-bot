@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { getAddress, PublicClient } from 'viem'
 import { VELODROME_V1_POOL_ABI } from '../../../../abi/velodrome/velodromeV1Pool'
 import { PoolConstructorParams } from '../../../base/Pool'
@@ -11,6 +12,7 @@ import {
 import { VelodromeV1Pool } from './Pool'
 import { VELODROME_V1_PERIPHERY } from './periphery'
 
+@Injectable()
 export class VelodromeV1PoolCreator extends PoolCreator {
 	override _getToken0Address = callToken0Function
 	override _getToken1Address = callToken1Function

@@ -1,29 +1,44 @@
-import { Module } from '@nestjs/common'
+import { DynamicModule, Module } from '@nestjs/common'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { ChainClientService } from '../utils/ChainClientService'
 import { PoolCreator } from './base/PoolCreator'
+import { DEX_REGISTRY_TOKEN, DexRegistry } from './DexRegistry'
 import { PoolUtils } from './PoolUtils'
-import { DEX_REGISTRY_TOKEN, DexRegistry } from './poolVariety'
+import { VelodromeV2PoolCreator } from './protocols/Velodrome/VelodromeV2/PoolCreator'
 
-const poolCreators = Object.values(DexRegistry)
+@Module({})
+export class DexModule {
+	static forRoot(): DynamicModule {
+		const poolCreators = Object.values(DexRegistry)
 
-@Module({
-	providers: [
-		PoolUtils,
-		...poolCreators,
-		{
-			provide: DEX_REGISTRY_TOKEN,
-			useFactory: (...poolCreators: PoolCreator[]) => {
-				const registry: Record<string, PoolCreator> = {}
-				const keys = Object.keys(DexRegistry)
+		return {
+			module: DexModule,
+			providers: [
+				ChainClientService,
+				TokenUtils,
+				...poolCreators,
+				VelodromeV2PoolCreator,
+				{
+					provide: DEX_REGISTRY_TOKEN,
+					useFactory: (...poolCreators: PoolCreator[]) => {
+						const registry: Record<string, PoolCreator> = {}
 
-				keys.forEach((key, index) => {
-					registry[key] = poolCreators[index]
-				})
+						const keys = Object.keys(DexRegistry)
 
-				return registry
-			},
-			inject: poolCreators,
-		},
-	],
-	exports: [PoolUtils],
-})
-export class DexModule {}
+						keys.forEach((key, index) => {
+							registry[key] = poolCreators[index]
+						})
+
+						console.log(Object.values(registry))
+						console.log(poolCreators)
+
+						return registry
+					},
+					inject: poolCreators,
+				},
+				PoolUtils,
+			],
+			exports: [PoolUtils],
+		}
+	}
+}
