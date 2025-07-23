@@ -1,11 +1,14 @@
+import { Injectable } from '@nestjs/common'
 import { arbitrum, fuse } from 'viem/chains'
+import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { FUSE_BRIDGE_SUPPORTED_TOKENS } from '../bridges/FuseBridge/supportedTokens'
+import { Stargate } from '../bridges/stargate/Stargate'
 import { StargateAPI, StargateAPIError } from '../bridges/stargate/StargateAPI'
 import { Pool } from '../dex/base/Pool'
-import { ChainUtils } from '../primitives/chains/ChainUtils'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
+import { ChainClientService } from '../utils/ChainClientService'
 import logger from '../utils/logger'
 import {
 	FuseBridgeEdge,
@@ -56,14 +59,24 @@ export interface GraphBuildConfig {
  * @dev Automatically adds all Native Currencies and their Wrapped Versions for all chains featured in provided `Pool`s
  * @returns Graph with all required Nodes and Edges, which is not supposed to be modified manually
  */
+
+@Injectable()
 export class GraphBuilder {
+	constructor(
+		private readonly tokenUtils: TokenUtils,
+		private readonly chainClientService: ChainClientService,
+		private readonly stargate: Stargate,
+		private readonly fuseBridge: FuseBridge,
+		private readonly stargateAPI: StargateAPI,
+	) {}
+
 	/**
 	 * Builds `Graph` from provided `GraphBuildConfig`
 	 * @dev Finds all possible bridging opportunities by itself (Stargate and Fuse)
 	 * @dev Automatically adds all Native Currencies and their Wrapped Versions for all chains featured in provided `Pool`s
 	 * @returns Graph with all required Nodes and Edges, which is not supposed to be modified manually
 	 */
-	static async build(buildConfig: GraphBuildConfig): Promise<Graph> {
+	async build(buildConfig: GraphBuildConfig): Promise<Graph> {
 		const {
 			pools,
 			stargateConfig = {
@@ -80,14 +93,18 @@ export class GraphBuilder {
 			throw new GraphBuilderError('No pools provided')
 		}
 
-		const graph = new Graph(buildConfig.edgeCacheTTL)
+		const graph = new Graph(
+			this.tokenUtils,
+			this.chainClientService,
+			buildConfig.edgeCacheTTL,
+		)
 
 		/* ================ Setup Pools (With Tokens) ================ */
 
 		for (const pool of pools) {
 			graph.addDexPool(pool)
 			logger.info(
-				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${ChainUtils.getChainNameById(pool.chainId)})`,
+				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${this.chainClientService.getChainNameById(pool.chainId)})`,
 			)
 		}
 
@@ -107,7 +124,7 @@ export class GraphBuilder {
 		/* ================ Report Result ================ */
 
 		const uniqueChains = this.getAllUniqueChainIdsFromPools(pools).map(
-			(chainId) => ChainUtils.getChainNameById(chainId),
+			(chainId) => this.chainClientService.getChainNameById(chainId),
 		)
 
 		logger.info('============================')
@@ -124,10 +141,7 @@ export class GraphBuilder {
 		return graph
 	}
 
-	static setupNativeCurrencies(
-		graph: Graph,
-		pools: Pool[],
-	): NativeCurrency[] {
+	setupNativeCurrencies(graph: Graph, pools: Pool[]): NativeCurrency[] {
 		logger.info('------ Setting up Native Currencies ------')
 
 		const uniqueChains = this.getAllUniqueChainIdsFromPools(pools)
@@ -135,7 +149,7 @@ export class GraphBuilder {
 		const nativeCurrencies: NativeCurrency[] = []
 
 		for (const chainId of uniqueChains) {
-			const nativeCurrency = TokenUtils.getNative(chainId)
+			const nativeCurrency = this.tokenUtils.getNative(chainId)
 			graph.addNode(nativeCurrency)
 			nativeCurrencies.push(nativeCurrency)
 
@@ -145,7 +159,7 @@ export class GraphBuilder {
 		return nativeCurrencies
 	}
 
-	private static async setupWrappedNativeCurrencies(
+	private async setupWrappedNativeCurrencies(
 		graph: Graph,
 		nativeCurrencies: NativeCurrency[],
 	) {
@@ -153,7 +167,7 @@ export class GraphBuilder {
 
 		const wrappedNativeCurrencies: WrappedNative[] = await Promise.all(
 			nativeCurrencies.map((native) =>
-				TokenUtils.getWrappedNative(native.chainId),
+				this.tokenUtils.getWrappedNative(native.chainId),
 			),
 		)
 
@@ -173,13 +187,27 @@ export class GraphBuilder {
 
 		// ADD WRAP / UNWRAP
 		for (const wrapped of wrappedNativeCurrencies) {
-			graph.addEdge(new WrapEdge(wrapped.native, wrapped, graph))
+			graph.addEdge(
+				new WrapEdge(
+					this.chainClientService,
+					wrapped.native,
+					wrapped,
+					graph,
+				),
+			)
 
-			graph.addEdge(new UnwrapEdge(wrapped, wrapped.native, graph))
+			graph.addEdge(
+				new UnwrapEdge(
+					this.chainClientService,
+					wrapped,
+					wrapped.native,
+					graph,
+				),
+			)
 		}
 	}
 
-	private static async setupStargateBridges(
+	private async setupStargateBridges(
 		graph: Graph,
 		stargateConfig: StargateConfig,
 	) {
@@ -196,7 +224,7 @@ export class GraphBuilder {
 			let metadata: StargateTokenMetadata
 
 			try {
-				metadata = await StargateAPI.getTokenMetadata(token)
+				metadata = await this.stargateAPI.getTokenMetadata(token)
 			} catch (error) {
 				if (
 					error instanceof StargateAPIError &&
@@ -248,11 +276,19 @@ export class GraphBuilder {
 		}
 
 		for (const pair of pairs) {
-			graph.addEdge(new StargateBridgeEdge(pair[0], pair[1], graph))
+			graph.addEdge(
+				new StargateBridgeEdge(
+					this.chainClientService,
+					this.stargate,
+					pair[0],
+					pair[1],
+					graph,
+				),
+			)
 		}
 	}
 
-	private static setupFuseBridges(graph: Graph) {
+	private setupFuseBridges(graph: Graph) {
 		logger.info('------ Setting up Fuse Bridges ------')
 
 		type AssetId = string
@@ -292,7 +328,15 @@ export class GraphBuilder {
 
 			// FUSE from other chains → WFUSE on Fuse
 			for (const fuseToken of fuseOnOtherChains) {
-				graph.addEdge(new FuseBridgeEdge(fuseToken, wfuseToken, graph))
+				graph.addEdge(
+					new FuseBridgeEdge(
+						this.chainClientService,
+						this.fuseBridge,
+						fuseToken,
+						wfuseToken,
+						graph,
+					),
+				)
 				logger.info(
 					`Added bridge: ${fuseToken.toString()} --> ${wfuseToken.toString()}`,
 				)
@@ -302,7 +346,13 @@ export class GraphBuilder {
 			if (nativeFuseOnFuse) {
 				for (const fuseToken of fuseOnOtherChains) {
 					graph.addEdge(
-						new FuseBridgeEdge(nativeFuseOnFuse, fuseToken, graph),
+						new FuseBridgeEdge(
+							this.chainClientService,
+							this.fuseBridge,
+							nativeFuseOnFuse,
+							fuseToken,
+							graph,
+						),
 					)
 					logger.info(
 						`Added bridge: ${nativeFuseOnFuse.toString()} --> ${fuseToken.toString()}`,
@@ -330,8 +380,24 @@ export class GraphBuilder {
 			for (const token of tokens) {
 				if (token.chainId === fuse.id) continue
 
-				graph.addEdge(new FuseBridgeEdge(token, tokenOnFuse, graph))
-				graph.addEdge(new FuseBridgeEdge(tokenOnFuse, token, graph))
+				graph.addEdge(
+					new FuseBridgeEdge(
+						this.chainClientService,
+						this.fuseBridge,
+						token,
+						tokenOnFuse,
+						graph,
+					),
+				)
+				graph.addEdge(
+					new FuseBridgeEdge(
+						this.chainClientService,
+						this.fuseBridge,
+						tokenOnFuse,
+						token,
+						graph,
+					),
+				)
 			}
 
 			const assetGroupString = tokens
@@ -342,7 +408,7 @@ export class GraphBuilder {
 		}
 	}
 
-	private static getAllUniqueChainIdsFromPools(pools: Pool[]): number[] {
+	private getAllUniqueChainIdsFromPools(pools: Pool[]): number[] {
 		return [...new Set(pools.map((pool) => pool.chainId))]
 	}
 }

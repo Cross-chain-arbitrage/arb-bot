@@ -9,9 +9,8 @@ import { Pool } from '../../dex/base/Pool'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenAmount } from '../../primitives/tokens/TokenAmount'
-import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../primitives/tokens/WrappedNative'
-import { ClientManager } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { shortenAddress } from '../../utils/common'
 import { Graph } from './Graph'
 
@@ -31,6 +30,7 @@ export abstract class Edge<T extends ActionType = ActionType> {
 	lastQuote: EdgeQuoteResult | undefined
 
 	constructor(
+		readonly chainClientService: ChainClientService,
 		readonly from: GraphNode,
 		readonly to: GraphNode,
 		readonly actionType: T,
@@ -67,12 +67,13 @@ export class SwapEdge extends Edge {
 	readonly id: EdgeId
 
 	constructor(
+		chainClientService: ChainClientService,
 		override readonly from: Token,
 		override readonly to: Token,
 		readonly pool: Pool,
 		graph: Graph,
 	) {
-		super(from, to, ActionType.SWAP, graph)
+		super(chainClientService, from, to, ActionType.SWAP, graph)
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}-${this.pool.address}`
 	}
 
@@ -175,12 +176,14 @@ export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
 	private pendingQuoteRequest: Promise<void> | null = null
 
 	constructor(
+		chainClientService: ChainClientService,
+		readonly relay: Relay,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,
 		readonly rateFunctionTTL: number = 5000,
 	) {
-		super(from, to, ActionType.RELAY_BRIDGE, graph)
+		super(chainClientService, from, to, ActionType.RELAY_BRIDGE, graph)
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
 
 		this.rateFunction = new TTLCache({
@@ -249,7 +252,7 @@ export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
 	}
 
 	private async fetchAndCacheRateFunction(amountIn: bigint): Promise<void> {
-		const quote = await Relay.quote(this.from, this.to, amountIn)
+		const quote = await this.relay.quote(this.from, this.to, amountIn)
 		const relayQuote = relayQuoteSchema.parse(quote.rawResult)
 
 		this.rateFunction.set(
@@ -261,13 +264,13 @@ export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
 	async execute(
 		amountIn: bigint,
 	): Promise<EdgeExecutionResult<ActionType.RELAY_BRIDGE>> {
-		const result = await Relay.bridge(this.from, this.to, amountIn)
+		const result = await this.relay.bridge(this.from, this.to, amountIn)
 
 		return {
 			amountOut: result.amountOut,
 			srcTxReceipt: result.srcTxReceipt,
 			dstTxHash: result.dstTxHash,
-			bridgeFee: new TokenAmount(this.from, 0n), //TODO: remove useless returning 0
+			bridgeFee: new TokenAmount(this.chainClientService, this.from, 0n), //TODO: remove useless returning 0
 		}
 	}
 }
@@ -276,27 +279,30 @@ export class FuseBridgeEdge extends Edge<ActionType.FUSE_BRIDGE> {
 	readonly id: EdgeId
 
 	constructor(
+		chainClientService: ChainClientService,
+		readonly fuseBridge: FuseBridge,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,
 	) {
-		super(from, to, ActionType.FUSE_BRIDGE, graph)
+		super(chainClientService, from, to, ActionType.FUSE_BRIDGE, graph)
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
 	}
 
 	async execute(
 		amountIn: bigint,
 	): Promise<EdgeExecutionResult<ActionType.FUSE_BRIDGE>> {
-		const { bridgeTx, lzFee } = await FuseBridge.bridge(
+		const { bridgeTx, lzFee } = await this.fuseBridge.bridge(
 			this.from as Token,
 			this.to.chainId,
-			ClientManager.getWalletClient(this.to.chainId).account.address,
+			this.chainClientService.getWalletClient(this.to.chainId).account
+				.address,
 			amountIn,
 		)
 
-		const srcTxReceipt = await ClientManager.getClient(
-			this.from.chainId,
-		).waitForTransactionReceipt({ hash: bridgeTx.srcTxHash as Hash })
+		const srcTxReceipt = await this.chainClientService
+			.getClient(this.from.chainId)
+			.waitForTransactionReceipt({ hash: bridgeTx.srcTxHash as Hash })
 
 		const message = await bridgeTx.waitForBridgeToFinish()
 
@@ -311,7 +317,7 @@ export class FuseBridgeEdge extends Edge<ActionType.FUSE_BRIDGE> {
 	}
 
 	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
-		const { amountOut, lzFee, gas } = await FuseBridge.quoteBridge(
+		const { amountOut, lzFee, gas } = await this.fuseBridge.quoteBridge(
 			this.from,
 			this.to.chainId,
 			amountIn,
@@ -336,12 +342,13 @@ abstract class CommonEdge<
 	readonly id: EdgeId
 
 	constructor(
+		chainClientService: ChainClientService,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		override readonly actionType: T,
 		graph: Graph,
 	) {
-		super(from, to, actionType, graph)
+		super(chainClientService, from, to, actionType, graph)
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
 	}
 
@@ -359,11 +366,12 @@ abstract class CommonEdge<
 
 export class WrapEdge extends CommonEdge<ActionType.WRAP> {
 	constructor(
+		chainClientService: ChainClientService,
 		override readonly from: NativeCurrency,
 		override readonly to: Token,
 		graph: Graph,
 	) {
-		super(from, to, ActionType.WRAP, graph)
+		super(chainClientService, from, to, ActionType.WRAP, graph)
 	}
 
 	async execute(
@@ -387,11 +395,12 @@ export class WrapEdge extends CommonEdge<ActionType.WRAP> {
 
 export class UnwrapEdge extends CommonEdge<ActionType.UNWRAP> {
 	constructor(
+		chainClientService: ChainClientService,
 		override readonly from: Token,
 		override readonly to: NativeCurrency,
 		graph: Graph,
 	) {
-		super(from, to, ActionType.UNWRAP, graph)
+		super(chainClientService, from, to, ActionType.UNWRAP, graph)
 	}
 
 	async execute(
@@ -417,16 +426,18 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 	readonly id: EdgeId
 
 	constructor(
+		chainClientService: ChainClientService,
+		readonly stargate: Stargate,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,
 	) {
-		super(from, to, ActionType.STARGATE_BRIDGE, graph)
+		super(chainClientService, from, to, ActionType.STARGATE_BRIDGE, graph)
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
 	}
 
 	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
-		const { amountOut, lzFee, gas } = await Stargate.quoteBridge(
+		const { amountOut, lzFee, gas } = await this.stargate.quoteBridge(
 			this.from,
 			amountIn,
 			this.to.chainId,
@@ -447,23 +458,19 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 	async execute(
 		amountIn: bigint,
 	): Promise<EdgeExecutionResult<ActionType.STARGATE_BRIDGE>> {
-		const fromToken = await TokenUtils.fromAddress(
-			this.from.address,
-			this.from.chainId,
-		)
-
-		const result = await Stargate.bridge(
-			fromToken,
+		const result = await this.stargate.bridge(
+			this.from,
 			this.to.chainId,
-			ClientManager.getWalletClient(this.from.chainId).account.address,
+			this.chainClientService.getWalletClient(this.from.chainId).account
+				.address,
 			amountIn,
 		)
 
-		const srcTxReceipt = await ClientManager.getClient(
-			this.from.chainId,
-		).waitForTransactionReceipt({
-			hash: result.bridgeTx.srcTxHash as Hash,
-		})
+		const srcTxReceipt = await this.chainClientService
+			.getClient(this.from.chainId)
+			.waitForTransactionReceipt({
+				hash: result.bridgeTx.srcTxHash as Hash,
+			})
 
 		const message = await result.bridgeTx.waitForBridgeToFinish()
 
@@ -480,16 +487,24 @@ export class SimpleStargateBridgeEdge extends Edge<ActionType.SIMPLE_STARGATE_BR
 	readonly id: EdgeId
 
 	constructor(
+		chainClientService: ChainClientService,
+		readonly simpleStargate: SimpleStargate,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,
 	) {
-		super(from, to, ActionType.SIMPLE_STARGATE_BRIDGE, graph)
+		super(
+			chainClientService,
+			from,
+			to,
+			ActionType.SIMPLE_STARGATE_BRIDGE,
+			graph,
+		)
 		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
 	}
 
 	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
-		const { amountOut, lzFee, gas } = await SimpleStargate.quote(
+		const { amountOut, lzFee, gas } = await this.simpleStargate.quote(
 			this.from,
 			this.to,
 			amountIn,
@@ -510,18 +525,17 @@ export class SimpleStargateBridgeEdge extends Edge<ActionType.SIMPLE_STARGATE_BR
 	async execute(
 		amountIn: bigint,
 	): Promise<EdgeExecutionResult<ActionType.SIMPLE_STARGATE_BRIDGE>> {
-		const fromToken = await TokenUtils.fromAddress(
-			this.from.address,
-			this.from.chainId,
+		const result = await this.simpleStargate.bridge(
+			this.from,
+			this.to,
+			amountIn,
 		)
 
-		const result = await SimpleStargate.bridge(fromToken, this.to, amountIn)
-
-		const srcTxReceipt = await ClientManager.getClient(
-			this.from.chainId,
-		).waitForTransactionReceipt({
-			hash: result.bridgeTx.srcTxHash as Hash,
-		})
+		const srcTxReceipt = await this.chainClientService
+			.getClient(this.from.chainId)
+			.waitForTransactionReceipt({
+				hash: result.bridgeTx.srcTxHash as Hash,
+			})
 
 		const message = await result.bridgeTx.waitForBridgeToFinish()
 

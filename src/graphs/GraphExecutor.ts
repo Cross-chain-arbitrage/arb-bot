@@ -1,10 +1,10 @@
 import { TransactionReceipt } from 'viem'
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { ChainClientService } from '../utils/ChainClientService'
 import { runFnWithRetry } from '../utils/common'
 import logger from '../utils/logger'
 import { ActionType, Edge } from './primitives/Edge'
-
 export interface GraphExecutorConfig {
 	path: Edge[]
 	startAmount: bigint
@@ -22,11 +22,16 @@ export interface GraphExecutorConfig {
 }
 
 export class GraphExecutor {
+	constructor(
+		readonly chainClientService: ChainClientService,
+		readonly tokenUtils: TokenUtils,
+	) {}
+
 	/**
 	 * Execute the arbitrage path
 	 * @returns actual end amount
 	 */
-	static async execute(config: GraphExecutorConfig) {
+	async execute(config: GraphExecutorConfig) {
 		const {
 			path,
 			startAmount,
@@ -72,7 +77,7 @@ export class GraphExecutor {
 	/**
 	 * build and print log and calculate tx cost
 	 */
-	static async handleExecutionResult(
+	async handleExecutionResult(
 		edge: Edge,
 		executionResult: EdgeExecutionResult<ActionType>,
 	) {
@@ -128,8 +133,8 @@ export class GraphExecutor {
 		}
 	}
 
-	static async getTxCost(chainId: number, txReceipt: TransactionReceipt) {
-		const nativeCurrency = TokenUtils.getNative(chainId)
+	async getTxCost(chainId: number, txReceipt: TransactionReceipt) {
+		const nativeCurrency = this.tokenUtils.getNative(chainId)
 
 		let txCostInNative = 0n
 		try {

@@ -1,6 +1,6 @@
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
-import { ChainUtils } from '../primitives/chains/ChainUtils'
+import { ChainClientService } from '../utils/ChainClientService'
 import { getAccountAddress } from '../utils/common'
 import logger from '../utils/logger'
 import { GraphArbitrageBot } from './GraphArbitrageBot'
@@ -20,6 +20,7 @@ export class GraphBalanceReporter {
 	constructor(
 		readonly bot: GraphArbitrageBot,
 		readonly tgNotifier: TgBalancesNotifier,
+		readonly chainClientService: ChainClientService,
 		updateInterval: number = 60000, // 60 seconds default
 	) {
 		this.addressToCheck = getAccountAddress()
@@ -144,7 +145,7 @@ export class GraphBalanceReporter {
 			`💵 <b>Total Portfolio: $${totalUsd.toFixed(2)}</b>\n\n`
 
 		for (const [chainId, chainBalances] of balancesByChain) {
-			const chainName = ChainUtils.getChainNameById(chainId)
+			const chainName = this.chainClientService.getChainNameById(chainId)
 			const chainTotal = chainBalances.reduce(
 				(sum, item) => sum + item.usdValue,
 				0,

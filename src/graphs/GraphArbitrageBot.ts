@@ -10,7 +10,7 @@ import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ClientManager } from '../utils/ChainClientService'
+import { ChainClientService } from '../utils/ChainClientService'
 import logger from '../utils/logger'
 import { runFuncWithDelay } from '../utils/polling'
 import { GraphExecutor } from './GraphExecutor'
@@ -47,6 +47,12 @@ export class GraphArbitrageBot {
 			graphOptimizerOptions: GraphOptimizerOptions
 		}>,
 		settings: BotSettings,
+		readonly chainClientService: ChainClientService,
+		readonly graphVisualizer: GraphVisualizer,
+		readonly tokenUtils: TokenUtils,
+		readonly stargate: Stargate,
+		readonly fuseBridge: FuseBridge,
+		readonly graphExecutor: GraphExecutor,
 	) {
 		this.settings = { ...DEFAULT_SETTINGS, ...settings }
 	}
@@ -56,7 +62,7 @@ export class GraphArbitrageBot {
 
 		let message = `${this.name} started\n\nGraph:\n`
 
-		const { view, edit } = GraphVisualizer.getLinksToMermaidGraph(
+		const { view, edit } = this.graphVisualizer.getLinksToMermaidGraph(
 			this.graphParams.graph,
 		)
 
@@ -110,7 +116,7 @@ export class GraphArbitrageBot {
 
 	async executeArbitrage(opportunity: GraphArbitrageOpportunity) {
 		try {
-			const prettyOpportunity = GraphVisualizer.getPrettyOpportunity(
+			const prettyOpportunity = this.graphVisualizer.getPrettyOpportunity(
 				opportunity,
 				await this.startTokenPrice(),
 			)
@@ -204,11 +210,11 @@ export class GraphArbitrageBot {
 	async calculateEdgeExecutionCost(edge: Edge) {
 		let executionCostInUsd = 0
 
-		const nativeOnFromChain = TokenUtils.getNative(edge.from.chainId)
+		const nativeOnFromChain = this.tokenUtils.getNative(edge.from.chainId)
 		const nativePrice = await PriceOracle.getPrice(nativeOnFromChain)
-		const gasPrice = await ClientManager.getClient(
-			edge.from.chainId,
-		).getGasPrice()
+		const gasPrice = await this.chainClientService
+			.getClient(edge.from.chainId)
+			.getGasPrice()
 
 		const txCostInUsd =
 			Number(
@@ -269,7 +275,7 @@ export class GraphArbitrageBot {
 		if (!this.isFirstRun) return
 
 		try {
-			const { view, edit } = GraphVisualizer.getLinksToMermaidGraph(
+			const { view, edit } = this.graphVisualizer.getLinksToMermaidGraph(
 				this.graphParams.graph,
 			)
 
@@ -351,7 +357,7 @@ export class GraphArbitrageBot {
 		const { path, startAmount } = graphArbitrageOpportunity
 
 		const { actualEndAmount, totalTxsCostInUsd } =
-			await GraphExecutor.execute({
+			await this.graphExecutor.execute({
 				path,
 				startAmount,
 				beforeExecuteEdgeHook: this.checkEdgeProfitability.bind(this),
@@ -453,10 +459,10 @@ export class GraphArbitrageBot {
 				)
 
 			case ActionType.STARGATE_BRIDGE:
-				return await Stargate.approveToBridge(from, maxUint256)
+				return await this.stargate.approveToBridge(from, maxUint256)
 
 			case ActionType.FUSE_BRIDGE:
-				return await FuseBridge.approveToBridge(
+				return await this.fuseBridge.approveToBridge(
 					from,
 					maxUint256,
 					to.chainId,
