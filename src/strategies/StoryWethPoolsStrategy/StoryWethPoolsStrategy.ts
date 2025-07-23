@@ -1,6 +1,7 @@
 import { arbitrum } from 'viem/chains'
 import { PoolUtils } from '../../dex/PoolUtils'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { getAlchemyRpcUrl } from '../../utils/alchemy'
 import { ClientManager } from '../../utils/ClientManager'
 import { Strategy, StrategyConfig } from '../Strategy'
 import { WETH_POOLS } from './wethPools'
@@ -8,7 +9,7 @@ import { WETH_POOLS } from './wethPools'
 /* ============ Strategy Config ============ */
 
 async function main() {
-	ClientManager.useCustomRpcUrl(arbitrum.id)
+	ClientManager.useCustomRpcUrl(arbitrum.id, getAlchemyRpcUrl(arbitrum.id))
 	const usdcArbAddress = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
 	const usdcArb = await TokenUtils.fromAddress(usdcArbAddress, arbitrum.id)
 

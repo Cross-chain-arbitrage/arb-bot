@@ -2,6 +2,7 @@ import { base, swellchain } from 'viem/chains'
 import { PoolUtils } from '../dex/PoolUtils'
 import { ActionType } from '../graphs/primitives/Edge'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { getAlchemyRpcUrl } from '../utils/alchemy'
 import { ClientManager } from '../utils/ClientManager'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
 
@@ -26,7 +27,7 @@ export const SWELLCHAIN_WETH_POOLS: PoolData[] = [
 /* ============ Strategy Config ============ */
 
 async function main() {
-	ClientManager.useCustomRpcUrl(base.id)
+	ClientManager.useCustomRpcUrl(base.id, getAlchemyRpcUrl(base.id))
 
 	const baseNative = TokenUtils.getNative(base.id)
 	const swellchainNative = TokenUtils.getNative(swellchain.id)

@@ -1,6 +1,7 @@
 import { bsc } from 'viem/chains'
 import { PoolUtils } from '../../dex/PoolUtils'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { getAlchemyRpcUrl } from '../../utils/alchemy'
 import { ClientManager } from '../../utils/ClientManager'
 import { Strategy, StrategyConfig } from '../Strategy'
 import { FUSE_POOLS } from './fusePools'
@@ -8,7 +9,7 @@ import { FUSE_POOLS } from './fusePools'
 const USDT_ADDRESS = '0x55d398326f99059ff775485246999027b3197955'
 
 async function main() {
-	ClientManager.useCustomRpcUrl(bsc.id)
+	ClientManager.useCustomRpcUrl(bsc.id, getAlchemyRpcUrl(bsc.id))
 
 	const usdt = await TokenUtils.fromAddress(USDT_ADDRESS, bsc.id)
 

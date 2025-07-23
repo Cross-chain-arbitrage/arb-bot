@@ -1,6 +1,7 @@
 import { arbitrum, fuse } from 'viem/chains'
 import { PoolUtils } from '../dex/PoolUtils'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { getAlchemyRpcUrl } from '../utils/alchemy'
 import { ClientManager } from '../utils/ClientManager'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
 
@@ -21,7 +22,7 @@ export const WBTC_POOLS: PoolData[] = [
 /* ============ Strategy Config ============ */
 
 async function main() {
-	ClientManager.useCustomRpcUrl(arbitrum.id)
+	ClientManager.useCustomRpcUrl(arbitrum.id, getAlchemyRpcUrl(arbitrum.id))
 
 	const config: StrategyConfig = {
 		name: 'WBTC Fuse Bot',
