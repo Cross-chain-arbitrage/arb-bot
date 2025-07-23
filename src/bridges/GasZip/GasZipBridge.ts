@@ -1,9 +1,10 @@
 import TTLCache from '@isaacs/ttlcache'
-import { Address, Hash, parseEther } from 'viem'
+import { Address, parseEther, zeroHash } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
 import { createCustomError } from '../../utils/common'
+import { GasZipBridgeTx } from './GasZipBridgeTx'
 
 // TODO: Replace with actual GasZip Calldata API endpoint
 const GASZIP_API_URL = 'https://backend.gas.zip/v2'
@@ -157,7 +158,7 @@ export class GasZipBridge {
 		tokenOut: Token | NativeCurrency,
 		amountIn: bigint,
 		slippage: bigint = 10n,
-	): Promise<Hash> {
+	): Promise<GasZipBridgeTx> {
 		const isSourceSupported = await this.isChainSupported(tokenIn.chainId)
 		const isDestinationSupported = await this.isChainSupported(
 			tokenOut.chainId,
@@ -223,6 +224,8 @@ export class GasZipBridge {
 
 				throw new this.customError(data.quotes[0].error)
 			}
+
+			return new GasZipBridgeTx(zeroHash, tokenIn, tokenOut, amountIn)
 		} catch (error) {
 			throw new this.customError(error as string)
 		}

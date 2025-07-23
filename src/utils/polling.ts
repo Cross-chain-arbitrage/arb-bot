@@ -7,10 +7,12 @@ export async function poll<T>(
 	timeoutMs: number,
 	customError?: Error,
 ): Promise<T> {
+	let failedWithTimeout = false // to avoid infinite loop in polling even after timeout
+
 	const pollUntilCondition = async (): Promise<T> => {
 		let response = await fn()
 
-		while (!condition(response)) {
+		while (!condition(response) && !failedWithTimeout) {
 			await wait(intervalMs)
 			response = await fn()
 		}
@@ -22,6 +24,7 @@ export async function poll<T>(
 
 	const timeoutPromise = new Promise<never>((_, reject) => {
 		timeoutId = setTimeout(() => {
+			failedWithTimeout = true
 			reject(customError ?? new Error('Polling Timeout'))
 		}, timeoutMs)
 	})
@@ -29,6 +32,7 @@ export async function poll<T>(
 	try {
 		return await Promise.race([pollUntilCondition(), timeoutPromise])
 	} finally {
+		console.log('clearing timeout')
 		clearTimeout(timeoutId!)
 	}
 }
