@@ -1,5 +1,5 @@
 import TTLCache from '@isaacs/ttlcache'
-import { Address, parseEther, zeroHash } from 'viem'
+import { Address, maxUint256, parseEther, zeroHash } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
@@ -44,6 +44,8 @@ export interface GasZipChain {
 // const GAS_ZIP_EXECUTOR_ADDRESS = '0x90E595783E43eb89fF07f63d27B8430e6B44bD9c'
 
 export class GasZipBridge {
+	static BRIDGE_LIMIT_ETHER = parseEther('0.375')
+
 	static chainsCache: TTLCache<string, GasZipChain[]> = new TTLCache({
 		ttl: 1000 * 60 * 5, // 5 min
 	})
@@ -83,8 +85,10 @@ export class GasZipBridge {
 			throw new this.customError(`Amount ${amount} is too small`)
 		}
 
-		if (amount >= parseEther('0.375')) {
-			throw new this.customError(`Amount ${amount} is too big`)
+		if (amount >= this.getSecurityBridgeLimit(tokenIn, dstChainId)) {
+			throw new this.customError(
+				`Amount ${amount} exceeds manually set bridge limit`,
+			)
 		}
 
 		// if (amount > this.getBridgeLimit(dstChainId)) {
@@ -189,8 +193,10 @@ export class GasZipBridge {
 			throw new this.customError(`Amount ${amountIn} is too small`)
 		}
 
-		if (amountIn >= parseEther('0.375')) {
-			throw new this.customError(`Amount ${amountIn} is too big`)
+		if (amountIn >= this.getSecurityBridgeLimit(tokenIn, dstChainId)) {
+			throw new this.customError(
+				`Amount ${amountIn} exceeds manually set bridge limit`,
+			)
 		}
 
 		try {
@@ -229,6 +235,19 @@ export class GasZipBridge {
 		} catch (error) {
 			throw new this.customError(error as string)
 		}
+	}
+
+	static getSecurityBridgeLimit(
+		tokenIn: Token | NativeCurrency,
+		dstChainId: number,
+	): bigint {
+		if (tokenIn.symbol === 'ETH') {
+			return this.BRIDGE_LIMIT_ETHER
+		}
+
+		// Can't make up manual limits for all non-ETH tokens
+		// Can be set for each chain individually
+		return maxUint256
 	}
 
 	static async isChainSupported(chainId: number): Promise<boolean> {

@@ -1,4 +1,5 @@
-import { arbitrum, superposition, tronShasta } from 'viem/chains'
+import { parseEther } from 'viem'
+import { arbitrum, fuse, superposition, tronShasta } from 'viem/chains'
 import {
 	GasZipBridge,
 	GasZipQuote,
@@ -40,6 +41,58 @@ makeSuite('GasZip ~ quote()', () => {
 		)
 
 		validateQuote(quote, dstChainId, tokenIn, amount)
+	})
+
+	it('MUST quote Arbitrum -> Fuse', async () => {
+		const tokenIn = TokenUtils.getNative(arbitrum.id)
+		const dstChainId = fuse.id
+		const amountInEth = tokenIn.parseUnits('0.01')
+
+		const quote = await GasZipBridge.quote(
+			tokenIn,
+			dstChainId,
+			amountInEth,
+			'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
+		)
+
+		expect(quote).toBeDefined()
+		expect(quote.chain).toBe(dstChainId)
+		expect(quote.decimals).toBe(tokenIn.decimals)
+
+		// Fuse price is not known, so we can't validate the quote
+		expect(quote.expected).toBeGreaterThan(amountInEth * 10000n)
+		expect(quote.expected).toBeLessThanOrEqual(amountInEth * 600000n)
+
+		expect(quote.expectedNative).toBe(quote.expected)
+		expect(quote.gas).toBeGreaterThanOrEqual(0)
+		expect(quote.speed).toBeGreaterThanOrEqual(1)
+		expect(quote.usd).toBeGreaterThan(10)
+	})
+
+	it('MUST quote Fuse -> Arbitrum', async () => {
+		const tokenIn = TokenUtils.getNative(fuse.id)
+		const dstChainId = arbitrum.id
+		const amountInFuse = tokenIn.parseUnits('1000')
+
+		const quote = await GasZipBridge.quote(
+			tokenIn,
+			dstChainId,
+			amountInFuse,
+			'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
+		)
+
+		expect(quote).toBeDefined()
+		expect(quote.chain).toBe(dstChainId)
+		expect(quote.decimals).toBe(tokenIn.decimals)
+
+		// Fuse price is not known, so we can't validate the quote
+		expect(quote.expected).toBeGreaterThan(amountInFuse / 600000n)
+		expect(quote.expected).toBeLessThanOrEqual(amountInFuse / 10000n)
+
+		expect(quote.expectedNative).toBe(quote.expected)
+		expect(quote.gas).toBeGreaterThanOrEqual(0)
+		expect(quote.speed).toBeGreaterThanOrEqual(1)
+		expect(quote.usd).toBeGreaterThan(10)
 	})
 
 	it('MUST quote Superposition -> Arbitrum', async () => {
@@ -149,10 +202,29 @@ makeSuite('GasZip ~ quote()', () => {
 				amount,
 				'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
 			),
-		).rejects.toThrow(`Amount ${amount} is too big`)
+		).rejects.toThrow(`Amount ${amount} exceeds manually set bridge limit`)
 	})
 
-	it('MUST throw on amountIn exceeding bridge limit', async () => {
+	it('MUST throw on amountIn exceeding manually set bridge limit', async () => {
+		const tokenIn = TokenUtils.getNative(arbitrum.id)
+		const dstChainId = superposition.id
+		const amount = tokenIn.parseUnits('1')
+
+		await expect(
+			GasZipBridge.quote(
+				tokenIn,
+				dstChainId,
+				amount,
+				'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
+			),
+		).rejects.toThrow(`Amount ${amount} exceeds manually set bridge limit`)
+	})
+
+	it('MUST throw on amountIn exceeding GasZip bridge capability', async () => {
+		jest.spyOn(GasZipBridge, 'getSecurityBridgeLimit').mockReturnValue(
+			parseEther('31'),
+		)
+
 		const tokenIn = TokenUtils.getNative(arbitrum.id)
 		const dstChainId = superposition.id
 		const amount = tokenIn.parseUnits('30')
@@ -165,7 +237,7 @@ makeSuite('GasZip ~ quote()', () => {
 				'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
 			),
 		).rejects.toThrow(
-			`Amount ${amount} is too big and cannot be fulfilled right now`,
+			`Amount ${amount} is too big and cannot be fulfilled right no`,
 		)
 	})
 
