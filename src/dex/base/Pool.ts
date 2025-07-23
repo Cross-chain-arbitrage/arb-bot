@@ -89,6 +89,7 @@ export abstract class Pool extends BaseContract {
 
 		const hash = await this.wallet.writeContract({
 			...request,
+			account: this.wallet.account,
 			gas: this.multiplyGas(gas),
 		})
 
