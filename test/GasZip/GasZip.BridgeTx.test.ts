@@ -1,6 +1,7 @@
 import { zeroHash } from 'viem'
 import { arbitrum, superposition } from 'viem/chains'
 import { GasZipBridgeTx } from '../../src/bridges/GasZip/GasZipBridgeTx'
+import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { makeSuite } from '../testUtils/makeSuite'
 
@@ -28,6 +29,36 @@ makeSuite('GasZip ~ GasZipBridgeTx', () => {
 			expect(
 				() => new GasZipBridgeTx(zeroHash, srcToken, dstToken, amount),
 			).toThrow('Source and destination tokens cannot be the same')
+		})
+
+		it('MUST throw on non-native src token', () => {
+			const srcToken = new Token(
+				'0x0000000000000000000000000000000000000001',
+				arbitrum.id,
+				'TEST',
+				18,
+			)
+			const dstToken = TokenUtils.getNative(arbitrum.id)
+			const amount = srcToken.parseUnits('1')
+
+			expect(
+				() => new GasZipBridgeTx(zeroHash, srcToken, dstToken, amount),
+			).toThrow('Source token must be native')
+		})
+
+		it('MUST throw on non-native dst token', () => {
+			const srcToken = TokenUtils.getNative(superposition.id)
+			const dstToken = new Token(
+				'0x0000000000000000000000000000000000000001',
+				arbitrum.id,
+				'TEST',
+				18,
+			)
+			const amount = srcToken.parseUnits('1')
+
+			expect(
+				() => new GasZipBridgeTx(zeroHash, srcToken, dstToken, amount),
+			).toThrow('Destination token must be native')
 		})
 
 		it('MUST throw on 0 amount', () => {

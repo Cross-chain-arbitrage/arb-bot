@@ -1,4 +1,4 @@
-import { Hash } from 'viem'
+import { Hash, parseUnits } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { Tx } from '../../primitives/transactions/Tx'
@@ -52,6 +52,7 @@ enum GasZipDepositStatus {
 export class GasZipBridgeTx implements BridgeTx {
 	public srcTx: Tx
 	public dstTx?: Tx
+	public amountOut?: bigint
 
 	constructor(
 		srcTxHash: Hash,
@@ -60,6 +61,14 @@ export class GasZipBridgeTx implements BridgeTx {
 		public readonly amount: bigint,
 		public readonly timeoutMs: number = 60000,
 	) {
+		if (!srcToken.isNative()) {
+			throw new GasZipBridgeTxError('Source token must be native')
+		}
+
+		if (!dstToken.isNative()) {
+			throw new GasZipBridgeTxError('Destination token must be native')
+		}
+
 		if (srcToken.chainId === dstToken.chainId) {
 			throw new GasZipBridgeTxError(
 				'Source and destination tokens cannot be the same',
@@ -126,6 +135,10 @@ export class GasZipBridgeTx implements BridgeTx {
 		}
 
 		this.dstTx = new Tx(response.txs[0].hash, this.dstToken.chainId)
+		this.amountOut = parseUnits(
+			response.txs[0].value,
+			this.dstToken.decimals,
+		)
 	}
 
 	get srcTxHash() {
