@@ -97,7 +97,6 @@ export class GasZipBridgeTx implements BridgeTx {
 		}
 
 		const isDepositConfirmed = (data: GasZipDepositResponse | null) => {
-			console.log(data)
 			if (!data?.deposit) {
 				return false
 			}
@@ -108,7 +107,6 @@ export class GasZipBridgeTx implements BridgeTx {
 				txs.length === 1 &&
 				txs[0].status === GasZipDepositStatus.CONFIRMED
 			) {
-				console.log(data)
 				this.dstTx = new Tx(txs[0].hash, this.dstToken.chainId)
 				return true
 			}
