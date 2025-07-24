@@ -1,8 +1,8 @@
 import { parseEther, WalletClient } from 'viem'
 import { arbitrum, fuse } from 'viem/chains'
 
-import { FuseBridge } from '../../src/bridges/FuseBridge/FuseBridge'
-import { FuseBridgeTx } from '../../src/bridges/FuseBridge/FuseBridgeTx'
+import { FuseBridge } from '../../src/bridges/fuse-bridge/FuseBridge'
+import { FuseBridgeTx } from '../../src/bridges/fuse-bridge/FuseBridgeTx'
 import { StargateBridgeTx } from '../../src/bridges/stargate/StargateBridgeTx'
 import { PoolUtils } from '../../src/dex/PoolUtils'
 import { Pool } from '../../src/dex/base/Pool'

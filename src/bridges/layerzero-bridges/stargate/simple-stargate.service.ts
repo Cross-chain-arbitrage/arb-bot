@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import axios from 'axios'
-import { LayerZeroScanAPI } from '../../dataApi/layerzeroscan/LayerZeroScanAPI'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
-import { TokenAmount } from '../../primitives/tokens/TokenAmount'
-import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../utils/ChainClientService'
-import { createCustomError } from '../../utils/common'
+import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
+import { Token } from '../../../primitives/tokens/Token'
+import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
+import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
+import { ChainClientService } from '../../../utils/ChainClientService'
+import { createCustomError } from '../../../utils/common'
+import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
 import { STARGATE_CHAINS } from './dumped/chains'
-import { StargateBridgeTx } from './StargateBridgeTx'
+import { StargateBridgeTx } from './stargate-tx'
 
 export interface QuoteResponse {
 	quotes: Quote[]
@@ -61,11 +61,11 @@ export interface Transaction {
 const BRIDGE_GAS_COST = 400_000n
 
 @Injectable()
-export class SimpleStargate {
+export class SimpleStargateService {
 	constructor(
 		private readonly chainClientService: ChainClientService,
 		private readonly tokenUtils: TokenUtils,
-		private readonly layerZeroScanAPI: LayerZeroScanAPI,
+		private readonly layerZeroScanService: LayerZeroScanService,
 	) {}
 
 	baseUrl = 'https://stargate.finance/api/v1'
@@ -150,7 +150,7 @@ export class SimpleStargate {
 			amountOut,
 			lzFee,
 			bridgeTx: new StargateBridgeTx(
-				this.layerZeroScanAPI,
+				this.layerZeroScanService,
 				tx,
 				tokenIn,
 				tokenOut,

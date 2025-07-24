@@ -1,8 +1,8 @@
 import { Hash } from 'viem'
-import { LayerZeroScanAPI } from '../../dataApi/layerzeroscan/LayerZeroScanAPI'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
-import { LZBridgeTx } from '../BridgeTx'
+import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
+import { Token } from '../../../primitives/tokens/Token'
+import { LZBridgeTx } from '../layerzero-bridge-tx'
+import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
 
 export class StargateBridgeTxError extends Error {
 	constructor(message: string) {
@@ -14,14 +14,14 @@ export class StargateBridgeTxError extends Error {
 
 export class StargateBridgeTx extends LZBridgeTx {
 	constructor(
-		layerZeroScanAPI: LayerZeroScanAPI,
+		layerZeroScanService: LayerZeroScanService,
 		srcTxHash: Hash,
 		srcToken: Token | NativeCurrency,
 		override readonly dstToken: Token | NativeCurrency,
 		amount: bigint,
 	) {
 		super(
-			layerZeroScanAPI,
+			layerZeroScanService,
 			srcTxHash,
 			srcToken.chainId,
 			srcToken,

@@ -8,7 +8,7 @@ import {
 	optimism,
 	sepolia,
 } from 'viem/chains'
-import { FuseBridge } from '../../src/bridges/FuseBridge/FuseBridge'
+import { FuseBridge } from '../../src/bridges/fuse-bridge/FuseBridge'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { getAlchemyRpcUrl } from '../../src/utils/alchemy'

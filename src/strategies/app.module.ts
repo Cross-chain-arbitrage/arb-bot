@@ -1,10 +1,5 @@
 import { Module } from '@nestjs/common'
-import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
-import { Relay } from '../bridges/relay/Relay'
-import { SimpleStargate } from '../bridges/stargate/SimpleStargate'
-import { Stargate } from '../bridges/stargate/Stargate'
-import { StargateAPI } from '../bridges/stargate/StargateAPI'
-import { LayerZeroScanAPI } from '../dataApi/layerzeroscan/LayerZeroScanAPI'
+import { BridgeModule } from '../bridges/bridge.module'
 import { DexModule } from '../dex/dex.module'
 import { GraphBuilder } from '../graphs/GraphBuilder'
 import { GraphExecutor } from '../graphs/GraphExecutor'
@@ -16,7 +11,7 @@ import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { ChainClientService } from '../utils/ChainClientService'
 
 @Module({
-	imports: [DexModule.forRoot()],
+	imports: [DexModule.forRoot(), BridgeModule],
 	providers: [
 		GraphBuilder,
 		PriceOracleService,
@@ -25,13 +20,7 @@ import { ChainClientService } from '../utils/ChainClientService'
 		TgArbitrageNotifier,
 		TgBalancesNotifier,
 		GraphVisualizer,
-		SimpleStargate,
-		Relay,
-		Stargate,
-		FuseBridge,
 		GraphExecutor,
-		StargateAPI,
-		LayerZeroScanAPI,
 	],
 })
 export class AppModule {}

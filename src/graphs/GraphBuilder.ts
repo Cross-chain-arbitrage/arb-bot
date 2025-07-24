@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { arbitrum, fuse } from 'viem/chains'
-import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
-import { FUSE_BRIDGE_SUPPORTED_TOKENS } from '../bridges/FuseBridge/supportedTokens'
-import { Stargate } from '../bridges/stargate/Stargate'
-import { StargateAPI, StargateAPIError } from '../bridges/stargate/StargateAPI'
+import { FUSE_BRIDGE_SUPPORTED_TOKENS } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.constants'
+import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
+import {
+	StargateAPIError,
+	StargateAPIService,
+} from '../bridges/layerzero-bridges/stargate/stargate-api.service'
+import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
 import { Pool } from '../dex/base/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
@@ -65,9 +68,9 @@ export class GraphBuilder {
 	constructor(
 		private readonly tokenUtils: TokenUtils,
 		private readonly chainClientService: ChainClientService,
-		private readonly stargate: Stargate,
-		private readonly fuseBridge: FuseBridge,
-		private readonly stargateAPI: StargateAPI,
+		private readonly stargateService: StargateService,
+		private readonly fuseBridgeService: FuseBridgeService,
+		private readonly stargateAPIService: StargateAPIService,
 	) {}
 
 	/**
@@ -224,7 +227,7 @@ export class GraphBuilder {
 			let metadata: StargateTokenMetadata
 
 			try {
-				metadata = await this.stargateAPI.getTokenMetadata(token)
+				metadata = await this.stargateAPIService.getTokenMetadata(token)
 			} catch (error) {
 				if (
 					error instanceof StargateAPIError &&
@@ -279,7 +282,7 @@ export class GraphBuilder {
 			graph.addEdge(
 				new StargateBridgeEdge(
 					this.chainClientService,
-					this.stargate,
+					this.stargateService,
 					pair[0],
 					pair[1],
 					graph,
@@ -331,7 +334,7 @@ export class GraphBuilder {
 				graph.addEdge(
 					new FuseBridgeEdge(
 						this.chainClientService,
-						this.fuseBridge,
+						this.fuseBridgeService,
 						fuseToken,
 						wfuseToken,
 						graph,
@@ -348,7 +351,7 @@ export class GraphBuilder {
 					graph.addEdge(
 						new FuseBridgeEdge(
 							this.chainClientService,
-							this.fuseBridge,
+							this.fuseBridgeService,
 							nativeFuseOnFuse,
 							fuseToken,
 							graph,
@@ -383,7 +386,7 @@ export class GraphBuilder {
 				graph.addEdge(
 					new FuseBridgeEdge(
 						this.chainClientService,
-						this.fuseBridge,
+						this.fuseBridgeService,
 						token,
 						tokenOnFuse,
 						graph,
@@ -392,7 +395,7 @@ export class GraphBuilder {
 				graph.addEdge(
 					new FuseBridgeEdge(
 						this.chainClientService,
-						this.fuseBridge,
+						this.fuseBridgeService,
 						tokenOnFuse,
 						token,
 						graph,

@@ -3,8 +3,9 @@ import {
 	Message,
 	MessageStatus,
 } from '@layerzerolabs/scan-client'
+import { Injectable } from '@nestjs/common'
 import { Hash, isHash, zeroHash } from 'viem'
-import { poll } from '../../utils/polling'
+import { poll } from '../../../utils/polling'
 
 export class LayerZeroScanError extends Error {
 	constructor(message: string) {
@@ -16,7 +17,8 @@ export class LayerZeroScanError extends Error {
 
 // @layerzerolabs/scan-client wrapper functions doesn't work
 // only manual client creation works
-export class LayerZeroScanAPI {
+@Injectable()
+export class LayerZeroScanService {
 	private readonly timeout: number = 10 * 60_000
 	private readonly pollingInterval: number = 2500
 

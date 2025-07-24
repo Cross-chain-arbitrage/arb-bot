@@ -3,8 +3,8 @@ import {
 	maxUint256,
 	TransactionReceipt,
 } from 'viem'
-import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
-import { Stargate } from '../bridges/stargate/Stargate'
+import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
+import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
@@ -50,8 +50,8 @@ export class GraphArbitrageBot {
 		readonly chainClientService: ChainClientService,
 		readonly graphVisualizer: GraphVisualizer,
 		readonly tokenUtils: TokenUtils,
-		readonly stargate: Stargate,
-		readonly fuseBridge: FuseBridge,
+		readonly stargate: StargateService,
+		readonly fuseBridge: FuseBridgeService,
 		readonly graphExecutor: GraphExecutor,
 		readonly priceOracleService: PriceOracleService,
 	) {

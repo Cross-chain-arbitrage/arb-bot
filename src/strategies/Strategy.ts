@@ -1,7 +1,7 @@
-import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
-import { Relay } from '../bridges/relay/Relay'
-import { SimpleStargate } from '../bridges/stargate/SimpleStargate'
-import { Stargate } from '../bridges/stargate/Stargate'
+import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
+import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
+import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
+import { RelayService } from '../bridges/relay/relay-service'
 import { PoolType } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
@@ -56,10 +56,10 @@ export class Strategy {
 		readonly tgArbitrageNotifier: TgArbitrageNotifier,
 		readonly tgBalancesNotifier: TgBalancesNotifier,
 		readonly graphVisualizer: GraphVisualizer,
-		readonly simpleStargate: SimpleStargate,
-		readonly relayBridge: Relay,
-		readonly stargate: Stargate,
-		readonly fuseBridge: FuseBridge,
+		readonly simpleStargateService: SimpleStargateService,
+		readonly relayService: RelayService,
+		readonly stargateService: StargateService,
+		readonly fuseBridgeService: FuseBridgeService,
 		readonly graphExecutor: GraphExecutor,
 	) {}
 
@@ -77,7 +77,7 @@ export class Strategy {
 						graph.addEdge(
 							new SimpleStargateBridgeEdge(
 								this.chainClientService,
-								this.simpleStargate,
+								this.simpleStargateService,
 								edgeConstructor.from,
 								edgeConstructor.to,
 								graph,
@@ -89,7 +89,7 @@ export class Strategy {
 						graph.addEdge(
 							new RelayBridgeEdge(
 								this.chainClientService,
-								this.relayBridge,
+								this.relayService,
 								edgeConstructor.from,
 								edgeConstructor.to,
 								graph,
@@ -142,8 +142,8 @@ export class Strategy {
 			this.chainClientService,
 			this.graphVisualizer,
 			this.tokenUtils,
-			this.stargate,
-			this.fuseBridge,
+			this.stargateService,
+			this.fuseBridgeService,
 			this.graphExecutor,
 			this.priceOracle,
 		)

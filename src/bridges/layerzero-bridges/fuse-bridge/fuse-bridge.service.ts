@@ -1,19 +1,21 @@
 import { Injectable } from '@nestjs/common'
 import { isAddressEqual, zeroAddress, zeroHash } from 'viem'
 import { arbitrum, base, bsc, fuse, mainnet, optimism } from 'viem/chains'
-import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../abi/fuse/erc20BridgeForeign'
-import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../abi/fuse/erc20BridgeHome'
-import { FUSE_BRIDGE_HOME_ABI } from '../../abi/fuse/fuseBridgeHome'
-import { LayerZeroScanAPI } from '../../dataApi/layerzeroscan/LayerZeroScanAPI'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
-import { TokenAmount } from '../../primitives/tokens/TokenAmount'
-import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../utils/ChainClientService'
-import { createCustomError } from '../../utils/common'
-import { FuseBridgeTx } from './FuseBridgeTx'
-import { FUSE_BRIDGE_SUPPORTED_CHAINS } from './supportedChain'
-import { FUSE_BRIDGE_SUPPORTED_TOKENS } from './supportedTokens'
+import { FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN } from '../../../abi/fuse/erc20BridgeForeign'
+import { FUSE_ERC20_BRIDGE_ABI_ON_FUSE } from '../../../abi/fuse/erc20BridgeHome'
+import { FUSE_BRIDGE_HOME_ABI } from '../../../abi/fuse/fuseBridgeHome'
+import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
+import { Token } from '../../../primitives/tokens/Token'
+import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
+import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
+import { ChainClientService } from '../../../utils/ChainClientService'
+import { createCustomError } from '../../../utils/common'
+import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
+import {
+	FUSE_BRIDGE_SUPPORTED_CHAINS,
+	FUSE_BRIDGE_SUPPORTED_TOKENS,
+} from './fuse-bridge.constants'
+import { FuseTx } from './fuse-tx'
 
 const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
 const ERC20_BRIDGE_FUSE = '0x353af4878d7452e974538706273887F7ED90Da47'
@@ -86,11 +88,11 @@ const ADAPTER_PARAMS =
 const BRIDGE_GAS_COST = 400_000n
 
 @Injectable()
-export class FuseBridge {
+export class FuseBridgeService {
 	constructor(
 		private readonly chainClientService: ChainClientService,
 		private readonly tokenUtils: TokenUtils,
-		private readonly layerZeroScanAPI: LayerZeroScanAPI,
+		private readonly layerZeroScanService: LayerZeroScanService,
 	) {}
 
 	async bridge(
@@ -100,7 +102,7 @@ export class FuseBridge {
 		amount: bigint,
 		simulateOnly: boolean = false,
 	): Promise<{
-		bridgeTx: FuseBridgeTx
+		bridgeTx: FuseTx
 		lzFee: TokenAmount
 	}> {
 		const unwrapWeth = false
@@ -189,8 +191,8 @@ export class FuseBridge {
 		})
 
 		if (simulateOnly) {
-			return new FuseBridgeTx(
-				this.layerZeroScanAPI,
+			return new FuseTx(
+				this.layerZeroScanService,
 				zeroHash,
 				tokenIn.chainId,
 			)
@@ -198,7 +200,7 @@ export class FuseBridge {
 
 		const txHash = await wallet.writeContract(request)
 
-		return new FuseBridgeTx(this.layerZeroScanAPI, txHash, fuse.id)
+		return new FuseTx(this.layerZeroScanService, txHash, fuse.id)
 	}
 
 	private async executeForeignBridge(
@@ -224,8 +226,8 @@ export class FuseBridge {
 		})
 
 		if (simulateOnly) {
-			return new FuseBridgeTx(
-				this.layerZeroScanAPI,
+			return new FuseTx(
+				this.layerZeroScanService,
 				zeroHash,
 				tokenIn.chainId,
 			)
@@ -233,7 +235,7 @@ export class FuseBridge {
 
 		const txHash = await wallet.writeContract(result.request)
 
-		return new FuseBridgeTx(this.layerZeroScanAPI, txHash, tokenIn.chainId)
+		return new FuseTx(this.layerZeroScanService, txHash, tokenIn.chainId)
 	}
 
 	async approveToBridge(

@@ -14,7 +14,7 @@ import { createCustomError } from '../../utils/common'
 
 //TODO: add validation and write tests
 @Injectable()
-export class Relay {
+export class RelayService {
 	constructor(private readonly chainClientService: ChainClientService) {}
 	customError = createCustomError('RelayError')
 	client: RelayClient = createClient({

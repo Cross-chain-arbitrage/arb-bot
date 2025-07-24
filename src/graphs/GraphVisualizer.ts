@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { deflate } from 'pako'
-import { getStargateChainKey } from '../bridges/stargate/helpers'
+import { getStargateChainKey } from '../bridges/layerzero-bridges/stargate/stargate.utils'
 import { Graph } from './primitives/Graph'
 
 @Injectable()

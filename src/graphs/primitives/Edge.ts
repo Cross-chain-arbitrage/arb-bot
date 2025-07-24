@@ -1,10 +1,10 @@
 import TTLCache from '@isaacs/ttlcache'
 import { Hash } from 'viem'
 import z from 'zod'
-import { FuseBridge } from '../../bridges/FuseBridge/FuseBridge'
-import { Relay } from '../../bridges/relay/Relay'
-import { SimpleStargate } from '../../bridges/stargate/SimpleStargate'
-import { Stargate } from '../../bridges/stargate/Stargate'
+import { FuseBridgeService } from '../../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
+import { SimpleStargateService } from '../../bridges/layerzero-bridges/stargate/simple-stargate.service'
+import { StargateService } from '../../bridges/layerzero-bridges/stargate/stargate-service'
+import { RelayService } from '../../bridges/relay/relay-service'
 import { Pool } from '../../dex/base/Pool'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
@@ -177,7 +177,7 @@ export class RelayBridgeEdge extends Edge<ActionType.RELAY_BRIDGE> {
 
 	constructor(
 		chainClientService: ChainClientService,
-		readonly relay: Relay,
+		readonly relay: RelayService,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,
@@ -280,7 +280,7 @@ export class FuseBridgeEdge extends Edge<ActionType.FUSE_BRIDGE> {
 
 	constructor(
 		chainClientService: ChainClientService,
-		readonly fuseBridge: FuseBridge,
+		readonly fuseBridge: FuseBridgeService,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,
@@ -427,7 +427,7 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 
 	constructor(
 		chainClientService: ChainClientService,
-		readonly stargate: Stargate,
+		readonly stargate: StargateService,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,
@@ -488,7 +488,7 @@ export class SimpleStargateBridgeEdge extends Edge<ActionType.SIMPLE_STARGATE_BR
 
 	constructor(
 		chainClientService: ChainClientService,
-		readonly simpleStargate: SimpleStargate,
+		readonly simpleStargate: SimpleStargateService,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,

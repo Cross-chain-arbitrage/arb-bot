@@ -1,30 +1,30 @@
 import { Injectable } from '@nestjs/common'
 import { getContract, zeroAddress, zeroHash } from 'viem'
-import { OFT_ABI } from '../../abi/stargate/oft'
-import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
-import { LayerZeroScanAPI } from '../../dataApi/layerzeroscan/LayerZeroScanAPI'
-import { getChainEIdByNativeChainId } from '../../dataApi/layerzeroscan/utils'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
-import { TokenAmount } from '../../primitives/tokens/TokenAmount'
-import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { WrappedNative } from '../../primitives/tokens/WrappedNative'
-import { ChainClientService } from '../../utils/ChainClientService'
-import { createCustomError, padAddressToBytes32 } from '../../utils/common'
-import { StargateAPI } from './StargateAPI'
-import { StargateBridgeTx } from './StargateBridgeTx'
-import { getStargateChainKey } from './helpers'
+import { OFT_ABI } from '../../../abi/stargate/oft'
+import { STARGATE_BASE_ABI } from '../../../abi/stargate/stargateBase'
+import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
+import { Token } from '../../../primitives/tokens/Token'
+import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
+import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
+import { WrappedNative } from '../../../primitives/tokens/WrappedNative'
+import { ChainClientService } from '../../../utils/ChainClientService'
+import { createCustomError, padAddressToBytes32 } from '../../../utils/common'
+import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
+import { getChainEIdByNativeChainId } from '../layerzero.utils'
+import { StargateAPIService } from './stargate-api.service'
+import { StargateBridgeTx } from './stargate-tx'
+import { getStargateChainKey } from './stargate.utils'
 export const StargateError = createCustomError('StargateError')
 
 const BRIDGE_GAS_COST = 400_000n
 
 @Injectable()
-export class Stargate {
+export class StargateService {
 	constructor(
 		private readonly chainClientService: ChainClientService,
 		private readonly tokenUtils: TokenUtils,
-		private readonly stargateAPI: StargateAPI,
-		private readonly layerZeroScanAPI: LayerZeroScanAPI,
+		private readonly stargateAPIService: StargateAPIService,
+		private readonly layerZeroScanService: LayerZeroScanService,
 	) {}
 
 	/**
@@ -60,7 +60,8 @@ export class Stargate {
 
 		this.validateRecipient(tokenIn.chainId, recipient)
 
-		const tokenMetadata = await this.stargateAPI.getTokenMetadata(tokenIn)
+		const tokenMetadata =
+			await this.stargateAPIService.getTokenMetadata(tokenIn)
 
 		const poolOrOFT = tokenMetadata.address
 
@@ -120,7 +121,7 @@ export class Stargate {
 		if (simulateOnly) {
 			return {
 				bridgeTx: new StargateBridgeTx(
-					this.layerZeroScanAPI,
+					this.layerZeroScanService,
 					zeroHash,
 					tokenIn,
 					tokenOut,
@@ -140,7 +141,7 @@ export class Stargate {
 
 		return {
 			bridgeTx: new StargateBridgeTx(
-				this.layerZeroScanAPI,
+				this.layerZeroScanService,
 				txHash,
 				tokenIn,
 				tokenOut,
@@ -157,7 +158,8 @@ export class Stargate {
 	}
 
 	async getBridgeAddress(token: Token | NativeCurrency): Promise<Address> {
-		const tokenMetadata = await this.stargateAPI.getTokenMetadata(token)
+		const tokenMetadata =
+			await this.stargateAPIService.getTokenMetadata(token)
 
 		return tokenMetadata.address
 	}
@@ -198,7 +200,8 @@ export class Stargate {
 		recipient: Address,
 		amount: bigint,
 	): Promise<QuoteResult> {
-		const tokenMetadata = await this.stargateAPI.getTokenMetadata(tokenIn)
+		const tokenMetadata =
+			await this.stargateAPIService.getTokenMetadata(tokenIn)
 
 		return await this._quote(
 			tokenMetadata,
@@ -343,7 +346,9 @@ export class Stargate {
 		toChainId: number,
 	): Promise<Token | NativeCurrency> {
 		const assetMetadata =
-			await this.stargateAPI.getSameAssetMetadataAcrossChains(srcToken)
+			await this.stargateAPIService.getSameAssetMetadataAcrossChains(
+				srcToken,
+			)
 
 		const dstTokens = assetMetadata.filter(
 			(token) => token.chainKey === getStargateChainKey(toChainId),

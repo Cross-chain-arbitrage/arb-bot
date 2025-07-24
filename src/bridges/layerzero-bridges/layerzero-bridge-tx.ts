@@ -1,9 +1,9 @@
 import { Message } from '@layerzerolabs/scan-client'
 import { Hash } from 'viem'
-import { LayerZeroScanAPI } from '../dataApi/layerzeroscan/LayerZeroScanAPI'
-import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
-import { Token } from '../primitives/tokens/Token'
-import { Tx } from '../primitives/transactions/Tx'
+import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
+import { Token } from '../../primitives/tokens/Token'
+import { Tx } from '../../primitives/transactions/tx'
+import { LayerZeroScanService } from './layerzero-scan/layerzero-scan.service'
 
 export interface BridgeTx {
 	srcTx: Tx
@@ -19,7 +19,7 @@ export class LZBridgeTx implements BridgeTx {
 	public dstTx?: Tx
 
 	constructor(
-		private readonly layerZeroScanAPI: LayerZeroScanAPI,
+		private readonly layerZeroScanService: LayerZeroScanService,
 		hash: string,
 		chainId: number,
 		public readonly srcToken: Token | NativeCurrency,
@@ -30,7 +30,7 @@ export class LZBridgeTx implements BridgeTx {
 	}
 
 	async waitForBridgeToFinish(): Promise<Message> {
-		const message = await this.layerZeroScanAPI.waitForDeliveryStatus(
+		const message = await this.layerZeroScanService.waitForDeliveryStatus(
 			this.srcTx.hash as Hash,
 		)
 

@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core'
 import { base, swellchain } from 'viem/chains'
-import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
-import { Relay } from '../bridges/relay/Relay'
-import { SimpleStargate } from '../bridges/stargate/SimpleStargate'
-import { Stargate } from '../bridges/stargate/Stargate'
+import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
+import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
+import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
+import { RelayService } from '../bridges/relay/relay-service'
 import { PoolUtils } from '../dex/PoolUtils'
 import { GraphBuilder } from '../graphs/GraphBuilder'
 import { GraphExecutor } from '../graphs/GraphExecutor'
@@ -48,10 +48,10 @@ async function main() {
 	const tgArbitrageNotifier = context.get(TgArbitrageNotifier)
 	const tgBalancesNotifier = context.get(TgBalancesNotifier)
 	const graphVisualizer = context.get(GraphVisualizer)
-	const simpleStargate = context.get(SimpleStargate)
-	const relayBridge = context.get(Relay)
-	const stargate = context.get(Stargate)
-	const fuseBridge = context.get(FuseBridge)
+	const simpleStargate = context.get(SimpleStargateService)
+	const relayBridge = context.get(RelayService)
+	const stargate = context.get(StargateService)
+	const fuseBridge = context.get(FuseBridgeService)
 
 	const baseNative = tokenUtils.getNative(base.id)
 	const swellchainNative = tokenUtils.getNative(swellchain.id)

@@ -1,11 +1,11 @@
 import TTLCache from '@isaacs/ttlcache'
 import axios from 'axios'
 import { isAddressEqual } from 'viem'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
-import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { createCustomError } from '../../utils/common'
-import { getStargateChainKey } from './helpers'
+import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
+import { Token } from '../../../primitives/tokens/Token'
+import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
+import { createCustomError } from '../../../utils/common'
+import { getStargateChainKey } from './stargate.utils'
 
 export const StargateAPIError = createCustomError('StargateAPIError')
 
@@ -13,7 +13,7 @@ const STARGATE_API_URL = new URL('https://mainnet.stargate-api.com/v1')
 
 type RequestId = string
 
-export class StargateAPI {
+export class StargateAPIService {
 	constructor(private readonly tokenUtils: TokenUtils) {}
 	private cache = new TTLCache<RequestId, StargateTokenMetadata[]>({
 		ttl: 1000 * 60 * 60 * 24, // 24 hours
