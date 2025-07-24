@@ -2,7 +2,6 @@ import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Relay } from '../bridges/relay/Relay'
 import { SimpleStargate } from '../bridges/stargate/SimpleStargate'
 import { Stargate } from '../bridges/stargate/Stargate'
-import { GeckoTerminalAPI } from '../dataApi/geckoterminal/GeckoTerminalAPI'
 import { PoolType } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
@@ -17,7 +16,7 @@ import {
 import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
-import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
+import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
@@ -51,10 +50,9 @@ export class Strategy {
 	constructor(
 		private readonly config: StrategyConfig,
 		readonly graphBuilder: GraphBuilder,
-		readonly priceOracle: PriceOracle,
+		readonly priceOracle: PriceOracleService,
 		readonly chainClientService: ChainClientService,
 		readonly tokenUtils: TokenUtils,
-		readonly geckoTerminalAPI: GeckoTerminalAPI,
 		readonly tgArbitrageNotifier: TgArbitrageNotifier,
 		readonly tgBalancesNotifier: TgBalancesNotifier,
 		readonly graphVisualizer: GraphVisualizer,

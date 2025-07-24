@@ -6,7 +6,7 @@ import {
 import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Stargate } from '../bridges/stargate/Stargate'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
-import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
+import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
@@ -53,7 +53,7 @@ export class GraphArbitrageBot {
 		readonly stargate: Stargate,
 		readonly fuseBridge: FuseBridge,
 		readonly graphExecutor: GraphExecutor,
-		readonly priceOracle: PriceOracle,
+		readonly priceOracleService: PriceOracleService,
 	) {
 		this.settings = { ...DEFAULT_SETTINGS, ...settings }
 	}
@@ -213,7 +213,8 @@ export class GraphArbitrageBot {
 		let executionCostInUsd = 0
 
 		const nativeOnFromChain = this.tokenUtils.getNative(edge.from.chainId)
-		const nativePrice = await this.priceOracle.getPrice(nativeOnFromChain)
+		const nativePrice =
+			await this.priceOracleService.getPrice(nativeOnFromChain)
 		const gasPrice = await this.chainClientService
 			.getClient(edge.from.chainId)
 			.getGasPrice()
@@ -241,7 +242,7 @@ export class GraphArbitrageBot {
 				edge.lastQuote!.cost as EdgeExecutionCost<BridgeActionType>
 			).bridgeFee
 
-			const tokenPrice = await this.priceOracle.getPrice(
+			const tokenPrice = await this.priceOracleService.getPrice(
 				bridgeFee.underlyingToken,
 			)
 
@@ -474,6 +475,6 @@ export class GraphArbitrageBot {
 	}
 
 	private async startTokenPrice() {
-		return this.priceOracle.getPrice(this.graphParams.startToken)
+		return this.priceOracleService.getPrice(this.graphParams.startToken)
 	}
 }

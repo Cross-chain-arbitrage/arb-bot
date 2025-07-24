@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common'
 import { isAddressEqual } from 'viem'
-import { GeckoTerminalAPI } from '../../dataApi/geckoterminal/GeckoTerminalAPI'
-import { chainIdToGeckoChainId } from '../../dataApi/geckoterminal/chains'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import logger from '../../utils/logger'
+import { chainIdToGeckoChainId } from './gecko-terminal-chains.constants.ts'
+import { GeckoTerminalService } from './gecko-terminal.service'
 import {
 	Currency,
 	CurrencyId,
 	CurrencyState,
 	PriceOracleSettings,
-} from './types'
+} from './price-oracle.types'
 const PriceOracleError = createCustomError('PriceOracleError')
 
 const DEFAULT_SETTINGS: PriceOracleSettings = {
@@ -20,14 +20,14 @@ const DEFAULT_SETTINGS: PriceOracleSettings = {
 }
 
 @Injectable()
-export class PriceOracle {
+export class PriceOracleService {
 	private currencyStates: Map<CurrencyId, CurrencyState> = new Map()
 	private priceUpdater: NodeJS.Timeout | undefined
 
 	constructor(
 		readonly chainClientService: ChainClientService,
 		readonly tokenUtils: TokenUtils,
-		readonly geckoTerminalAPI: GeckoTerminalAPI,
+		readonly geckoTerminalService: GeckoTerminalService,
 	) {}
 
 	/* ======== PUBLIC METHODS ======== */
@@ -91,7 +91,7 @@ export class PriceOracle {
 			if (currencyState) return currencyState.price
 		}
 
-		const tokenPrice = await this.geckoTerminalAPI.getTokenPrice(
+		const tokenPrice = await this.geckoTerminalService.getTokenPrice(
 			priceLookupCurrency.address,
 			this.getGeckoId(priceLookupCurrency.chainId),
 		)
@@ -161,10 +161,11 @@ export class PriceOracle {
 			lookupAddresses.push(priceLookupCurrency.address)
 		}
 
-		const addressesAndPrices = await this.geckoTerminalAPI.getTokenPrices(
-			lookupAddresses,
-			this.getGeckoId(chainId),
-		)
+		const addressesAndPrices =
+			await this.geckoTerminalService.getTokenPrices(
+				lookupAddresses,
+				this.getGeckoId(chainId),
+			)
 
 		const currencyStates: CurrencyState[] = []
 

@@ -4,15 +4,14 @@ import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
 import { Relay } from '../bridges/relay/Relay'
 import { SimpleStargate } from '../bridges/stargate/SimpleStargate'
 import { Stargate } from '../bridges/stargate/Stargate'
-import { GeckoTerminalAPI } from '../dataApi/geckoterminal/GeckoTerminalAPI'
 import { PoolUtils } from '../dex/PoolUtils'
 import { GraphBuilder } from '../graphs/GraphBuilder'
 import { GraphExecutor } from '../graphs/GraphExecutor'
 import { GraphVisualizer } from '../graphs/GraphVisualizer'
 import { ActionType } from '../graphs/primitives/Edge'
-import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
+import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { ChainClientService } from '../utils/ChainClientService'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
@@ -45,8 +44,7 @@ async function main() {
 	const poolUtils = context.get(PoolUtils)
 	const graphExecutor = context.get(GraphExecutor)
 	const graphBuilder = context.get(GraphBuilder)
-	const priceOracle = context.get(PriceOracle)
-	const geckoTerminalAPI = context.get(GeckoTerminalAPI)
+	const priceOracle = context.get(PriceOracleService)
 	const tgArbitrageNotifier = context.get(TgArbitrageNotifier)
 	const tgBalancesNotifier = context.get(TgBalancesNotifier)
 	const graphVisualizer = context.get(GraphVisualizer)
@@ -120,7 +118,6 @@ async function main() {
 		priceOracle,
 		chainClientService,
 		tokenUtils,
-		geckoTerminalAPI,
 		tgArbitrageNotifier,
 		tgBalancesNotifier,
 		graphVisualizer,

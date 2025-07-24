@@ -1,5 +1,5 @@
 import { TransactionReceipt } from 'viem'
-import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
+import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { ChainClientService } from '../utils/ChainClientService'
 import { runFnWithRetry } from '../utils/common'
@@ -25,7 +25,7 @@ export class GraphExecutor {
 	constructor(
 		readonly chainClientService: ChainClientService,
 		readonly tokenUtils: TokenUtils,
-		readonly priceOracle: PriceOracle,
+		readonly priceOracleService: PriceOracleService,
 	) {}
 
 	/**
@@ -94,7 +94,7 @@ export class GraphExecutor {
 			const { srcTxReceipt, dstTxHash, bridgeFee } =
 				executionResult as EdgeExecutionResult<BridgeActionType>
 
-			const bridgeFeeTokenPrice = await this.priceOracle.getPrice(
+			const bridgeFeeTokenPrice = await this.priceOracleService.getPrice(
 				bridgeFee.underlyingToken,
 			)
 
@@ -151,7 +151,8 @@ export class GraphExecutor {
 		const txCostInNativeFormatted =
 			nativeCurrency.formatUnits(txCostInNative)
 
-		const nativePrice = await this.priceOracle.getPrice(nativeCurrency)
+		const nativePrice =
+			await this.priceOracleService.getPrice(nativeCurrency)
 
 		const txCostInUsd = Number(txCostInNativeFormatted) * nativePrice
 

@@ -1,5 +1,5 @@
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
-import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
+import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { ChainClientService } from '../utils/ChainClientService'
 import { getAccountAddress } from '../utils/common'
 import logger from '../utils/logger'
@@ -21,7 +21,7 @@ export class GraphBalanceReporter {
 		readonly bot: GraphArbitrageBot,
 		readonly tgNotifier: TgBalancesNotifier,
 		readonly chainClientService: ChainClientService,
-		readonly priceOracle: PriceOracle,
+		readonly priceOracleService: PriceOracleService,
 		updateInterval: number = 60000, // 60 seconds default
 	) {
 		this.addressToCheck = getAccountAddress()
@@ -103,7 +103,7 @@ export class GraphBalanceReporter {
 	private async getNodeBalanceAndPrice(node: GraphNode) {
 		const [balance, price] = await Promise.all([
 			node.balanceOf(this.addressToCheck),
-			this.priceOracle.getPrice(node).catch(() => 0), // Fallback to 0 if price not available
+			this.priceOracleService.getPrice(node).catch(() => 0), // Fallback to 0 if price not available
 		])
 
 		const balanceFormatted = Number(node.formatUnits(balance))

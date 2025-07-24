@@ -1,7 +1,7 @@
 import { Chain, Client, erc20Abi, getContract, WalletClient } from 'viem'
 import { Pool } from '../../src/dex/base/Pool'
 import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
-import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
+import { PriceOracle } from '../../src/modules/price-oracle/price-oracle.service'
 import { Token } from '../../src/primitives/tokens/Token'
 import { ClientManager } from '../../src/utils/ChainClientService'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'

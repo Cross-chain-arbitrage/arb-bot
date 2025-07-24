@@ -1,6 +1,7 @@
+import { Injectable } from '@nestjs/common'
 import axios from 'axios'
 import { Address } from 'viem'
-import { CHAINS } from './chains'
+import { CHAINS } from './gecko-terminal-chains.constants.ts'
 
 interface GeckoTerminalTokenData {
 	id: string
@@ -26,7 +27,8 @@ interface GeckoTerminalTokenData {
 // docs say that you can retrieve up to 30 addresses in one request
 const BATCH_SIZE = 30
 
-export class GeckoTerminalAPI {
+@Injectable()
+export class GeckoTerminalService {
 	private readonly baseUrl: string = 'https://api.geckoterminal.com/api/v2'
 
 	async getTokenData(

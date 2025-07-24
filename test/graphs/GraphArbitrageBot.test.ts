@@ -14,7 +14,7 @@ import {
 } from '../../src/graphs/primitives/Edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
-import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
+import { PriceOracle } from '../../src/modules/price-oracle/price-oracle.service'
 import { TokenAmount } from '../../src/primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { ClientManager } from '../../src/utils/ChainClientService'
