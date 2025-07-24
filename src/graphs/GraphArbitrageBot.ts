@@ -85,7 +85,6 @@ export class GraphArbitrageBot {
 	}
 
 	async findArbitrage() {
-		console.log('findArbitrage')
 		try {
 			const findOpportunityRes = await GraphOptimizer.findOpportunity(
 				this.graphParams.startToken,
@@ -258,7 +257,6 @@ export class GraphArbitrageBot {
 	}
 
 	async findAndExecuteArbitrage() {
-		console.log('findAndExecuteArbitrage')
 		if (this.isArbitrageExecuting) return
 
 		const arbitrageOpportunity = await this.findArbitrage()
