@@ -1,104 +1,104 @@
-import { arbitrum } from 'viem/chains'
-import {
-	ArbitrageOpportunity,
-	getArbitrageOpportunities,
-} from './getArbitrageOpportunities'
-import { TgOpportunityNotifier } from './modules/notification/TgOpportunityNotifier'
-import { ClientManager } from './utils/ChainClientService'
-import { runFuncWithDelay } from './utils/polling'
+// import { arbitrum } from 'viem/chains'
+// import {
+// 	ArbitrageOpportunity,
+// 	getArbitrageOpportunities,
+// } from './getArbitrageOpportunities'
+// import { TgOpportunityNotifier } from './modules/notification/TgOpportunityNotifier'
+// import { ClientManager } from './utils/ChainClientService'
+// import { runFuncWithDelay } from './utils/polling'
 
-const MIN_DIFFERENCE_TO_NOTIFY = 2
-const MIN_PROFIT_TO_NOTIFY = 2
+// const MIN_DIFFERENCE_TO_NOTIFY = 2
+// const MIN_PROFIT_TO_NOTIFY = 2
 
-const POLL_INTERVAL_MS = 5 * 60 * 1000
+// const POLL_INTERVAL_MS = 5 * 60 * 1000
 
-const NotificationService = new TgOpportunityNotifier()
+// const NotificationService = new TgOpportunityNotifier()
 
-interface ArbitrageOpportunityRecord {
-	opportunity: ArbitrageOpportunity
-	inception: Date
-	isSubjectToDeletion: boolean // sets false at the start of new monitoring loop
-	messages: MessageResponse[]
-}
+// interface ArbitrageOpportunityRecord {
+// 	opportunity: ArbitrageOpportunity
+// 	inception: Date
+// 	isSubjectToDeletion: boolean // sets false at the start of new monitoring loop
+// 	messages: MessageResponse[]
+// }
 
-type ID = `${string}:${string}`
+// type ID = `${string}:${string}`
 
-const opportunityRecords = new Map<ID, ArbitrageOpportunityRecord>()
+// const opportunityRecords = new Map<ID, ArbitrageOpportunityRecord>()
 
-runFuncWithDelay(monitor, POLL_INTERVAL_MS).catch(console.error)
+// runFuncWithDelay(monitor, POLL_INTERVAL_MS).catch(console.error)
 
-async function monitor() {
-	ClientManager.useCustomRpcUrl(arbitrum.id)
-	const opportunities = await getArbitrageOpportunities()
+// async function monitor() {
+// 	ClientManager.useCustomRpcUrl(arbitrum.id)
+// 	const opportunities = await getArbitrageOpportunities()
 
-	opportunityRecords.forEach((record) => {
-		record.isSubjectToDeletion = true
-	})
+// 	opportunityRecords.forEach((record) => {
+// 		record.isSubjectToDeletion = true
+// 	})
 
-	await processOpportunities(opportunities)
+// 	await processOpportunities(opportunities)
 
-	// Clean up outdated opportunities
-	for (const [key, record] of opportunityRecords.entries()) {
-		if (record.isSubjectToDeletion) {
-			opportunityRecords.delete(key)
-		}
-	}
-}
+// 	// Clean up outdated opportunities
+// 	for (const [key, record] of opportunityRecords.entries()) {
+// 		if (record.isSubjectToDeletion) {
+// 			opportunityRecords.delete(key)
+// 		}
+// 	}
+// }
 
-async function processOpportunities(opportunities: ArbitrageOpportunity[]) {
-	const suitableOpportunities = []
+// async function processOpportunities(opportunities: ArbitrageOpportunity[]) {
+// 	const suitableOpportunities = []
 
-	for (const opportunity of opportunities) {
-		const isProfitable =
-			opportunity.potentialProfit?.profitUSD &&
-			opportunity.potentialProfit.profitUSD > MIN_PROFIT_TO_NOTIFY
+// 	for (const opportunity of opportunities) {
+// 		const isProfitable =
+// 			opportunity.potentialProfit?.profitUSD &&
+// 			opportunity.potentialProfit.profitUSD > MIN_PROFIT_TO_NOTIFY
 
-		const isSpread =
-			Math.abs(opportunity.priceDiffPercent) > MIN_DIFFERENCE_TO_NOTIFY
+// 		const isSpread =
+// 			Math.abs(opportunity.priceDiffPercent) > MIN_DIFFERENCE_TO_NOTIFY
 
-		if (isProfitable || isSpread) {
-			suitableOpportunities.push(opportunity)
-		}
-	}
+// 		if (isProfitable || isSpread) {
+// 			suitableOpportunities.push(opportunity)
+// 		}
+// 	}
 
-	for (const opportunity of suitableOpportunities) {
-		const id = getOpportunityID(opportunity)
+// 	for (const opportunity of suitableOpportunities) {
+// 		const id = getOpportunityID(opportunity)
 
-		if (!opportunityRecords.has(id)) {
-			// Set new opportunity
-			opportunityRecords.set(id, {
-				opportunity,
-				inception: new Date(),
-				isSubjectToDeletion: false,
-				messages: [],
-			})
+// 		if (!opportunityRecords.has(id)) {
+// 			// Set new opportunity
+// 			opportunityRecords.set(id, {
+// 				opportunity,
+// 				inception: new Date(),
+// 				isSubjectToDeletion: false,
+// 				messages: [],
+// 			})
 
-			const messages =
-				await NotificationService.sendNotificationsOnOpportunity(
-					opportunity,
-					opportunityRecords.get(id)!.inception,
-				)
+// 			const messages =
+// 				await NotificationService.sendNotificationsOnOpportunity(
+// 					opportunity,
+// 					opportunityRecords.get(id)!.inception,
+// 				)
 
-			opportunityRecords.set(id, {
-				opportunity,
-				inception: new Date(),
-				isSubjectToDeletion: false,
-				messages: messages ? [messages] : [],
-			})
-		} else {
-			// Update existing opportunity
-			const record = opportunityRecords.get(id)!
-			record.isSubjectToDeletion = false
+// 			opportunityRecords.set(id, {
+// 				opportunity,
+// 				inception: new Date(),
+// 				isSubjectToDeletion: false,
+// 				messages: messages ? [messages] : [],
+// 			})
+// 		} else {
+// 			// Update existing opportunity
+// 			const record = opportunityRecords.get(id)!
+// 			record.isSubjectToDeletion = false
 
-			await NotificationService.editNotificationsOnOpportunity(
-				opportunity,
-				record.inception,
-				record.messages,
-			)
-		}
-	}
-}
+// 			await NotificationService.editNotificationsOnOpportunity(
+// 				opportunity,
+// 				record.inception,
+// 				record.messages,
+// 			)
+// 		}
+// 	}
+// }
 
-function getOpportunityID(opportunity: ArbitrageOpportunity): ID {
-	return `${opportunity.pool.chainName}:${opportunity.pool.address}` as ID
-}
+// function getOpportunityID(opportunity: ArbitrageOpportunity): ID {
+// 	return `${opportunity.pool.chainName}:${opportunity.pool.address}` as ID
+// }

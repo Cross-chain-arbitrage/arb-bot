@@ -1,7 +1,14 @@
+import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
+import { Relay } from '../bridges/relay/Relay'
+import { SimpleStargate } from '../bridges/stargate/SimpleStargate'
+import { Stargate } from '../bridges/stargate/Stargate'
+import { GeckoTerminalAPI } from '../dataApi/geckoterminal/GeckoTerminalAPI'
 import { PoolType } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
+import { GraphExecutor } from '../graphs/GraphExecutor'
+import { GraphVisualizer } from '../graphs/GraphVisualizer'
 import {
 	ActionType,
 	RelayBridgeEdge,
@@ -13,6 +20,8 @@ import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { ChainClientService } from '../utils/ChainClientService'
 import logger from '../utils/logger'
 
 export interface PoolData {
@@ -39,11 +48,28 @@ export interface StrategyConfig {
 }
 
 export class Strategy {
-	constructor(private readonly config: StrategyConfig) {}
+	constructor(
+		private readonly config: StrategyConfig,
+		readonly graphBuilder: GraphBuilder,
+		readonly priceOracle: PriceOracle,
+		readonly chainClientService: ChainClientService,
+		readonly tokenUtils: TokenUtils,
+		readonly geckoTerminalAPI: GeckoTerminalAPI,
+		readonly tgArbitrageNotifier: TgArbitrageNotifier,
+		readonly tgBalancesNotifier: TgBalancesNotifier,
+		readonly graphVisualizer: GraphVisualizer,
+		readonly simpleStargate: SimpleStargate,
+		readonly relayBridge: Relay,
+		readonly stargate: Stargate,
+		readonly fuseBridge: FuseBridge,
+		readonly graphExecutor: GraphExecutor,
+	) {}
 
 	async run() {
 		logger.info('Building Graph')
-		const graph = await GraphBuilder.build(this.config.graphBuildConfig)
+		const graph = await this.graphBuilder.build(
+			this.config.graphBuildConfig,
+		)
 
 		if (this.config.graphBuildConfig.edgeConstructors) {
 			for (const edgeConstructor of this.config.graphBuildConfig
@@ -52,6 +78,8 @@ export class Strategy {
 					case ActionType.SIMPLE_STARGATE_BRIDGE:
 						graph.addEdge(
 							new SimpleStargateBridgeEdge(
+								this.chainClientService,
+								this.simpleStargate,
 								edgeConstructor.from,
 								edgeConstructor.to,
 								graph,
@@ -62,6 +90,8 @@ export class Strategy {
 					case ActionType.RELAY_BRIDGE:
 						graph.addEdge(
 							new RelayBridgeEdge(
+								this.chainClientService,
+								this.relayBridge,
 								edgeConstructor.from,
 								edgeConstructor.to,
 								graph,
@@ -77,7 +107,7 @@ export class Strategy {
 		}
 
 		logger.info('Initializing PriceOracle')
-		await PriceOracle.initializePriceUpdating(
+		await this.priceOracle.initializePriceUpdating(
 			Array.from(graph.nodes.values()),
 		)
 
@@ -88,6 +118,8 @@ export class Strategy {
 		const balanceReporter = new GraphBalanceReporter(
 			bot,
 			new TgBalancesNotifier(),
+			this.chainClientService,
+			this.priceOracle,
 		)
 		balanceReporter.start()
 
@@ -98,7 +130,7 @@ export class Strategy {
 	private buildBot(graph: Graph): GraphArbitrageBot {
 		return new GraphArbitrageBot(
 			this.config.name,
-			new TgArbitrageNotifier(),
+			this.tgArbitrageNotifier,
 			{
 				graph,
 				startToken: this.config.startToken,
@@ -109,6 +141,13 @@ export class Strategy {
 				pollingInterval: this.config.pollingInterval,
 				arbitrageTimeout: this.config.arbitrageTimeout,
 			},
+			this.chainClientService,
+			this.graphVisualizer,
+			this.tokenUtils,
+			this.stargate,
+			this.fuseBridge,
+			this.graphExecutor,
+			this.priceOracle,
 		)
 	}
 

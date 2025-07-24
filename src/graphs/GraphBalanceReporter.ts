@@ -21,6 +21,7 @@ export class GraphBalanceReporter {
 		readonly bot: GraphArbitrageBot,
 		readonly tgNotifier: TgBalancesNotifier,
 		readonly chainClientService: ChainClientService,
+		readonly priceOracle: PriceOracle,
 		updateInterval: number = 60000, // 60 seconds default
 	) {
 		this.addressToCheck = getAccountAddress()
@@ -102,7 +103,7 @@ export class GraphBalanceReporter {
 	private async getNodeBalanceAndPrice(node: GraphNode) {
 		const [balance, price] = await Promise.all([
 			node.balanceOf(this.addressToCheck),
-			PriceOracle.getPrice(node).catch(() => 0), // Fallback to 0 if price not available
+			this.priceOracle.getPrice(node).catch(() => 0), // Fallback to 0 if price not available
 		])
 
 		const balanceFormatted = Number(node.formatUnits(balance))

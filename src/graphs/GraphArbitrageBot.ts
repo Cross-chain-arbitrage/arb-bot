@@ -53,6 +53,7 @@ export class GraphArbitrageBot {
 		readonly stargate: Stargate,
 		readonly fuseBridge: FuseBridge,
 		readonly graphExecutor: GraphExecutor,
+		readonly priceOracle: PriceOracle,
 	) {
 		this.settings = { ...DEFAULT_SETTINGS, ...settings }
 	}
@@ -84,6 +85,7 @@ export class GraphArbitrageBot {
 	}
 
 	async findArbitrage() {
+		console.log('findArbitrage')
 		try {
 			const findOpportunityRes = await GraphOptimizer.findOpportunity(
 				this.graphParams.startToken,
@@ -211,7 +213,7 @@ export class GraphArbitrageBot {
 		let executionCostInUsd = 0
 
 		const nativeOnFromChain = this.tokenUtils.getNative(edge.from.chainId)
-		const nativePrice = await PriceOracle.getPrice(nativeOnFromChain)
+		const nativePrice = await this.priceOracle.getPrice(nativeOnFromChain)
 		const gasPrice = await this.chainClientService
 			.getClient(edge.from.chainId)
 			.getGasPrice()
@@ -239,7 +241,7 @@ export class GraphArbitrageBot {
 				edge.lastQuote!.cost as EdgeExecutionCost<BridgeActionType>
 			).bridgeFee
 
-			const tokenPrice = await PriceOracle.getPrice(
+			const tokenPrice = await this.priceOracle.getPrice(
 				bridgeFee.underlyingToken,
 			)
 
@@ -255,6 +257,7 @@ export class GraphArbitrageBot {
 	}
 
 	async findAndExecuteArbitrage() {
+		console.log('findAndExecuteArbitrage')
 		if (this.isArbitrageExecuting) return
 
 		const arbitrageOpportunity = await this.findArbitrage()
@@ -471,6 +474,6 @@ export class GraphArbitrageBot {
 	}
 
 	private async startTokenPrice() {
-		return PriceOracle.getPrice(this.graphParams.startToken)
+		return this.priceOracle.getPrice(this.graphParams.startToken)
 	}
 }

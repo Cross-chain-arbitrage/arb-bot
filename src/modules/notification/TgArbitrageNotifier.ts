@@ -9,7 +9,7 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 		prettyOpportunity: string
 	} | null = null
 
-	constructor() {
+	constructor(readonly graphVisualizer: GraphVisualizer) {
 		const messageThreadId = getEnvSafe('TG_BOT_MESSAGE_THREAD_ID')
 		super(messageThreadId)
 	}
@@ -97,7 +97,7 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 	) {
 		const prettyOpportunity = this.lastMessage
 			? this.lastMessage.prettyOpportunity
-			: GraphVisualizer.getPrettyOpportunity(
+			: this.graphVisualizer.getPrettyOpportunity(
 					arbitrageOpportunity,
 					startTokenPrice,
 				)

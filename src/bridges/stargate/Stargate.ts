@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { getContract, zeroAddress, zeroHash } from 'viem'
 import { OFT_ABI } from '../../abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../abi/stargate/stargateBase'
@@ -13,11 +14,11 @@ import { createCustomError, padAddressToBytes32 } from '../../utils/common'
 import { StargateAPI } from './StargateAPI'
 import { StargateBridgeTx } from './StargateBridgeTx'
 import { getStargateChainKey } from './helpers'
-
 export const StargateError = createCustomError('StargateError')
 
 const BRIDGE_GAS_COST = 400_000n
 
+@Injectable()
 export class Stargate {
 	constructor(
 		private readonly chainClientService: ChainClientService,

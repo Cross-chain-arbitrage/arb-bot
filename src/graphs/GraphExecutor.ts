@@ -25,6 +25,7 @@ export class GraphExecutor {
 	constructor(
 		readonly chainClientService: ChainClientService,
 		readonly tokenUtils: TokenUtils,
+		readonly priceOracle: PriceOracle,
 	) {}
 
 	/**
@@ -93,7 +94,7 @@ export class GraphExecutor {
 			const { srcTxReceipt, dstTxHash, bridgeFee } =
 				executionResult as EdgeExecutionResult<BridgeActionType>
 
-			const bridgeFeeTokenPrice = await PriceOracle.getPrice(
+			const bridgeFeeTokenPrice = await this.priceOracle.getPrice(
 				bridgeFee.underlyingToken,
 			)
 
@@ -150,7 +151,7 @@ export class GraphExecutor {
 		const txCostInNativeFormatted =
 			nativeCurrency.formatUnits(txCostInNative)
 
-		const nativePrice = await PriceOracle.getPrice(nativeCurrency)
+		const nativePrice = await this.priceOracle.getPrice(nativeCurrency)
 
 		const txCostInUsd = Number(txCostInNativeFormatted) * nativePrice
 

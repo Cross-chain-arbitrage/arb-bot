@@ -1,9 +1,22 @@
+import { NestFactory } from '@nestjs/core'
 import { base, swellchain } from 'viem/chains'
+import { FuseBridge } from '../bridges/FuseBridge/FuseBridge'
+import { Relay } from '../bridges/relay/Relay'
+import { SimpleStargate } from '../bridges/stargate/SimpleStargate'
+import { Stargate } from '../bridges/stargate/Stargate'
+import { GeckoTerminalAPI } from '../dataApi/geckoterminal/GeckoTerminalAPI'
 import { PoolUtils } from '../dex/PoolUtils'
+import { GraphBuilder } from '../graphs/GraphBuilder'
+import { GraphExecutor } from '../graphs/GraphExecutor'
+import { GraphVisualizer } from '../graphs/GraphVisualizer'
 import { ActionType } from '../graphs/primitives/Edge'
+import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
+import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
+import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ClientManager } from '../utils/ChainClientService'
+import { ChainClientService } from '../utils/ChainClientService'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
+import { AppModule } from './app.module'
 
 export const SWELLCHAIN_WETH_POOLS: PoolData[] = [
 	{
@@ -26,16 +39,30 @@ export const SWELLCHAIN_WETH_POOLS: PoolData[] = [
 /* ============ Strategy Config ============ */
 
 async function main() {
-	ClientManager.useCustomRpcUrl(base.id)
+	const context = await NestFactory.createApplicationContext(AppModule)
+	const chainClientService = context.get(ChainClientService)
+	const tokenUtils = context.get(TokenUtils)
+	const poolUtils = context.get(PoolUtils)
+	const graphExecutor = context.get(GraphExecutor)
+	const graphBuilder = context.get(GraphBuilder)
+	const priceOracle = context.get(PriceOracle)
+	const geckoTerminalAPI = context.get(GeckoTerminalAPI)
+	const tgArbitrageNotifier = context.get(TgArbitrageNotifier)
+	const tgBalancesNotifier = context.get(TgBalancesNotifier)
+	const graphVisualizer = context.get(GraphVisualizer)
+	const simpleStargate = context.get(SimpleStargate)
+	const relayBridge = context.get(Relay)
+	const stargate = context.get(Stargate)
+	const fuseBridge = context.get(FuseBridge)
 
-	const baseNative = TokenUtils.getNative(base.id)
-	const swellchainNative = TokenUtils.getNative(swellchain.id)
-	const usdeOnBase = await TokenUtils.fromAddress(
+	const baseNative = tokenUtils.getNative(base.id)
+	const swellchainNative = tokenUtils.getNative(swellchain.id)
+	const usdeOnBase = await tokenUtils.fromAddress(
 		'0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34',
 		base.id,
 	)
 
-	const usdeOnSwell = await TokenUtils.fromAddress(
+	const usdeOnSwell = await tokenUtils.fromAddress(
 		'0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34',
 		swellchain.id,
 	)
@@ -71,7 +98,7 @@ async function main() {
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
 		graphBuildConfig: {
-			pools: await PoolUtils.createPools(SWELLCHAIN_WETH_POOLS),
+			pools: await poolUtils.createPools(SWELLCHAIN_WETH_POOLS),
 			stargateConfig: {
 				connectSecondaryChains: false,
 				baseChainId: base.id,
@@ -87,7 +114,22 @@ async function main() {
 		},
 	}
 
-	const strategy = new Strategy(config)
+	const strategy = new Strategy(
+		config,
+		graphBuilder,
+		priceOracle,
+		chainClientService,
+		tokenUtils,
+		geckoTerminalAPI,
+		tgArbitrageNotifier,
+		tgBalancesNotifier,
+		graphVisualizer,
+		simpleStargate,
+		relayBridge,
+		stargate,
+		fuseBridge,
+		graphExecutor,
+	)
 	await strategy.run()
 }
 

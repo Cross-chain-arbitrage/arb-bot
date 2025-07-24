@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import axios from 'axios'
 import { LayerZeroScanAPI } from '../../dataApi/layerzeroscan/LayerZeroScanAPI'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
@@ -59,6 +60,7 @@ export interface Transaction {
 
 const BRIDGE_GAS_COST = 400_000n
 
+@Injectable()
 export class SimpleStargate {
 	constructor(
 		private readonly chainClientService: ChainClientService,
