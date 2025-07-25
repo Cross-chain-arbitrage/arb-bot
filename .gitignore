@@ -10,3 +10,4 @@ terraform.json
 dist
 logs
 .data
+configs/
