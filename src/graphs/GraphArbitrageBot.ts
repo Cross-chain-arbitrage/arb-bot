@@ -1,3 +1,4 @@
+import { Logger } from 'nestjs-pino'
 import {
 	ContractFunctionExecutionError,
 	maxUint256,
@@ -11,7 +12,6 @@ import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { ChainClientService } from '../utils/ChainClientService'
-import logger from '../utils/logger'
 import { runFuncWithDelay } from '../utils/polling'
 import { GraphExecutor } from './GraphExecutor'
 import { GraphVisualizer } from './GraphVisualizer'
@@ -54,12 +54,13 @@ export class GraphArbitrageBot {
 		readonly fuseBridge: FuseBridgeService,
 		readonly graphExecutor: GraphExecutor,
 		readonly priceOracleService: PriceOracleService,
+		readonly logger: Logger,
 	) {
 		this.settings = { ...DEFAULT_SETTINGS, ...settings }
 	}
 
 	start() {
-		logger.warn('Check that you gave all required token approvals')
+		this.logger.warn('Check that you gave all required token approvals')
 
 		let message = `${this.botName} started\n\nGraph:\n`
 
@@ -70,12 +71,12 @@ export class GraphArbitrageBot {
 		const viewLink = `\x1b]8;;${view}\x1b\\📊 View Graph\x1b]8;;\x1b\\`
 		const editLink = `\x1b]8;;${edit}\x1b\\✏️ Edit Graph\x1b]8;;\x1b\\`
 
-		logger.info(`Graph links: ${viewLink} | ${editLink}`)
+		this.logger.log(`Graph links: ${viewLink} | ${editLink}`)
 
 		message += `<a href="${view}">📊 View Graph</a> | <a href="${edit}">✏️ Edit Graph</a>\n\n`
 
 		this.TgArbitrageNotifier.sendMessage(message).catch((err) => {
-			logger.error(err, 'Error sending message to telegram')
+			this.logger.error(err, 'Error sending message to telegram')
 		})
 
 		void runFuncWithDelay(async () => {
@@ -106,9 +107,9 @@ export class GraphArbitrageBot {
 						sender: err.sender,
 					},
 				)
-				logger.error(shortenedError, 'Error finding arbitrage')
+				this.logger.error(shortenedError, 'Error finding arbitrage')
 			} else {
-				logger.error(err, 'Error finding arbitrage')
+				this.logger.error(err, 'Error finding arbitrage')
 			}
 
 			return null
@@ -121,7 +122,7 @@ export class GraphArbitrageBot {
 				opportunity,
 				await this.startTokenPrice(),
 			)
-			logger.info(prettyOpportunity)
+			this.logger.log(prettyOpportunity)
 			this.notifyAboutArbStart(prettyOpportunity)
 
 			const { endAmount, revenue, executionCostInUsd } =
@@ -130,7 +131,7 @@ export class GraphArbitrageBot {
 			const readableActualAmountOut =
 				this.graphParams.startToken.formatUnits(endAmount)
 
-			logger.info(
+			this.logger.log(
 				`Arbitrage is finished, amount out: ${readableActualAmountOut}, revenue: $${revenue}, execution cost: $${executionCostInUsd}`,
 			)
 			this.notifyAboutArbEnd(
@@ -138,7 +139,7 @@ export class GraphArbitrageBot {
 				endAmount,
 				opportunity,
 			).catch((err) => {
-				logger.error(err, 'Error sending path to telegram')
+				this.logger.error(err, 'Error sending path to telegram')
 			})
 		} catch (err) {
 			if (err instanceof ContractFunctionExecutionError) {
@@ -152,12 +153,12 @@ export class GraphArbitrageBot {
 						sender: err.sender,
 					},
 				)
-				logger.error(shortenedError, 'Error executing arbitrage')
+				this.logger.error(shortenedError, 'Error executing arbitrage')
 			} else {
-				logger.error(err, 'Error executing arbitrage')
+				this.logger.error(err, 'Error executing arbitrage')
 			}
 			this.notifyAboutArbError(err, opportunity).catch((err) => {
-				logger.error(err, 'Error sending error to telegram')
+				this.logger.error(err, 'Error sending error to telegram')
 			})
 		}
 	}
@@ -166,7 +167,7 @@ export class GraphArbitrageBot {
 		opportunity: GraphArbitrageOpportunity | null,
 	): Promise<boolean> {
 		if (!opportunity || !opportunity.path) {
-			logger.info('No arbitrage found')
+			this.logger.log('No arbitrage found')
 			return false
 		}
 
@@ -176,7 +177,7 @@ export class GraphArbitrageBot {
 		)
 
 		if (expectedRevenue < 0) {
-			logger.warn(
+			this.logger.warn(
 				opportunity,
 				`Revenue is negative, expectedRevenue: $${expectedRevenue.toFixed(2)}`,
 			)
@@ -184,7 +185,7 @@ export class GraphArbitrageBot {
 		}
 
 		if (expectedRevenue < this.settings.minProfitUsd) {
-			logger.info(
+			this.logger.log(
 				`Revenue is too low, expectedRevenue: $${expectedRevenue.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
 			)
 			return false
@@ -199,7 +200,7 @@ export class GraphArbitrageBot {
 		const expectedProfit = expectedRevenue - executionCostInUsd
 
 		if (expectedProfit < this.settings.minProfitUsd) {
-			logger.info(
+			this.logger.log(
 				`Profit is too low, expectedProfit: $${expectedProfit.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
 			)
 			return false
@@ -284,11 +285,11 @@ export class GraphArbitrageBot {
 			const viewLink = `\x1b]8;;${view}\x1b\\📊 View Graph\x1b]8;;\x1b\\`
 			const editLink = `\x1b]8;;${edit}\x1b\\✏️ Edit Graph\x1b]8;;\x1b\\`
 
-			logger.info(
+			this.logger.log(
 				`Graph with rates after first run: ${viewLink} | ${editLink}`,
 			)
 		} catch (error) {
-			logger.error(error, 'Error checking first run')
+			this.logger.error(error, 'Error checking first run')
 		} finally {
 			this.isFirstRun = false
 		}
@@ -301,7 +302,7 @@ export class GraphArbitrageBot {
 		if (
 			this.executionErrorInARow++ > this.settings.maxExecutionErrorsInARow
 		) {
-			logger.warn(
+			this.logger.warn(
 				'Too many execution errors in a row, skipping notification',
 			)
 			return
@@ -320,7 +321,7 @@ export class GraphArbitrageBot {
 			opportunity,
 			startTokenPrice,
 		).catch((err) => {
-			logger.error(err, 'Error sending error to telegram')
+			this.logger.error(err, 'Error sending error to telegram')
 		})
 	}
 
@@ -340,7 +341,7 @@ export class GraphArbitrageBot {
 			opportunity,
 			price,
 		).catch((err) => {
-			logger.error(err, 'Error sending path to telegram')
+			this.logger.error(err, 'Error sending path to telegram')
 		})
 	}
 
@@ -349,7 +350,7 @@ export class GraphArbitrageBot {
 			this.botName,
 			prettyOpportunity,
 		).catch((err) => {
-			logger.error(err, 'Error sending path to telegram')
+			this.logger.error(err, 'Error sending path to telegram')
 		})
 	}
 
@@ -436,15 +437,15 @@ export class GraphArbitrageBot {
 		for (const [edgeId, edge] of this.graphParams.graph.edges) {
 			const { from, to } = edge
 
-			logger.info(
+			this.logger.log(
 				`approving for edge ${edge.actionType} ${from.chainId}:${from.symbol} - ${to.chainId}:${to.symbol}`,
 			)
 			const tx = await this.approveForEdge(edge)
 
 			if (!tx) {
-				logger.info('Approve already done')
+				this.logger.log('Approve already done')
 			} else {
-				logger.info(tx?.transactionHash)
+				this.logger.log(tx?.transactionHash)
 			}
 		}
 	}

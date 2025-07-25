@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { Logger } from 'nestjs-pino'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
@@ -62,6 +63,7 @@ export class Strategy {
 		readonly stargateService: StargateService,
 		readonly fuseBridgeService: FuseBridgeService,
 		readonly graphExecutor: GraphExecutor,
+		readonly logger: Logger,
 	) {}
 
 	async run(config: StrategyConfig) {
@@ -145,6 +147,7 @@ export class Strategy {
 			this.fuseBridgeService,
 			this.graphExecutor,
 			this.priceOracle,
+			this.logger,
 		)
 	}
 

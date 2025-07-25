@@ -1,3 +1,4 @@
+import { Logger } from 'nestjs-pino'
 import { TransactionReceipt } from 'viem'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
@@ -5,6 +6,7 @@ import { ChainClientService } from '../utils/ChainClientService'
 import { runFnWithRetry } from '../utils/common'
 import logger from '../utils/logger'
 import { ActionType, Edge } from './primitives/Edge'
+
 export interface GraphExecutorConfig {
 	path: Edge[]
 	startAmount: bigint
@@ -26,6 +28,7 @@ export class GraphExecutor {
 		readonly chainClientService: ChainClientService,
 		readonly tokenUtils: TokenUtils,
 		readonly priceOracleService: PriceOracleService,
+		readonly logger: Logger,
 	) {}
 
 	/**
@@ -55,6 +58,7 @@ export class GraphExecutor {
 			const executionResult = await runFnWithRetry(
 				() => edge.execute(nextAmountIn),
 				retryExecuteEdgeCount,
+				this.logger,
 			)
 
 			const { executionCostInUsd } = await this.handleExecutionResult(

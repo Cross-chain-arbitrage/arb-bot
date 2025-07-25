@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
+import { Logger } from 'nestjs-pino'
 import { PoolUtils } from './dex/PoolUtils'
 import { ActionType } from './graphs/primitives/Edge'
 import { Token } from './primitives/tokens/Token'
@@ -11,7 +12,14 @@ import { Strategy, StrategyConfig } from './strategies/Strategy'
 /* ============ Strategy Config ============ */
 
 async function main() {
-	const context = await NestFactory.createApplicationContext(AppModule)
+	const context = await NestFactory.createApplicationContext(AppModule, {
+		bufferLogs: true,
+	})
+
+	const logger = context.get(Logger)
+
+	context.useLogger(logger)
+
 	const baseConfigService = context.get(
 		ConfigService<ReturnType<typeof loadConfig>, true>,
 	)

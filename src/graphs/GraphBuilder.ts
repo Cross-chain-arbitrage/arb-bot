@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { Logger } from 'nestjs-pino'
 import { fuse } from 'viem/chains'
 import { FUSE_BRIDGE_SUPPORTED_TOKENS } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.constants'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
@@ -12,7 +13,6 @@ import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import { ChainClientService } from '../utils/ChainClientService'
-import logger from '../utils/logger'
 import {
 	FuseBridgeEdge,
 	StargateBridgeEdge,
@@ -73,6 +73,7 @@ export class GraphBuilder {
 		private readonly stargateService: StargateService,
 		private readonly fuseBridgeService: FuseBridgeService,
 		private readonly stargateAPIService: StargateAPIService,
+		private readonly logger: Logger,
 	) {}
 
 	/**
@@ -84,9 +85,9 @@ export class GraphBuilder {
 	async build(buildConfig: GraphBuildConfig): Promise<Graph> {
 		const { pools, connectSecondaryChains, baseChainId } = buildConfig
 
-		logger.info('============================')
-		logger.info('Building Graph from Pools')
-		logger.info('============================')
+		this.logger.log('============================')
+		this.logger.log('Building Graph from Pools')
+		this.logger.log('============================')
 
 		if (!pools || pools.length === 0) {
 			throw new GraphBuilderError('No pools provided')
@@ -102,7 +103,7 @@ export class GraphBuilder {
 
 		for (const pool of pools) {
 			graph.addDexPool(pool)
-			logger.info(
+			this.logger.log(
 				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${this.chainClientService.getChainNameById(pool.chainId)})`,
 			)
 		}
@@ -129,22 +130,22 @@ export class GraphBuilder {
 			(chainId) => this.chainClientService.getChainNameById(chainId),
 		)
 
-		logger.info('============================')
-		logger.info('Graph Built Successfully')
-		logger.info('============================')
+		this.logger.log('============================')
+		this.logger.log('Graph Built Successfully')
+		this.logger.log('============================')
 
-		logger.info(`Graph has ${graph.nodes.size} nodes`)
-		logger.info(`Graph has ${graph.edges.size} edges`)
-		logger.info(
+		this.logger.log(`Graph has ${graph.nodes.size} nodes`)
+		this.logger.log(`Graph has ${graph.edges.size} edges`)
+		this.logger.log(
 			`Graph contains ${uniqueChains.length} (${uniqueChains.join(', ')}) chains`,
 		)
-		logger.info('============================')
+		this.logger.log('============================')
 
 		return graph
 	}
 
 	setupNativeCurrencies(graph: Graph, pools: Pool[]): NativeCurrency[] {
-		logger.info('------ Setting up Native Currencies ------')
+		this.logger.log('------ Setting up Native Currencies ------')
 
 		const uniqueChains = this.getAllUniqueChainIdsFromPools(pools)
 
@@ -155,7 +156,9 @@ export class GraphBuilder {
 			graph.addNode(nativeCurrency)
 			nativeCurrencies.push(nativeCurrency)
 
-			logger.info(`Added Native Currency: ${nativeCurrency.toString()}`)
+			this.logger.log(
+				`Added Native Currency: ${nativeCurrency.toString()}`,
+			)
 		}
 
 		return nativeCurrencies
@@ -165,7 +168,7 @@ export class GraphBuilder {
 		graph: Graph,
 		nativeCurrencies: NativeCurrency[],
 	) {
-		logger.info('------ Setting up Wrapped Native Currencies ------')
+		this.logger.log('------ Setting up Wrapped Native Currencies ------')
 
 		const wrappedNativeCurrencies: WrappedNative[] = await Promise.all(
 			nativeCurrencies.map((native) =>
@@ -177,7 +180,7 @@ export class GraphBuilder {
 			try {
 				graph.addNode(wrapped)
 
-				logger.info(`Added Wrapped Native: ${wrapped.toString()}`)
+				this.logger.log(`Added Wrapped Native: ${wrapped.toString()}`)
 			} catch (error) {
 				if (error instanceof GraphError) {
 					continue
@@ -214,7 +217,7 @@ export class GraphBuilder {
 		stargateConfig: StargateConfig,
 	) {
 		const { connectSecondaryChains, baseChainId } = stargateConfig
-		logger.info('------ Setting up Stargate Bridges ------')
+		this.logger.log('------ Setting up Stargate Bridges ------')
 
 		type AssetId = number
 
@@ -247,7 +250,7 @@ export class GraphBuilder {
 			assetGroups.get(assetId)?.add(token)
 		}
 
-		logger.info(`Found ${assetGroups.size} asset group(s)`)
+		this.logger.log(`Found ${assetGroups.size} asset group(s)`)
 
 		const pairs: [GraphNode, GraphNode][] = []
 
@@ -274,7 +277,7 @@ export class GraphBuilder {
 				.map((asset) => asset.toString())
 				.join(' <--> ')
 
-			logger.info(`Added ${assetGroupString} bridges`)
+			this.logger.log(`Added ${assetGroupString} bridges`)
 		}
 
 		for (const pair of pairs) {
@@ -291,7 +294,7 @@ export class GraphBuilder {
 	}
 
 	private setupFuseBridges(graph: Graph) {
-		logger.info('------ Setting up Fuse Bridges ------')
+		this.logger.log('------ Setting up Fuse Bridges ------')
 
 		type AssetId = string
 
@@ -313,7 +316,7 @@ export class GraphBuilder {
 			}
 		}
 
-		logger.info(`Found ${assetGroups.size} asset group(s)`)
+		this.logger.log(`Found ${assetGroups.size} asset group(s)`)
 
 		// Handle FUSE tokens specially
 		const fuseAssets = assetGroups.get('FUSE')
@@ -339,7 +342,7 @@ export class GraphBuilder {
 						graph,
 					),
 				)
-				logger.info(
+				this.logger.log(
 					`Added bridge: ${fuseToken.toString()} --> ${wfuseToken.toString()}`,
 				)
 			}
@@ -356,7 +359,7 @@ export class GraphBuilder {
 							graph,
 						),
 					)
-					logger.info(
+					this.logger.log(
 						`Added bridge: ${nativeFuseOnFuse.toString()} --> ${fuseToken.toString()}`,
 					)
 				}
@@ -406,7 +409,7 @@ export class GraphBuilder {
 				.map((asset) => asset.toString())
 				.join(' <--> ')
 
-			logger.info(`Added ${assetGroupString} bridges`)
+			this.logger.log(`Added ${assetGroupString} bridges`)
 		}
 	}
 
