@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
+import { Logger } from 'nestjs-pino'
 import { BaseError, Hex, pad } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import logger from './logger'
 
 export const wait = (ms: number): Promise<void> =>
 	new Promise((resolve) => setTimeout(resolve, ms))
@@ -30,6 +30,7 @@ export function getEnvSafe(key: string): string {
 export async function runFnWithRetry<T>(
 	fn: () => Promise<T>,
 	maxRetries: number,
+	logger: Logger,
 ): Promise<T> {
 	const errors: Error[] = []
 

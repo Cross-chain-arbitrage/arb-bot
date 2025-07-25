@@ -1,5 +1,5 @@
+import { Injectable } from '@nestjs/common'
 import { getAddress } from 'viem'
-import { ClientManager } from '../../../../utils/ClientManager'
 import {
 	callFactoryFunction,
 	callFeeFunction,
@@ -12,6 +12,7 @@ import { PoolCreator } from '../../../base/PoolCreator'
 import { PANCAKE_V3_PERIPHERY } from './periphery'
 import { PancakeV3Pool } from './Pool'
 
+@Injectable()
 export class PancakeV3PoolCreator extends PoolCreator {
 	override _getToken0Address = callToken0Function
 	override _getToken1Address = callToken1Function
@@ -31,12 +32,13 @@ export class PancakeV3PoolCreator extends PoolCreator {
 		periphery: (typeof PANCAKE_V3_PERIPHERY)[number][Address],
 		immutables: PoolConstructorParams['immutables'],
 	) {
-		const client = ClientManager.getClient(chainId)
+		const client = this.chainClientService.getClient(chainId)
 
 		const fee = await callFeeFunction(poolAddress, client)
 
 		return new PancakeV3Pool(
 			{
+				chainClientService: this.chainClientService,
 				immutables,
 				poolAddress,
 				chainId,

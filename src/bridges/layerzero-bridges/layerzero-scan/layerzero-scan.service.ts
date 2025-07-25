@@ -3,8 +3,9 @@ import {
 	Message,
 	MessageStatus,
 } from '@layerzerolabs/scan-client'
+import { Injectable } from '@nestjs/common'
 import { Hash, isHash, zeroHash } from 'viem'
-import { poll } from '../../utils/polling'
+import { poll } from '../../../utils/polling'
 
 export class LayerZeroScanError extends Error {
 	constructor(message: string) {
@@ -16,12 +17,13 @@ export class LayerZeroScanError extends Error {
 
 // @layerzerolabs/scan-client wrapper functions doesn't work
 // only manual client creation works
-export class LayerZeroScanAPI {
-	private static readonly timeout: number = 10 * 60_000
-	private static readonly pollingInterval: number = 2500
+@Injectable()
+export class LayerZeroScanService {
+	private readonly timeout: number = 10 * 60_000
+	private readonly pollingInterval: number = 2500
 
 	// Assumes only one message is sent per tx
-	static async waitForDeliveryStatus(srcTxHash: Hash) {
+	async waitForDeliveryStatus(srcTxHash: Hash) {
 		if (!isHash(srcTxHash)) {
 			throw new LayerZeroScanError('srcTxHash is not a valid hash')
 		}
@@ -40,7 +42,7 @@ export class LayerZeroScanAPI {
 		return messages[0]
 	}
 
-	static async getMessagesBySrcTxHash(srcTxHash: Hash): Promise<Message[]> {
+	async getMessagesBySrcTxHash(srcTxHash: Hash): Promise<Message[]> {
 		if (srcTxHash === zeroHash) {
 			throw new LayerZeroScanError('srcTxHash is zero hash')
 		}

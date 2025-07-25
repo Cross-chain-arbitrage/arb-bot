@@ -1,7 +1,15 @@
+import { Injectable } from '@nestjs/common'
+import { Logger } from 'nestjs-pino'
+import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
+import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
+import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
+import { RelayService } from '../bridges/relay/relay-service'
 import { PoolType } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
+import { GraphExecutor } from '../graphs/GraphExecutor'
+import { GraphVisualizer } from '../graphs/GraphVisualizer'
 import {
 	ActionType,
 	RelayBridgeEdge,
@@ -10,9 +18,11 @@ import {
 import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
-import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
+import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
+import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { ChainClientService } from '../utils/ChainClientService'
 import logger from '../utils/logger'
 
 export interface PoolData {
@@ -22,7 +32,7 @@ export interface PoolData {
 }
 
 export interface StrategyConfig {
-	name: string
+	botName: string
 	giveApprovals: boolean
 	startToken: Token | NativeCurrency
 	minProfitUsd: number
@@ -34,24 +44,41 @@ export interface StrategyConfig {
 		}[]
 	}
 	graphOptimizerOptions: GraphOptimizerOptions
-	pollingInterval: number
-	arbitrageTimeout: number
+	opportunityCheckInterval: number
+	arbitrageExecutionTimeout: number
 }
 
+@Injectable()
 export class Strategy {
-	constructor(private readonly config: StrategyConfig) {}
+	constructor(
+		readonly graphBuilder: GraphBuilder,
+		readonly priceOracle: PriceOracleService,
+		readonly chainClientService: ChainClientService,
+		readonly tokenUtils: TokenUtils,
+		readonly tgArbitrageNotifier: TgArbitrageNotifier,
+		readonly tgBalancesNotifier: TgBalancesNotifier,
+		readonly graphVisualizer: GraphVisualizer,
+		readonly simpleStargateService: SimpleStargateService,
+		readonly relayService: RelayService,
+		readonly stargateService: StargateService,
+		readonly fuseBridgeService: FuseBridgeService,
+		readonly graphExecutor: GraphExecutor,
+		readonly logger: Logger,
+	) {}
 
-	async run() {
+	async run(config: StrategyConfig) {
 		logger.info('Building Graph')
-		const graph = await GraphBuilder.build(this.config.graphBuildConfig)
+		const graph = await this.graphBuilder.build(config.graphBuildConfig)
 
-		if (this.config.graphBuildConfig.edgeConstructors) {
-			for (const edgeConstructor of this.config.graphBuildConfig
+		if (config.graphBuildConfig.edgeConstructors) {
+			for (const edgeConstructor of config.graphBuildConfig
 				.edgeConstructors) {
 				switch (edgeConstructor.type) {
 					case ActionType.SIMPLE_STARGATE_BRIDGE:
 						graph.addEdge(
 							new SimpleStargateBridgeEdge(
+								this.chainClientService,
+								this.simpleStargateService,
 								edgeConstructor.from,
 								edgeConstructor.to,
 								graph,
@@ -62,6 +89,8 @@ export class Strategy {
 					case ActionType.RELAY_BRIDGE:
 						graph.addEdge(
 							new RelayBridgeEdge(
+								this.chainClientService,
+								this.relayService,
 								edgeConstructor.from,
 								edgeConstructor.to,
 								graph,
@@ -77,17 +106,19 @@ export class Strategy {
 		}
 
 		logger.info('Initializing PriceOracle')
-		await PriceOracle.initializePriceUpdating(
+		await this.priceOracle.initializePriceUpdating(
 			Array.from(graph.nodes.values()),
 		)
 
-		const bot = this.buildBot(graph)
+		const bot = this.buildBot(graph, config)
 
-		if (this.config.giveApprovals) await this.prepare(bot)
+		if (config.giveApprovals) await this.prepare(bot)
 
 		const balanceReporter = new GraphBalanceReporter(
 			bot,
 			new TgBalancesNotifier(),
+			this.chainClientService,
+			this.priceOracle,
 		)
 		balanceReporter.start()
 
@@ -95,20 +126,28 @@ export class Strategy {
 		bot.start()
 	}
 
-	private buildBot(graph: Graph): GraphArbitrageBot {
+	private buildBot(graph: Graph, config: StrategyConfig): GraphArbitrageBot {
 		return new GraphArbitrageBot(
-			this.config.name,
-			new TgArbitrageNotifier(),
+			config.botName,
+			this.tgArbitrageNotifier,
 			{
 				graph,
-				startToken: this.config.startToken,
-				graphOptimizerOptions: this.config.graphOptimizerOptions,
+				startToken: config.startToken,
+				graphOptimizerOptions: config.graphOptimizerOptions,
 			},
 			{
-				minProfitUsd: this.config.minProfitUsd,
-				pollingInterval: this.config.pollingInterval,
-				arbitrageTimeout: this.config.arbitrageTimeout,
+				minProfitUsd: config.minProfitUsd,
+				opportunityCheckInterval: config.opportunityCheckInterval,
+				arbitrageExecutionTimeout: config.arbitrageExecutionTimeout,
 			},
+			this.chainClientService,
+			this.graphVisualizer,
+			this.tokenUtils,
+			this.stargateService,
+			this.fuseBridgeService,
+			this.graphExecutor,
+			this.priceOracle,
+			this.logger,
 		)
 	}
 

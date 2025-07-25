@@ -1,9 +1,11 @@
+import { Injectable } from '@nestjs/common'
 import { deflate } from 'pako'
-import { Stargate } from '../bridges/stargate/Stargate'
+import { getStargateChainKey } from '../bridges/layerzero-bridges/stargate/stargate.utils'
 import { Graph } from './primitives/Graph'
 
+@Injectable()
 export class GraphVisualizer {
-	static getLinksToMermaidGraph(graph: Graph) {
+	getLinksToMermaidGraph(graph: Graph) {
 		const mermaidCode = this.graphToMermaid(graph)
 
 		return {
@@ -12,7 +14,7 @@ export class GraphVisualizer {
 		}
 	}
 
-	static getPrettyOpportunity(
+	getPrettyOpportunity(
 		opportunity: GraphArbitrageOpportunity,
 		startTokenPriceUsd: number,
 	) {
@@ -59,15 +61,15 @@ export class GraphVisualizer {
 		return result
 	}
 
-	private static generateViewLink(mermaidCode: string): string {
+	private generateViewLink(mermaidCode: string): string {
 		return this.generateLink(mermaidCode, false)
 	}
 
-	private static generateEditLink(mermaidCode: string): string {
+	private generateEditLink(mermaidCode: string): string {
 		return this.generateLink(mermaidCode, true)
 	}
 
-	private static generateLink(mermaidCode: string, isEdit: boolean): string {
+	private generateLink(mermaidCode: string, isEdit: boolean): string {
 		// Create the proper JSON structure
 		const graphData = {
 			code: mermaidCode,
@@ -91,7 +93,7 @@ export class GraphVisualizer {
 	 * Returns a Mermaid graph string with nodes and edges
 	 * @param graph - Graph to convert to Mermaid
 	 */
-	static graphToMermaid(graph: Graph) {
+	graphToMermaid(graph: Graph) {
 		let str = `flowchart TB`
 		const nodesBySubgraph = new Map<number, GraphNode[]>()
 
@@ -131,17 +133,17 @@ export class GraphVisualizer {
 		return str
 	}
 
-	private static getNodeId(graphNodeId: GraphNodeId) {
+	private getNodeId(graphNodeId: GraphNodeId) {
 		return `Node_${graphNodeId.split(':').join('_')}`
 	}
 
-	private static getChainId(chainId: number) {
+	private getChainId(chainId: number) {
 		return `Chain_${chainId}`
 	}
 
-	private static getChainName(chainId: number) {
+	private getChainName(chainId: number) {
 		try {
-			return Stargate.getChainKey(chainId) + ` (${chainId})`
+			return getStargateChainKey(chainId) + ` (${chainId})`
 		} catch (error) {
 			return `Unnamed Chain (${chainId})`
 		}

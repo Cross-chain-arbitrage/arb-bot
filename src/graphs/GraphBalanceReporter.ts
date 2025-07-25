@@ -1,6 +1,6 @@
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
-import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
-import { ChainUtils } from '../primitives/chains/ChainUtils'
+import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
+import { ChainClientService } from '../utils/ChainClientService'
 import { getAccountAddress } from '../utils/common'
 import logger from '../utils/logger'
 import { GraphArbitrageBot } from './GraphArbitrageBot'
@@ -20,6 +20,8 @@ export class GraphBalanceReporter {
 	constructor(
 		readonly bot: GraphArbitrageBot,
 		readonly tgNotifier: TgBalancesNotifier,
+		readonly chainClientService: ChainClientService,
+		readonly priceOracleService: PriceOracleService,
 		updateInterval: number = 60000, // 60 seconds default
 	) {
 		this.addressToCheck = getAccountAddress()
@@ -80,7 +82,7 @@ export class GraphBalanceReporter {
 
 			await this.tgNotifier.sendOrEditBalanceReport(
 				message,
-				this.bot.name,
+				this.bot.botName,
 			)
 		} catch (error) {
 			logger.error('Failed to report balances:', error)
@@ -101,7 +103,7 @@ export class GraphBalanceReporter {
 	private async getNodeBalanceAndPrice(node: GraphNode) {
 		const [balance, price] = await Promise.all([
 			node.balanceOf(this.addressToCheck),
-			PriceOracle.getPrice(node).catch(() => 0), // Fallback to 0 if price not available
+			this.priceOracleService.getPrice(node).catch(() => 0), // Fallback to 0 if price not available
 		])
 
 		const balanceFormatted = Number(node.formatUnits(balance))
@@ -139,12 +141,12 @@ export class GraphBalanceReporter {
 
 		// Build unified message
 		let message =
-			`<b>${this.bot.name}</b>\n` +
+			`<b>${this.bot.botName}</b>\n` +
 			`🕐 ${new Date().toLocaleString('ru', { timeZoneName: 'short' })}\n` +
 			`💵 <b>Total Portfolio: $${totalUsd.toFixed(2)}</b>\n\n`
 
 		for (const [chainId, chainBalances] of balancesByChain) {
-			const chainName = ChainUtils.getChainNameById(chainId)
+			const chainName = this.chainClientService.getChainNameById(chainId)
 			const chainTotal = chainBalances.reduce(
 				(sum, item) => sum + item.usdValue,
 				0,

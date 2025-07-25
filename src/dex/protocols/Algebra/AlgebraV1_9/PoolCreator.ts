@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { getAddress } from 'viem'
 import {
 	callFactoryFunction,
@@ -10,6 +11,7 @@ import { PoolCreator } from '../../../base/PoolCreator'
 import { ALGEBRA_V1_9_PERIPHERY } from './periphery'
 import { AlgebraV1_9Pool } from './Pool'
 
+@Injectable()
 export class AlgebraV1_9PoolCreator extends PoolCreator {
 	override _getToken0Address = callToken0Function
 	override _getToken1Address = callToken1Function
@@ -31,6 +33,7 @@ export class AlgebraV1_9PoolCreator extends PoolCreator {
 	) {
 		const pool = new AlgebraV1_9Pool(
 			{
+				chainClientService: this.chainClientService,
 				immutables,
 				poolAddress,
 				chainId,

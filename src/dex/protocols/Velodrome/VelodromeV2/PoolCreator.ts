@@ -1,7 +1,7 @@
+import { Injectable } from '@nestjs/common'
 import { getAddress, PublicClient } from 'viem'
 import { VELODROME_V2_FACTORY_ABI } from '../../../../abi/velodrome/velodromeV2Factory'
 import { VELODROME_V2_POOL_ABI } from '../../../../abi/velodrome/velodromeV2Pool'
-import { ClientManager } from '../../../../utils/ClientManager'
 import {
 	callFactoryFunction,
 	callToken0Function,
@@ -13,6 +13,7 @@ import { PoolCreator } from '../../../base/PoolCreator'
 import { VELODROME_V2_PERIPHERY } from './periphery'
 import { VelodromeV2Pool } from './Pool'
 
+@Injectable()
 export class VelodromeV2PoolCreator extends PoolCreator {
 	override _getToken0Address = callToken0Function
 	override _getToken1Address = callToken1Function
@@ -44,7 +45,7 @@ export class VelodromeV2PoolCreator extends PoolCreator {
 		periphery: { router: Address } & object,
 		immutables: PoolConstructorParams['immutables'],
 	): Promise<Pool> {
-		const client = ClientManager.getClient(chainId)
+		const client = this.chainClientService.getClient(chainId)
 
 		const isStable = await client.readContract({
 			address: poolAddress,
@@ -61,6 +62,7 @@ export class VelodromeV2PoolCreator extends PoolCreator {
 
 		const pool = new VelodromeV2Pool(
 			{
+				chainClientService: this.chainClientService,
 				immutables,
 				poolAddress,
 				chainId,

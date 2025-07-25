@@ -1,16 +1,17 @@
+import { Injectable } from '@nestjs/common'
 import { isAddressEqual } from 'viem'
-import { GeckoTerminalAPI } from '../../dataApi/geckoterminal/GeckoTerminalAPI'
-import { chainIdToGeckoChainId } from '../../dataApi/geckoterminal/chains'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import logger from '../../utils/logger'
+import { chainIdToGeckoChainId } from './gecko-terminal-chains.constants.ts'
+import { GeckoTerminalService } from './gecko-terminal.service'
 import {
 	Currency,
 	CurrencyId,
 	CurrencyState,
 	PriceOracleSettings,
-} from './types'
-
+} from './price-oracle.types'
 const PriceOracleError = createCustomError('PriceOracleError')
 
 const DEFAULT_SETTINGS: PriceOracleSettings = {
@@ -18,9 +19,16 @@ const DEFAULT_SETTINGS: PriceOracleSettings = {
 	updateInterval: 1000 * 60 * 5, // 5 minutes
 }
 
-export class PriceOracle {
-	private static currencyStates: Map<CurrencyId, CurrencyState> = new Map()
-	private static priceUpdater: NodeJS.Timeout | undefined
+@Injectable()
+export class PriceOracleService {
+	private currencyStates: Map<CurrencyId, CurrencyState> = new Map()
+	private priceUpdater: NodeJS.Timeout | undefined
+
+	constructor(
+		readonly chainClientService: ChainClientService,
+		readonly tokenUtils: TokenUtils,
+		readonly geckoTerminalService: GeckoTerminalService,
+	) {}
 
 	/* ======== PUBLIC METHODS ======== */
 
@@ -29,7 +37,7 @@ export class PriceOracle {
 	 * @param currencies - Array of Token, NativeCurrency or WrappedNative
 	 * @param updateInterval - The interval to update prices, false to not update prices, undefined to use the default interval (5 minutes)
 	 */
-	static async initializePriceUpdating(
+	async initializePriceUpdating(
 		currencies: Currency[],
 		updateInterval = DEFAULT_SETTINGS.updateInterval,
 	) {
@@ -46,7 +54,7 @@ export class PriceOracle {
 	/**
 	 * Start updating prices every updateInterval, if there is no price updater running, it will be started
 	 */
-	static startPriceUpdating(updateInterval: number): void {
+	startPriceUpdating(updateInterval: number): void {
 		if (this.priceUpdater) {
 			return
 		}
@@ -58,7 +66,7 @@ export class PriceOracle {
 		}, updateInterval)
 	}
 
-	static stopPriceUpdating(): void {
+	stopPriceUpdating(): void {
 		if (this.priceUpdater) {
 			clearInterval(this.priceUpdater)
 			this.priceUpdater = undefined
@@ -69,7 +77,7 @@ export class PriceOracle {
 	 * Get the price of a currency, cache it and update it every 5 minutes
 	 * @param currency - Token, NativeCurrency or WrappedNative
 	 */
-	static async getPrice(
+	async getPrice(
 		currency: Currency,
 		settings: Partial<PriceOracleSettings> = DEFAULT_SETTINGS,
 	): Promise<number> {
@@ -83,7 +91,7 @@ export class PriceOracle {
 			if (currencyState) return currencyState.price
 		}
 
-		const tokenPrice = await GeckoTerminalAPI.getTokenPrice(
+		const tokenPrice = await this.geckoTerminalService.getTokenPrice(
 			priceLookupCurrency.address,
 			this.getGeckoId(priceLookupCurrency.chainId),
 		)
@@ -100,7 +108,7 @@ export class PriceOracle {
 	 * Get the price of a currency, cache it and update it every 5 minutes
 	 * @param currencies - Array of Token, NativeCurrency or WrappedNative
 	 */
-	static async getPrices(
+	async getPrices(
 		currencies: Currency[],
 		settings: Partial<PriceOracleSettings> = DEFAULT_SETTINGS,
 	): Promise<CurrencyState[]> {
@@ -141,7 +149,7 @@ export class PriceOracle {
 
 	/* ======== PRIVATE METHODS ======== */
 
-	private static async fetchAndUpdateCurrencyStates(
+	private async fetchAndUpdateCurrencyStates(
 		chainId: number,
 		currencies: Currency[],
 	) {
@@ -153,10 +161,11 @@ export class PriceOracle {
 			lookupAddresses.push(priceLookupCurrency.address)
 		}
 
-		const addressesAndPrices = await GeckoTerminalAPI.getTokenPrices(
-			lookupAddresses,
-			this.getGeckoId(chainId),
-		)
+		const addressesAndPrices =
+			await this.geckoTerminalService.getTokenPrices(
+				lookupAddresses,
+				this.getGeckoId(chainId),
+			)
 
 		const currencyStates: CurrencyState[] = []
 
@@ -189,7 +198,7 @@ export class PriceOracle {
 		return currencyStates
 	}
 
-	private static groupCurrenciesByChain(
+	private groupCurrenciesByChain(
 		currencies: Currency[],
 	): Map<number, Currency[]> {
 		const currenciesByChain = new Map<number, Currency[]>()
@@ -205,7 +214,7 @@ export class PriceOracle {
 		return currenciesByChain
 	}
 
-	private static setCurrencyState(
+	private setCurrencyState(
 		currency: Currency,
 		price: number,
 		lastUpdated?: number,
@@ -217,15 +226,13 @@ export class PriceOracle {
 		})
 	}
 
-	private static async getLookupCurrency(
-		currency: Currency,
-	): Promise<Currency> {
+	private async getLookupCurrency(currency: Currency): Promise<Currency> {
 		return currency.isNative()
-			? await TokenUtils.getWrappedNative(currency.chainId)
+			? this.tokenUtils.getWrappedNative(currency.chainId)
 			: currency
 	}
 
-	private static async updatePrices(): Promise<void> {
+	private async updatePrices(): Promise<void> {
 		const currencyStatesToUpdate = Array.from(this.currencyStates.values())
 
 		const currenciesToUpdate = currencyStatesToUpdate.map((c) => c.currency)
@@ -238,7 +245,7 @@ export class PriceOracle {
 		}
 	}
 
-	private static getGeckoId(chainId: number): string {
+	private getGeckoId(chainId: number): string {
 		const chainIdStr = String(chainId) as keyof typeof chainIdToGeckoChainId
 
 		const geckoId = chainIdToGeckoChainId[chainIdStr]
@@ -252,7 +259,7 @@ export class PriceOracle {
 		return geckoId
 	}
 
-	private static async processCachedCurrencies(
+	private async processCachedCurrencies(
 		currencies: Currency[],
 		statesToReturn: CurrencyState[],
 		unknownCurrencies: Currency[],

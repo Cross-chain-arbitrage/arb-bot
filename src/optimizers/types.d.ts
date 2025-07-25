@@ -1,6 +1,6 @@
 type GraphOptimizerOptions = {
-	initialValueUSD: number
-	stepUSD: number
-	stepsAmount: number
+	minStartValueUsd: number
+	maxStartValueUsd: number
+	runCount: number
 	maxPathLength: number
 }

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import {
 	Chain,
 	createPublicClient,
@@ -13,46 +14,48 @@ import {
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
-
-import { base, bsc, lightlinkPhoenix, mainnet, story } from 'viem/chains'
+import {
+	arbitrum,
+	base,
+	bsc,
+	fuse,
+	lightlinkPhoenix,
+	mainnet,
+	story,
+} from 'viem/chains'
 import { getAlchemyRpcUrl } from './alchemy'
-import { getPrivateKey } from './common'
+import { createCustomError, getPrivateKey } from './common'
 
 const CUSTOM_RPC_URLS: Record<number, string> = {
 	[mainnet.id]: getAlchemyRpcUrl(mainnet.id),
-	// [arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
+	[arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
 	[bsc.id]: getAlchemyRpcUrl(bsc.id),
 	[story.id]: getAlchemyRpcUrl(story.id),
 	[lightlinkPhoenix.id]: `https://endpoints.omniatech.io/v1/lightlink/phoenix/bcd6910e361449d088886a7bfe37586c`,
-	// [fuse.id]: `https://lb.drpc.org/ogrpc?network=fuse&dkey=REDACTED_API_KEY`,
+	[fuse.id]: `https://lb.drpc.org/ogrpc?network=fuse&dkey=REDACTED_API_KEY`,
 	// [hemi.id]: `https://endpoints.omniatech.io/v1/hemi/mainnet/0292053309264c18932589701ab5020a`,
 	[base.id]: getAlchemyRpcUrl(base.id),
 } as const
 
-export class ClientManagerError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, ClientManagerError.prototype)
-		this.name = 'ClientManagerError'
-	}
-}
+@Injectable()
+export class ChainClientService {
+	public customError = createCustomError('ChainClientService')
 
-export class ClientManager {
-	private static clients: Map<
+	private clients: Map<
 		number,
 		PublicClient<FallbackTransport, Chain, undefined, undefined>
 	> = new Map()
-	private static _customRpcUrls: Map<number, URL> = new Map()
+	private customRpcUrls: Map<number, URL> = new Map()
 
-	private static _walletClients: Map<
+	private walletClients: Map<
 		number,
 		WalletClient<FallbackTransport, Chain, LocalAccount, undefined>
 	> = new Map()
 
-	static getWalletClient(
+	getWalletClient(
 		chainId: number,
 	): WalletClient<FallbackTransport, Chain, LocalAccount, undefined> {
-		const existingClient = this._walletClients.get(chainId)
+		const existingClient = this.walletClients.get(chainId)
 
 		if (existingClient) return existingClient
 
@@ -66,7 +69,7 @@ export class ClientManager {
 			transport,
 		})
 
-		this._walletClients.set(chainId, client)
+		this.walletClients.set(chainId, client)
 
 		return client
 	}
@@ -77,7 +80,7 @@ export class ClientManager {
 	 * @returns PublicClient
 	 * @dev If custom rpc url is set, it will be used ONCE the client is created
 	 */
-	static getClient(
+	getClient(
 		chainId: number,
 	): PublicClient<FallbackTransport, Chain, undefined, undefined> {
 		const existingClient = this.clients.get(chainId)
@@ -102,14 +105,14 @@ export class ClientManager {
 		return client
 	}
 
-	static getTransport(chainId: number): FallbackTransport {
+	getTransport(chainId: number): FallbackTransport {
 		const chain = this.findChainById(chainId)
 
 		const transports: Transport[] = []
 
 		const defaultTransportConfig: HttpTransportConfig = {
 			timeout: 6_000,
-			batch: true,
+			batch: false,
 			// onFetchRequest(request, init) {
 			// },
 		}
@@ -124,7 +127,7 @@ export class ClientManager {
 
 		/* ======== Insert Custom Transports ======== */
 
-		const customRpcUrl = this._customRpcUrls.get(chainId)?.toString()
+		const customRpcUrl = this.customRpcUrls.get(chainId)?.toString()
 
 		if (customRpcUrl) {
 			transports.push(http(customRpcUrl, defaultTransportConfig))
@@ -144,15 +147,15 @@ export class ClientManager {
 		/* ======== Build Fallback Transport ======== */
 
 		return fallback(transports, {
-			retryCount: 5,
-			retryDelay: 1000,
+			retryCount: 3,
+			retryDelay: 500,
 			// rank: true results in strange behavior
 			// significantly slows down process while doing many requests
 			rank: false,
 		})
 	}
 
-	static getChain(chainId: number): Chain {
+	getChain(chainId: number): Chain {
 		const chain = this.findChainById(chainId)
 		return {
 			...chain,
@@ -162,42 +165,43 @@ export class ClientManager {
 		}
 	}
 
+	//TODO: update this method with nestjs behavior
 	/**
 	 * MUST be called before client creation in `getClient()` call
 	 * Otherwise, the client will not use the custom rpc url
 	 * @param chainId
 	 * @param rpcUrl - optional, if not provided, the custom rpc url will be fetched from the `CUSTOM_RPC_URLS` map
 	 */
-	static useCustomRpcUrl(chainId: number, rpcUrl?: string): void {
+	useCustomRpcUrl(chainId: number, rpcUrl?: string): void {
 		if (rpcUrl) {
 			const url = new URL(rpcUrl)
-			this._customRpcUrls.set(chainId, url)
+			this.customRpcUrls.set(chainId, url)
 			return
 		}
 
 		const customRpcUrl = this.getCustomRpcUrl(chainId) as string
 
 		if (!customRpcUrl) {
-			throw new ClientManagerError(
+			throw new this.customError(
 				`Custom rpc url not found for chain ${chainId}`,
 			)
 		}
 
 		const url = new URL(customRpcUrl)
-		this._customRpcUrls.set(chainId, url)
+		this.customRpcUrls.set(chainId, url)
 	}
 
-	static getCustomRpcUrl(chainId: number): string | undefined {
+	getCustomRpcUrl(chainId: number): string | undefined {
 		return CUSTOM_RPC_URLS[chainId]
 	}
 
-	static findChainById(chainId: number): Chain {
+	findChainById(chainId: number): Chain {
 		const chain = Object.values(chains).find(
 			(chain) => chain.id === chainId,
 		)
 
 		if (!chain) {
-			throw new ClientManagerError(
+			throw new this.customError(
 				`Chain with id ${chainId} not found in viem chains`,
 			)
 		}
@@ -205,7 +209,7 @@ export class ClientManager {
 		return chain
 	}
 
-	static findChainByName(chainName: string): Chain {
+	findChainByName(chainName: string): Chain {
 		chainName = chainName.toLowerCase()
 
 		if (chainName === 'bsc' || chainName === 'bnb') return chains.bsc
@@ -222,7 +226,19 @@ export class ClientManager {
 		return chain as Chain
 	}
 
-	static clearClients(): void {
+	clearClients(): void {
 		this.clients.clear()
+	}
+
+	getChainNameById(id: number): string {
+		const fullName = this.findChainById(id).name
+		const keywords = ['Mainnet']
+
+		const nameWithoutKeywords = keywords
+			.reduce((acc, keyword) => {
+				return acc.replace(keyword, '')
+			}, fullName)
+			.trim()
+		return nameWithoutKeywords
 	}
 }

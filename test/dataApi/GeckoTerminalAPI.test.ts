@@ -1,4 +1,4 @@
-import { GeckoTerminalAPI } from '../../src/dataApi/geckoterminal/GeckoTerminalAPI'
+import { GeckoTerminalAPI } from '../../src/modules/price-oracle/geckoterminal/GeckoTerminalAPI'
 import { makeSuite } from '../testUtils/makeSuite'
 
 const ethTokens = [

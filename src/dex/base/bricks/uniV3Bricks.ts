@@ -4,7 +4,6 @@ import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
 import { UNIV3_ROUTER_ABI } from '../../../abi/uniV3/uniV3Router'
 import { UNIV3_ROUTER02_ABI } from '../../../abi/uniV3/uniV3Router02'
 import { Token } from '../../../primitives/tokens/Token'
-import { ClientManager } from '../../../utils/ClientManager'
 import { Pool } from '../Pool'
 
 export async function getPriceFromSlot(
@@ -12,7 +11,7 @@ export async function getPriceFromSlot(
 	slotFunctionName: string,
 	sqrtPriceX96Index: number,
 ): Promise<{ price: number; sqrtPriceX96: bigint }> {
-	const client = ClientManager.getClient(this.chainId)
+	const client = this.chainClientService.getClient(this.chainId)
 
 	const result = await client.readContract({
 		address: this.address,

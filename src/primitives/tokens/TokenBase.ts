@@ -1,25 +1,30 @@
 import { Address, formatUnits, isAddressEqual, parseUnits } from 'viem'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { shortenAddress } from '../../utils/common'
-import { ChainUtils } from '../chains/ChainUtils'
 import { BaseContract } from '../contracts/BaseContract'
 
-export class TokenBaseError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, TokenBaseError.prototype)
-		this.name = 'TokenBaseError'
-	}
+export interface TokenMetadata {
+	symbol: string
+	name?: string
+	decimals: number
 }
 
 export abstract class TokenBase extends BaseContract {
+	public readonly symbol: string
+	public readonly decimals: number
+	public readonly name?: string
+
 	constructor(
+		chainClientService: ChainClientService,
 		address: Address,
 		chainId: number,
-		public readonly symbol: string,
-		public readonly decimals: number,
-		public readonly name?: string,
+		tokenMetadata: TokenMetadata,
 	) {
-		super(address, chainId)
+		super(chainClientService, address, chainId)
+
+		this.symbol = tokenMetadata.symbol
+		this.decimals = tokenMetadata.decimals
+		this.name = tokenMetadata.name
 	}
 
 	abstract isNative(): boolean
@@ -52,7 +57,7 @@ export abstract class TokenBase extends BaseContract {
 	}
 
 	override toString(): string {
-		const chainName = ChainUtils.getChainNameById(this.chainId)
+		const chainName = this.chainClientService.getChainNameById(this.chainId)
 
 		return `${this.symbol} (${chainName ?? this.chainId})`
 	}

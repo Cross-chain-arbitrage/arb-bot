@@ -1,11 +1,11 @@
 import TTLCache from '@isaacs/ttlcache'
 import axios from 'axios'
 import { isAddressEqual } from 'viem'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
-import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { createCustomError } from '../../utils/common'
-import { Stargate } from './Stargate'
+import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
+import { Token } from '../../../primitives/tokens/Token'
+import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
+import { createCustomError } from '../../../utils/common'
+import { getStargateChainKey } from './stargate.utils'
 
 export const StargateAPIError = createCustomError('StargateAPIError')
 
@@ -13,12 +13,13 @@ const STARGATE_API_URL = new URL('https://mainnet.stargate-api.com/v1')
 
 type RequestId = string
 
-export class StargateAPI {
-	private static cache = new TTLCache<RequestId, StargateTokenMetadata[]>({
+export class StargateAPIService {
+	constructor(private readonly tokenUtils: TokenUtils) {}
+	private cache = new TTLCache<RequestId, StargateTokenMetadata[]>({
 		ttl: 1000 * 60 * 60 * 24, // 24 hours
 	})
 
-	static async getAllTokensMetadata(): Promise<StargateTokenMetadata[]> {
+	async getAllTokensMetadata(): Promise<StargateTokenMetadata[]> {
 		const REQUEST_ID = 'metadata-v2'
 
 		const cachedMetadata = this.cache.get(REQUEST_ID)
@@ -42,22 +43,22 @@ export class StargateAPI {
 	}
 
 	// Function to fetch tokens from the API
-	static async getTokensMetadataOnChain(
+	async getTokensMetadataOnChain(
 		chainId: number,
 	): Promise<StargateTokenMetadata[]> {
-		const chainKey = Stargate.getChainKey(chainId)
+		const chainKey = getStargateChainKey(chainId)
 
 		const metadata = await this.getAllTokensMetadata()
 
 		return metadata.filter((metadata) => metadata.chainKey === chainKey)
 	}
 
-	static async getTokenMetadata(
+	async getTokenMetadata(
 		token: Token | NativeCurrency,
 	): Promise<StargateTokenMetadata> {
 		const metadata = await this.getAllTokensMetadata()
 
-		const chainKey = Stargate.getChainKey(token.chainId)
+		const chainKey = getStargateChainKey(token.chainId)
 
 		const tokenMetadata = metadata.find(
 			(metadata) =>
@@ -74,7 +75,7 @@ export class StargateAPI {
 		return tokenMetadata
 	}
 
-	static async getSameAssetMetadataAcrossChains(
+	async getSameAssetMetadataAcrossChains(
 		token: Token | NativeCurrency,
 	): Promise<StargateTokenMetadata[]> {
 		const metadata = await this.getAllTokensMetadata()
@@ -82,7 +83,7 @@ export class StargateAPI {
 		const asset = metadata.find(
 			(metadata) =>
 				isAddressEqual(metadata.token.address, token.address) &&
-				metadata.chainKey === Stargate.getChainKey(token.chainId),
+				metadata.chainKey === getStargateChainKey(token.chainId),
 		)
 
 		if (!asset) {
@@ -96,12 +97,12 @@ export class StargateAPI {
 		return metadata.filter((metadata) => metadata.assetId === assetId)
 	}
 
-	static async getTokensOnChain(chainId: number) {
+	async getTokensOnChain(chainId: number) {
 		const metadata = await this.getTokensMetadataOnChain(chainId)
 		const tokenData = metadata.map((token) => token.token)
 
 		const tokens = tokenData.map((token) =>
-			TokenUtils.fromAddress(token.address, chainId),
+			this.tokenUtils.fromAddress(token.address, chainId),
 		)
 
 		return Promise.all(tokens)

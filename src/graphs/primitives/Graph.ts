@@ -1,6 +1,7 @@
 import TTLCache from '@isaacs/ttlcache'
 import { Pool } from '../../dex/base/Pool'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { ActionType, Edge, SwapEdge } from './Edge'
 
 export class GraphError extends Error {
@@ -17,7 +18,11 @@ export class Graph {
 
 	private edgeCache: TTLCache<string, GetRateResult>
 
-	constructor(edgeCacheTTL: number = 1000 * 1) {
+	constructor(
+		readonly tokenUtils: TokenUtils,
+		readonly chainClientService: ChainClientService,
+		edgeCacheTTL: number = 1000 * 1,
+	) {
 		this.edgeCache = new TTLCache<string, GetRateResult>({
 			ttl: edgeCacheTTL,
 		})
@@ -27,11 +32,11 @@ export class Graph {
 		const from = this.nodes.get(edge.from.id)
 		const to = this.nodes.get(edge.to.id)
 
-		if (!TokenUtils.isValidTokenId(edge.from.id)) {
+		if (!this.tokenUtils.isValidTokenId(edge.from.id)) {
 			throw new GraphError(`Invalid token id: ${edge.from.id}`)
 		}
 
-		if (!TokenUtils.isValidTokenId(edge.to.id)) {
+		if (!this.tokenUtils.isValidTokenId(edge.to.id)) {
 			throw new GraphError(`Invalid token id: ${edge.to.id}`)
 		}
 
@@ -69,8 +74,12 @@ export class Graph {
 			this.addNode(to)
 		}
 
-		this.addEdge(new SwapEdge(from, to, pool, this))
-		this.addEdge(new SwapEdge(to, from, pool, this))
+		this.addEdge(
+			new SwapEdge(this.chainClientService, from, to, pool, this),
+		)
+		this.addEdge(
+			new SwapEdge(this.chainClientService, to, from, pool, this),
+		)
 
 		// this._addDexPoolEdge(pool, slippage)
 	}
