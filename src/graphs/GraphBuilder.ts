@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { arbitrum, fuse } from 'viem/chains'
+import { fuse } from 'viem/chains'
 import { FUSE_BRIDGE_SUPPORTED_TOKENS } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.constants'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import {
@@ -48,8 +48,10 @@ interface StargateConfig {
 export interface GraphBuildConfig {
 	/** The pools to build the graph from */
 	pools: Pool[]
-	/** The configuration for the Stargate bridges */
-	stargateConfig?: StargateConfig
+	/** If true, will connect all possible pairs of chains. Otherwise, will only connect base chain with all other chains */
+	connectSecondaryChains: boolean
+	/** The chain to connect to all other chains. Used only if `connectSecondaryChains` is false */
+	baseChainId: number
 	/** The slippage tolerance for the swaps */
 	slippage?: number
 	/** cache for calling getRate on edges */
@@ -80,13 +82,7 @@ export class GraphBuilder {
 	 * @returns Graph with all required Nodes and Edges, which is not supposed to be modified manually
 	 */
 	async build(buildConfig: GraphBuildConfig): Promise<Graph> {
-		const {
-			pools,
-			stargateConfig = {
-				connectSecondaryChains: true,
-				baseChainId: arbitrum.id,
-			},
-		} = buildConfig
+		const { pools, connectSecondaryChains, baseChainId } = buildConfig
 
 		logger.info('============================')
 		logger.info('Building Graph from Pools')
@@ -118,7 +114,10 @@ export class GraphBuilder {
 
 		/* ================ Setup Stargate Bridges ================ */
 
-		await this.setupStargateBridges(graph, stargateConfig)
+		await this.setupStargateBridges(graph, {
+			connectSecondaryChains,
+			baseChainId,
+		})
 
 		/* ================ Setup Fuse Bridges ================ */
 

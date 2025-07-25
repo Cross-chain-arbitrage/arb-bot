@@ -22,18 +22,19 @@ export class GraphOptimizer {
 		graph: Graph,
 		options: GraphOptimizerOptions,
 	): Promise<GraphArbitrageOpportunity | null> {
-		const { initialValueUSD, stepUSD, stepsAmount, maxPathLength } = options
+		const { minStartValueUsd, maxStartValueUsd, runCount, maxPathLength } =
+			options
 
 		const algorithmResultsPromises: Promise<GraphArbitrageOpportunity | null>[] =
 			[]
 
-		let valueUSD = initialValueUSD
-		for (let i = 0; i < stepsAmount; i++) {
+		let valueUSD = minStartValueUsd
+		for (let i = 0; i < runCount; i++) {
 			const tokenAmount = startToken.parseUnits(
 				(valueUSD / startTokenUSDPrice).toString(),
 			)
 
-			valueUSD += stepUSD
+			valueUSD += (maxStartValueUsd - minStartValueUsd) / runCount
 
 			algorithmResultsPromises.push(
 				GraphOpportunityFinder.findArbOpportunity(

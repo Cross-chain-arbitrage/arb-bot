@@ -19,16 +19,16 @@ import { ActionType, Edge, SwapEdge } from './primitives/Edge'
 import { Graph } from './primitives/Graph'
 
 const DEFAULT_SETTINGS = {
-	arbitrageTimeout: 5 * 60 * 1000,
+	arbitrageExecutionTimeout: 5 * 60 * 1000,
 	retryExecuteEdgeCount: 2,
 	maxExecutionErrorsInARow: 3,
 }
 
 type BotSettings = Readonly<{
 	minProfitUsd: number
-	pollingInterval: number
+	opportunityCheckInterval: number
 	/** Timeout in milliseconds after which arbitrage execution is considered failed and reset */
-	arbitrageTimeout?: number
+	arbitrageExecutionTimeout?: number
 	retryExecuteEdgeCount?: number
 	maxExecutionErrorsInARow?: number
 }>
@@ -39,7 +39,7 @@ export class GraphArbitrageBot {
 	readonly settings: Required<BotSettings>
 
 	constructor(
-		readonly name: string,
+		readonly botName: string,
 		readonly TgArbitrageNotifier: TgArbitrageNotifier,
 		readonly graphParams: Readonly<{
 			graph: Graph
@@ -61,7 +61,7 @@ export class GraphArbitrageBot {
 	start() {
 		logger.warn('Check that you gave all required token approvals')
 
-		let message = `${this.name} started\n\nGraph:\n`
+		let message = `${this.botName} started\n\nGraph:\n`
 
 		const { view, edit } = this.graphVisualizer.getLinksToMermaidGraph(
 			this.graphParams.graph,
@@ -81,7 +81,7 @@ export class GraphArbitrageBot {
 		void runFuncWithDelay(async () => {
 			await this.findAndExecuteArbitrage()
 			this.firstRunCheck()
-		}, this.settings.pollingInterval)
+		}, this.settings.opportunityCheckInterval)
 	}
 
 	async findArbitrage() {
@@ -313,7 +313,7 @@ export class GraphArbitrageBot {
 		const startTokenPrice = await this.startTokenPrice()
 
 		this.TgArbitrageNotifier.sendArbitrageError(
-			this.name,
+			this.botName,
 			errorMessage,
 			this.executionErrorInARow >
 				this.settings.maxExecutionErrorsInARow - 1,
@@ -334,7 +334,7 @@ export class GraphArbitrageBot {
 		const price = await this.startTokenPrice()
 
 		this.TgArbitrageNotifier.sendArbitrageEnd(
-			this.name,
+			this.botName,
 			executionCostInUsd,
 			actualAmountOut,
 			opportunity,
@@ -346,7 +346,7 @@ export class GraphArbitrageBot {
 
 	private notifyAboutArbStart(prettyOpportunity: string) {
 		this.TgArbitrageNotifier.sendArbitrageStart(
-			this.name,
+			this.botName,
 			prettyOpportunity,
 		).catch((err) => {
 			logger.error(err, 'Error sending path to telegram')
@@ -429,7 +429,7 @@ export class GraphArbitrageBot {
 		this.isArbitrageExecuting = true
 		setTimeout(() => {
 			this.isArbitrageExecuting = false
-		}, this.settings.arbitrageTimeout)
+		}, this.settings.arbitrageExecutionTimeout)
 	}
 
 	async approveAll() {

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
@@ -30,7 +31,7 @@ export interface PoolData {
 }
 
 export interface StrategyConfig {
-	name: string
+	botName: string
 	giveApprovals: boolean
 	startToken: Token | NativeCurrency
 	minProfitUsd: number
@@ -42,13 +43,13 @@ export interface StrategyConfig {
 		}[]
 	}
 	graphOptimizerOptions: GraphOptimizerOptions
-	pollingInterval: number
-	arbitrageTimeout: number
+	opportunityCheckInterval: number
+	arbitrageExecutionTimeout: number
 }
 
+@Injectable()
 export class Strategy {
 	constructor(
-		private readonly config: StrategyConfig,
 		readonly graphBuilder: GraphBuilder,
 		readonly priceOracle: PriceOracleService,
 		readonly chainClientService: ChainClientService,
@@ -63,14 +64,12 @@ export class Strategy {
 		readonly graphExecutor: GraphExecutor,
 	) {}
 
-	async run() {
+	async run(config: StrategyConfig) {
 		logger.info('Building Graph')
-		const graph = await this.graphBuilder.build(
-			this.config.graphBuildConfig,
-		)
+		const graph = await this.graphBuilder.build(config.graphBuildConfig)
 
-		if (this.config.graphBuildConfig.edgeConstructors) {
-			for (const edgeConstructor of this.config.graphBuildConfig
+		if (config.graphBuildConfig.edgeConstructors) {
+			for (const edgeConstructor of config.graphBuildConfig
 				.edgeConstructors) {
 				switch (edgeConstructor.type) {
 					case ActionType.SIMPLE_STARGATE_BRIDGE:
@@ -109,9 +108,9 @@ export class Strategy {
 			Array.from(graph.nodes.values()),
 		)
 
-		const bot = this.buildBot(graph)
+		const bot = this.buildBot(graph, config)
 
-		if (this.config.giveApprovals) await this.prepare(bot)
+		if (config.giveApprovals) await this.prepare(bot)
 
 		const balanceReporter = new GraphBalanceReporter(
 			bot,
@@ -125,19 +124,19 @@ export class Strategy {
 		bot.start()
 	}
 
-	private buildBot(graph: Graph): GraphArbitrageBot {
+	private buildBot(graph: Graph, config: StrategyConfig): GraphArbitrageBot {
 		return new GraphArbitrageBot(
-			this.config.name,
+			config.botName,
 			this.tgArbitrageNotifier,
 			{
 				graph,
-				startToken: this.config.startToken,
-				graphOptimizerOptions: this.config.graphOptimizerOptions,
+				startToken: config.startToken,
+				graphOptimizerOptions: config.graphOptimizerOptions,
 			},
 			{
-				minProfitUsd: this.config.minProfitUsd,
-				pollingInterval: this.config.pollingInterval,
-				arbitrageTimeout: this.config.arbitrageTimeout,
+				minProfitUsd: config.minProfitUsd,
+				opportunityCheckInterval: config.opportunityCheckInterval,
+				arbitrageExecutionTimeout: config.arbitrageExecutionTimeout,
 			},
 			this.chainClientService,
 			this.graphVisualizer,
