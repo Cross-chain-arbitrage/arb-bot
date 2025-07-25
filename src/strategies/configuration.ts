@@ -1,14 +1,10 @@
 import { readFileSync } from 'fs'
 import * as yaml from 'js-yaml'
-import { join } from 'path'
 import { getAddress } from 'viem'
 import { z } from 'zod'
-import { DexRegistry } from '../dex/DexRegistry'
 import { PoolType } from '../dex/PoolUtils'
 
-const YAML_CONFIG_FILENAME = 'config.yaml'
-
-const tokenIdScheme = z.string().transform((val) => {
+function parseChainIdAddress(val: string) {
 	const [chainId, address] = val.split(':')
 
 	const isValidChainId = !isNaN(Number(chainId)) && Number(chainId) > 0
@@ -23,46 +19,44 @@ const tokenIdScheme = z.string().transform((val) => {
 		chainId: parseInt(chainId),
 		address: validAddress,
 	}
+}
+
+const ChainIdAddressScheme = z.string().transform((val) => {
+	return parseChainIdAddress(val)
 })
 
-const addressScheme = z.string().transform((val) => {
-	const validAddress = getAddress(val)
+const poolScheme = z
+	.object({
+		pool: z.string(),
+		type: z.string(),
+	})
+	.transform((val) => {
+		const { chainId, address } = parseChainIdAddress(val.pool)
 
-	return validAddress
-})
-
-const poolTypeScheme = z.string().transform((val) => {
-	const validPoolType = Object.keys(DexRegistry).find((type) => type === val)
-
-	if (!validPoolType) {
-		throw new Error(`Invalid pool type: ${val}`)
-	}
-
-	return validPoolType as PoolType
-})
+		return {
+			chainId,
+			address,
+			type: val.type as PoolType,
+		}
+	})
 
 const configScheme = z.object({
 	botName: z.string(),
 	giveApprovals: z.boolean(),
-	startTokenId: tokenIdScheme,
+	isDryRun: z.boolean(),
+	startTokenId: ChainIdAddressScheme,
 	minProfitUsd: z.number(),
 	opportunityCheckInterval: z.number(),
 	arbitrageExecutionTimeout: z.number(),
 	graphBuilderConfig: z.object({
-		pools: z.array(
-			z.object({
-				address: addressScheme,
-				chainId: z.number(),
-				type: poolTypeScheme,
-			}),
-		),
+		pools: z.array(poolScheme),
 		connectSecondaryChains: z.boolean(),
 		baseChainId: z.number(),
 		additionalEdges: z
 			.array(
 				z.object({
-					from: tokenIdScheme,
-					to: tokenIdScheme,
+					from: ChainIdAddressScheme,
+					to: ChainIdAddressScheme,
 					type: z.string(),
 				}),
 			)
@@ -78,9 +72,13 @@ const configScheme = z.object({
 })
 
 export function loadConfig() {
-	const config = yaml.load(
-		readFileSync(join(__dirname, YAML_CONFIG_FILENAME), 'utf8'),
-	)
+	const YAML_CONFIG_FILENAME = process.env.BOT_CONFIG_PATH
+
+	if (!YAML_CONFIG_FILENAME) {
+		throw new Error('BOT_CONFIG_PATH is not set')
+	}
+
+	const config = yaml.load(readFileSync(YAML_CONFIG_FILENAME, 'utf8'))
 
 	const parsedConfig = configScheme.parse(config)
 

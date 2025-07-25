@@ -29,12 +29,11 @@ export class GraphOptimizer {
 			[]
 
 		let valueUSD = minStartValueUsd
+
 		for (let i = 0; i < runCount; i++) {
 			const tokenAmount = startToken.parseUnits(
 				(valueUSD / startTokenUSDPrice).toString(),
 			)
-
-			valueUSD += (maxStartValueUsd - minStartValueUsd) / runCount
 
 			algorithmResultsPromises.push(
 				GraphOpportunityFinder.findArbOpportunity(
@@ -47,6 +46,10 @@ export class GraphOptimizer {
 					return null
 				}),
 			)
+
+			if (runCount === 1) continue
+
+			valueUSD += (maxStartValueUsd - minStartValueUsd) / (runCount - 1)
 		}
 
 		const algorithmResultsSettled = await Promise.allSettled(

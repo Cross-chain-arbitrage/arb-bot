@@ -82,7 +82,7 @@ export class GraphBalanceReporter {
 
 			await this.tgNotifier.sendOrEditBalanceReport(
 				message,
-				this.bot.name,
+				this.bot.botName,
 			)
 		} catch (error) {
 			logger.error('Failed to report balances:', error)
@@ -141,7 +141,7 @@ export class GraphBalanceReporter {
 
 		// Build unified message
 		let message =
-			`<b>${this.bot.name}</b>\n` +
+			`<b>${this.bot.botName}</b>\n` +
 			`🕐 ${new Date().toLocaleString('ru', { timeZoneName: 'short' })}\n` +
 			`💵 <b>Total Portfolio: $${totalUsd.toFixed(2)}</b>\n\n`
 
