@@ -85,6 +85,7 @@ export const chainIdToGeckoChainId = {
 	'43111': 'hemi',
 	'43114': 'avax',
 	'53935': 'dfk',
+	'55244': 'superposition',
 	'59144': 'linea',
 	'71402': 'godwoken',
 	'534352': 'scroll',

@@ -1,16 +1,11 @@
 import { Hash } from 'viem'
 import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
 import { Token } from '../../../primitives/tokens/Token'
+import { createCustomError } from '../../../utils/common'
 import { LZBridgeTx } from '../layerzero-bridge-tx'
 import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
 
-export class StargateBridgeTxError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, StargateBridgeTxError.prototype)
-		this.name = 'StargateBridgeTxError'
-	}
-}
+export const StargateBridgeTxError = createCustomError('StargateBridgeTxError')
 
 export class StargateBridgeTx extends LZBridgeTx {
 	constructor(
