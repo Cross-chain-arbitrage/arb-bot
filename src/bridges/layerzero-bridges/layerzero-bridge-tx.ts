@@ -20,7 +20,7 @@ export class LZBridgeTx implements BridgeTx {
 
 	constructor(
 		private readonly layerZeroScanService: LayerZeroScanService,
-		hash: string,
+		hash: Hash,
 		chainId: number,
 		public readonly srcToken: Token | NativeCurrency,
 		public readonly dstToken: Token | NativeCurrency,
@@ -34,7 +34,7 @@ export class LZBridgeTx implements BridgeTx {
 			this.srcTx.hash as Hash,
 		)
 
-		this.dstTx = new Tx(message.dstTxHash!, message.dstChainId)
+		this.dstTx = new Tx(message.dstTxHash as Hash, message.dstChainId)
 
 		return message
 	}
