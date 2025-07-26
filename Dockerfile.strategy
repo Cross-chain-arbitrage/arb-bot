@@ -9,13 +9,10 @@ COPY package.json yarn.lock ./
 
 # Install dependencies
 RUN yarn install --frozen-lockfile
-RUN yarn add @nestjs/cli
-
 # Copy source code and config files while preserving structure
 COPY src/ ./src/
 COPY tsconfig.build.json tsconfig.json ./
-COPY nest-cli.json ./
 
-RUN yarn nest build
+RUN yarn build
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/main"]
