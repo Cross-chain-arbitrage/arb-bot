@@ -1,7 +1,9 @@
+import { Injectable } from '@nestjs/common'
 import { getEnvSafe } from '../../utils/common'
 import logger from '../../utils/logger'
 import { TgBaseNotifier } from './TgBaseNotifier'
 
+@Injectable()
 export class TgBalancesNotifier extends TgBaseNotifier {
 	// Store message references by bot name for editing
 	private messageStore = new Map<string, MessageResponse>()

@@ -1,7 +1,9 @@
+import { Injectable } from '@nestjs/common'
 import { GraphVisualizer } from '../../graphs/GraphVisualizer'
 import { getEnvSafe } from '../../utils/common'
 import { TgBaseNotifier } from './TgBaseNotifier'
 
+@Injectable()
 export class TgArbitrageNotifier extends TgBaseNotifier {
 	// Store message references by opportunity name for editing
 	private lastMessage: {

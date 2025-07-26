@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { Logger } from 'nestjs-pino'
 import { TransactionReceipt } from 'viem'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
@@ -23,6 +24,7 @@ export interface GraphExecutorConfig {
 	) => unknown
 }
 
+@Injectable()
 export class GraphExecutor {
 	constructor(
 		readonly chainClientService: ChainClientService,
