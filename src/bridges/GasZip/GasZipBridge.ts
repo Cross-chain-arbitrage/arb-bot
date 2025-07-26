@@ -106,65 +106,62 @@ export class GasZipBridge {
 		// 	)
 		// }
 
-		try {
-			const response = await fetch(
-				`${GASZIP_API_URL}/quotes/${tokenIn.chainId}/${amount.toString()}/${tokenOut.chainId}`,
-				{
-					method: 'GET',
-					headers: { 'Content-Type': 'application/json' },
-				},
+		// try {
+		const response = await fetch(
+			`${GASZIP_API_URL}/quotes/${tokenIn.chainId}/${amount.toString()}/${tokenOut.chainId}`,
+			{
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' },
+			},
+		)
+
+		if (!response.ok) {
+			throw new this.customError(
+				'GasZip API error: ' + response.statusText,
 			)
-
-			if (!response.ok) {
-				throw new this.customError(
-					'GasZip API error: ' + response.statusText,
-				)
-			}
-
-			const data = (await response.json()) as GasZipQuoteResponse
-			const quotes = data.quotes
-
-			if (quotes.length > 1) {
-				throw new this.customError(
-					`Multiple quotes found for ${tokenIn.chainId} -> ${tokenOut.chainId}`,
-				)
-			}
-
-			if (quotes[0].error) {
-				if (quotes[0].error.includes('Cannot fulfill')) {
-					throw new this.customError(
-						`Amount ${amount} is too big and cannot be fulfilled right now}`,
-					)
-				}
-
-				throw new this.customError(quotes[0].error)
-			}
-
-			const amountOutMin =
-				(amount * (10000n - this.BRIDGE_SLIPPAGE_LIMIT_BPS)) / 10000n
-
-			console.log(
-				`Amount ${tokenIn.formatUnits(amount)}\n`,
-				`Expected ${tokenOut.formatUnits(quotes[0].expected)}\n`,
-				`Amount out min ${tokenOut.formatUnits(amountOutMin)}\n`,
-			)
-
-			if (quotes[0].expected < amountOutMin) {
-				const actualSlippage =
-					(Number(quotes[0].expected) / Number(amount) - 1) * -100
-
-				throw new this.customError(
-					`Quote expected ${quotes[0].expected} exceeds slippage of ${Number(this.BRIDGE_SLIPPAGE_LIMIT_BPS) / 100}% (actual slippage: ${actualSlippage.toFixed(
-						3,
-					)}%)`,
-				)
-			}
-
-			// Actually this field represents some gas cost in wei, but it doesn't actually line up
-			return { ...quotes[0], gas: this.TRANSFER_GAS_USAGE_WITH_8BYTES }
-		} catch (error) {
-			throw new this.customError(error as string)
 		}
+
+		const data = (await response.json()) as GasZipQuoteResponse
+		const quotes = data.quotes
+
+		if (quotes.length > 1) {
+			throw new this.customError(
+				`Multiple quotes found for ${tokenIn.chainId} -> ${tokenOut.chainId}`,
+			)
+		}
+
+		if (quotes[0].error) {
+			if (quotes[0].error.includes('Cannot fulfill')) {
+				throw new this.customError(
+					`Amount ${amount} is too big and cannot be fulfilled right now}`,
+				)
+			}
+
+			throw new this.customError(quotes[0].error)
+		}
+
+		// Fixed type mismatch
+		quotes[0].expected = BigInt(quotes[0].expected)
+
+		const amountOutMin =
+			(amount * (10000n - this.BRIDGE_SLIPPAGE_LIMIT_BPS)) / 10000n
+
+		if (BigInt(quotes[0].expected) < amountOutMin) {
+			const actualSlippage =
+				(Number(quotes[0].expected) / Number(amount) - 1) * -100
+
+			throw new this.customError(
+				`Quote expected ${quotes[0].expected} exceeds slippage of ${Number(this.BRIDGE_SLIPPAGE_LIMIT_BPS) / 100}% (actual slippage: ${actualSlippage.toFixed(
+					3,
+				)}%)`,
+			)
+		}
+
+		// Actually this field represents some gas cost in wei, but it doesn't actually line up
+		return { ...quotes[0], gas: this.TRANSFER_GAS_USAGE_WITH_8BYTES }
+		// } catch (error) {
+		// 	throw new this.customError(error as string)
+		// }
 	}
 
 	static async getChains() {
