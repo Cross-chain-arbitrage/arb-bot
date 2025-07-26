@@ -1,11 +1,11 @@
 import { Hash } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
-import { Tx } from '../../primitives/transactions/Tx'
-import { ClientManager } from '../../utils/ClientManager'
+import { Tx } from '../../primitives/transactions/transaction'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import { poll } from '../../utils/polling'
-import { BridgeTx } from '../BridgeTx'
+import { BridgeTx } from '../layerzero-bridges/layerzero-bridge-tx'
 
 export const GasZipBridgeTxError = createCustomError('GasZipBridgeTxError')
 
@@ -56,6 +56,7 @@ export class GasZipBridgeTx implements BridgeTx {
 	public amountOut?: bigint
 
 	constructor(
+		private readonly chainClientService: ChainClientService,
 		srcTxHash: Hash,
 		public readonly srcToken: Token | NativeCurrency,
 		public readonly dstToken: Token | NativeCurrency,
@@ -135,7 +136,7 @@ export class GasZipBridgeTx implements BridgeTx {
 			throw new GasZipBridgeTxError('Deposit not found after polling')
 		}
 
-		const client = ClientManager.getClient(this.dstToken.chainId)
+		const client = this.chainClientService.getClient(this.dstToken.chainId)
 
 		const dstTx = await client.getTransaction({
 			hash: response.txs[0].hash,

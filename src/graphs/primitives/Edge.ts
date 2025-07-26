@@ -304,7 +304,7 @@ export class FuseBridgeEdge extends Edge<ActionType.FUSE_BRIDGE> {
 
 		const srcTxReceipt = await this.chainClientService
 			.getClient(this.from.chainId)
-			.waitForTransactionReceipt({ hash: bridgeTx.srcTxHash as Hash })
+			.waitForTransactionReceipt({ hash: bridgeTx.srcTxHash })
 
 		const message = await bridgeTx.waitForBridgeToFinish()
 
@@ -460,7 +460,7 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 	async execute(
 		amountIn: bigint,
 	): Promise<EdgeExecutionResult<ActionType.STARGATE_BRIDGE>> {
-		const bridgeTx = await GasZipBridge.bridge(
+		const { bridgeTx } = await this.stargate.bridge(
 			this.from as NativeCurrency,
 			this.to as NativeCurrency,
 			amountIn,
@@ -475,7 +475,7 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 		await bridgeTx.waitForBridgeToFinish()
 
 		return {
-			amountOut: bridgeTx.amountOut!,
+			amountOut: bridgeTx.amount,
 			srcTxReceipt,
 			dstTxHash: bridgeTx.dstTx?.hash as Hash,
 			bridgeFee: new TokenAmount(this.chainClientService, this.from, 0n), //TODO: remove useless returning 0
@@ -534,7 +534,7 @@ export class SimpleStargateBridgeEdge extends Edge<ActionType.SIMPLE_STARGATE_BR
 		const srcTxReceipt = await this.chainClientService
 			.getClient(this.from.chainId)
 			.waitForTransactionReceipt({
-				hash: result.bridgeTx.srcTxHash as Hash,
+				hash: result.bridgeTx.srcTxHash,
 			})
 
 		const message = await result.bridgeTx.waitForBridgeToFinish()
@@ -553,6 +553,7 @@ export class GasZipBridgeEdge extends Edge<ActionType.GAS_ZIP_BRIDGE> {
 
 	constructor(
 		chainClientService: ChainClientService,
+		private readonly gasZipBridge: GasZipBridge,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
 		graph: Graph,
@@ -562,7 +563,7 @@ export class GasZipBridgeEdge extends Edge<ActionType.GAS_ZIP_BRIDGE> {
 	}
 
 	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
-		const { expected: amountOut, gas } = await GasZipBridge.quote(
+		const { expected: amountOut, gas } = await this.gasZipBridge.quote(
 			this.from as NativeCurrency,
 			this.to as NativeCurrency,
 			amountIn,
@@ -584,7 +585,7 @@ export class GasZipBridgeEdge extends Edge<ActionType.GAS_ZIP_BRIDGE> {
 	async execute(
 		amountIn: bigint,
 	): Promise<EdgeExecutionResult<ActionType.GAS_ZIP_BRIDGE>> {
-		const bridgeTx = await GasZipBridge.bridge(
+		const bridgeTx = await this.gasZipBridge.bridge(
 			this.from as NativeCurrency,
 			this.to as NativeCurrency,
 			amountIn,

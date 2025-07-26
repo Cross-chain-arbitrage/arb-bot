@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { Logger } from 'nestjs-pino'
+import { GasZipBridge } from '../bridges/GasZip/GasZipBridge'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
@@ -33,7 +34,7 @@ export interface PoolData {
 }
 
 export interface StrategyConfig {
-	name: string
+	botName: string
 	dryRun?: boolean
 	giveApprovals: boolean
 	startToken: Token | NativeCurrency
@@ -65,6 +66,7 @@ export class Strategy {
 		readonly stargateService: StargateService,
 		readonly fuseBridgeService: FuseBridgeService,
 		readonly graphExecutor: GraphExecutor,
+		readonly gasZipBridge: GasZipBridge,
 		readonly logger: Logger,
 	) {}
 
@@ -103,6 +105,8 @@ export class Strategy {
 					case ActionType.GAS_ZIP_BRIDGE:
 						graph.addEdge(
 							new GasZipBridgeEdge(
+								this.chainClientService,
+								this.gasZipBridge,
 								edgeConstructor.from,
 								edgeConstructor.to,
 								graph,

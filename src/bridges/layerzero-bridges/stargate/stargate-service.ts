@@ -39,33 +39,32 @@ export class StargateService {
 	 */
 	async bridge(
 		tokenIn: Token | NativeCurrency | WrappedNative,
-		toChainId: number,
-		recipient: Address,
+		tokenOut: Token | NativeCurrency | WrappedNative,
 		amount: bigint,
 		simulateOnly: boolean = false,
 	): Promise<{
 		bridgeTx: StargateBridgeTx
 		amountOut: bigint
-		tokenOut: Token | NativeCurrency
 		lzFee: TokenAmount
 	}> {
+		const toChainId = tokenOut.chainId
+
 		if (amount <= 0n)
 			throw new StargateError('Amount must be greater than 0')
-		if (!recipient) throw new StargateError('Recipient address is required')
 		if (!toChainId && toChainId >= 1)
 			throw new StargateError('Destination chain ID is required')
 		if (tokenIn.chainId === toChainId) {
 			throw new StargateError('Cannot send to the same chain')
 		}
 
-		this.validateRecipient(tokenIn.chainId, recipient)
-
 		const tokenMetadata =
 			await this.stargateAPIService.getTokenMetadata(tokenIn)
 
 		const poolOrOFT = tokenMetadata.address
 
-		const balance = await tokenIn.balanceOf(recipient)
+		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
+		const recipient = wallet.account.address
+		const balance = await tokenIn.balanceOf(wallet.account.address)
 
 		if (balance < amount) {
 			throw new StargateError(
@@ -77,7 +76,7 @@ export class StargateService {
 			await this.validateAllowance(recipient, poolOrOFT, amount, tokenIn)
 		}
 
-		const { quote, amountOut, tokenOut } = await this.quoteBridge(
+		const { quote, amountOut } = await this.quoteBridge(
 			tokenIn,
 			amount,
 			toChainId,
@@ -100,7 +99,6 @@ export class StargateService {
 		}
 
 		const client = this.chainClientService.getClient(tokenIn.chainId)
-		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 
 		const isNative = tokenIn instanceof NativeCurrency
 		const value = quote.messagingFee.nativeFee + (isNative ? amount : 0n)
@@ -114,7 +112,7 @@ export class StargateService {
 			args: [
 				sendParams,
 				quote.messagingFee as { nativeFee: bigint; lzTokenFee: bigint },
-				recipient,
+				wallet.account.address,
 			],
 		})
 
@@ -128,7 +126,6 @@ export class StargateService {
 					amount,
 				),
 				amountOut,
-				tokenOut,
 				lzFee: new TokenAmount(
 					this.chainClientService,
 					this.tokenUtils.getNative(tokenIn.chainId),
@@ -148,7 +145,6 @@ export class StargateService {
 				amount,
 			),
 			amountOut,
-			tokenOut,
 			lzFee: new TokenAmount(
 				this.chainClientService,
 				this.tokenUtils.getNative(tokenIn.chainId),

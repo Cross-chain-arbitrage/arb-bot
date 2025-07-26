@@ -1,7 +1,8 @@
 import TTLCache from '@isaacs/ttlcache'
+import { Injectable } from '@nestjs/common'
 import { parseEther, zeroHash } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { ClientManager } from '../../utils/ClientManager'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import { GasZipBridgeTx } from './GasZipBridgeTx'
 
@@ -49,16 +50,19 @@ interface GasZipCalldataResponse {
 export const GAS_ZIP_DIRECT_DEPOSIT_ADDRESS =
 	'0x391E7C679d29bD940d63be94AD22A25d25b5A604'
 
+@Injectable()
 export class GasZipBridge {
-	static BRIDGE_LIMIT_ETHER = parseEther('0.375')
-	static BRIDGE_SLIPPAGE_LIMIT_BPS = 75n // 0.75%
-	static TRANSFER_GAS_USAGE_WITH_8BYTES = 30000
+	BRIDGE_LIMIT_ETHER = parseEther('0.375')
+	BRIDGE_SLIPPAGE_LIMIT_BPS = 75n // 0.75%
+	TRANSFER_GAS_USAGE_WITH_8BYTES = 30000
 
-	static chainsCache: TTLCache<string, GasZipChain[]> = new TTLCache({
+	chainsCache: TTLCache<string, GasZipChain[]> = new TTLCache({
 		ttl: 1000 * 60 * 1, // 5 min
 	})
 
-	static customError = createCustomError('GasZipBridgeError')
+	constructor(private readonly chainClientService: ChainClientService) {}
+
+	customError = createCustomError('GasZipBridgeError')
 
 	/**
 	 * Get calldata and fee for a bridge operation
@@ -68,7 +72,7 @@ export class GasZipBridge {
 	 * @param recipient Recipient address on destination chain
 	 * @returns { calldata: string, fee: bigint, rawResult: unknown }
 	 */
-	static async quote(
+	async quote(
 		tokenIn: NativeCurrency,
 		tokenOut: NativeCurrency,
 		amount: bigint,
@@ -164,7 +168,7 @@ export class GasZipBridge {
 		// }
 	}
 
-	static async getChains() {
+	async getChains() {
 		const cachedChains = this.chainsCache.get('chains')
 
 		if (cachedChains) {
@@ -186,7 +190,7 @@ export class GasZipBridge {
 	 * @param fee Fee from quote()
 	 * @returns Transaction hash (Hash)
 	 */
-	static async bridge(
+	async bridge(
 		tokenIn: NativeCurrency,
 		tokenOut: NativeCurrency,
 		amountIn: bigint,
@@ -194,7 +198,7 @@ export class GasZipBridge {
 	): Promise<GasZipBridgeTx> {
 		// Called to validate params
 		await this.quote(tokenIn, tokenOut, amountIn)
-		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
+		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 		const account = wallet.account.address
 
 		try {
@@ -237,7 +241,13 @@ export class GasZipBridge {
 			}
 
 			if (simulateOnly) {
-				return new GasZipBridgeTx(zeroHash, tokenIn, tokenOut, amountIn)
+				return new GasZipBridgeTx(
+					this.chainClientService,
+					zeroHash,
+					tokenIn,
+					tokenOut,
+					amountIn,
+				)
 			}
 
 			const hash = await wallet.sendTransaction({
@@ -247,13 +257,19 @@ export class GasZipBridge {
 				value: amountIn,
 			})
 
-			return new GasZipBridgeTx(hash, tokenIn, tokenOut, amountIn)
+			return new GasZipBridgeTx(
+				this.chainClientService,
+				hash,
+				tokenIn,
+				tokenOut,
+				amountIn,
+			)
 		} catch (error) {
 			throw new this.customError(error as string)
 		}
 	}
 
-	static getSecurityBridgeLimit(
+	getSecurityBridgeLimit(
 		tokenIn: NativeCurrency,
 		tokenOut: NativeCurrency,
 	): bigint {
@@ -272,7 +288,7 @@ export class GasZipBridge {
 		return this.BRIDGE_LIMIT_ETHER
 	}
 
-	static async isChainSupported(chainId: number): Promise<boolean> {
+	async isChainSupported(chainId: number): Promise<boolean> {
 		const chains = await this.getChains()
 		return chains.some((chain) => chain.chain === chainId)
 	}

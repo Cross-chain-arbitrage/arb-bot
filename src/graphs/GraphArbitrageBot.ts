@@ -30,7 +30,7 @@ type BotSettings = Readonly<{
 	minProfitUsd: number
 	opportunityCheckInterval: number
 	/** Timeout in milliseconds after which arbitrage execution is considered failed and reset */
-	arbitrageExecutionTimeout?: number
+	arbitrageExecutionTimeout: number
 	retryExecuteEdgeCount?: number
 	maxExecutionErrorsInARow?: number
 }>
@@ -124,10 +124,10 @@ export class GraphArbitrageBot {
 				opportunity,
 				await this.startTokenPrice(),
 			)
-			logger.info(prettyOpportunity)
+			this.logger.log(prettyOpportunity)
 
 			if (this.settings.dryRun) {
-				logger.info('Dry run, skipping execution')
+				this.logger.log('Dry run, skipping execution')
 				return
 			}
 
