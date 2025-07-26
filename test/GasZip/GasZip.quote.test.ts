@@ -23,7 +23,9 @@ makeSuite('GasZip ~ quote()', () => {
 		expect(quote.expected).toBeLessThanOrEqual(amount)
 
 		expect(quote.expectedNative).toBe(quote.expected)
-		expect(quote.gas).toBe(0)
+
+		// Actually this field represents some gas cost in wei, but it doesn't actually line up
+		expect(quote.gas).toBe(GasZipBridge.TRANSFER_GAS_USAGE_WITH_8BYTES)
 		expect(quote.speed).toBeGreaterThanOrEqual(1)
 		expect(quote.usd).toBeGreaterThan(200)
 	}
@@ -163,6 +165,54 @@ makeSuite('GasZip ~ quote()', () => {
 		).rejects.toThrow(
 			`Amount ${amount} is too big and cannot be fulfilled right no`,
 		)
+	})
+
+	it('MUST throw on exceeding slippage', async () => {
+		const tokenIn = TokenUtils.getNative(superposition.id)
+		const tokenOut = TokenUtils.getNative(arbitrum.id)
+		const amount = tokenIn.parseUnits('1')
+
+		global.fetch = jest.fn().mockImplementation(() => {
+			return Promise.resolve({
+				ok: true,
+				json: () =>
+					Promise.resolve({
+						quotes: [{ expected: (amount * 99n) / 100n }],
+					}),
+			})
+		})
+
+		await expect(
+			GasZipBridge.quote(tokenIn, tokenOut, amount),
+		).rejects.toThrow(
+			`exceeds slippage of ${
+				Number(GasZipBridge.BRIDGE_SLIPPAGE_LIMIT_BPS) / 100
+			}%`,
+		)
+
+		// Just under the slippage limit
+
+		const expected =
+			(amount * 10000n - GasZipBridge.BRIDGE_SLIPPAGE_LIMIT_BPS + 1n) /
+			10000n
+
+		global.fetch = jest.fn().mockImplementation(() => {
+			return Promise.resolve({
+				ok: true,
+				json: () =>
+					Promise.resolve({
+						quotes: [
+							{
+								expected,
+							},
+						],
+					}),
+			})
+		})
+
+		await expect(
+			GasZipBridge.quote(tokenIn, tokenOut, amount),
+		).resolves.toBeDefined()
 	})
 
 	describe('Error Handling', () => {

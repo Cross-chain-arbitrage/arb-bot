@@ -74,8 +74,8 @@ makeSuite('GasZip ~ GasZipBridgeTx', () => {
 
 	describe('waitForBridgeToFinish', () => {
 		it('MUST return tx hash', async () => {
-			const srcToken = TokenUtils.getNative(superposition.id)
-			const dstToken = TokenUtils.getNative(arbitrum.id)
+			const srcToken = TokenUtils.getNative(arbitrum.id)
+			const dstToken = TokenUtils.getNative(superposition.id)
 			const amount = srcToken.parseUnits('1')
 
 			const tx = new GasZipBridgeTx(

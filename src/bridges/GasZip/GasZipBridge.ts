@@ -32,7 +32,7 @@ export interface GasZipChain {
 	name: string
 	chain: number // native chain id
 	short: number // unique Gas.zip id
-	gas: string // gas usage of a simple transfer
+	gas: string // Actually this field represents some gas cost in wei, but it doesn't actually line up with any costs
 	gwei: string // current gas price
 	bal: string // balance of the Gas.zip reloader
 	rpcs: string[]
@@ -47,14 +47,15 @@ interface GasZipCalldataResponse {
 }
 
 export const GAS_ZIP_DIRECT_DEPOSIT_ADDRESS =
-	'0x90E595783E43eb89fF07f63d27B8430e6B44bD9c'
+	'0x391E7C679d29bD940d63be94AD22A25d25b5A604'
 
 export class GasZipBridge {
 	static BRIDGE_LIMIT_ETHER = parseEther('0.375')
-	static BRIDGE_SLIPPAGE_LIMIT = 1n // 1%
+	static BRIDGE_SLIPPAGE_LIMIT_BPS = 75n // 0.75%
+	static TRANSFER_GAS_USAGE_WITH_8BYTES = 30000
 
 	static chainsCache: TTLCache<string, GasZipChain[]> = new TTLCache({
-		ttl: 1000 * 60 * 5, // 5 min
+		ttl: 1000 * 60 * 1, // 5 min
 	})
 
 	static customError = createCustomError('GasZipBridgeError')
@@ -119,6 +120,7 @@ export class GasZipBridge {
 					'GasZip API error: ' + response.statusText,
 				)
 			}
+
 			const data = (await response.json()) as GasZipQuoteResponse
 			const quotes = data.quotes
 
@@ -138,16 +140,28 @@ export class GasZipBridge {
 				throw new this.customError(quotes[0].error)
 			}
 
-			if (
-				quotes[0].expected <
-				(amount * (100n - this.BRIDGE_SLIPPAGE_LIMIT)) / 100n
-			) {
+			const amountOutMin =
+				(amount * (10000n - this.BRIDGE_SLIPPAGE_LIMIT_BPS)) / 10000n
+
+			console.log(
+				`Amount ${tokenIn.formatUnits(amount)}\n`,
+				`Expected ${tokenOut.formatUnits(quotes[0].expected)}\n`,
+				`Amount out min ${tokenOut.formatUnits(amountOutMin)}\n`,
+			)
+
+			if (quotes[0].expected < amountOutMin) {
+				const actualSlippage =
+					(Number(quotes[0].expected) / Number(amount) - 1) * -100
+
 				throw new this.customError(
-					`Quote expected ${quotes[0].expected} exceeds slippage of ${this.BRIDGE_SLIPPAGE_LIMIT}%`,
+					`Quote expected ${quotes[0].expected} exceeds slippage of ${Number(this.BRIDGE_SLIPPAGE_LIMIT_BPS) / 100}% (actual slippage: ${actualSlippage.toFixed(
+						3,
+					)}%)`,
 				)
 			}
 
-			return quotes[0]
+			// Actually this field represents some gas cost in wei, but it doesn't actually line up
+			return { ...quotes[0], gas: this.TRANSFER_GAS_USAGE_WITH_8BYTES }
 		} catch (error) {
 			throw new this.customError(error as string)
 		}
@@ -183,7 +197,6 @@ export class GasZipBridge {
 	): Promise<GasZipBridgeTx> {
 		// Called to validate params
 		await this.quote(tokenIn, tokenOut, amountIn)
-		const client = ClientManager.getClient(tokenIn.chainId)
 		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
 		const account = wallet.account.address
 
@@ -222,7 +235,7 @@ export class GasZipBridge {
 
 			if (balance < amountIn) {
 				throw new this.customError(
-					`Insufficient balance of ${tokenIn.toString()} for ${tokenIn.parseUnits(amountIn)}`,
+					`Insufficient balance to bridge, requested: ${tokenIn.formatUnits(amountIn)} ${tokenIn.toString()}, has ${tokenIn.formatUnits(balance)} ${tokenIn.toString()}`,
 				)
 			}
 

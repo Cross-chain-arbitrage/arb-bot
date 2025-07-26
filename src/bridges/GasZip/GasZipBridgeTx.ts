@@ -1,7 +1,8 @@
-import { Hash, parseUnits } from 'viem'
+import { Hash } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { Tx } from '../../primitives/transactions/Tx'
+import { ClientManager } from '../../utils/ClientManager'
 import { createCustomError } from '../../utils/common'
 import { poll } from '../../utils/polling'
 import { BridgeTx } from '../BridgeTx'
@@ -124,6 +125,8 @@ export class GasZipBridgeTx implements BridgeTx {
 			),
 		)
 
+		console.log('response', response)
+
 		if (
 			!response ||
 			response.txs.length !== 1 ||
@@ -132,11 +135,13 @@ export class GasZipBridgeTx implements BridgeTx {
 			throw new GasZipBridgeTxError('Deposit not found after polling')
 		}
 
-		this.dstTx = new Tx(response.txs[0].hash, this.dstToken.chainId)
-		this.amountOut = parseUnits(
-			response.txs[0].value,
-			this.dstToken.decimals,
-		)
+		const client = ClientManager.getClient(this.dstToken.chainId)
+
+		const dstTx = await client.getTransaction({
+			hash: response.txs[0].hash,
+		})
+
+		this.amountOut = dstTx.value
 	}
 
 	get srcTxHash() {

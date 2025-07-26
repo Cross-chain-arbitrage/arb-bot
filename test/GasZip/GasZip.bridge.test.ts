@@ -89,7 +89,7 @@ makeSuite('GasZip ~ bridge()', () => {
 		await expect(
 			GasZipBridge.bridge(tokenIn, tokenOut, amount, true),
 		).rejects.toThrow(
-			`Insufficient balance of ${tokenIn.toString()} for ${tokenIn.parseUnits(amount)}`,
+			`GasZipBridgeError: Insufficient balance to bridge, requested: ${tokenIn.formatUnits(amount)} ${tokenIn.toString()}, has ${tokenIn.formatUnits(amount - 1n)} ${tokenIn.toString()}`,
 		)
 	})
 
@@ -120,6 +120,8 @@ makeSuite('GasZip ~ bridge()', () => {
 		})
 
 		it('MUST send a transaction with provided calldata', async () => {
+			console.log('bridge test started')
+
 			const tokenIn = TokenUtils.getNative(arbitrum.id)
 			const tokenOut = TokenUtils.getNative(superposition.id)
 			const amount = tokenIn.parseUnits('0.1')
@@ -127,9 +129,7 @@ makeSuite('GasZip ~ bridge()', () => {
 			const client = ClientManager.getClient(arbitrum.id)
 			const wallet = ClientManager.getWalletClient(arbitrum.id)
 
-			console.log(client.transport.transports)
-
-			await setNativeBalance(wallet, wallet.account.address, amount * 2n)
+			await setNativeBalance(client, wallet.account.address, amount * 2n)
 
 			const balanceBefore = await tokenIn.balanceOf(
 				wallet.account.address,
