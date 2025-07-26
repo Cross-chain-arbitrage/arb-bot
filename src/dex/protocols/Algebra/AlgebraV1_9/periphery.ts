@@ -18,8 +18,8 @@ export const ALGEBRA_V1_9_PERIPHERY: Record<
 	},
 	[superposition.id]: {
 		[getAddress('0xCf4062Ee235BbeB4C7c0336ada689ed1c17547b6')]: {
-			quoter: '0x30A4bD5b1a9e9C0D80e9a45ef486bc1f1bc8e230',
 			router: '0xC216fCdEb961EEF95657Cb45dEe20e379C7624B8',
+			quoter: '0xc908fab181c513BaaE4c92cEe7EEC22bD4AcF059',
 		},
 	},
 }

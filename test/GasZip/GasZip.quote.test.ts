@@ -11,12 +11,12 @@ import { makeSuite } from '../testUtils/makeSuite'
 makeSuite('GasZip ~ quote()', () => {
 	function validateQuote(
 		quote: GasZipQuote,
-		dstChainId: number,
+		tokenOut: NativeCurrency,
 		tokenIn: NativeCurrency,
 		amount: bigint,
 	) {
 		expect(quote).toBeDefined()
-		expect(quote.chain).toBe(dstChainId)
+		expect(quote.chain).toBe(tokenOut.chainId)
 		expect(quote.decimals).toBe(tokenIn.decimals)
 
 		expect(quote.expected).toBeGreaterThan((amount * 99n) / 100n)
@@ -30,114 +30,62 @@ makeSuite('GasZip ~ quote()', () => {
 
 	it('MUST quote Arbitrum -> Superposition', async () => {
 		const tokenIn = TokenUtils.getNative(arbitrum.id)
-		const dstChainId = superposition.id
+		const tokenOut = TokenUtils.getNative(superposition.id)
 		const amount = tokenIn.parseUnits('0.1')
 
-		const quote = await GasZipBridge.quote(
-			tokenIn,
-			dstChainId,
-			amount,
-			'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-		)
+		const quote = await GasZipBridge.quote(tokenIn, tokenOut, amount)
 
-		validateQuote(quote, dstChainId, tokenIn, amount)
+		validateQuote(quote, tokenOut, tokenIn, amount)
 	})
 
-	it('MUST quote Arbitrum -> Fuse', async () => {
-		const tokenIn = TokenUtils.getNative(arbitrum.id)
-		const dstChainId = fuse.id
-		const amountInEth = tokenIn.parseUnits('0.01')
-
-		const quote = await GasZipBridge.quote(
-			tokenIn,
-			dstChainId,
-			amountInEth,
-			'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-		)
-
-		expect(quote).toBeDefined()
-		expect(quote.chain).toBe(dstChainId)
-		expect(quote.decimals).toBe(tokenIn.decimals)
-
-		// Fuse price is not known, so we can't validate the quote
-		expect(quote.expected).toBeGreaterThan(amountInEth * 10000n)
-		expect(quote.expected).toBeLessThanOrEqual(amountInEth * 600000n)
-
-		expect(quote.expectedNative).toBe(quote.expected)
-		expect(quote.gas).toBeGreaterThanOrEqual(0)
-		expect(quote.speed).toBeGreaterThanOrEqual(1)
-		expect(quote.usd).toBeGreaterThan(10)
-	})
-
-	it('MUST quote Fuse -> Arbitrum', async () => {
+	it('MUST THROW on quoting NON-ETH -> ETH', async () => {
 		const tokenIn = TokenUtils.getNative(fuse.id)
-		const dstChainId = arbitrum.id
-		const amountInFuse = tokenIn.parseUnits('1000')
+		const tokenOut = TokenUtils.getNative(arbitrum.id)
+		const amountIn = tokenIn.parseUnits('0.01')
 
-		const quote = await GasZipBridge.quote(
-			tokenIn,
-			dstChainId,
-			amountInFuse,
-			'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-		)
+		await expect(() =>
+			GasZipBridge.quote(tokenIn, tokenOut, amountIn),
+		).rejects.toThrow(`Bridge from non ETH token is not supported`)
+	})
 
-		expect(quote).toBeDefined()
-		expect(quote.chain).toBe(dstChainId)
-		expect(quote.decimals).toBe(tokenIn.decimals)
+	it('MUST THROW on quoting ETH -> NON-ETH', async () => {
+		const tokenIn = TokenUtils.getNative(arbitrum.id)
+		const tokenOut = TokenUtils.getNative(fuse.id)
+		const amountIn = tokenIn.parseUnits('0.01')
 
-		// Fuse price is not known, so we can't validate the quote
-		expect(quote.expected).toBeGreaterThan(amountInFuse / 600000n)
-		expect(quote.expected).toBeLessThanOrEqual(amountInFuse / 10000n)
-
-		expect(quote.expectedNative).toBe(quote.expected)
-		expect(quote.gas).toBeGreaterThanOrEqual(0)
-		expect(quote.speed).toBeGreaterThanOrEqual(1)
-		expect(quote.usd).toBeGreaterThan(10)
+		await expect(() =>
+			GasZipBridge.quote(tokenIn, tokenOut, amountIn),
+		).rejects.toThrow(`Bridge to non ETH token is not supported`)
 	})
 
 	it('MUST quote Superposition -> Arbitrum', async () => {
 		const tokenIn = TokenUtils.getNative(superposition.id)
-		const dstChainId = arbitrum.id
+		const tokenOut = TokenUtils.getNative(arbitrum.id)
 		const amount = tokenIn.parseUnits('0.1')
 
-		const quote = await GasZipBridge.quote(
-			tokenIn,
-			dstChainId,
-			amount,
-			'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-		)
+		const quote = await GasZipBridge.quote(tokenIn, tokenOut, amount)
 
-		validateQuote(quote, dstChainId, tokenIn, amount)
+		validateQuote(quote, tokenOut, tokenIn, amount)
 	})
 
 	it('MUST quote Arbitrum -> Hemi', async () => {
 		const tokenIn = TokenUtils.getNative(superposition.id)
-		const dstChainId = arbitrum.id
+		const tokenOut = TokenUtils.getNative(arbitrum.id)
 		const amount = tokenIn.parseUnits('0.1')
 
-		const quote = await GasZipBridge.quote(
-			tokenIn,
-			dstChainId,
-			amount,
-			'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-		)
+		const quote = await GasZipBridge.quote(tokenIn, tokenOut, amount)
 
-		validateQuote(quote, dstChainId, tokenIn, amount)
+		validateQuote(quote, tokenOut, tokenIn, amount)
 	})
 
 	it('MUST quote Hemi -> Arbitrum', async () => {
 		const tokenIn = TokenUtils.getNative(superposition.id)
-		const dstChainId = arbitrum.id
+		const tokenOut = TokenUtils.getNative(arbitrum.id)
 		const amount = tokenIn.parseUnits('0.1')
 
-		const quote = await GasZipBridge.quote(
-			tokenIn,
-			dstChainId,
-			amount,
-			'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-		)
+		const quote = await GasZipBridge.quote(tokenIn, tokenOut, amount)
 
-		validateQuote(quote, dstChainId, tokenIn, amount)
+		validateQuote(quote, tokenOut, tokenIn, amount)
 	})
 
 	it('MUST throw on unsupported source chain', async () => {
@@ -147,76 +95,57 @@ makeSuite('GasZip ~ quote()', () => {
 			'UNSUPPORTED',
 		)
 
-		const dstChainId = arbitrum.id
+		const tokenOut = TokenUtils.getNative(arbitrum.id)
 		const amount = tokenIn.parseUnits('0.1')
 
 		await expect(
-			GasZipBridge.quote(
-				tokenIn,
-				dstChainId,
-				amount,
-				'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-			),
+			GasZipBridge.quote(tokenIn, tokenOut, amount),
 		).rejects.toThrow(`Source chain ${tokenIn.chainId} is not supported`)
 	})
 
 	it('MUST throw on unsupported destination chain', async () => {
 		const tokenIn = TokenUtils.getNative(arbitrum.id)
-		const dstChainId = 1234567890
+		const tokenOut = new NativeCurrency(
+			1234567890,
+			'Unsupported',
+			'UNSUPPORTED',
+		)
 		const amount = tokenIn.parseUnits('0.1')
 
 		await expect(
-			GasZipBridge.quote(
-				tokenIn,
-				dstChainId,
-				amount,
-				'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-			),
-		).rejects.toThrow(`Destination chain ${dstChainId} is not supported`)
+			GasZipBridge.quote(tokenIn, tokenOut, amount),
+		).rejects.toThrow(
+			`Destination chain ${tokenOut.chainId} is not supported`,
+		)
 	})
 
 	it('MUST throw on small amountIn', async () => {
 		const tokenIn = TokenUtils.getNative(arbitrum.id)
-		const dstChainId = superposition.id
+		const tokenOut = TokenUtils.getNative(superposition.id)
 		const amount = tokenIn.parseUnits('0.000000000000000001')
 
 		await expect(
-			GasZipBridge.quote(
-				tokenIn,
-				dstChainId,
-				amount,
-				'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-			),
+			GasZipBridge.quote(tokenIn, tokenOut, amount),
 		).rejects.toThrow(`Amount ${amount} is too small`)
 	})
 
 	it('MUST throw on inadequately big amountIn', async () => {
 		const tokenIn = TokenUtils.getNative(arbitrum.id)
-		const dstChainId = superposition.id
+		const tokenOut = TokenUtils.getNative(superposition.id)
 		const amount = tokenIn.parseUnits('0.375')
 
 		await expect(
-			GasZipBridge.quote(
-				tokenIn,
-				dstChainId,
-				amount,
-				'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-			),
+			GasZipBridge.quote(tokenIn, tokenOut, amount),
 		).rejects.toThrow(`Amount ${amount} exceeds manually set bridge limit`)
 	})
 
 	it('MUST throw on amountIn exceeding manually set bridge limit', async () => {
 		const tokenIn = TokenUtils.getNative(arbitrum.id)
-		const dstChainId = superposition.id
+		const tokenOut = TokenUtils.getNative(superposition.id)
 		const amount = tokenIn.parseUnits('1')
 
 		await expect(
-			GasZipBridge.quote(
-				tokenIn,
-				dstChainId,
-				amount,
-				'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-			),
+			GasZipBridge.quote(tokenIn, tokenOut, amount),
 		).rejects.toThrow(`Amount ${amount} exceeds manually set bridge limit`)
 	})
 
@@ -226,16 +155,11 @@ makeSuite('GasZip ~ quote()', () => {
 		)
 
 		const tokenIn = TokenUtils.getNative(arbitrum.id)
-		const dstChainId = superposition.id
+		const tokenOut = TokenUtils.getNative(superposition.id)
 		const amount = tokenIn.parseUnits('30')
 
 		await expect(
-			GasZipBridge.quote(
-				tokenIn,
-				dstChainId,
-				amount,
-				'0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB',
-			),
+			GasZipBridge.quote(tokenIn, tokenOut, amount),
 		).rejects.toThrow(
 			`Amount ${amount} is too big and cannot be fulfilled right no`,
 		)
@@ -254,12 +178,11 @@ makeSuite('GasZip ~ quote()', () => {
 
 		it('MUST throw on GasZip API error with Error message', async () => {
 			const tokenIn = TokenUtils.getNative(arbitrum.id)
-			const dstChainId = superposition.id
+			const tokenOut = TokenUtils.getNative(superposition.id)
 			const amount = tokenIn.parseUnits('0.1')
-			const recipient = '0x000000E374a7Eb3A42E6B335C9D0a45F2f6256EB'
 
 			await expect(
-				GasZipBridge.quote(tokenIn, dstChainId, amount, recipient),
+				GasZipBridge.quote(tokenIn, tokenOut, amount),
 			).rejects.toThrow('Error: HTTP Request Error')
 		})
 	})

@@ -1,13 +1,12 @@
 import TTLCache from '@isaacs/ttlcache'
-import { Address, maxUint256, parseEther, zeroHash } from 'viem'
+import { parseEther, zeroHash } from 'viem'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
 import { ClientManager } from '../../utils/ClientManager'
 import { createCustomError } from '../../utils/common'
 import { GasZipBridgeTx } from './GasZipBridgeTx'
 
 // TODO: Replace with actual GasZip Calldata API endpoint
-const GASZIP_API_URL = 'https://backend.gas.zip/v2'
+export const GASZIP_API_URL = 'https://backend.gas.zip/v2'
 
 export interface GasZipQuoteResponse {
 	expires: number
@@ -20,7 +19,7 @@ export interface GasZipQuote {
 	expected: bigint
 	expectedNative: bigint
 	gas: number
-	speed: number
+	speed: number // seconds to transaction confirmation?
 	usd: number
 	error?: string
 }
@@ -41,10 +40,18 @@ export interface GasZipChain {
 	price: number // Native price in USD
 }
 
-// const GAS_ZIP_EXECUTOR_ADDRESS = '0x90E595783E43eb89fF07f63d27B8430e6B44bD9c'
+interface GasZipCalldataResponse {
+	calldata: string // '0x01012f'
+	expires: number // in seconds
+	quotes: GasZipQuote[]
+}
+
+export const GAS_ZIP_DIRECT_DEPOSIT_ADDRESS =
+	'0x90E595783E43eb89fF07f63d27B8430e6B44bD9c'
 
 export class GasZipBridge {
 	static BRIDGE_LIMIT_ETHER = parseEther('0.375')
+	static BRIDGE_SLIPPAGE_LIMIT = 1n // 1%
 
 	static chainsCache: TTLCache<string, GasZipChain[]> = new TTLCache({
 		ttl: 1000 * 60 * 5, // 5 min
@@ -62,12 +69,13 @@ export class GasZipBridge {
 	 */
 	static async quote(
 		tokenIn: NativeCurrency,
-		dstChainId: number,
+		tokenOut: NativeCurrency,
 		amount: bigint,
-		recipient: Address,
 	): Promise<GasZipQuote> {
 		const isSourceSupported = await this.isChainSupported(tokenIn.chainId)
-		const isDestinationSupported = await this.isChainSupported(dstChainId)
+		const isDestinationSupported = await this.isChainSupported(
+			tokenOut.chainId,
+		)
 
 		if (!isSourceSupported) {
 			throw new this.customError(
@@ -77,7 +85,7 @@ export class GasZipBridge {
 
 		if (!isDestinationSupported) {
 			throw new this.customError(
-				`Destination chain ${dstChainId} is not supported`,
+				`Destination chain ${tokenOut.chainId} is not supported`,
 			)
 		}
 
@@ -85,7 +93,7 @@ export class GasZipBridge {
 			throw new this.customError(`Amount ${amount} is too small`)
 		}
 
-		if (amount >= this.getSecurityBridgeLimit(tokenIn, dstChainId)) {
+		if (amount >= this.getSecurityBridgeLimit(tokenIn, tokenOut)) {
 			throw new this.customError(
 				`Amount ${amount} exceeds manually set bridge limit`,
 			)
@@ -99,7 +107,7 @@ export class GasZipBridge {
 
 		try {
 			const response = await fetch(
-				`${GASZIP_API_URL}/quotes/${tokenIn.chainId}/${amount.toString()}/${dstChainId}`,
+				`${GASZIP_API_URL}/quotes/${tokenIn.chainId}/${amount.toString()}/${tokenOut.chainId}`,
 				{
 					method: 'GET',
 					headers: { 'Content-Type': 'application/json' },
@@ -112,24 +120,34 @@ export class GasZipBridge {
 				)
 			}
 			const data = (await response.json()) as GasZipQuoteResponse
+			const quotes = data.quotes
 
-			if (data.quotes.length > 1) {
+			if (quotes.length > 1) {
 				throw new this.customError(
-					`Multiple quotes found for ${tokenIn.chainId} -> ${dstChainId}`,
+					`Multiple quotes found for ${tokenIn.chainId} -> ${tokenOut.chainId}`,
 				)
 			}
 
-			if (data.quotes[0].error) {
-				if (data.quotes[0].error.includes('Cannot fulfill')) {
+			if (quotes[0].error) {
+				if (quotes[0].error.includes('Cannot fulfill')) {
 					throw new this.customError(
 						`Amount ${amount} is too big and cannot be fulfilled right now}`,
 					)
 				}
 
-				throw new this.customError(data.quotes[0].error)
+				throw new this.customError(quotes[0].error)
 			}
 
-			return data.quotes[0]
+			if (
+				quotes[0].expected <
+				(amount * (100n - this.BRIDGE_SLIPPAGE_LIMIT)) / 100n
+			) {
+				throw new this.customError(
+					`Quote expected ${quotes[0].expected} exceeds slippage of ${this.BRIDGE_SLIPPAGE_LIMIT}%`,
+				)
+			}
+
+			return quotes[0]
 		} catch (error) {
 			throw new this.customError(error as string)
 		}
@@ -158,54 +176,20 @@ export class GasZipBridge {
 	 * @returns Transaction hash (Hash)
 	 */
 	static async bridge(
-		tokenIn: Token | NativeCurrency,
-		tokenOut: Token | NativeCurrency,
+		tokenIn: NativeCurrency,
+		tokenOut: NativeCurrency,
 		amountIn: bigint,
-		slippage: bigint = 10n,
+		simulateOnly: boolean = false,
 	): Promise<GasZipBridgeTx> {
-		const isSourceSupported = await this.isChainSupported(tokenIn.chainId)
-		const isDestinationSupported = await this.isChainSupported(
-			tokenOut.chainId,
-		)
-		const dstChainId = tokenOut.chainId
+		// Called to validate params
+		await this.quote(tokenIn, tokenOut, amountIn)
+		const client = ClientManager.getClient(tokenIn.chainId)
 		const wallet = ClientManager.getWalletClient(tokenIn.chainId)
 		const account = wallet.account.address
 
-		if (!isSourceSupported) {
-			throw new this.customError(
-				`Source chain ${tokenIn.chainId} is not supported`,
-			)
-		}
-
-		if (!isDestinationSupported) {
-			throw new this.customError(
-				`Destination chain ${dstChainId} is not supported`,
-			)
-		}
-
-		if (!tokenOut.isNative()) {
-			throw new this.customError(
-				`Destination token ${tokenOut.chainId} is not native`,
-			)
-		}
-
-		if (amountIn < parseEther('0.00001')) {
-			throw new this.customError(`Amount ${amountIn} is too small`)
-		}
-
-		if (amountIn >= this.getSecurityBridgeLimit(tokenIn, dstChainId)) {
-			throw new this.customError(
-				`Amount ${amountIn} exceeds manually set bridge limit`,
-			)
-		}
-
 		try {
 			const response = await fetch(
-				`${GASZIP_API_URL}/quotes/${tokenIn.chainId}/${amountIn.toString()}/${dstChainId}?to=${account}&from=${account}`,
-				{
-					method: 'GET',
-					headers: { 'Content-Type': 'application/json' },
-				},
+				`${GASZIP_API_URL}/quotes/${tokenIn.chainId}/${amountIn.toString()}/${tokenOut.chainId}?to=${account}&from=${account}`,
 			)
 
 			if (!response.ok) {
@@ -213,41 +197,69 @@ export class GasZipBridge {
 					'GasZip API error: ' + response.statusText,
 				)
 			}
-			const data = (await response.json()) as GasZipQuoteResponse
+
+			const data = (await response.json()) as GasZipCalldataResponse
 
 			if (data.quotes.length > 1) {
 				throw new this.customError(
-					`Multiple quotes found for ${tokenIn.chainId} -> ${dstChainId}`,
+					`Multiple quotes found for ${tokenIn.chainId} -> ${tokenOut.chainId}`,
 				)
 			}
 
-			if (data.quotes[0].error) {
-				if (data.quotes[0].error.includes('Cannot fulfill')) {
+			const quote = data.quotes[0]
+
+			if (quote.error) {
+				if (quote.error.includes('Cannot fulfill')) {
 					throw new this.customError(
 						`Amount ${amountIn} is too big and cannot be fulfilled right now}`,
 					)
 				}
 
-				throw new this.customError(data.quotes[0].error)
+				throw new this.customError(quote.error)
 			}
 
-			return new GasZipBridgeTx(zeroHash, tokenIn, tokenOut, amountIn)
+			const balance = await tokenIn.balanceOf(account)
+
+			if (balance < amountIn) {
+				throw new this.customError(
+					`Insufficient balance of ${tokenIn.toString()} for ${tokenIn.parseUnits(amountIn)}`,
+				)
+			}
+
+			if (simulateOnly) {
+				return new GasZipBridgeTx(zeroHash, tokenIn, tokenOut, amountIn)
+			}
+
+			const hash = await wallet.sendTransaction({
+				account: wallet.account,
+				to: GAS_ZIP_DIRECT_DEPOSIT_ADDRESS,
+				data: data.calldata as `0x${string}`,
+				value: amountIn,
+			})
+
+			return new GasZipBridgeTx(hash, tokenIn, tokenOut, amountIn)
 		} catch (error) {
 			throw new this.customError(error as string)
 		}
 	}
 
 	static getSecurityBridgeLimit(
-		tokenIn: Token | NativeCurrency,
-		dstChainId: number,
+		tokenIn: NativeCurrency,
+		tokenOut: NativeCurrency,
 	): bigint {
-		if (tokenIn.symbol === 'ETH') {
-			return this.BRIDGE_LIMIT_ETHER
+		if (tokenIn.symbol !== 'ETH' || tokenIn.decimals !== 18) {
+			throw new this.customError(
+				`Bridge from non ETH token is not supported`,
+			)
 		}
 
-		// Can't make up manual limits for all non-ETH tokens
-		// Can be set for each chain individually
-		return maxUint256
+		if (tokenOut.symbol !== 'ETH' || tokenOut.decimals !== 18) {
+			throw new this.customError(
+				`Bridge to non ETH token is not supported`,
+			)
+		}
+
+		return this.BRIDGE_LIMIT_ETHER
 	}
 
 	static async isChainSupported(chainId: number): Promise<boolean> {

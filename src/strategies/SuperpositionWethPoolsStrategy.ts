@@ -1,5 +1,6 @@
 import { arbitrum, superposition } from 'viem/chains'
 import { PoolUtils } from '../dex/PoolUtils'
+import { ActionType } from '../graphs/primitives/Edge'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { PoolData, Strategy, StrategyConfig } from './Strategy'
 
@@ -19,6 +20,22 @@ export const SUPERPOSITION_WETH_POOLS: PoolData[] = [
 /* ============ Strategy Config ============ */
 
 async function main() {
+	const arbNative = TokenUtils.getNative(arbitrum.id)
+	const superpositionNative = TokenUtils.getNative(superposition.id)
+
+	const edgeConstructors = [
+		{
+			from: arbNative,
+			to: superpositionNative,
+			type: ActionType.RELAY_BRIDGE,
+		},
+		{
+			from: superpositionNative,
+			to: arbNative,
+			type: ActionType.RELAY_BRIDGE,
+		},
+	]
+
 	const config: StrategyConfig = {
 		name: 'Superposition Weth Pools Bot',
 		dryRun: true,
@@ -33,6 +50,8 @@ async function main() {
 				connectSecondaryChains: false,
 				baseChainId: arbitrum.id,
 			},
+			edgeConstructors,
+			edgeCacheTTL: 3000,
 		},
 		graphOptimizerOptions: {
 			initialValueUSD: 200,
