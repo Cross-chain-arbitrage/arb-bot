@@ -27,12 +27,12 @@ async function main() {
 		{
 			from: arbNative,
 			to: superpositionNative,
-			type: ActionType.RELAY_BRIDGE,
+			type: ActionType.GAS_ZIP_BRIDGE,
 		},
 		{
 			from: superpositionNative,
 			to: arbNative,
-			type: ActionType.RELAY_BRIDGE,
+			type: ActionType.GAS_ZIP_BRIDGE,
 		},
 	]
 

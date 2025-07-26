@@ -12,6 +12,7 @@ import { GraphExecutor } from '../graphs/GraphExecutor'
 import { GraphVisualizer } from '../graphs/GraphVisualizer'
 import {
 	ActionType,
+	GasZipBridgeEdge,
 	RelayBridgeEdge,
 	SimpleStargateBridgeEdge,
 } from '../graphs/primitives/Edge'
@@ -98,6 +99,17 @@ export class Strategy {
 							),
 						)
 						break
+
+					case ActionType.GAS_ZIP_BRIDGE:
+						graph.addEdge(
+							new GasZipBridgeEdge(
+								edgeConstructor.from,
+								edgeConstructor.to,
+								graph,
+							),
+						)
+						break
+
 					default:
 						throw new Error(
 							`${edgeConstructor.type} can be added by more convenient way`,
