@@ -14,15 +14,7 @@ import {
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
-import {
-	arbitrum,
-	base,
-	bsc,
-	fuse,
-	lightlinkPhoenix,
-	mainnet,
-	story,
-} from 'viem/chains'
+import { arbitrum, base, bsc, mainnet, story } from 'viem/chains'
 import { getAlchemyRpcUrl } from './alchemy'
 import { createCustomError, getPrivateKey } from './common'
 
@@ -31,8 +23,8 @@ const CUSTOM_RPC_URLS: Record<number, string> = {
 	[arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
 	[bsc.id]: getAlchemyRpcUrl(bsc.id),
 	[story.id]: getAlchemyRpcUrl(story.id),
-	[lightlinkPhoenix.id]: `https://endpoints.omniatech.io/v1/lightlink/phoenix/bcd6910e361449d088886a7bfe37586c`,
-	[fuse.id]: `https://lb.drpc.org/ogrpc?network=fuse&dkey=REDACTED_API_KEY`,
+	// [lightlinkPhoenix.id]: `https://endpoints.omniatech.io/v1/lightlink/phoenix/bcd6910e361449d088886a7bfe37586c`,
+	// [fuse.id]: `https://lb.drpc.org/ogrpc?network=fuse&dkey=REDACTED_API_KEY`,
 	// [hemi.id]: `https://endpoints.omniatech.io/v1/hemi/mainnet/0292053309264c18932589701ab5020a`,
 	[base.id]: getAlchemyRpcUrl(base.id),
 } as const
@@ -85,7 +77,9 @@ export class ChainClientService {
 	): PublicClient<FallbackTransport, Chain, undefined, undefined> {
 		const existingClient = this.clients.get(chainId)
 
-		if (existingClient) return existingClient
+		if (existingClient) {
+			return existingClient
+		}
 
 		const chain = this.getChain(chainId)
 		const transport = this.getTransport(chainId)
@@ -228,6 +222,7 @@ export class ChainClientService {
 
 	clearClients(): void {
 		this.clients.clear()
+		this.walletClients.clear()
 	}
 
 	getChainNameById(id: number): string {
