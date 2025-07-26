@@ -1,7 +1,7 @@
 import { ChildProcess, exec } from 'child_process'
 import getPort from 'get-port'
-import { Chain, Client, toHex } from 'viem'
-import { ClientManager } from '../../src/utils/ChainClientService'
+import { Chain, Client, fallback, FallbackTransport, http, toHex } from 'viem'
+import { ClientManager } from '../../src/utils/ClientManager'
 import { getPrivateKey } from '../../src/utils/common'
 
 /* ======== useAnvil ======== */
@@ -46,8 +46,19 @@ async function startAnvilAndSetTestEnv(
 
 	await anvil.start(defaultRpcUrl)
 
-	// @ts-expect-error override readonly property
-	chain.rpcUrls.default.http[0] = `http://localhost:${anvil.port}`
+	jest.spyOn(ClientManager, 'getTransport').mockImplementation(
+		(): FallbackTransport => {
+			return fallback([
+				http(`http://localhost:${anvil.port}`, {
+					timeout: 20_000,
+					retryCount: 2,
+					retryDelay: 1000,
+				}),
+			])
+		},
+	)
+
+	// chain.rpcUrls.default.http[0] = `http://localhost:${anvil.port}`
 }
 
 function killAnvilAndRestoreEnv(
@@ -57,9 +68,10 @@ function killAnvilAndRestoreEnv(
 	realPk: string | undefined,
 ) {
 	anvil.stop()
+	jest.clearAllMocks()
 	ClientManager.clearClients()
-	// @ts-expect-error override readonly property
-	chain.rpcUrls.default.http[0] = defaultRpcUrl
+	// chain.rpcUrls.default.http[0] = defaultRpcUrl
+
 	process.env.PRIVATE_KEY = realPk
 }
 
@@ -94,6 +106,14 @@ class Anvil {
 		const command = this.buildCommand(fallbackRpcUrl)
 
 		this._process = exec(command)
+
+		// this._process.stdout?.on('data', (data) => {
+		// 	console.log('anvil stdout:', data.toString())
+		// })
+
+		// this._process.stderr?.on('data', (data) => {
+		// 	console.error('anvil stderr:', data.toString())
+		// })
 
 		await this.onAnvilStart()
 	}

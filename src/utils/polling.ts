@@ -32,7 +32,6 @@ export async function poll<T>(
 	try {
 		return await Promise.race([pollUntilCondition(), timeoutPromise])
 	} finally {
-		console.log('clearing timeout')
 		clearTimeout(timeoutId!)
 	}
 }
