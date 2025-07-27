@@ -460,7 +460,7 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 	async execute(
 		amountIn: bigint,
 	): Promise<EdgeExecutionResult<ActionType.STARGATE_BRIDGE>> {
-		const { bridgeTx } = await this.stargate.bridge(
+		const { bridgeTx, amountOut, lzFee } = await this.stargate.bridge(
 			this.from as NativeCurrency,
 			this.to as NativeCurrency,
 			amountIn,
@@ -475,10 +475,10 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 		await bridgeTx.waitForBridgeToFinish()
 
 		return {
-			amountOut: bridgeTx.amount,
+			amountOut,
 			srcTxReceipt,
 			dstTxHash: bridgeTx.dstTx?.hash as Hash,
-			bridgeFee: new TokenAmount(this.chainClientService, this.from, 0n), //TODO: remove useless returning 0
+			bridgeFee: lzFee,
 		}
 	}
 }
