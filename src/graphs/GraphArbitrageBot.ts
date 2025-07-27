@@ -19,16 +19,18 @@ import { ActionType, Edge, SwapEdge } from './primitives/Edge'
 import { Graph } from './primitives/Graph'
 
 const DEFAULT_SETTINGS = {
-	arbitrageExecutionTimeout: 5 * 60 * 1000,
+	dryRun: false,
+	arbitrageTimeout: 5 * 60 * 1000,
 	retryExecuteEdgeCount: 2,
 	maxExecutionErrorsInARow: 3,
 }
 
 type BotSettings = Readonly<{
+	dryRun?: boolean
 	minProfitUsd: number
 	opportunityCheckInterval: number
 	/** Timeout in milliseconds after which arbitrage execution is considered failed and reset */
-	arbitrageExecutionTimeout?: number
+	arbitrageExecutionTimeout: number
 	retryExecuteEdgeCount?: number
 	maxExecutionErrorsInARow?: number
 }>
@@ -123,7 +125,13 @@ export class GraphArbitrageBot {
 				await this.startTokenPrice(),
 			)
 			this.logger.log(prettyOpportunity)
+
 			this.notifyAboutArbStart(prettyOpportunity)
+
+			if (this.settings.dryRun) {
+				this.logger.log('Dry run, skipping execution')
+				return
+			}
 
 			const { endAmount, revenue, executionCostInUsd } =
 				await this.execute(opportunity)

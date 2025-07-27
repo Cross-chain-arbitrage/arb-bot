@@ -41,8 +41,6 @@ makeSuite('GraphArbitrageBot', () => {
 	beforeAll(async () => {
 		jest.spyOn(PriceOracle, 'getPrice').mockResolvedValue(3000)
 
-		ClientManager.useCustomRpcUrl(arbitrum.id)
-
 		wethWbtcFuse = await PoolUtils.createPool(
 			wethWbtcFuseAddress,
 			fuse.id,

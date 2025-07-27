@@ -1,11 +1,11 @@
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { Logger } from 'nestjs-pino'
+import { AppModule } from './app.module'
 import { PoolUtils } from './dex/PoolUtils'
 import { ActionType } from './graphs/primitives/Edge'
 import { Token } from './primitives/tokens/Token'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
-import { AppModule } from './strategies/app.module'
 import { loadConfig } from './strategies/configuration'
 import { Strategy, StrategyConfig } from './strategies/Strategy'
 

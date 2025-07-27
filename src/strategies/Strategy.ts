@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { Logger } from 'nestjs-pino'
+import { GasZipBridge } from '../bridges/GasZip/GasZipBridge'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
@@ -12,6 +13,7 @@ import { GraphExecutor } from '../graphs/GraphExecutor'
 import { GraphVisualizer } from '../graphs/GraphVisualizer'
 import {
 	ActionType,
+	GasZipBridgeEdge,
 	RelayBridgeEdge,
 	SimpleStargateBridgeEdge,
 } from '../graphs/primitives/Edge'
@@ -33,6 +35,7 @@ export interface PoolData {
 
 export interface StrategyConfig {
 	botName: string
+	dryRun?: boolean
 	giveApprovals: boolean
 	startToken: Token | NativeCurrency
 	minProfitUsd: number
@@ -63,6 +66,7 @@ export class Strategy {
 		readonly stargateService: StargateService,
 		readonly fuseBridgeService: FuseBridgeService,
 		readonly graphExecutor: GraphExecutor,
+		readonly gasZipBridge: GasZipBridge,
 		readonly logger: Logger,
 	) {}
 
@@ -97,6 +101,19 @@ export class Strategy {
 							),
 						)
 						break
+
+					case ActionType.GAS_ZIP_BRIDGE:
+						graph.addEdge(
+							new GasZipBridgeEdge(
+								this.chainClientService,
+								this.gasZipBridge,
+								edgeConstructor.from,
+								edgeConstructor.to,
+								graph,
+							),
+						)
+						break
+
 					default:
 						throw new Error(
 							`${edgeConstructor.type} can be added by more convenient way`,
@@ -106,6 +123,7 @@ export class Strategy {
 		}
 
 		logger.info('Initializing PriceOracle')
+
 		await this.priceOracle.initializePriceUpdating(
 			Array.from(graph.nodes.values()),
 		)
@@ -114,13 +132,15 @@ export class Strategy {
 
 		if (config.giveApprovals) await this.prepare(bot)
 
-		const balanceReporter = new GraphBalanceReporter(
-			bot,
-			new TgBalancesNotifier(),
-			this.chainClientService,
-			this.priceOracle,
-		)
-		balanceReporter.start()
+		if (!config.dryRun) {
+			const balanceReporter = new GraphBalanceReporter(
+				bot,
+				new TgBalancesNotifier(),
+				this.chainClientService,
+				this.priceOracle,
+			)
+			balanceReporter.start()
+		}
 
 		logger.info('Starting Graph Arbitrage Bot')
 		bot.start()
