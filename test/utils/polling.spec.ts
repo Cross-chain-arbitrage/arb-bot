@@ -1,7 +1,6 @@
 import { poll } from '../../src/utils/polling'
-import { makeSuite } from '../testUtils/makeSuite'
 
-makeSuite('polling', () => {
+describe('polling', () => {
 	// Mock function that returns incrementing numbers
 	const createMockFn = (
 		finalValue: number,
