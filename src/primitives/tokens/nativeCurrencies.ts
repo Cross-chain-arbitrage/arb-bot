@@ -25,6 +25,7 @@ export const NATIVE_CURRENCIES: Record<number, TokenMetadata> = {
 	[chains.base.id]: ETH_METADATA,
 	[chains.hemi.id]: ETH_METADATA,
 	[chains.lightlinkPhoenix.id]: ETH_METADATA,
+	[chains.bob.id]: ETH_METADATA,
 	[chains.fuse.id]: createMetadata('FUSE', 'FUSE', 18),
 	[chains.story.id]: createMetadata('IP', 'IP', 18),
 	[chains.bsc.id]: createMetadata('BNB', 'BNB', 18),
