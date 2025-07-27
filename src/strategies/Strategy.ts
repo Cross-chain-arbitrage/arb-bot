@@ -35,7 +35,7 @@ export interface PoolData {
 
 export interface StrategyConfig {
 	botName: string
-	dryRun?: boolean
+	dryRun: boolean
 	giveApprovals: boolean
 	startToken: Token | NativeCurrency
 	minProfitUsd: number
@@ -159,6 +159,7 @@ export class Strategy {
 				minProfitUsd: config.minProfitUsd,
 				opportunityCheckInterval: config.opportunityCheckInterval,
 				arbitrageExecutionTimeout: config.arbitrageExecutionTimeout,
+				dryRun: config.dryRun,
 			},
 			this.chainClientService,
 			this.graphVisualizer,

@@ -66,6 +66,7 @@ async function main() {
 
 	const strategyConfig: StrategyConfig = {
 		botName: config.get('botName'),
+		dryRun: config.get('isDryRun'),
 		giveApprovals: config.get('giveApprovals'),
 		startToken: startToken,
 		minProfitUsd: config.get('minProfitUsd'),

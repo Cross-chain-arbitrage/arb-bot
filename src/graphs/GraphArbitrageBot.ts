@@ -26,7 +26,7 @@ const DEFAULT_SETTINGS = {
 }
 
 type BotSettings = Readonly<{
-	dryRun?: boolean
+	dryRun: boolean
 	minProfitUsd: number
 	opportunityCheckInterval: number
 	/** Timeout in milliseconds after which arbitrage execution is considered failed and reset */
@@ -80,6 +80,10 @@ export class GraphArbitrageBot {
 		this.TgArbitrageNotifier.sendMessage(message).catch((err) => {
 			this.logger.error(err, 'Error sending message to telegram')
 		})
+
+		if (this.settings.dryRun) {
+			this.logger.log('This Arbitrage Bot is in dry run mode')
+		}
 
 		void runFuncWithDelay(async () => {
 			await this.findAndExecuteArbitrage()
