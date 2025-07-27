@@ -1,9 +1,13 @@
+import { Test } from '@nestjs/testing'
 import { Chain, Client, erc20Abi, getContract, WalletClient } from 'viem'
 import { Pool } from '../../src/dex/base/Pool'
-import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
-import { PriceOracle } from '../../src/modules/price-oracle/price-oracle.service'
+import { DexRegistry } from '../../src/dex/DexRegistry'
+import { PoolType } from '../../src/dex/PoolUtils'
+import { GeckoTerminalService } from '../../src/modules/price-oracle/gecko-terminal.service'
+import { PriceOracleService } from '../../src/modules/price-oracle/price-oracle.service'
 import { Token } from '../../src/primitives/tokens/Token'
-import { ClientManager } from '../../src/utils/ChainClientService'
+import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
+import { ChainClientService } from '../../src/utils/ChainClientService'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'
 
 export type PoolTestConfig = {
@@ -31,19 +35,38 @@ export function testPool(context: PoolTestConfig) {
 	let walletClient: WalletClient
 	let botAddress: Address
 	let pool: Pool
+	let priceOracleService: PriceOracleService
 
-	useAnvil({
+	const { mockChainClientService } = useAnvil({
 		chainId: chain.id,
 		timeoutStartAnvil: 20000,
 		rpcUrl,
 	})
 
 	beforeAll(async () => {
-		client = ClientManager.getClient(chain.id)
-		walletClient = ClientManager.getWalletClient(chain.id)
-		botAddress = walletClient.account!.address
+		const poolCreatorClass = DexRegistry[poolType]
+		const app = await Test.createTestingModule({
+			providers: [
+				{
+					provide: ChainClientService,
+					useValue: mockChainClientService,
+				},
+				TokenUtils,
+				poolCreatorClass,
+				PriceOracleService,
+				GeckoTerminalService,
+			],
+		}).compile()
 
-		pool = await PoolUtils.createPool(poolAddress, chain.id, poolType)
+		walletClient = mockChainClientService.getWalletClient(chain.id)
+		botAddress = walletClient.account!.address
+		priceOracleService = app.get(PriceOracleService)
+
+		client = mockChainClientService.getClient(chain.id)
+
+		const poolCreator = app.get(poolCreatorClass)
+
+		pool = await poolCreator.create(poolAddress, chain.id)
 
 		await setNativeBalance(client, botAddress, 10n ** 36n)
 		await setTokenBalance(
@@ -89,12 +112,8 @@ export function testPool(context: PoolTestConfig) {
 	}
 
 	async function swapAndAssert(tokenIn: Token, tokenOut: Token) {
-		const tokenInPrice = await PriceOracle.getPrice(tokenIn, {
-			updateInterval: false,
-		})
-		const tokenOutPrice = await PriceOracle.getPrice(tokenOut, {
-			updateInterval: false,
-		})
+		const tokenInPrice = await priceOracleService.getPrice(tokenIn)
+		const tokenOutPrice = await priceOracleService.getPrice(tokenOut)
 
 		const amountIn = tokenIn.parseUnits(
 			(AMOUNT_IN_USD / tokenInPrice).toString(),

@@ -1,8 +1,17 @@
 import { ChildProcess, exec } from 'child_process'
 import getPort from 'get-port'
-import { Chain, Client, toHex } from 'viem'
-import { ClientManager } from '../../src/utils/ChainClientService'
-import { getPrivateKey } from '../../src/utils/common'
+import {
+	Client,
+	createPublicClient,
+	createWalletClient,
+	defineChain,
+	http,
+	toHex,
+	WalletClient,
+} from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
+import * as chains from 'viem/chains'
+import { ChainClientService } from '../../src/utils/ChainClientService'
 
 /* ======== useAnvil ======== */
 
@@ -16,51 +25,75 @@ const testMnemonic =
  * Starts anvil in describe() and replace viem rpc url and private key
  */
 export function useAnvil(anvilConfig: AnvilConfig) {
-	const chain = ClientManager.findChainById(anvilConfig.chainId)
+	const chain = Object.values(chains).find(
+		(chain) => chain.id === anvilConfig.chainId,
+	) as chains.Chain
+
+	if (!chain) {
+		throw new Error(
+			`Chain with id ${anvilConfig.chainId} not found in viem chains`,
+		)
+	}
 
 	const defaultRpcUrl = chain.rpcUrls.default.http[0]
-
-	const realPk = getPrivateKey()
 
 	const anvil = new Anvil(anvilConfig)
 
 	beforeAll(async () => {
-		await startAnvilAndSetTestEnv(anvil, chain, defaultRpcUrl)
+		await anvil.start(defaultRpcUrl)
 	})
 
 	afterAll(() => {
-		killAnvilAndRestoreEnv(anvil, chain, defaultRpcUrl, realPk)
+		anvil.stop()
 	})
 
-	return anvil
-}
+	const mockChainClientService = {
+		getClient: (chainId: number) => {
+			if (chainId !== chain.id) {
+				throw new Error(
+					`chainClientService from useAnvil support only forked chain, expected ${chain.id}, got ${chainId}`,
+				)
+			}
 
-async function startAnvilAndSetTestEnv(
-	anvil: Anvil,
-	chain: Chain,
-	defaultRpcUrl: string,
-) {
-	ClientManager.clearClients()
+			const publicClient = createPublicClient({
+				chain: defineChain({
+					...chain,
+					rpcUrls: {
+						default: {
+							http: [`http://localhost:${anvil.port}`],
+						},
+					},
+				}),
+				transport: http(),
+			})
 
-	process.env.PRIVATE_KEY = testPk
+			return publicClient as Client
+		},
+		getWalletClient: (chainId: number) => {
+			if (chainId !== chain.id) {
+				throw new Error(
+					`chainClientService from useAnvil support only forked chain, expected ${chain.id}, got ${chainId}`,
+				)
+			}
 
-	await anvil.start(defaultRpcUrl)
+			const walletClient = createWalletClient({
+				chain: defineChain({
+					...chain,
+					rpcUrls: {
+						default: {
+							http: [`http://localhost:${anvil.port}`],
+						},
+					},
+				}),
+				transport: http(),
+				account: privateKeyToAccount(testPk),
+			})
 
-	// @ts-expect-error override readonly property
-	chain.rpcUrls.default.http[0] = `http://localhost:${anvil.port}`
-}
+			return walletClient as WalletClient
+		},
+	} as ChainClientService
 
-function killAnvilAndRestoreEnv(
-	anvil: Anvil,
-	chain: Chain,
-	defaultRpcUrl: string,
-	realPk: string | undefined,
-) {
-	anvil.stop()
-	ClientManager.clearClients()
-	// @ts-expect-error override readonly property
-	chain.rpcUrls.default.http[0] = defaultRpcUrl
-	process.env.PRIVATE_KEY = realPk
+	return { anvil, mockChainClientService }
 }
 
 class Anvil {
