@@ -126,12 +126,12 @@ export class GraphArbitrageBot {
 			)
 			this.logger.log(prettyOpportunity)
 
+			this.notifyAboutArbStart(prettyOpportunity)
+
 			if (this.settings.dryRun) {
 				this.logger.log('Dry run, skipping execution')
 				return
 			}
-
-			this.notifyAboutArbStart(prettyOpportunity)
 
 			const { endAmount, revenue, executionCostInUsd } =
 				await this.execute(opportunity)
