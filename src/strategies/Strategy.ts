@@ -123,6 +123,7 @@ export class Strategy {
 		}
 
 		logger.info('Initializing PriceOracle')
+
 		await this.priceOracle.initializePriceUpdating(
 			Array.from(graph.nodes.values()),
 		)
@@ -131,13 +132,15 @@ export class Strategy {
 
 		if (config.giveApprovals) await this.prepare(bot)
 
-		const balanceReporter = new GraphBalanceReporter(
-			bot,
-			new TgBalancesNotifier(),
-			this.chainClientService,
-			this.priceOracle,
-		)
-		balanceReporter.start()
+		if (!config.dryRun) {
+			const balanceReporter = new GraphBalanceReporter(
+				bot,
+				new TgBalancesNotifier(),
+				this.chainClientService,
+				this.priceOracle,
+			)
+			balanceReporter.start()
+		}
 
 		logger.info('Starting Graph Arbitrage Bot')
 		bot.start()
