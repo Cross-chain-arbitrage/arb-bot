@@ -1,14 +1,14 @@
+import { Logger } from 'nestjs-pino'
 import { runFnWithRetry } from '../../src/utils/common'
-import logger from '../../src/utils/logger'
-import { makeSuite } from '../testUtils/makeSuite'
-makeSuite('common', () => {
+
+describe('common', () => {
 	describe('runFnWithRetry', () => {
-		let spyOnLoggerWarn: jest.SpyInstance
+		let logger: jest.Mocked<Pick<Logger, 'warn'>>
 
 		beforeEach(() => {
-			spyOnLoggerWarn = jest
-				.spyOn(logger, 'warn')
-				.mockImplementation(() => {})
+			logger = {
+				warn: jest.fn(),
+			}
 		})
 
 		afterEach(() => {
@@ -18,7 +18,11 @@ makeSuite('common', () => {
 		it('should return the result of the function', async () => {
 			const fn = () => Promise.resolve(1)
 
-			const result = await runFnWithRetry(fn, 3)
+			const result = await runFnWithRetry(
+				fn,
+				3,
+				logger as unknown as Logger,
+			)
 
 			expect(result).toBe(1)
 		})
@@ -34,7 +38,9 @@ makeSuite('common', () => {
 				return Promise.resolve(1)
 			}
 
-			await expect(runFnWithRetry(fn, 3)).rejects.toThrow('Error')
+			await expect(
+				runFnWithRetry(fn, 3, logger as unknown as Logger),
+			).rejects.toThrow('Error')
 		})
 
 		it('should warn about the error and retry with success', async () => {
@@ -48,9 +54,9 @@ makeSuite('common', () => {
 				return Promise.resolve(1)
 			}
 
-			await runFnWithRetry(fn, 3)
+			await runFnWithRetry(fn, 3, logger as unknown as Logger)
 
-			expect(spyOnLoggerWarn).toHaveBeenCalledTimes(2)
+			expect(logger.warn).toHaveBeenCalledTimes(2)
 		})
 	})
 })
