@@ -14,6 +14,8 @@ async function main() {
 			json: isProd,
 		}),
 	})
+
+	// Global runtime is continued at `src/strategies/Strategy:onApplicationBootstrap()`
 }
 
 if (require.main === module) {
