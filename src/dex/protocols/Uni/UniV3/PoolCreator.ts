@@ -1,5 +1,5 @@
+import { Injectable } from '@nestjs/common'
 import { getAddress } from 'viem'
-import { ClientManager } from '../../../../utils/ClientManager'
 import {
 	callFactoryFunction,
 	callFeeFunction,
@@ -12,6 +12,7 @@ import { PoolCreator } from '../../../base/PoolCreator'
 import { UNIV3_PERIPHERY_CONFIG } from './periphery'
 import { UniV3Pool } from './Pool'
 
+@Injectable()
 export class UniV3PoolCreator extends PoolCreator {
 	override _getToken0Address = callToken0Function
 	override _getToken1Address = callToken1Function
@@ -31,12 +32,13 @@ export class UniV3PoolCreator extends PoolCreator {
 		periphery: (typeof UNIV3_PERIPHERY_CONFIG)[number][Address],
 		immutables: PoolConstructorParams['immutables'],
 	) {
-		const client = ClientManager.getClient(chainId)
+		const client = this.chainClientService.getClient(chainId)
 
 		const fee = await callFeeFunction(poolAddress, client)
 
 		return new UniV3Pool(
 			{
+				chainClientService: this.chainClientService,
 				immutables,
 				poolAddress,
 				chainId,

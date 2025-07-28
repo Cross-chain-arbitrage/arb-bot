@@ -1,20 +1,23 @@
 import {
 	arbitrum,
 	base,
+	bob,
 	bsc,
 	fuse,
 	gravity,
 	hemi,
 	lightlinkPhoenix,
 	story,
+	superposition,
 	swellchain,
 } from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { getAccountAddress } from '../../utils/common'
 import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'
+import { TokenMetadata } from './TokenBase'
 import { WrappedNativeError } from './TokenErrors'
-import { TokenUtils } from './TokenUtils'
 
 export const wrappedTokens: Record<number, Address | undefined> = {
 	[arbitrum.id]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
@@ -26,16 +29,16 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[gravity.id]: '0xBB859E225ac8Fb6BE1C7e38D87b767e95Fef0EbD',
 	[base.id]: '0x4200000000000000000000000000000000000006',
 	[swellchain.id]: '0x4200000000000000000000000000000000000006',
+	[superposition.id]: '0x1fB719f10b56d7a85DCD32f27f897375fB21cfdd',
+	[bob.id]: '0x4200000000000000000000000000000000000006',
 }
 
 export class WrappedNative extends Token {
-	readonly native: NativeCurrency
-
 	constructor(
+		chainClientService: ChainClientService,
+		readonly native: NativeCurrency,
 		chainId: number,
-		symbol: string,
-		decimals: number,
-		name: string,
+		tokenMetadata: TokenMetadata,
 	) {
 		const address = wrappedTokens[chainId]
 
@@ -43,8 +46,7 @@ export class WrappedNative extends Token {
 			throw new Error(`Wrapped token not found for chain ${chainId}`)
 		}
 
-		super(address, chainId, symbol, decimals, name)
-		this.native = TokenUtils.getNative(chainId)
+		super(chainClientService, address, chainId, tokenMetadata)
 	}
 
 	async deposit(amount: bigint) {

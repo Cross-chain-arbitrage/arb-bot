@@ -1,5 +1,6 @@
 import { Address, isAddressEqual } from 'viem'
-import { TokenBase } from './TokenBase'
+import { ChainClientService } from '../../utils/ChainClientService'
+import { TokenBase, TokenMetadata } from './TokenBase'
 import { NativeCurrencyError } from './TokenErrors'
 
 export const NATIVE_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
@@ -7,8 +8,17 @@ export const STARGATE_NATIVE_ADDRESS =
 	'0x0000000000000000000000000000000000000000'
 
 export class NativeCurrency extends TokenBase {
-	constructor(chainId: number, symbol: string, name: string) {
-		super(STARGATE_NATIVE_ADDRESS, chainId, symbol, 18, name)
+	constructor(
+		chainClientService: ChainClientService,
+		chainId: number,
+		tokenMetadata: TokenMetadata,
+	) {
+		super(
+			chainClientService,
+			STARGATE_NATIVE_ADDRESS,
+			chainId,
+			tokenMetadata,
+		)
 	}
 
 	isNative(): true {

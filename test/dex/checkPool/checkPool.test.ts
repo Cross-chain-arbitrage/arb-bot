@@ -1,7 +1,7 @@
 import { Chain, getAddress } from 'viem'
 import * as viemChains from 'viem/chains'
+import { DexRegistry } from '../../../src/dex/DexRegistry'
 import { PoolType } from '../../../src/dex/PoolUtils'
-import { DexRegistry } from '../../../src/dex/poolVariety'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { makeSuite } from '../../testUtils/makeSuite'
 import { testPool } from '../../testUtils/testPool'

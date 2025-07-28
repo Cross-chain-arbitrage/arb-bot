@@ -14,10 +14,10 @@ import {
 } from '../../src/graphs/primitives/Edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
-import { PriceOracle } from '../../src/modules/PriceOracle/PriceOracle'
+import { PriceOracle } from '../../src/modules/price-oracle/price-oracle.service'
 import { TokenAmount } from '../../src/primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
-import { ClientManager } from '../../src/utils/ClientManager'
+import { ClientManager } from '../../src/utils/ChainClientService'
 import { wait } from '../../src/utils/common'
 import logger from '../../src/utils/logger'
 import { makeSuite } from '../testUtils/makeSuite'
@@ -40,8 +40,6 @@ makeSuite('GraphArbitrageBot', () => {
 
 	beforeAll(async () => {
 		jest.spyOn(PriceOracle, 'getPrice').mockResolvedValue(3000)
-
-		ClientManager.useCustomRpcUrl(arbitrum.id)
 
 		wethWbtcFuse = await PoolUtils.createPool(
 			wethWbtcFuseAddress,

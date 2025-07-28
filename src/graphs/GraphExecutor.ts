@@ -1,6 +1,9 @@
+import { Injectable } from '@nestjs/common'
+import { Logger } from 'nestjs-pino'
 import { TransactionReceipt } from 'viem'
-import { PriceOracle } from '../modules/PriceOracle/PriceOracle'
+import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { ChainClientService } from '../utils/ChainClientService'
 import { runFnWithRetry } from '../utils/common'
 import logger from '../utils/logger'
 import { ActionType, Edge } from './primitives/Edge'
@@ -21,12 +24,20 @@ export interface GraphExecutorConfig {
 	) => unknown
 }
 
+@Injectable()
 export class GraphExecutor {
+	constructor(
+		readonly chainClientService: ChainClientService,
+		readonly tokenUtils: TokenUtils,
+		readonly priceOracleService: PriceOracleService,
+		readonly logger: Logger,
+	) {}
+
 	/**
 	 * Execute the arbitrage path
 	 * @returns actual end amount
 	 */
-	static async execute(config: GraphExecutorConfig) {
+	async execute(config: GraphExecutorConfig) {
 		const {
 			path,
 			startAmount,
@@ -49,6 +60,7 @@ export class GraphExecutor {
 			const executionResult = await runFnWithRetry(
 				() => edge.execute(nextAmountIn),
 				retryExecuteEdgeCount,
+				this.logger,
 			)
 
 			const { executionCostInUsd } = await this.handleExecutionResult(
@@ -72,7 +84,7 @@ export class GraphExecutor {
 	/**
 	 * build and print log and calculate tx cost
 	 */
-	static async handleExecutionResult(
+	async handleExecutionResult(
 		edge: Edge,
 		executionResult: EdgeExecutionResult<ActionType>,
 	) {
@@ -90,7 +102,7 @@ export class GraphExecutor {
 			const { srcTxReceipt, dstTxHash, bridgeFee } =
 				executionResult as EdgeExecutionResult<BridgeActionType>
 
-			const bridgeFeeTokenPrice = await PriceOracle.getPrice(
+			const bridgeFeeTokenPrice = await this.priceOracleService.getPrice(
 				bridgeFee.underlyingToken,
 			)
 
@@ -130,8 +142,8 @@ export class GraphExecutor {
 		}
 	}
 
-	static async getTxCost(chainId: number, txReceipt: TransactionReceipt) {
-		const nativeCurrency = TokenUtils.getNative(chainId)
+	async getTxCost(chainId: number, txReceipt: TransactionReceipt) {
+		const nativeCurrency = this.tokenUtils.getNative(chainId)
 
 		let txCostInNative = 0n
 		try {
@@ -147,7 +159,8 @@ export class GraphExecutor {
 		const txCostInNativeFormatted =
 			nativeCurrency.formatUnits(txCostInNative)
 
-		const nativePrice = await PriceOracle.getPrice(nativeCurrency)
+		const nativePrice =
+			await this.priceOracleService.getPrice(nativeCurrency)
 
 		const txCostInUsd = Number(txCostInNativeFormatted) * nativePrice
 

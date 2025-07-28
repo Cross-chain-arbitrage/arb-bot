@@ -6,21 +6,21 @@ import {
 	maxUint256,
 	TransactionReceipt,
 } from 'viem'
+import { ChainClientService } from '../../utils/ChainClientService'
 import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from './NativeCurrency'
-import { TokenBase } from './TokenBase'
+import { TokenBase, TokenMetadata } from './TokenBase'
 import { TokenError } from './TokenErrors'
 
 export class Token extends TokenBase {
 	constructor(
+		chainClientService: ChainClientService,
 		address: Address,
 		chainId: number,
-		symbol: string,
-		decimals: number,
-		name?: string,
+		tokenMetadata: TokenMetadata,
 	) {
-		super(address, chainId, symbol, decimals, name)
+		super(chainClientService, address, chainId, tokenMetadata)
 		this.validateTokenAddress(address)
-		this.validateDecimals(decimals)
+		this.validateDecimals(tokenMetadata.decimals)
 	}
 
 	isNative(): false {

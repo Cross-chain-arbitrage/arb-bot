@@ -35,6 +35,7 @@ declare global {
 		| ActionType.FUSE_BRIDGE
 		| ActionType.RELAY_BRIDGE
 		| ActionType.SIMPLE_STARGATE_BRIDGE
+		| ActionType.GAS_ZIP_BRIDGE
 
 	type EdgeExecutionCost<T extends ActionType = ActionType> = {
 		gas: bigint

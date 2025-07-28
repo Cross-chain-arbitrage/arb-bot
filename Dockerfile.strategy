@@ -9,13 +9,10 @@ COPY package.json yarn.lock ./
 
 # Install dependencies
 RUN yarn install --frozen-lockfile
-
 # Copy source code and config files while preserving structure
 COPY src/ ./src/
 COPY tsconfig.build.json tsconfig.json ./
 
-# Compile TypeScript to JavaScript
 RUN yarn build
 
-# Use environment variable for entry point
-CMD ["sh", "-c", "node dist/strategies/${ENTRY_POINT}"]
+CMD ["node", "dist/main"]
