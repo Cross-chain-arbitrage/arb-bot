@@ -1,8 +1,8 @@
+import { Logger } from '@nestjs/common'
 import { BaseError } from 'viem'
 import { GraphOpportunityFinder } from '../graphs/GraphOpportunityFinder'
 import { Graph } from '../graphs/primitives/Graph'
 import { createCustomError } from '../utils/common'
-import logger from '../utils/logger'
 
 const GraphOptimizerError = createCustomError('GraphOptimizerError')
 
@@ -21,6 +21,7 @@ export class GraphOptimizer {
 		startTokenUSDPrice: number,
 		graph: Graph,
 		options: GraphOptimizerOptions,
+		logger: Logger,
 	): Promise<GraphArbitrageOpportunity | null> {
 		const { minStartValueUsd, maxStartValueUsd, runCount, maxPathLength } =
 			options
@@ -62,7 +63,7 @@ export class GraphOptimizer {
 			.map((result) => result.value)
 
 		if (algorithmResults.length === 0) {
-			this.handleErrors(algorithmResultsSettled)
+			this.handleErrors(algorithmResultsSettled, logger)
 
 			throw new GraphOptimizerError(
 				'All optimization attempts failed with errors',
@@ -86,6 +87,7 @@ export class GraphOptimizer {
 
 	private static handleErrors(
 		algorithmResultsSettled: PromiseSettledResult<GraphArbitrageOpportunity | null>[],
+		logger: Logger,
 	) {
 		logger.error('Errors occurred during graph optimization')
 

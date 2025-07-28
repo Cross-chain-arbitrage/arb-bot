@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Logger, Module } from '@nestjs/common'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ChainClientService } from '../../utils/ChainClientService'
 import { GeckoTerminalService } from './gecko-terminal.service'
@@ -10,6 +10,7 @@ import { PriceOracleService } from './price-oracle.service'
 		GeckoTerminalService,
 		TokenUtils,
 		ChainClientService,
+		Logger,
 	],
 	exports: [PriceOracleService],
 })
