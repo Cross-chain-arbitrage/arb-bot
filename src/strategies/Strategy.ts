@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common'
-import { Logger } from 'nestjs-pino'
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { GasZipBridge } from '../bridges/GasZip/GasZipBridge'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
 import { RelayService } from '../bridges/relay/relay-service'
-import { PoolType } from '../dex/PoolUtils'
+import { PoolType, PoolUtils } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
@@ -25,7 +25,7 @@ import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { ChainClientService } from '../utils/ChainClientService'
-import logger from '../utils/logger'
+import { loadConfig } from './configuration'
 
 export interface PoolData {
 	address: Address
@@ -52,12 +52,17 @@ export interface StrategyConfig {
 }
 
 @Injectable()
-export class Strategy {
+export class Strategy implements OnApplicationBootstrap {
 	constructor(
+		readonly baseConfigService: ConfigService<
+			ReturnType<typeof loadConfig>,
+			true
+		>,
+		readonly tokenUtils: TokenUtils,
+		readonly poolUtils: PoolUtils,
 		readonly graphBuilder: GraphBuilder,
 		readonly priceOracle: PriceOracleService,
 		readonly chainClientService: ChainClientService,
-		readonly tokenUtils: TokenUtils,
 		readonly tgArbitrageNotifier: TgArbitrageNotifier,
 		readonly tgBalancesNotifier: TgBalancesNotifier,
 		readonly graphVisualizer: GraphVisualizer,
@@ -70,9 +75,71 @@ export class Strategy {
 		readonly logger: Logger,
 	) {}
 
+	async onApplicationBootstrap() {
+		// Create a wrapper that always uses infer: true
+		const config = {
+			get: <K extends keyof ReturnType<typeof loadConfig>>(key: K) =>
+				this.baseConfigService.get(key, { infer: true }),
+		}
+
+		const startTokenId = config.get('startTokenId')
+
+		const startToken = await this.tokenUtils.fromAddress(
+			startTokenId.address,
+			startTokenId.chainId,
+		)
+
+		const graphBuilderConfig = config.get('graphBuilderConfig')
+
+		const edgeConstructors: {
+			from: Token
+			to: Token
+			type: ActionType
+		}[] = []
+
+		if (graphBuilderConfig.additionalEdges) {
+			for (const additionalEdge of graphBuilderConfig.additionalEdges) {
+				edgeConstructors.push({
+					from: await this.tokenUtils.fromAddress(
+						additionalEdge.from.address,
+						additionalEdge.from.chainId,
+					),
+					to: await this.tokenUtils.fromAddress(
+						additionalEdge.to.address,
+						additionalEdge.to.chainId,
+					),
+					type: additionalEdge.type as ActionType,
+				})
+			}
+		}
+
+		const strategyConfig: StrategyConfig = {
+			botName: config.get('botName'),
+			dryRun: config.get('isDryRun'),
+			giveApprovals: config.get('giveApprovals'),
+			startToken: startToken,
+			minProfitUsd: config.get('minProfitUsd'),
+			opportunityCheckInterval: config.get('opportunityCheckInterval'),
+			arbitrageExecutionTimeout: config.get('arbitrageExecutionTimeout'),
+			graphBuildConfig: {
+				pools: await this.poolUtils.createPools(
+					graphBuilderConfig.pools,
+				),
+				connectSecondaryChains:
+					graphBuilderConfig.connectSecondaryChains,
+				baseChainId: graphBuilderConfig.baseChainId,
+				edgeConstructors,
+				edgeCacheTTL: graphBuilderConfig.edgeCacheTTL ?? 3000,
+			},
+			graphOptimizerOptions: config.get('graphOptimizerConfig'),
+		}
+
+		await this.run(strategyConfig)
+	}
+
 	async run(config: StrategyConfig) {
 		this.logConfig(config)
-		logger.info('Building Graph')
+		this.logger.log('Building Graph')
 		const graph = await this.graphBuilder.build(config.graphBuildConfig)
 
 		if (config.graphBuildConfig.edgeConstructors) {
@@ -123,7 +190,7 @@ export class Strategy {
 			}
 		}
 
-		logger.info('Initializing PriceOracle')
+		this.logger.log('Initializing PriceOracle')
 
 		await this.priceOracle.initializePriceUpdating(
 			Array.from(graph.nodes.values()),
@@ -136,14 +203,15 @@ export class Strategy {
 		if (!config.dryRun) {
 			const balanceReporter = new GraphBalanceReporter(
 				bot,
-				new TgBalancesNotifier(),
+				this.tgBalancesNotifier,
 				this.chainClientService,
 				this.priceOracle,
+				this.logger,
 			)
 			balanceReporter.start()
 		}
 
-		logger.info('Starting Graph Arbitrage Bot')
+		this.logger.log('Starting Graph Arbitrage Bot')
 		bot.start()
 	}
 
@@ -174,35 +242,37 @@ export class Strategy {
 	}
 
 	private async prepare(bot: GraphArbitrageBot) {
-		logger.info('Starting WethPoolsStrategy')
+		this.logger.log('Starting WethPoolsStrategy')
 
 		await bot.approveAll()
 	}
 
 	logConfig(config: StrategyConfig) {
-		const shortConfig: StrategyConfig = {
-			name: config.name,
+		const startToken = {
+			address: config.startToken.address,
+			chainId: config.startToken.chainId,
+			symbol: config.startToken.symbol,
+			decimals: config.startToken.decimals,
+		}
+
+		const formattedConfig = {
+			botName: config.botName,
+			dryRun: config.dryRun,
 			giveApprovals: config.giveApprovals,
-			startToken: config.startToken,
+			startToken,
 			minProfitUsd: config.minProfitUsd,
 			graphOptimizerOptions: config.graphOptimizerOptions,
+			// TODO: log graphBuildConfig
 			graphBuildConfig: {
 				pools: [],
 				edgeConstructors: [],
-				stargateConfig: {
-					connectSecondaryChains: false,
-					baseChainId:
-						config.graphBuildConfig.stargateConfig?.baseChainId ??
-						0,
-				},
+				connectSecondaryChains: false,
+				baseChainId: config.graphBuildConfig.baseChainId ?? 0,
 			},
-			pollingInterval: config.pollingInterval,
-			arbitrageTimeout: config.arbitrageTimeout,
+			arbitrageExecutionTimeout: config.arbitrageExecutionTimeout,
+			opportunityCheckInterval: config.opportunityCheckInterval,
 		}
 
-		logger.info(
-			{ ...shortConfig, type: 'strategy-config' },
-			'Strategy initialized',
-		)
+		this.logger.log({ ...formattedConfig }, 'strategy-config')
 	}
 }

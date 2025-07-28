@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { isAddressEqual } from 'viem'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
-import logger from '../../utils/logger'
 import { chainIdToGeckoChainId } from './gecko-terminal-chains.constants.ts'
 import { GeckoTerminalService } from './gecko-terminal.service'
 import {
@@ -28,6 +27,7 @@ export class PriceOracleService {
 		readonly chainClientService: ChainClientService,
 		readonly tokenUtils: TokenUtils,
 		readonly geckoTerminalService: GeckoTerminalService,
+		readonly logger: Logger,
 	) {}
 
 	/* ======== PUBLIC METHODS ======== */
@@ -61,7 +61,7 @@ export class PriceOracleService {
 
 		this.priceUpdater = setInterval(() => {
 			this.updatePrices().catch((error) =>
-				logger.error('Error updating prices:', error),
+				this.logger.error('Error updating prices:', error),
 			)
 		}, updateInterval)
 	}

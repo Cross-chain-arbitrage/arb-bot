@@ -1,5 +1,4 @@
-import { Injectable } from '@nestjs/common'
-import { Logger } from 'nestjs-pino'
+import { Injectable, Logger } from '@nestjs/common'
 import { fuse } from 'viem/chains'
 import { FUSE_BRIDGE_SUPPORTED_TOKENS } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.constants'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'

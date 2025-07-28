@@ -1,4 +1,4 @@
-import { Logger } from 'nestjs-pino'
+import { Logger } from '@nestjs/common'
 import {
 	ContractFunctionExecutionError,
 	maxUint256,
@@ -6,6 +6,11 @@ import {
 } from 'viem'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
+import {
+	OpportunityLog,
+	OpportunityLogType,
+	SuccessExecutionOpportunityLog,
+} from '../logging/OpportunityLog'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
@@ -40,8 +45,6 @@ export class GraphArbitrageBot {
 	private executionErrorInARow = 0
 	readonly settings: Required<BotSettings>
 
-	readonly oppLogger: Logger
-
 	constructor(
 		readonly botName: string,
 		readonly TgArbitrageNotifier: TgArbitrageNotifier,
@@ -61,10 +64,6 @@ export class GraphArbitrageBot {
 		readonly logger: Logger,
 	) {
 		this.settings = { ...DEFAULT_SETTINGS, ...settings }
-
-		this.oppLogger = logger.child({
-			module: 'opportunity-finder',
-		})
 	}
 
 	start() {
@@ -104,6 +103,7 @@ export class GraphArbitrageBot {
 				await this.startTokenPrice(),
 				this.graphParams.graph,
 				this.graphParams.graphOptimizerOptions,
+				this.logger,
 			)
 
 			return findOpportunityRes
@@ -555,7 +555,7 @@ export class GraphArbitrageBot {
 			executionTime,
 		}
 
-		this.oppLogger.info(log, msg)
+		this.logger.log(log, msg)
 	}
 
 	async logOpportunity(
@@ -587,6 +587,6 @@ export class GraphArbitrageBot {
 			path: opportunity.path.map((edge) => edge.id),
 		}
 
-		this.oppLogger.info(log, msg)
+		this.logger.log(log, msg)
 	}
 }

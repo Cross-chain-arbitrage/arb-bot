@@ -1,5 +1,5 @@
+import { Logger } from '@nestjs/common'
 import dotenv from 'dotenv'
-import { Logger } from 'nestjs-pino'
 import { BaseError, Hex, pad } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 
