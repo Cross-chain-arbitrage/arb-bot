@@ -28,7 +28,7 @@ async function main() {
 		name: 'Fuse Weth Pools Bot',
 		giveApprovals: false,
 		startToken: TokenUtils.getNative(arbitrum.id),
-		minProfitUsd: 0.8,
+		minProfitUsd: 0.45,
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
 		graphBuildConfig: {

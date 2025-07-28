@@ -97,7 +97,10 @@ export function getAccountAddress() {
 
 export function createCustomError(errorName: string) {
 	return class CustomError extends Error {
-		constructor(message: string) {
+		constructor(
+			message: string,
+			public context?: unknown,
+		) {
 			super(message)
 			Object.setPrototypeOf(this, new.target.prototype)
 			this.name = errorName

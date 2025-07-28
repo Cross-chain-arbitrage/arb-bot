@@ -67,7 +67,7 @@ async function main() {
 		name: 'Swellchain Weth Pools Bot',
 		giveApprovals: false,
 		startToken: usdeOnBase,
-		minProfitUsd: 5,
+		minProfitUsd: 0.5,
 		pollingInterval: 10_000,
 		arbitrageTimeout: 5 * 60 * 1000,
 		graphBuildConfig: {
@@ -77,6 +77,7 @@ async function main() {
 				baseChainId: base.id,
 			},
 			edgeConstructors,
+			edgeCacheTTL: 3000,
 		},
 		graphOptimizerOptions: {
 			initialValueUSD: 200,

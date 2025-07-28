@@ -184,6 +184,14 @@ export class GraphArbitrageBot {
 			opportunity.endAmount,
 		)
 
+		if (expectedRevenue < 0) {
+			logger.warn(
+				opportunity,
+				`Revenue is negative, expectedRevenue: $${expectedRevenue.toFixed(2)}`,
+			)
+			return false
+		}
+
 		if (expectedRevenue < this.settings.minProfitUsd) {
 			await this.logSkippedOpp(opportunity, 'Revenue is too low')
 			return false
@@ -192,40 +200,7 @@ export class GraphArbitrageBot {
 		let executionCostInUsd = 0
 
 		for (const edge of opportunity.path) {
-			const nativeOnFromChain = TokenUtils.getNative(edge.from.chainId)
-			const nativePrice = await PriceOracle.getPrice(nativeOnFromChain)
-			const gasPrice = await ClientManager.getClient(
-				edge.from.chainId,
-			).getGasPrice()
-
-			const txCostInUsd =
-				Number(
-					nativeOnFromChain.formatUnits(
-						gasPrice * edge.lastQuote!.cost.gas,
-					),
-				) * nativePrice
-
-			executionCostInUsd += txCostInUsd
-
-			if (
-				edge.actionType === ActionType.STARGATE_BRIDGE ||
-				edge.actionType === ActionType.FUSE_BRIDGE
-			) {
-				const bridgeFee = (
-					edge.lastQuote!.cost as EdgeExecutionCost<BridgeActionType>
-				).bridgeFee
-
-				const tokenPrice = await PriceOracle.getPrice(
-					bridgeFee.underlyingToken,
-				)
-
-				const txCostInUsd =
-					Number(
-						bridgeFee.underlyingToken.formatUnits(bridgeFee.amount),
-					) * tokenPrice
-
-				executionCostInUsd += txCostInUsd
-			}
+			executionCostInUsd += await this.calculateEdgeExecutionCost(edge)
 		}
 
 		const expectedProfit = expectedRevenue - executionCostInUsd
@@ -236,6 +211,53 @@ export class GraphArbitrageBot {
 		}
 
 		return true
+	}
+
+	async calculateEdgeExecutionCost(edge: Edge) {
+		let executionCostInUsd = 0
+
+		const nativeOnFromChain = TokenUtils.getNative(edge.from.chainId)
+		const nativePrice = await PriceOracle.getPrice(nativeOnFromChain)
+		const gasPrice = await ClientManager.getClient(
+			edge.from.chainId,
+		).getGasPrice()
+
+		const txCostInUsd =
+			Number(
+				nativeOnFromChain.formatUnits(
+					gasPrice * edge.lastQuote!.cost.gas,
+				),
+			) * nativePrice
+
+		// TODO: refactor! Relay returns already calculated gas * gasPrice
+		if (edge.actionType === ActionType.RELAY_BRIDGE) {
+			executionCostInUsd += Number(edge.lastQuote!.cost.gas) * nativePrice
+		} else {
+			executionCostInUsd += txCostInUsd
+		}
+
+		if (
+			edge.actionType === ActionType.STARGATE_BRIDGE ||
+			edge.actionType === ActionType.FUSE_BRIDGE ||
+			edge.actionType === ActionType.SIMPLE_STARGATE_BRIDGE
+		) {
+			const bridgeFee = (
+				edge.lastQuote!.cost as EdgeExecutionCost<BridgeActionType>
+			).bridgeFee
+
+			const tokenPrice = await PriceOracle.getPrice(
+				bridgeFee.underlyingToken,
+			)
+
+			const txCostInUsd =
+				Number(
+					bridgeFee.underlyingToken.formatUnits(bridgeFee.amount),
+				) * tokenPrice
+
+			executionCostInUsd += txCostInUsd
+		}
+
+		return executionCostInUsd
 	}
 
 	async findAndExecuteArbitrage() {

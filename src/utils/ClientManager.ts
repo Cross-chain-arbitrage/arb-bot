@@ -14,20 +14,13 @@ import {
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
 
-import {
-	arbitrum,
-	base,
-	bsc,
-	lightlinkPhoenix,
-	mainnet,
-	story,
-} from 'viem/chains'
+import { base, bsc, lightlinkPhoenix, mainnet, story } from 'viem/chains'
 import { getAlchemyRpcUrl } from './alchemy'
 import { getPrivateKey } from './common'
 
 const CUSTOM_RPC_URLS: Record<number, string> = {
 	[mainnet.id]: getAlchemyRpcUrl(mainnet.id),
-	[arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
+	// [arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
 	[bsc.id]: getAlchemyRpcUrl(bsc.id),
 	[story.id]: getAlchemyRpcUrl(story.id),
 	[lightlinkPhoenix.id]: `https://endpoints.omniatech.io/v1/lightlink/phoenix/bcd6910e361449d088886a7bfe37586c`,
@@ -116,7 +109,7 @@ export class ClientManager {
 
 		const defaultTransportConfig: HttpTransportConfig = {
 			timeout: 6_000,
-			batch: false,
+			batch: true,
 			// onFetchRequest(request, init) {
 			// },
 		}
@@ -151,8 +144,8 @@ export class ClientManager {
 		/* ======== Build Fallback Transport ======== */
 
 		return fallback(transports, {
-			retryCount: 3,
-			retryDelay: 500,
+			retryCount: 5,
+			retryDelay: 1000,
 			// rank: true results in strange behavior
 			// significantly slows down process while doing many requests
 			rank: false,
