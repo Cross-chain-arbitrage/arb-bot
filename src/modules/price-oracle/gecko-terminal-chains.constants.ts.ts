@@ -91,6 +91,7 @@ export const chainIdToGeckoChainId = {
 	'534352': 'scroll',
 	'1313161554': 'aurora',
 	'1666600000': 'one',
+	'60808': 'bob-network',
 }
 
 export const CHAINS: GeckoTerminalChain[] = [

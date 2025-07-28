@@ -1,6 +1,5 @@
-import { Module } from '@nestjs/common'
+import { Logger, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { LoggerModule } from 'nestjs-pino'
 import { BridgeModule } from './bridges/bridge.module'
 import { DexModule } from './dex/dex.module'
 import { GraphBuilder } from './graphs/GraphBuilder'
@@ -16,16 +15,6 @@ import { ChainClientService } from './utils/ChainClientService'
 
 @Module({
 	imports: [
-		LoggerModule.forRoot({
-			pinoHttp: {
-				transport: {
-					target: 'pino-pretty',
-					options: {
-						colorize: true,
-					},
-				},
-			},
-		}),
 		DexModule.forRoot(),
 		BridgeModule,
 		PriceOracleModule,
@@ -42,6 +31,7 @@ import { ChainClientService } from './utils/ChainClientService'
 		GraphVisualizer,
 		GraphExecutor,
 		Strategy,
+		Logger,
 	],
 })
 export class AppModule {}

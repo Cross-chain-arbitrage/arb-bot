@@ -1,6 +1,7 @@
 import {
 	arbitrum,
 	base,
+	bob,
 	bsc,
 	fuse,
 	gravity,
@@ -29,6 +30,7 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[base.id]: '0x4200000000000000000000000000000000000006',
 	[swellchain.id]: '0x4200000000000000000000000000000000000006',
 	[superposition.id]: '0x1fB719f10b56d7a85DCD32f27f897375fB21cfdd',
+	[bob.id]: '0x4200000000000000000000000000000000000006',
 }
 
 export class WrappedNative extends Token {

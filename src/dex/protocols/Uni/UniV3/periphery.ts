@@ -2,6 +2,7 @@ import { getAddress } from 'viem'
 import {
 	arbitrum,
 	base,
+	bob,
 	hemi,
 	lightlinkPhoenix,
 	rootstock,
@@ -19,10 +20,17 @@ export const UNIV3_PERIPHERY_CONFIG: Record<
 	}
 > = {
 	[hemi.id]: {
-		[getAddress('0xCdBCd51a5E8728E0AF4895ce5771b7d17fF71959')]: {
-			quoter: '0x1400feFD6F9b897970f00Df6237Ff2B8b27Dc82C',
-			router: '0x33d91116e0370970444B0281AB117e161fEbFcdD',
-			is02Router: false,
+		[getAddress('0x346239972d1fa486FC4a521031BC81bFB7D6e8a4')]: {
+			quoter: '0xcBa55304013187D49d4012F4d7e4B63a04405cd5',
+			router: '0x864DDc9B50B9A0dF676d826c9B9EDe9F8913a160',
+			is02Router: true,
+		},
+	},
+	[bob.id]: {
+		[getAddress('0xcb2436774C3e191c85056d248EF4260ce5f27A9D')]: {
+			quoter: '0x6Aa54a43d7eEF5b239a18eed3Af4877f46522BCA',
+			router: '0x807F4E281B7A3B324825C64ca53c69F0b418dE40',
+			is02Router: true,
 		},
 	},
 	[arbitrum.id]: {

@@ -1,4 +1,4 @@
-import { Logger } from 'nestjs-pino'
+import { Logger } from '@nestjs/common'
 import {
 	ContractFunctionExecutionError,
 	maxUint256,
@@ -6,6 +6,11 @@ import {
 } from 'viem'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
+import {
+	OpportunityLog,
+	OpportunityLogType,
+	SuccessExecutionOpportunityLog,
+} from '../logging/OpportunityLog'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
@@ -26,7 +31,7 @@ const DEFAULT_SETTINGS = {
 }
 
 type BotSettings = Readonly<{
-	dryRun?: boolean
+	dryRun: boolean
 	minProfitUsd: number
 	opportunityCheckInterval: number
 	/** Timeout in milliseconds after which arbitrage execution is considered failed and reset */
@@ -81,6 +86,10 @@ export class GraphArbitrageBot {
 			this.logger.error(err, 'Error sending message to telegram')
 		})
 
+		if (this.settings.dryRun) {
+			this.logger.log('This Arbitrage Bot is in dry run mode')
+		}
+
 		void runFuncWithDelay(async () => {
 			await this.findAndExecuteArbitrage()
 			this.firstRunCheck()
@@ -94,6 +103,7 @@ export class GraphArbitrageBot {
 				await this.startTokenPrice(),
 				this.graphParams.graph,
 				this.graphParams.graphOptimizerOptions,
+				this.logger,
 			)
 
 			return findOpportunityRes
@@ -124,8 +134,7 @@ export class GraphArbitrageBot {
 				opportunity,
 				await this.startTokenPrice(),
 			)
-			this.logger.log(prettyOpportunity)
-
+			await this.logProfitableOpp(opportunity, 'Arbitrage found')
 			this.notifyAboutArbStart(prettyOpportunity)
 
 			if (this.settings.dryRun) {
@@ -139,9 +148,13 @@ export class GraphArbitrageBot {
 			const readableActualAmountOut =
 				this.graphParams.startToken.formatUnits(endAmount)
 
-			this.logger.log(
+			await this.logSuccessExecutionOpp(
+				opportunity,
+				endAmount,
+				executionCostInUsd,
 				`Arbitrage is finished, amount out: ${readableActualAmountOut}, revenue: $${revenue}, execution cost: $${executionCostInUsd}`,
 			)
+
 			this.notifyAboutArbEnd(
 				executionCostInUsd,
 				endAmount,
@@ -175,7 +188,7 @@ export class GraphArbitrageBot {
 		opportunity: GraphArbitrageOpportunity | null,
 	): Promise<boolean> {
 		if (!opportunity || !opportunity.path) {
-			this.logger.log('No arbitrage found')
+			await this.logAbsenceOfArbitrage('No arbitrage found')
 			return false
 		}
 
@@ -193,7 +206,8 @@ export class GraphArbitrageBot {
 		}
 
 		if (expectedRevenue < this.settings.minProfitUsd) {
-			this.logger.log(
+			await this.logSkippedOpp(
+				opportunity,
 				`Revenue is too low, expectedRevenue: $${expectedRevenue.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
 			)
 			return false
@@ -208,7 +222,8 @@ export class GraphArbitrageBot {
 		const expectedProfit = expectedRevenue - executionCostInUsd
 
 		if (expectedProfit < this.settings.minProfitUsd) {
-			this.logger.log(
+			await this.logSkippedOpp(
+				opportunity,
 				`Profit is too low, expectedProfit: $${expectedProfit.toFixed(2)}, minProfitUsd: $${this.settings.minProfitUsd}`,
 			)
 			return false
@@ -483,5 +498,95 @@ export class GraphArbitrageBot {
 
 	private async startTokenPrice() {
 		return this.priceOracleService.getPrice(this.graphParams.startToken)
+	}
+
+	async logSkippedOpp(
+		arbitrageOpportunity: GraphArbitrageOpportunity,
+		msg: string,
+	) {
+		await this.logOpportunity(arbitrageOpportunity, 'skipped', msg)
+	}
+
+	async logProfitableOpp(
+		arbitrageOpportunity: GraphArbitrageOpportunity,
+		msg: string,
+	) {
+		await this.logOpportunity(arbitrageOpportunity, 'success-finding', msg)
+	}
+
+	async logAbsenceOfArbitrage(msg: string) {
+		await this.logOpportunity(
+			{
+				path: [],
+				startAmount: 0n,
+				endAmount: 0n,
+				profitAmount: 0n,
+				profitPercentage: 0,
+			},
+			'no-arbitrage',
+			msg,
+		)
+	}
+
+	async logSuccessExecutionOpp(
+		arbitrageOpportunity: GraphArbitrageOpportunity,
+		actualAmountOut: bigint,
+		executionTime: number,
+		msg: string,
+	) {
+		const profit = actualAmountOut - arbitrageOpportunity.startAmount
+		const actualProfitUsd =
+			Number(this.graphParams.startToken.formatUnits(profit)) *
+			(await this.startTokenPrice())
+
+		const readableProfitAmount = Number(
+			this.graphParams.startToken.formatUnits(profit),
+		)
+
+		const log: SuccessExecutionOpportunityLog = {
+			type: 'success-execution',
+			module: 'opportunity-finder',
+			profitAmount: profit.toString(),
+			profitAmountUsd: actualProfitUsd,
+			readableProfitAmount,
+			amountIn: arbitrageOpportunity.startAmount.toString(),
+			amountOut: actualAmountOut.toString(),
+			path: arbitrageOpportunity.path.map((edge) => edge.id),
+			executionTime,
+		}
+
+		this.logger.log(log, msg)
+	}
+
+	async logOpportunity(
+		opportunity: GraphArbitrageOpportunity,
+		type: OpportunityLogType,
+		msg: string,
+	) {
+		const expectedProfitUsd =
+			opportunity.profitAmount > 0n
+				? Number(
+						this.graphParams.startToken.formatUnits(
+							opportunity.profitAmount,
+						),
+					) * (await this.startTokenPrice())
+				: 0
+
+		const readableProfitAmount = Number(
+			this.graphParams.startToken.formatUnits(opportunity.profitAmount),
+		)
+
+		const log: OpportunityLog = {
+			type,
+			module: 'opportunity-finder',
+			profitAmount: opportunity.profitAmount.toString(),
+			profitAmountUsd: expectedProfitUsd,
+			readableProfitAmount,
+			amountIn: opportunity.startAmount.toString(),
+			amountOut: opportunity.endAmount.toString(),
+			path: opportunity.path.map((edge) => edge.id),
+		}
+
+		this.logger.log(log, msg)
 	}
 }

@@ -1,8 +1,8 @@
+import { Logger } from '@nestjs/common'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { ChainClientService } from '../utils/ChainClientService'
 import { getAccountAddress } from '../utils/common'
-import logger from '../utils/logger'
 import { GraphArbitrageBot } from './GraphArbitrageBot'
 
 interface NodeWithBalance {
@@ -22,6 +22,7 @@ export class GraphBalanceReporter {
 		readonly tgNotifier: TgBalancesNotifier,
 		readonly chainClientService: ChainClientService,
 		readonly priceOracleService: PriceOracleService,
+		private readonly logger: Logger,
 		updateInterval: number = 60000, // 60 seconds default
 	) {
 		this.addressToCheck = getAccountAddress()
@@ -33,24 +34,24 @@ export class GraphBalanceReporter {
 	 */
 	start() {
 		if (this.isRunning) {
-			logger.warn('GraphBalanceReporter is already running')
+			this.logger.warn('GraphBalanceReporter is already running')
 			return
 		}
 
 		this.isRunning = true
-		logger.info(
+		this.logger.log(
 			`Starting periodic balance reporter (interval: ${this.updateInterval}ms)`,
 		)
 
 		// Initial balance check
 		this.reportBalances().catch((error) =>
-			logger.error('Error in initial balance check:', error),
+			this.logger.error('Error in initial balance check:', error),
 		)
 
 		// Set up periodic checking
 		this.intervalId = setInterval(() => {
 			this.reportBalances().catch((error) =>
-				logger.error('Error in periodic balance check:', error),
+				this.logger.error('Error in periodic balance check:', error),
 			)
 		}, this.updateInterval)
 	}
@@ -68,7 +69,7 @@ export class GraphBalanceReporter {
 			clearInterval(this.intervalId)
 			this.intervalId = null
 		}
-		logger.info('Stopped periodic balance reporter')
+		this.logger.log('Stopped periodic balance reporter')
 	}
 
 	async reportBalances() {
@@ -78,14 +79,14 @@ export class GraphBalanceReporter {
 
 			const message = this.buildBalanceReport(balancesByChain)
 
-			logger.info(message)
+			this.logger.log(message)
 
 			await this.tgNotifier.sendOrEditBalanceReport(
 				message,
 				this.bot.botName,
 			)
 		} catch (error) {
-			logger.error('Failed to report balances:', error)
+			this.logger.error('Failed to report balances:', error)
 		}
 	}
 
