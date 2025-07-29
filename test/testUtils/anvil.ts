@@ -128,6 +128,14 @@ class Anvil {
 
 		this._process = exec(command)
 
+		// this._process.stdout?.on('data', (data) => {
+		// 	console.log('anvil stdout:', data.toString())
+		// })
+
+		// this._process.stderr?.on('data', (data) => {
+		// 	console.error('anvil stderr:', data.toString())
+		// })
+
 		await this.onAnvilStart()
 	}
 

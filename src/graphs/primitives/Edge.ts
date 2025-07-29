@@ -1,6 +1,7 @@
 import TTLCache from '@isaacs/ttlcache'
 import { Hash } from 'viem'
 import z from 'zod'
+import { GasZipBridge } from '../../bridges/GasZip/GasZipBridge'
 import { FuseBridgeService } from '../../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { SimpleStargateService } from '../../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import { StargateService } from '../../bridges/layerzero-bridges/stargate/stargate-service'
@@ -22,6 +23,7 @@ export enum ActionType {
 	WRAP = 'WRAP',
 	UNWRAP = 'UNWRAP',
 	SIMPLE_STARGATE_BRIDGE = 'SIMPLE_STARGATE_BRIDGE',
+	GAS_ZIP_BRIDGE = 'GAS_ZIP_BRIDGE',
 }
 
 export abstract class Edge<T extends ActionType = ActionType> {
@@ -302,7 +304,7 @@ export class FuseBridgeEdge extends Edge<ActionType.FUSE_BRIDGE> {
 
 		const srcTxReceipt = await this.chainClientService
 			.getClient(this.from.chainId)
-			.waitForTransactionReceipt({ hash: bridgeTx.srcTxHash as Hash })
+			.waitForTransactionReceipt({ hash: bridgeTx.srcTxHash })
 
 		const message = await bridgeTx.waitForBridgeToFinish()
 
@@ -458,27 +460,25 @@ export class StargateBridgeEdge extends Edge<ActionType.STARGATE_BRIDGE> {
 	async execute(
 		amountIn: bigint,
 	): Promise<EdgeExecutionResult<ActionType.STARGATE_BRIDGE>> {
-		const result = await this.stargate.bridge(
-			this.from,
-			this.to.chainId,
-			this.chainClientService.getWalletClient(this.from.chainId).account
-				.address,
+		const { bridgeTx } = await this.stargate.bridge(
+			this.from as NativeCurrency,
+			this.to as NativeCurrency,
 			amountIn,
 		)
 
 		const srcTxReceipt = await this.chainClientService
 			.getClient(this.from.chainId)
 			.waitForTransactionReceipt({
-				hash: result.bridgeTx.srcTxHash as Hash,
+				hash: bridgeTx.srcTxHash,
 			})
 
-		const message = await result.bridgeTx.waitForBridgeToFinish()
+		await bridgeTx.waitForBridgeToFinish()
 
 		return {
-			amountOut: result.amountOut,
+			amountOut: bridgeTx.amount,
 			srcTxReceipt,
-			dstTxHash: message.dstTxHash as Hash,
-			bridgeFee: result.lzFee,
+			dstTxHash: bridgeTx.dstTx?.hash as Hash,
+			bridgeFee: new TokenAmount(this.chainClientService, this.from, 0n), //TODO: remove useless returning 0
 		}
 	}
 }
@@ -534,7 +534,7 @@ export class SimpleStargateBridgeEdge extends Edge<ActionType.SIMPLE_STARGATE_BR
 		const srcTxReceipt = await this.chainClientService
 			.getClient(this.from.chainId)
 			.waitForTransactionReceipt({
-				hash: result.bridgeTx.srcTxHash as Hash,
+				hash: result.bridgeTx.srcTxHash,
 			})
 
 		const message = await result.bridgeTx.waitForBridgeToFinish()
@@ -544,6 +544,66 @@ export class SimpleStargateBridgeEdge extends Edge<ActionType.SIMPLE_STARGATE_BR
 			srcTxReceipt,
 			dstTxHash: message.dstTxHash as Hash,
 			bridgeFee: result.lzFee,
+		}
+	}
+}
+
+export class GasZipBridgeEdge extends Edge<ActionType.GAS_ZIP_BRIDGE> {
+	readonly id: EdgeId
+
+	constructor(
+		chainClientService: ChainClientService,
+		private readonly gasZipBridge: GasZipBridge,
+		override readonly from: GraphNode,
+		override readonly to: GraphNode,
+		graph: Graph,
+	) {
+		super(chainClientService, from, to, ActionType.GAS_ZIP_BRIDGE, graph)
+		this.id = `${this.from.id}-${this.to.id}-${this.actionType}`
+	}
+
+	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
+		const { expected: amountOut, gas } = await this.gasZipBridge.quote(
+			this.from as NativeCurrency,
+			this.to as NativeCurrency,
+			amountIn,
+		)
+
+		const rate = this.calcRate(amountIn, amountOut)
+
+		// fee on dst is not accounted for
+		// actual amountOut will be less for dstBridgeTxCost * 1.2
+		return {
+			rate,
+			amountOut,
+			cost: {
+				gas: BigInt(gas),
+			},
+		}
+	}
+
+	async execute(
+		amountIn: bigint,
+	): Promise<EdgeExecutionResult<ActionType.GAS_ZIP_BRIDGE>> {
+		const bridgeTx = await this.gasZipBridge.bridge(
+			this.from as NativeCurrency,
+			this.to as NativeCurrency,
+			amountIn,
+		)
+
+		const srcTxReceipt = await this.chainClientService
+			.getClient(this.from.chainId)
+			.waitForTransactionReceipt({
+				hash: bridgeTx.srcTxHash,
+			})
+
+		await bridgeTx.waitForBridgeToFinish()
+
+		return {
+			amountOut: bridgeTx.amountOut!,
+			srcTxReceipt,
+			dstTxHash: bridgeTx.dstTx?.hash as Hash,
+			bridgeFee: new TokenAmount(this.chainClientService, this.from, 0n), //TODO: remove useless returning 0
 		}
 	}
 }

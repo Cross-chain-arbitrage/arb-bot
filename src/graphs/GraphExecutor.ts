@@ -1,11 +1,9 @@
-import { Injectable } from '@nestjs/common'
-import { Logger } from 'nestjs-pino'
+import { Injectable, Logger } from '@nestjs/common'
 import { TransactionReceipt } from 'viem'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { ChainClientService } from '../utils/ChainClientService'
 import { runFnWithRetry } from '../utils/common'
-import logger from '../utils/logger'
 import { ActionType, Edge } from './primitives/Edge'
 
 export interface GraphExecutorConfig {
@@ -55,7 +53,7 @@ export class GraphExecutor {
 			await beforeExecuteEdgeHook?.(path, edge, nextAmountIn)
 
 			const beforeExecuteLogMsg = `Start ${edge.actionType} from: ${from.toString()} to:${to.toString()} input:${from.formatUnits(nextAmountIn)}}`
-			logger.info(beforeExecuteLogMsg)
+			this.logger.log(beforeExecuteLogMsg)
 
 			const executionResult = await runFnWithRetry(
 				() => edge.execute(nextAmountIn),
@@ -134,7 +132,7 @@ export class GraphExecutor {
 		executionResultLogMsg += `│ Gas Cost:      ${nativeCurrency.formatUnits(txCostInNative)} ${nativeCurrency.symbol} (~$${txCostInUsd.toFixed(2)})\n`
 		executionResultLogMsg += `└────────────────────────────────────────────────────\n`
 
-		logger.info(executionResultLogMsg)
+		this.logger.log(executionResultLogMsg)
 
 		return {
 			executionCostInUsd,
@@ -150,7 +148,7 @@ export class GraphExecutor {
 			// viem returns not bigint for one of the values (probably effectiveGasPrice)
 			txCostInNative = txReceipt.gasUsed * txReceipt.effectiveGasPrice
 		} catch (error) {
-			logger.error(
+			this.logger.error(
 				`Error calculating tx cost in native for tx ${txReceipt.transactionHash}, gasUsed: ${txReceipt.gasUsed}, effectiveGasPrice: ${txReceipt.effectiveGasPrice}`,
 				error,
 			)

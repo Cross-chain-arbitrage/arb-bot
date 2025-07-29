@@ -7,7 +7,7 @@ export class FuseTx extends Tx {
 
 	constructor(
 		private readonly layerZeroScanService: LayerZeroScanService,
-		hash: string,
+		hash: Hash,
 		chainId: number,
 	) {
 		super(hash, chainId)
@@ -15,7 +15,7 @@ export class FuseTx extends Tx {
 
 	async waitForBridgeToFinish() {
 		const message = await this.layerZeroScanService.waitForDeliveryStatus(
-			this.hash as Hash,
+			this.hash,
 		)
 
 		this.dstTxHash = message.dstTxHash! as Hash
