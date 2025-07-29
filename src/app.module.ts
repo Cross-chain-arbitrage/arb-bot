@@ -1,5 +1,6 @@
 import { Logger, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { LoggerModule } from 'nestjs-pino'
 import { BridgeModule } from './bridges/bridge.module'
 import { DexModule } from './dex/dex.module'
 import { GraphBuilder } from './graphs/GraphBuilder'
@@ -12,9 +13,20 @@ import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { loadConfig } from './strategies/configuration'
 import { Strategy } from './strategies/Strategy'
 import { ChainClientService } from './utils/ChainClientService'
+import { transport } from './utils/logging-config'
 
 @Module({
 	imports: [
+		LoggerModule.forRoot({
+			pinoHttp: {
+				transport,
+				formatters: {
+					level(label, number) {
+						return { level: label }
+					},
+				},
+			},
+		}),
 		DexModule.forRoot(),
 		BridgeModule,
 		PriceOracleModule,
