@@ -210,22 +210,26 @@ services:
         networks:
             - loki
 
-    wbtc-bot:
-        container_name: wbtc-bot
+    fuse-wbtc:
+        container_name: fuse-wbtc
         image: strategy
         env_file:
             - ./.env
         environment:
-            - BOT_CONFIG_PATH=./configs/wbtc-fuse.yaml
+            - BOT_CONFIG_PATH=./config.yaml
+        volumes:
+            - ./configs/fuse-wbtc.yaml:/app/config.yaml
         networks:
             - loki
 
-    fuse-bot:
-        container_name: fuse-bot
+    fuse-fuse:
+        container_name: fuse-fuse
         image: strategy
         env_file:
             - ./.env
         environment:
-            - BOT_CONFIG_PATH=./configs/fuse-fuse.yaml
+            - BOT_CONFIG_PATH=./config.yaml
+        volumes:
+            - ./configs/fuse-fuse.yaml:/app/config.yaml
         networks:
             - loki
