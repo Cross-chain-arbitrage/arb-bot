@@ -27,7 +27,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: ./Dockerfile.strategy
+        file: ./Dockerfile
         push: true
         tags: |
           us-west2-docker.pkg.dev/my-gcp-project/docker-registry/swag-bot:latest
