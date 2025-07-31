@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { Chain, Client, erc20Abi, getContract, WalletClient } from 'viem'
 import { Pool } from '../../src/dex/base/Pool'
@@ -55,6 +56,7 @@ export function testPool(context: PoolTestConfig) {
 				poolCreatorClass,
 				PriceOracleService,
 				GeckoTerminalService,
+				Logger,
 			],
 		}).compile()
 

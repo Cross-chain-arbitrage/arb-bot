@@ -1,4 +1,4 @@
-import { Logger } from 'nestjs-pino'
+import { Logger } from '@nestjs/common'
 import { runFnWithRetry } from '../../src/utils/common'
 
 describe('common', () => {

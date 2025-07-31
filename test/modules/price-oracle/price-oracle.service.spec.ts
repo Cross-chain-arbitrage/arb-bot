@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { arbitrum, fuse } from 'viem/chains'
 import { GeckoTerminalService } from '../../../src/modules/price-oracle/gecko-terminal.service'
@@ -74,6 +75,7 @@ describe('Price Oracle', () => {
 						useValue: chainClientService, // Reuse existing instance
 					},
 					GeckoTerminalService,
+					Logger,
 				],
 			}).compile()
 
@@ -205,6 +207,7 @@ describe('Price Oracle', () => {
 						provide: GeckoTerminalService,
 						useValue: mockGeckoTerminalService,
 					},
+					Logger,
 				],
 			}).compile()
 
