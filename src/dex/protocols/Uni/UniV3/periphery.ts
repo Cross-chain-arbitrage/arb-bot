@@ -25,6 +25,12 @@ export const UNIV3_PERIPHERY_CONFIG: Record<
 			router: '0x864DDc9B50B9A0dF676d826c9B9EDe9F8913a160',
 			is02Router: true,
 		},
+
+		[getAddress('0xCdBCd51a5E8728E0AF4895ce5771b7d17fF71959')]: {
+			quoter: '0x1400feFD6F9b897970f00Df6237Ff2B8b27Dc82C',
+			router: '0x33d91116e0370970444B0281AB117e161fEbFcdD',
+			is02Router: false,
+		},
 	},
 	[bob.id]: {
 		[getAddress('0xcb2436774C3e191c85056d248EF4260ce5f27A9D')]: {

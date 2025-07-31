@@ -1,9 +1,21 @@
-import { Chain, Client, erc20Abi, getContract, WalletClient } from 'viem'
+import { Logger } from '@nestjs/common'
+import { Test } from '@nestjs/testing'
+import {
+	Chain,
+	Client,
+	ContractFunctionExecutionError,
+	erc20Abi,
+	getContract,
+	WalletClient,
+} from 'viem'
 import { Pool } from '../../src/dex/base/Pool'
-import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
-import { PriceOracle } from '../../src/modules/price-oracle/price-oracle.service'
+import { DexRegistry } from '../../src/dex/DexRegistry'
+import { PoolType } from '../../src/dex/PoolUtils'
+import { GeckoTerminalService } from '../../src/modules/price-oracle/gecko-terminal.service'
+import { PriceOracleService } from '../../src/modules/price-oracle/price-oracle.service'
 import { Token } from '../../src/primitives/tokens/Token'
-import { ClientManager } from '../../src/utils/ChainClientService'
+import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
+import { ChainClientService } from '../../src/utils/ChainClientService'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'
 
 export type PoolTestConfig = {
@@ -31,19 +43,39 @@ export function testPool(context: PoolTestConfig) {
 	let walletClient: WalletClient
 	let botAddress: Address
 	let pool: Pool
+	let priceOracleService: PriceOracleService
 
-	useAnvil({
+	const { mockChainClientService, anvil } = useAnvil({
 		chainId: chain.id,
 		timeoutStartAnvil: 20000,
 		rpcUrl,
 	})
 
 	beforeAll(async () => {
-		client = ClientManager.getClient(chain.id)
-		walletClient = ClientManager.getWalletClient(chain.id)
-		botAddress = walletClient.account!.address
+		const poolCreatorClass = DexRegistry[poolType]
+		const app = await Test.createTestingModule({
+			providers: [
+				{
+					provide: ChainClientService,
+					useValue: mockChainClientService,
+				},
+				TokenUtils,
+				poolCreatorClass,
+				PriceOracleService,
+				GeckoTerminalService,
+				Logger,
+			],
+		}).compile()
 
-		pool = await PoolUtils.createPool(poolAddress, chain.id, poolType)
+		walletClient = mockChainClientService.getWalletClient(chain.id)
+		botAddress = walletClient.account!.address
+		priceOracleService = app.get(PriceOracleService)
+
+		client = mockChainClientService.getClient(chain.id)
+
+		const poolCreator = app.get(poolCreatorClass)
+
+		pool = await poolCreator.create(poolAddress, chain.id)
 
 		await setNativeBalance(client, botAddress, 10n ** 36n)
 		await setTokenBalance(
@@ -89,79 +121,105 @@ export function testPool(context: PoolTestConfig) {
 	}
 
 	async function swapAndAssert(tokenIn: Token, tokenOut: Token) {
-		const tokenInPrice = await PriceOracle.getPrice(tokenIn, {
-			updateInterval: false,
-		})
-		const tokenOutPrice = await PriceOracle.getPrice(tokenOut, {
-			updateInterval: false,
-		})
+		try {
+			const tokenInPrice = await priceOracleService.getPrice(tokenIn)
+			const tokenOutPrice = await priceOracleService.getPrice(tokenOut)
 
-		const amountIn = tokenIn.parseUnits(
-			(AMOUNT_IN_USD / tokenInPrice).toString(),
-		)
+			const amountIn = tokenIn.parseUnits(
+				(AMOUNT_IN_USD / tokenInPrice).toString(),
+			)
 
-		const tokenInContract = getContract({
-			address: tokenIn.address,
-			abi: erc20Abi,
-			client: walletClient,
-		})
+			const tokenInContract = getContract({
+				address: tokenIn.address,
+				abi: erc20Abi,
+				client: walletClient,
+			})
 
-		const tokenOutContract = getContract({
-			address: tokenOut.address,
-			abi: erc20Abi,
-			client: walletClient,
-		})
+			const tokenOutContract = getContract({
+				address: tokenOut.address,
+				abi: erc20Abi,
+				client: walletClient,
+			})
 
-		await tokenInContract.write.approve([pool.routerAddress, amountIn], {
-			account: walletClient.account!,
-			chain: walletClient.chain,
-		})
+			await tokenInContract.write.approve(
+				[pool.routerAddress, amountIn],
+				{
+					account: walletClient.account!,
+					chain: walletClient.chain,
+				},
+			)
 
-		const tokenInBalanceBefore = await tokenInContract.read.balanceOf([
-			botAddress,
-		])
+			const tokenInBalanceBefore = await tokenInContract.read.balanceOf([
+				botAddress,
+			])
 
-		const tokenOutBalanceBefore = await tokenOutContract.read.balanceOf([
-			botAddress,
-		])
+			const tokenOutBalanceBefore = await tokenOutContract.read.balanceOf(
+				[botAddress],
+			)
 
-		const { amountOut: amountOutQuote } = await pool.quoteSwap({
-			tokenIn,
-			tokenOut,
-			amountIn,
-		})
+			const { amountOut: amountOutQuote } = await pool.quoteSwap({
+				tokenIn,
+				tokenOut,
+				amountIn,
+			})
 
-		const { amountOut: amountOutSimulated } = await pool.simulateSwap({
-			tokenIn,
-			tokenOut,
-			amountIn,
-		})
+			const { amountOut: amountOutSimulated } = await pool.simulateSwap({
+				tokenIn,
+				tokenOut,
+				amountIn,
+			})
 
-		const { amountOut } = await pool.swap({
-			tokenIn,
-			tokenOut,
-			amountIn,
-		})
+			const { amountOut } = await pool.swap({
+				tokenIn,
+				tokenOut,
+				amountIn,
+			})
 
-		const tokenInBalanceAfter = await tokenInContract.read.balanceOf([
-			botAddress,
-		])
-		const tokenOutBalanceAfter = await tokenOutContract.read.balanceOf([
-			botAddress,
-		])
+			const tokenInBalanceAfter = await tokenInContract.read.balanceOf([
+				botAddress,
+			])
+			const tokenOutBalanceAfter = await tokenOutContract.read.balanceOf([
+				botAddress,
+			])
 
-		// simulate, quote and swap return the same amount
-		expect(amountOut).toBe(amountOutSimulated)
-		expect(amountOut).toBe(amountOutQuote)
+			// simulate, quote and swap return the same amount
+			expect(amountOut).toBe(amountOutSimulated)
+			expect(amountOut).toBe(amountOutQuote)
 
-		// swap truly happens
-		expect(tokenInBalanceBefore - tokenInBalanceAfter).toBe(amountIn)
-		expect(tokenOutBalanceAfter - tokenOutBalanceBefore).toBe(amountOut)
+			// swap truly happens
+			expect(tokenInBalanceBefore - tokenInBalanceAfter).toBe(amountIn)
+			expect(tokenOutBalanceAfter - tokenOutBalanceBefore).toBe(amountOut)
 
-		const amountOutUsd =
-			Number(tokenOut.formatUnits(amountOut)) * tokenOutPrice
+			const amountOutUsd =
+				Number(tokenOut.formatUnits(amountOut)) * tokenOutPrice
 
-		// swap makes sense and we receive suitable value
-		expect(amountOutUsd).toBeGreaterThan(AMOUNT_IN_USD / 2)
+			// swap makes sense and we receive suitable value
+			expect(amountOutUsd).toBeGreaterThan(AMOUNT_IN_USD / 2)
+		} catch (err) {
+			if (err instanceof ContractFunctionExecutionError) {
+				const shortenedError = new ContractFunctionExecutionError(
+					err.cause,
+					{
+						...err,
+						abi: [],
+					},
+				)
+				console.log('error', shortenedError)
+			} else {
+				console.log('error', err)
+			}
+
+			const lastEthCallIdx = anvil.logs.lastIndexOf('eth_call')
+
+			if (lastEthCallIdx !== -1) {
+				console.log(
+					`last eth_call: ${anvil.logs.slice(lastEthCallIdx)}`,
+				)
+			} else {
+				console.log('No eth_call found in logs')
+			}
+
+			throw err
+		}
 	}
 }

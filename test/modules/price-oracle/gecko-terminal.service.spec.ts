@@ -1,7 +1,6 @@
-import { GeckoTerminalAPI } from '../../src/modules/price-oracle/geckoterminal/GeckoTerminalAPI'
-import { makeSuite } from '../testUtils/makeSuite'
+import { GeckoTerminalService } from '../../../src/modules/price-oracle/gecko-terminal.service'
 
-const ethTokens = [
+const tokensOnEthereum: Address[] = [
 	'0xdac17f958d2ee523a2206206994597c13d831ec7',
 	'0xB8c77482e45F1F44dE1745F52C74426C631bDD52',
 	'0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
@@ -44,49 +43,63 @@ const ethTokens = [
 	'0x6e1A19F235bE7ED8E3369eF73b196C07257494DE',
 ]
 
-makeSuite('GeckoTerminalAPI', () => {
-	it('should receive price for one asset', async () => {
-		const price = await GeckoTerminalAPI.getTokenPrice(
-			ethTokens[0] as Address,
-			'eth',
-		)
+describe('GeckoTerminalService', () => {
+	let geckoTerminalService: GeckoTerminalService
 
-		expect(price).toBeGreaterThan(0)
+	beforeEach(() => {
+		geckoTerminalService = new GeckoTerminalService()
 	})
 
-	it('should receive prices for several assets', async () => {
-		const tokensToFetch = ethTokens.slice(0, 5)
-		const prices = await GeckoTerminalAPI.getTokenPrices(
-			tokensToFetch as Address[],
-			'eth',
-		)
-		expect(prices).toHaveLength(5)
+	describe('getTokenPrice', () => {
+		it('should receive price for one asset', async () => {
+			const price = await geckoTerminalService.getTokenPrice(
+				tokensOnEthereum[0],
+				'eth',
+			)
 
-		for (const token of prices) {
-			expect(token.price).toBeGreaterThan(0)
-		}
+			expect(price).toBeGreaterThan(0)
+		})
+
+		it('should throw an error for an invalid chain', async () => {
+			await expect(
+				geckoTerminalService.getTokenPrice(
+					tokensOnEthereum[0],
+					'invalidChain',
+				),
+			).rejects.toThrow('Chain invalidChain not found')
+		})
 	})
 
-	it('should receive prices for more than 30 assets', async () => {
-		const prices = await GeckoTerminalAPI.getTokenPrices(
-			ethTokens as Address[],
-			'eth',
-		)
-		expect(prices).toHaveLength(ethTokens.length)
-		for (const token of prices) {
-			if (token.price === 0) {
-				console.log(token.address)
+	describe('getTokenPrices', () => {
+		it('should receive prices for several assets', async () => {
+			const tokensToFetch = tokensOnEthereum.slice(0, 5)
+
+			const prices = await geckoTerminalService.getTokenPrices(
+				tokensToFetch,
+				'eth',
+			)
+
+			expect(prices).toHaveLength(5)
+
+			for (const token of prices) {
+				expect(token.price).toBeGreaterThan(0)
 			}
-			expect(token.price).toBeGreaterThan(0)
-		}
-	})
+		})
 
-	it('should throw an error for an invalid chain', async () => {
-		await expect(
-			GeckoTerminalAPI.getTokenPrice(
-				ethTokens[0] as Address,
-				'invalidChain',
-			),
-		).rejects.toThrow('Chain invalidChain not found')
+		it('should receive prices for more than 30 assets', async () => {
+			const prices = await geckoTerminalService.getTokenPrices(
+				tokensOnEthereum,
+				'eth',
+			)
+			expect(prices).toHaveLength(tokensOnEthereum.length)
+
+			for (const token of prices) {
+				if (token.price === 0) {
+					console.log(token.address)
+				}
+
+				expect(token.price).toBeGreaterThan(0)
+			}
+		})
 	})
 })

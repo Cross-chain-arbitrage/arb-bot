@@ -14,7 +14,7 @@ import {
 const PriceOracleError = createCustomError('PriceOracleError')
 
 const DEFAULT_SETTINGS: PriceOracleSettings = {
-	useCache: true,
+	useCachedValues: true,
 	updateInterval: 1000 * 60 * 5, // 5 minutes
 }
 
@@ -42,7 +42,7 @@ export class PriceOracleService {
 		updateInterval = DEFAULT_SETTINGS.updateInterval,
 	) {
 		const currencyStates = await this.getPrices(currencies, {
-			useCache: false,
+			useCachedValues: false,
 			updateInterval,
 		})
 
@@ -83,7 +83,7 @@ export class PriceOracleService {
 	): Promise<number> {
 		const priceLookupCurrency = await this.getLookupCurrency(currency)
 
-		if (settings.useCache) {
+		if (settings.useCachedValues) {
 			const currencyState = this.currencyStates.get(
 				priceLookupCurrency.id,
 			)
@@ -115,7 +115,7 @@ export class PriceOracleService {
 		const unknownCurrencies: Currency[] = []
 		const statesToReturn: CurrencyState[] = []
 
-		if (settings.useCache) {
+		if (settings.useCachedValues) {
 			await this.processCachedCurrencies(
 				currencies,
 				statesToReturn,
@@ -239,7 +239,7 @@ export class PriceOracleService {
 
 		if (currenciesToUpdate.length > 0) {
 			await this.getPrices(currenciesToUpdate, {
-				useCache: false, // we are retrieving new prices
+				useCachedValues: false, // we are retrieving new prices
 				updateInterval: false,
 			})
 		}

@@ -40,4 +40,4 @@ export CHECK_POOL_RPC_URL
 export CHECK_POOL=true
 export CHECK_POOL_POOL_TYPE
 
-yarn test:logs ./test/dex/checkPool/checkPool.test.ts --detectOpenHandles
+yarn test ./test/dex/checkPool/checkPool.spec.ts --detectOpenHandles
