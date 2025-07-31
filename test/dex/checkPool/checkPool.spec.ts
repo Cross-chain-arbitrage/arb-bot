@@ -3,15 +3,13 @@ import * as viemChains from 'viem/chains'
 import { DexRegistry } from '../../../src/dex/DexRegistry'
 import { PoolType } from '../../../src/dex/PoolUtils'
 import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
-import { makeSuite } from '../../testUtils/makeSuite'
 import { testPool } from '../../testUtils/testPool'
 
 if (process.env.CHECK_POOL === 'true') {
 	const { chain, poolAddress, rpcUrl, poolType } = getContext()
 
-	makeSuite('Check pool', () =>
-		testPool({ chain, poolAddress, rpcUrl, poolType }),
-	)
+	describe('Check pool', () =>
+		testPool({ chain, poolAddress, rpcUrl, poolType }))
 } else {
 	it.skip('Skip this file in common tests', () => {})
 }

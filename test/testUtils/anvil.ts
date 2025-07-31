@@ -100,6 +100,7 @@ class Anvil {
 	readonly config: AnvilConfig
 	private _port: number | undefined
 	private _process: ChildProcess | undefined
+	logs: string = ''
 
 	get port() {
 		if (!this._port) {
@@ -128,13 +129,13 @@ class Anvil {
 
 		this._process = exec(command)
 
-		// this._process.stdout?.on('data', (data) => {
-		// 	console.log('anvil stdout:', data.toString())
-		// })
+		this._process.stdout?.on('data', (data) => {
+			this.logs += data.toString()
+		})
 
-		// this._process.stderr?.on('data', (data) => {
-		// 	console.error('anvil stderr:', data.toString())
-		// })
+		this._process.stderr?.on('data', (data) => {
+			this.logs += data.toString()
+		})
 
 		await this.onAnvilStart()
 	}
@@ -148,7 +149,7 @@ class Anvil {
 	private buildCommand(fallbackRpcUrl: string) {
 		const rpcUrlToUse = this.config.rpcUrl ?? fallbackRpcUrl
 
-		let command = `anvil --fork-url "${rpcUrlToUse}" --port ${this.port} --mnemonic "${testMnemonic}"`
+		let command = `anvil --print-traces --fork-url "${rpcUrlToUse}" --port ${this.port} --mnemonic "${testMnemonic}"`
 
 		if (typeof this.config.blockNumber === 'number') {
 			command += ` --fork-block-number ${this.config.blockNumber}`
