@@ -72,16 +72,10 @@ export class TgArbitrageNotifier extends TgBaseNotifier {
 	async sendArbitrageError(
 		name: string,
 		error: string,
-		isLastNotification: boolean,
 		opportunity: GraphArbitrageOpportunity,
 		startTokenPrice: number,
 	) {
-		let statusPart = `❌ <b>Execution error:</b> ${error}`
-
-		if (isLastNotification) {
-			statusPart +=
-				'\n\n⚠️ Too many execution errors in a row, next errors will not be notified'
-		}
+		const statusPart = `❌ <b>Execution error:</b> ${error}`
 
 		await this.editOrSendMessage(
 			name,
