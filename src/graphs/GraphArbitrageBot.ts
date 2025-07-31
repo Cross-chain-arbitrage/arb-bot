@@ -466,7 +466,7 @@ export class GraphArbitrageBot {
 			const tx = await this.approveForEdge(edge)
 
 			if (!tx) {
-				this.logger.log('Approve already done')
+				this.logger.log('Approve already done or not required')
 			} else {
 				this.logger.log(tx?.transactionHash)
 			}
