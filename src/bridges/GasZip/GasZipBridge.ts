@@ -53,7 +53,7 @@ export const GAS_ZIP_DIRECT_DEPOSIT_ADDRESS =
 @Injectable()
 export class GasZipBridge {
 	BRIDGE_LIMIT_ETHER = parseEther('0.375')
-	BRIDGE_SLIPPAGE_LIMIT_BPS = 75n // 0.75%
+	BRIDGE_SLIPPAGE_LIMIT_BPS = 200n // 2%
 	TRANSFER_GAS_USAGE_WITH_8BYTES = 30000
 
 	chainsCache: TTLCache<string, GasZipChain[]> = new TTLCache({
