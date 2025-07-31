@@ -27,7 +27,6 @@ const DEFAULT_SETTINGS = {
 	dryRun: false,
 	arbitrageTimeout: 5 * 60 * 1000,
 	retryExecuteEdgeCount: 2,
-	maxExecutionErrorsInARow: 3,
 }
 
 type BotSettings = Readonly<{
@@ -37,7 +36,6 @@ type BotSettings = Readonly<{
 	/** Timeout in milliseconds after which arbitrage execution is considered failed and reset */
 	arbitrageExecutionTimeout: number
 	retryExecuteEdgeCount?: number
-	maxExecutionErrorsInARow?: number
 }>
 
 export class GraphArbitrageBot {
@@ -322,15 +320,6 @@ export class GraphArbitrageBot {
 		error: unknown,
 		opportunity: GraphArbitrageOpportunity,
 	) {
-		if (
-			this.executionErrorInARow++ > this.settings.maxExecutionErrorsInARow
-		) {
-			this.logger.warn(
-				'Too many execution errors in a row, skipping notification',
-			)
-			return
-		}
-
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error'
 
@@ -339,8 +328,6 @@ export class GraphArbitrageBot {
 		this.TgArbitrageNotifier.sendArbitrageError(
 			this.botName,
 			errorMessage,
-			this.executionErrorInARow >
-				this.settings.maxExecutionErrorsInARow - 1,
 			opportunity,
 			startTokenPrice,
 		).catch((err) => {
@@ -466,7 +453,7 @@ export class GraphArbitrageBot {
 			const tx = await this.approveForEdge(edge)
 
 			if (!tx) {
-				this.logger.log('Approve already done')
+				this.logger.log('Approve already done or not required')
 			} else {
 				this.logger.log(tx?.transactionHash)
 			}

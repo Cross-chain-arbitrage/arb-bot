@@ -72,7 +72,7 @@ export class VelodromeV1Pool extends Pool {
 		let path = '0x'
 
 		path += tokenIn.address.slice(2)
-		path += toHex(1, { size: 3 }).slice(2)
+		path += toHex(this.tickSpacing, { size: 3 }).slice(2)
 		path += tokenOut.address.slice(2)
 
 		return path as Bytes

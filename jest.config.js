@@ -6,7 +6,7 @@ module.exports = {
 		'^.+.tsx?$': ['ts-jest', {}],
 	},
 
-	testMatch: ['<rootDir>/test/**/*.test.ts'],
+	testMatch: ['<rootDir>/test/**/*.spec.ts'],
 
 	testTimeout: 180_000,
 }

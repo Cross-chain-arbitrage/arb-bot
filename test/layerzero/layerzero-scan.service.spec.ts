@@ -1,17 +1,20 @@
 import { Message, MessageStatus } from '@layerzerolabs/scan-client'
 import { Hash, isHash, zeroHash } from 'viem'
-import { LayerZeroScanAPI } from '../../src/bridges/layerzero-bridges/layerzero-scan/layerzero-scan.service'
-import { makeSuite } from '../testUtils/makeSuite'
+import { LayerZeroScanService } from '../../src/bridges/layerzero-bridges/layerzero-scan/layerzero-scan.service'
 
-makeSuite('LayerZeroScanAPI', () => {
+describe('layerZeroScanService', () => {
+	let layerZeroScanService: LayerZeroScanService
+
+	beforeEach(() => {
+		layerZeroScanService = new LayerZeroScanService()
+	})
+
 	it('retrieves messages for a given srcTxHash', async () => {
 		const srcTxHash =
 			'0x2351c2e4875885ecab97b8dbcb34a5fe6f9dc8614c2c36de05f0898352b0709d'
 
 		const messages =
-			await LayerZeroScanAPI.getMessagesBySrcTxHash(srcTxHash)
-
-		console.log(messages)
+			await layerZeroScanService.getMessagesBySrcTxHash(srcTxHash)
 
 		expect(messages.length).toBeGreaterThan(0)
 	})
@@ -20,13 +23,13 @@ makeSuite('LayerZeroScanAPI', () => {
 		const nonExistentTxHash =
 			'0x0000000000000000000000000000000000000000000000000000000000000001'
 		const messages =
-			await LayerZeroScanAPI.getMessagesBySrcTxHash(nonExistentTxHash)
+			await layerZeroScanService.getMessagesBySrcTxHash(nonExistentTxHash)
 		expect(messages.length).toBe(0)
 	})
 
 	it('MUST throw if srcTxHash is zero hash', async () => {
 		await expect(
-			LayerZeroScanAPI.getMessagesBySrcTxHash(zeroHash),
+			layerZeroScanService.getMessagesBySrcTxHash(zeroHash),
 		).rejects.toThrow()
 	})
 
@@ -34,7 +37,8 @@ makeSuite('LayerZeroScanAPI', () => {
 		const srcTxHash =
 			'0x2351c2e4875885ecab97b8dbcb34a5fe6f9dc8614c2c36de05f0898352b0709d'
 
-		const message = await LayerZeroScanAPI.waitForDeliveryStatus(srcTxHash)
+		const message =
+			await layerZeroScanService.waitForDeliveryStatus(srcTxHash)
 
 		expect(message.status).toBe(MessageStatus.DELIVERED)
 		expect(message.dstTxHash).toBeDefined()
@@ -55,17 +59,16 @@ makeSuite('LayerZeroScanAPI', () => {
 			await recentMessages.json()
 
 		const srcTxHash = recentMessagesData.result.data.messages[0].srcTxHash
-		console.log(srcTxHash)
 
 		if (!isHash(srcTxHash as Hash)) {
 			throw new Error(
-				'srcTxHash got from LayerZeroScanAPI is not a valid hash',
+				'srcTxHash got from layerZeroScanService is not a valid hash',
 			)
 		}
 
 		jest.setTimeout(5 * 60_000)
 
-		const message = await LayerZeroScanAPI.waitForDeliveryStatus(
+		const message = await layerZeroScanService.waitForDeliveryStatus(
 			srcTxHash as Hash,
 		)
 
