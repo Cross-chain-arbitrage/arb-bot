@@ -13,7 +13,6 @@ import {
 } from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
 import { ChainClientService } from '../../chain-client/chain-client.service'
-import { getAccountAddress } from '../../utils/common'
 import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'
 import { TokenMetadata } from './TokenBase'
@@ -50,7 +49,7 @@ export class WrappedNative extends Token {
 	}
 
 	async deposit(amount: bigint) {
-		const balance = await this.native.balanceOf(getAccountAddress())
+		const balance = await this.native.balanceOf(this.wallet.account.address)
 
 		if (balance < amount) {
 			throw new WrappedNativeError('Insufficient balance')
@@ -74,7 +73,7 @@ export class WrappedNative extends Token {
 	}
 
 	async withdraw(amount: bigint) {
-		const balance = await this.balanceOf(getAccountAddress())
+		const balance = await this.balanceOf(this.wallet.account.address)
 
 		if (balance < amount) {
 			throw new WrappedNativeError('Insufficient balance')

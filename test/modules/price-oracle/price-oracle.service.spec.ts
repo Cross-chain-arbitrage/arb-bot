@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { arbitrum, fuse } from 'viem/chains'
+import { ChainClientConfigService } from '../../../src/chain-client/chain-client-config.service'
 import { ChainClientService } from '../../../src/chain-client/chain-client.service'
 import { GeckoTerminalService } from '../../../src/modules/price-oracle/gecko-terminal.service'
 import { PriceOracleService } from '../../../src/modules/price-oracle/price-oracle.service'
@@ -33,7 +34,14 @@ describe('Price Oracle', () => {
 	beforeAll(async () => {
 		// Create the testing module once to get shared services
 		const sharedModule: TestingModule = await Test.createTestingModule({
-			providers: [TokenUtils, ChainClientService],
+			providers: [
+				TokenUtils,
+				ChainClientService,
+				{
+					provide: ChainClientConfigService,
+					useValue: {},
+				},
+			],
 		}).compile()
 
 		// Get shared service instances
