@@ -7,11 +7,11 @@ import {
 	StargateAPIService,
 } from '../bridges/layerzero-bridges/stargate/stargate-api.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import { Pool } from '../dex/base/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
-import { ChainClientService } from '../utils/ChainClientService'
 import {
 	FuseBridgeEdge,
 	StargateBridgeEdge,

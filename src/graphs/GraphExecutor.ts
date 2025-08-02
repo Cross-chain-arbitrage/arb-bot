@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { TransactionReceipt } from 'viem'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../utils/ChainClientService'
 import { runFnWithRetry } from '../utils/common'
 import { ActionType, Edge } from './primitives/Edge'
 

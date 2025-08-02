@@ -7,7 +7,7 @@ import {
 	isAddressEqual,
 } from 'viem'
 import { ERC20_ABI } from '../../abi/erc20'
-import { ChainClientService } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { ETH_METADATA, NATIVE_CURRENCIES } from './nativeCurrencies'
 import {
 	NATIVE_ADDRESS,

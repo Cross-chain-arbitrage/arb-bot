@@ -1,7 +1,7 @@
 import TTLCache from '@isaacs/ttlcache'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { Pool } from '../../dex/base/Pool'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../utils/ChainClientService'
 import { ActionType, Edge, SwapEdge } from './Edge'
 
 export class GraphError extends Error {

@@ -9,7 +9,7 @@ import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 
 import { Injectable } from '@nestjs/common'
-import { ChainClientService } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { createCustomError } from '../../utils/common'
 
 //TODO: add validation and write tests

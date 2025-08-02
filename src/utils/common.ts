@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common'
 import dotenv from 'dotenv'
 import { BaseError, Hex, pad } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
 
 export const wait = (ms: number): Promise<void> =>
 	new Promise((resolve) => setTimeout(resolve, ms))
@@ -78,23 +77,6 @@ export function padAddressToBytes32(address: Address): Hex {
 }
 
 dotenv.config()
-
-export function getPrivateKey(): Hex {
-	const privateKey = process.env[`PRIVATE_KEY`]
-
-	if (!privateKey) {
-		throw new Error(`Private key not found`)
-	}
-
-	return privateKey as Hex
-}
-
-export function getAccountAddress() {
-	const pk = getPrivateKey()
-	const account = privateKeyToAccount(pk)
-
-	return account.address
-}
 
 export function createCustomError(errorName: string) {
 	return class CustomError extends Error {

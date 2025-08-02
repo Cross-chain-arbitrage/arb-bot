@@ -1,5 +1,5 @@
 import { Address, formatUnits, isAddressEqual, parseUnits } from 'viem'
-import { ChainClientService } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { shortenAddress } from '../../utils/common'
 import { BaseContract } from '../contracts/BaseContract'
 

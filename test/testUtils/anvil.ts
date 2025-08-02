@@ -11,7 +11,7 @@ import {
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
-import { ChainClientService } from '../../src/utils/ChainClientService'
+import { ChainClientService } from '../../src/chain-client/chain-client.service'
 
 /* ======== useAnvil ======== */
 

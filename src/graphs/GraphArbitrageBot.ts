@@ -6,6 +6,7 @@ import {
 } from 'viem'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import {
 	OpportunityLog,
 	OpportunityLogType,
@@ -16,7 +17,6 @@ import { PriceOracleService } from '../modules/price-oracle/price-oracle.service
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../utils/ChainClientService'
 import { runFuncWithDelay } from '../utils/polling'
 import { GraphExecutor } from './GraphExecutor'
 import { GraphVisualizer } from './GraphVisualizer'

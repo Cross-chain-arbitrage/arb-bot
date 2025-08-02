@@ -8,6 +8,7 @@ import {
 	getContract,
 	WalletClient,
 } from 'viem'
+import { ChainClientService } from '../../src/chain-client/chain-client.service'
 import { Pool } from '../../src/dex/base/Pool'
 import { DexRegistry } from '../../src/dex/DexRegistry'
 import { PoolType } from '../../src/dex/PoolUtils'
@@ -15,7 +16,6 @@ import { GeckoTerminalService } from '../../src/modules/price-oracle/gecko-termi
 import { PriceOracleService } from '../../src/modules/price-oracle/price-oracle.service'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../src/utils/ChainClientService'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'
 
 export type PoolTestConfig = {

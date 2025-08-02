@@ -2,6 +2,7 @@ import { Logger, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { LoggerModule } from 'nestjs-pino'
 import { BridgeModule } from './bridges/bridge.module'
+import { ChainClientService } from './chain-client/chain-client.service'
 import { DexModule } from './dex/dex.module'
 import { GraphBuilder } from './graphs/GraphBuilder'
 import { GraphExecutor } from './graphs/GraphExecutor'
@@ -12,7 +13,6 @@ import { PriceOracleModule } from './modules/price-oracle/price-oracle.module'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
 import { loadConfig } from './strategies/configuration'
 import { Strategy } from './strategies/Strategy'
-import { ChainClientService } from './utils/ChainClientService'
 import { transport } from './utils/logging-config'
 
 @Module({
@@ -32,6 +32,7 @@ import { transport } from './utils/logging-config'
 		PriceOracleModule,
 		ConfigModule.forRoot({
 			load: [loadConfig],
+			isGlobal: true,
 		}),
 	],
 	providers: [

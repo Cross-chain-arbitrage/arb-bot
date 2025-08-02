@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../utils/ChainClientService'
 import { GasZipBridge } from './GasZip/GasZipBridge'
 import { FuseBridgeService } from './layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { LayerZeroScanService } from './layerzero-bridges/layerzero-scan/layerzero-scan.service'

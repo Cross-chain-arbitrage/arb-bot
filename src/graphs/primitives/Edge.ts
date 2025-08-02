@@ -6,12 +6,12 @@ import { FuseBridgeService } from '../../bridges/layerzero-bridges/fuse-bridge/f
 import { SimpleStargateService } from '../../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import { StargateService } from '../../bridges/layerzero-bridges/stargate/stargate-service'
 import { RelayService } from '../../bridges/relay/relay-service'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { Pool } from '../../dex/base/Pool'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenAmount } from '../../primitives/tokens/TokenAmount'
 import { WrappedNative } from '../../primitives/tokens/WrappedNative'
-import { ChainClientService } from '../../utils/ChainClientService'
 import { shortenAddress } from '../../utils/common'
 import { Graph } from './Graph'
 

@@ -5,6 +5,7 @@ import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse
 import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
 import { RelayService } from '../bridges/relay/relay-service'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import { PoolType, PoolUtils } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
@@ -24,7 +25,6 @@ import { PriceOracleService } from '../modules/price-oracle/price-oracle.service
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../utils/ChainClientService'
 import { loadConfig } from './configuration'
 
 export interface PoolData {

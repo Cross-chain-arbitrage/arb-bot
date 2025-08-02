@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { isAddressEqual } from 'viem'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import { chainIdToGeckoChainId } from './gecko-terminal-chains.constants.ts'
 import { GeckoTerminalService } from './gecko-terminal.service'

@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
-import { ChainClientService } from '../utils/ChainClientService'
 import { getAccountAddress } from '../utils/common'
 import { GraphArbitrageBot } from './GraphArbitrageBot'
 

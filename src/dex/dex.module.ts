@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../utils/ChainClientService'
 import { PoolCreator } from './base/PoolCreator'
 import { DEX_REGISTRY_TOKEN, DexRegistry } from './DexRegistry'
 import { PoolUtils } from './PoolUtils'

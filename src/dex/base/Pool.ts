@@ -5,9 +5,9 @@ import {
 	isAddressEqual,
 	TransactionReceipt,
 } from 'viem'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { BaseContract } from '../../primitives/contracts/BaseContract'
 import { Token } from '../../primitives/tokens/Token'
-import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 
 /**

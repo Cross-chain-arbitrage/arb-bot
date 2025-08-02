@@ -1,6 +1,6 @@
 import { Logger, Module } from '@nestjs/common'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../utils/ChainClientService'
 import { GeckoTerminalService } from './gecko-terminal.service'
 import { PriceOracleService } from './price-oracle.service'
 

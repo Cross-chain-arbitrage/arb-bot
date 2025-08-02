@@ -1,13 +1,13 @@
 import { Logger } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { arbitrum, fuse } from 'viem/chains'
+import { ChainClientService } from '../../../src/chain-client/chain-client.service'
 import { GeckoTerminalService } from '../../../src/modules/price-oracle/gecko-terminal.service'
 import { PriceOracleService } from '../../../src/modules/price-oracle/price-oracle.service'
 import { PriceOracleSettings } from '../../../src/modules/price-oracle/price-oracle.types'
 import { NativeCurrency } from '../../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../../src/primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../../src/utils/ChainClientService'
 import { wait } from '../../../src/utils/common'
 
 const WETH_ARB_ADDRESS = '0x82af49447d8a07e3bd95bd0d56f35241523fbab1' // WETH on Arbitrum
