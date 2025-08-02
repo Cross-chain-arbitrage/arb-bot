@@ -1,10 +1,12 @@
-import { Abi, DecodeEventLogReturnType } from 'viem'
+import { DecodeEventLogReturnType, toHex } from 'viem'
+import { UNI_UNIVERSAL_ROUTER_ABI } from '../../../abi/uni-universal-router'
 import { UNIV3_POOL_SWAP_EVENT_ABI } from '../../../abi/uniV3/uniV3Pool'
 import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
 import { UNIV3_ROUTER_ABI } from '../../../abi/uniV3/uniV3Router'
 import { UNIV3_ROUTER02_ABI } from '../../../abi/uniV3/uniV3Router02'
 import { Token } from '../../../primitives/tokens/Token'
 import { Pool } from '../Pool'
+import { CommandType, RoutePlanner } from './uni-universal-router-planner'
 
 export async function getPriceFromSlot(
 	this: Pool,
@@ -65,50 +67,6 @@ export async function quoteSwapUniV3(
 	return result[0]
 }
 
-export async function simulateSwapUniV3(
-	this: Pool & {
-		routerAddress: Address
-		fee: number
-		is02Router: boolean
-	},
-	params: SwapParams,
-): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
-	const abi: Abi = this.is02Router ? UNIV3_ROUTER02_ABI : UNIV3_ROUTER_ABI
-
-	const { amountOut: amountOutExpected } = await this.quoteSwap(params)
-
-	const amountOutMinimum = this.calcMinAmountOut(
-		amountOutExpected,
-		params.slippage ?? this.DEFAULT_SLIPPAGE,
-	)
-
-	const args = [
-		{
-			tokenIn: params.tokenIn.address,
-			tokenOut: params.tokenOut.address,
-			fee: this.fee,
-			recipient: this.account.address,
-			deadline: this.is02Router ? undefined : this.calcDeadline(60 * 5),
-			amountIn: params.amountIn,
-			amountOutMinimum,
-			sqrtPriceLimitX96: 0n,
-		},
-	]
-
-	const { result: amountOut, request } = await this.client.simulateContract({
-		address: this.routerAddress,
-		abi,
-		functionName: 'exactInputSingle',
-		account: this.account,
-		args,
-	})
-
-	return {
-		amountOut,
-		request: request as unknown as SimulateRequestWithAccount,
-	}
-}
-
 export function defineAmountsFromEventUniV3(
 	this: Pool,
 	swapEvent: DecodeEventLogReturnType<typeof UNIV3_POOL_SWAP_EVENT_ABI>,
@@ -124,4 +82,144 @@ export function defineAmountsFromEventUniV3(
 		: [amount1, -amount0]
 
 	return { amountOut, amountIn }
+}
+
+export enum RouterType {
+	V1 = 'v1',
+	V2 = 'v2',
+	UNIVERSAL = 'universal',
+}
+export async function simulateSwapUniV3(
+	this: Pool & {
+		routerAddress: Address
+		fee: number
+		routerType: RouterType
+	},
+	params: SwapParams,
+): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const { amountOut: amountOutExpected } = await this.quoteSwap(params)
+	const amountOutMinimum = this.calcMinAmountOut(
+		amountOutExpected,
+		params.slippage ?? this.DEFAULT_SLIPPAGE,
+	)
+
+	switch (this.routerType) {
+		case RouterType.V1:
+			return simulateSwapRouterV1.bind(this)(params, amountOutMinimum)
+		case RouterType.V2:
+			return simulateSwapRouterV2.bind(this)(params, amountOutMinimum)
+		case RouterType.UNIVERSAL:
+			return simulateSwapRouterUniversal.bind(this)(
+				params,
+				amountOutMinimum,
+				amountOutExpected,
+			)
+	}
+}
+
+async function simulateSwapRouterV1(
+	this: Pool & { routerAddress: Address; fee: number },
+	params: SwapParams,
+	amountOutMinimum: bigint,
+): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const args = [
+		{
+			tokenIn: params.tokenIn.address,
+			tokenOut: params.tokenOut.address,
+			fee: this.fee,
+			recipient: this.account.address,
+			deadline: this.calcDeadline(60 * 5),
+			amountIn: params.amountIn,
+			amountOutMinimum,
+			sqrtPriceLimitX96: 0n,
+		},
+	] as const
+
+	const { result: amountOut, request } = await this.client.simulateContract({
+		address: this.routerAddress,
+		abi: UNIV3_ROUTER_ABI,
+		functionName: 'exactInputSingle',
+		account: this.account,
+		args,
+	})
+
+	return {
+		amountOut,
+		request: request as unknown as SimulateRequestWithAccount,
+	}
+}
+
+async function simulateSwapRouterV2(
+	this: Pool & { routerAddress: Address; fee: number },
+	params: SwapParams,
+	amountOutMinimum: bigint,
+): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const args = [
+		{
+			tokenIn: params.tokenIn.address,
+			tokenOut: params.tokenOut.address,
+			fee: this.fee,
+			recipient: this.account.address,
+			amountIn: params.amountIn,
+			amountOutMinimum,
+			sqrtPriceLimitX96: 0n,
+		},
+	] as const
+
+	const { result: amountOut, request } = await this.client.simulateContract({
+		address: this.routerAddress,
+		abi: UNIV3_ROUTER02_ABI,
+		functionName: 'exactInputSingle',
+		account: this.account,
+		args,
+	})
+
+	return {
+		amountOut,
+		request: request as unknown as SimulateRequestWithAccount,
+	}
+}
+
+async function simulateSwapRouterUniversal(
+	this: Pool & { routerAddress: Address; fee: number },
+	params: SwapParams,
+	amountOutMinimum: bigint,
+	amountOutExpected: bigint,
+): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const planner = new RoutePlanner()
+
+	planner.addCommand(CommandType.V3_SWAP_EXACT_IN, {
+		recipient: this.account.address,
+		amountIn: params.amountIn,
+		amountOutMinimum,
+		path: buildPath.bind(this)(params.tokenIn, params.tokenOut),
+		payerIsUser: true,
+	})
+
+	const { request } = await this.client.simulateContract({
+		address: this.routerAddress,
+		abi: UNI_UNIVERSAL_ROUTER_ABI,
+		functionName: 'execute',
+		account: this.account.address,
+		args: [planner.commands, planner.inputs],
+	})
+
+	return {
+		amountOut: amountOutExpected,
+		request: request as unknown as SimulateRequestWithAccount,
+	}
+}
+
+function buildPath(
+	this: Pool & { fee: number },
+	tokenIn: Token,
+	tokenOut: Token,
+): Bytes {
+	let path = '0x'
+
+	path += tokenIn.address.slice(2)
+	path += toHex(this.fee, { size: 3 }).slice(2)
+	path += tokenOut.address.slice(2)
+
+	return path as Bytes
 }

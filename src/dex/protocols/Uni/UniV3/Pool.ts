@@ -4,6 +4,7 @@ import {
 	defineAmountsFromEventUniV3,
 	getPriceFromSlot,
 	quoteSwapUniV3,
+	RouterType,
 	simulateSwapUniV3,
 } from '../../../base/bricks/uniV3Bricks'
 import { Pool, PoolConstructorParams } from '../../../base/Pool'
@@ -11,13 +12,13 @@ import { Pool, PoolConstructorParams } from '../../../base/Pool'
 export class UniV3Pool extends Pool {
 	public readonly fee: number
 	public readonly quoterAddress: Address
-	public readonly is02Router: boolean
+	public readonly routerType: RouterType
 
 	constructor(
 		params: Omit<PoolConstructorParams, 'poolAbi'>,
 		fee: number,
 		quoterAddress: Address,
-		is02Router: boolean,
+		routerType: RouterType,
 	) {
 		super({
 			...params,
@@ -26,7 +27,7 @@ export class UniV3Pool extends Pool {
 
 		this.fee = fee
 		this.quoterAddress = quoterAddress
-		this.is02Router = is02Router
+		this.routerType = routerType
 	}
 
 	override async getPrice(): Promise<{

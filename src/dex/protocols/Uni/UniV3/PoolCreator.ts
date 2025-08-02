@@ -46,7 +46,7 @@ export class UniV3PoolCreator extends PoolCreator {
 			},
 			fee,
 			periphery.quoter,
-			periphery.is02Router,
+			periphery.routerType,
 		)
 	}
 }
