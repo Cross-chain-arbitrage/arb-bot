@@ -13,11 +13,18 @@ import { RouterType } from '../../../base/bricks/uniV3Bricks'
 export const UNIV3_PERIPHERY_CONFIG: Record<
 	number,
 	{
-		[factoryAddress: Address]: {
-			router: Address
-			quoter: Address
-			routerType: RouterType
-		}
+		[factoryAddress: Address]:
+			| {
+					router: Address
+					quoter: Address
+					routerType: RouterType.V1 | RouterType.V2
+			  }
+			| {
+					router: Address
+					quoter: Address
+					routerType: RouterType.UNIVERSAL
+					permit2: Address
+			  }
 	}
 > = {
 	[hemi.id]: {
@@ -80,6 +87,14 @@ export const UNIV3_PERIPHERY_CONFIG: Record<
 			quoter: '0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a',
 			router: '0x2626664c2603336E57B271c5C0b26F421741e481',
 			routerType: RouterType.V2,
+		},
+	},
+	[1300]: {
+		[getAddress('0x6D709dA17b57d608bD13fd6607690cE78745BF47')]: {
+			quoter: '0xbc31abF21573194DB8e763bC718FFaC3c91808bF',
+			router: '0x219F3ef35307515c41eae6867AffB327033dD96b',
+			routerType: RouterType.UNIVERSAL,
+			permit2: '0xb615b6dcE9d01C7C512234387Cbb2249B07C193b',
 		},
 	},
 }

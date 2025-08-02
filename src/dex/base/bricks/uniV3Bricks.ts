@@ -1,4 +1,5 @@
 import { DecodeEventLogReturnType, toHex } from 'viem'
+import { PERMIT2_ABI } from '../../../abi/permit2'
 import { UNI_UNIVERSAL_ROUTER_ABI } from '../../../abi/uni-universal-router'
 import { UNIV3_POOL_SWAP_EVENT_ABI } from '../../../abi/uniV3/uniV3Pool'
 import { UNIV3_QUOTER_ABI } from '../../../abi/uniV3/uniV3Quoter'
@@ -94,6 +95,7 @@ export async function simulateSwapUniV3(
 		routerAddress: Address
 		fee: number
 		routerType: RouterType
+		permit2Address?: Address
 	},
 	params: SwapParams,
 ): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
@@ -186,14 +188,95 @@ export async function simulateSwapUniV3RouterV2(
 	}
 }
 
+async function generatePermit2Signature(
+	this: Pool & { permit2Address: Address },
+	permitSingle: {
+		details: {
+			token: Address
+			amount: bigint
+			expiration: bigint
+			nonce: bigint
+		}
+		spender: Address
+		sigDeadline: bigint
+	},
+): Promise<`0x${string}`> {
+	// EIP-712 domain for Permit2
+	const domain = {
+		name: 'Permit2',
+		chainId: this.chainId,
+		verifyingContract: this.permit2Address,
+	}
+
+	// EIP-712 types for PermitSingle
+	const types = {
+		PermitSingle: [
+			{ name: 'details', type: 'PermitDetails' },
+			{ name: 'spender', type: 'address' },
+			{ name: 'sigDeadline', type: 'uint256' },
+		],
+		PermitDetails: [
+			{ name: 'token', type: 'address' },
+			{ name: 'amount', type: 'uint160' },
+			{ name: 'expiration', type: 'uint48' },
+			{ name: 'nonce', type: 'uint48' },
+		],
+	}
+
+	// Sign the typed data
+	const signature = await this.wallet.signTypedData({
+		domain,
+		types,
+		primaryType: 'PermitSingle',
+		message: permitSingle,
+	})
+
+	return signature
+}
+
 export async function simulateSwapUniV3RouterUniversal(
-	this: Pool & { routerAddress: Address; fee: number },
+	this: Pool & {
+		routerAddress: Address
+		fee: number
+		permit2Address?: Address
+	},
 	params: SwapParams,
 ): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
 	const { amountOutMinimum, amountOutExpected } =
 		await getAmountOuts.bind(this)(params)
 
 	const planner = new RoutePlanner()
+
+	const [, , nonce] = await this.client.readContract({
+		address: this.permit2Address!,
+		abi: PERMIT2_ABI,
+		functionName: 'allowance',
+		args: [
+			this.wallet.account.address,
+			params.tokenIn.address,
+			this.routerAddress,
+		],
+	})
+
+	const permitSingle = {
+		details: {
+			token: params.tokenIn.address,
+			amount: params.amountIn,
+			expiration: this.calcDeadline(60),
+			nonce: BigInt(nonce),
+		},
+		spender: this.routerAddress,
+		sigDeadline: this.calcDeadline(60),
+	}
+
+	const signature = await generatePermit2Signature.bind(
+		this as Pool & { permit2Address: Address },
+	)(permitSingle)
+
+	planner.addCommand(CommandType.PERMIT2_PERMIT, {
+		permitSingle,
+		signature,
+	})
 
 	planner.addCommand(CommandType.V3_SWAP_EXACT_IN, {
 		recipient: this.account.address,

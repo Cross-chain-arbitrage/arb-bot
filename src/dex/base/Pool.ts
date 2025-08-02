@@ -281,4 +281,11 @@ export abstract class Pool extends BaseContract {
 
 		return (expectedAmountOut * (BASIS_POINTS - slippage)) / BASIS_POINTS
 	}
+
+	async approveInfinite() {
+		const receipt0 = await this.token0.approveInfinite(this.routerAddress)
+		const receipt1 = await this.token1.approveInfinite(this.routerAddress)
+
+		return [receipt0, receipt1]
+	}
 }

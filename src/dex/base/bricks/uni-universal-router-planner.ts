@@ -1,5 +1,8 @@
 import { encodeAbiParameters, type AbiParameter, type Address } from 'viem'
 
+// Type alias for bytes strings
+type Bytes = `0x${string}`
+
 /**
  * CommandTypes
  * @description Flags that modify a command's execution
@@ -10,10 +13,51 @@ export enum CommandType {
 	// V2_SWAP_EXACT_IN = 0x08,
 	// WRAP_ETH = 0x0b,
 	// UNWRAP_WETH = 0x0c,
+	PERMIT2_PERMIT = 0x0a,
 }
+
+// struct PermitSingle {
+// 	// the permit data for a single token allowance
+// 	PermitDetails details;
+// 	// address permissioned on the allowed tokens
+// 	address spender;
+// 	// deadline on the permit signature
+// 	uint256 sigDeadline;
+// }
+
+// struct PermitDetails {
+// 	// ERC20 token address
+// 	address token;
+// 	// the maximum amount allowed to spend
+// 	uint160 amount;
+// 	// timestamp at which a spender's token allowances become invalid
+// 	uint48 expiration;
+// 	// an incrementing value indexed per owner,token,and spender for each signature
+// 	uint48 nonce;
+// }
+
+// Parameters:
+
+// PermitSingle permitSingle
+// bytes signature
 
 // ABI parameter with required name
 type NamedAbiParameter = AbiParameter & { name: string }
+
+// Define PermitDetails structure
+const PermitDetailsAbi = [
+	{ type: 'address', name: 'token' },
+	{ type: 'uint160', name: 'amount' },
+	{ type: 'uint48', name: 'expiration' },
+	{ type: 'uint48', name: 'nonce' },
+] as const satisfies readonly NamedAbiParameter[]
+
+// Define PermitSingle structure
+const PermitSingleAbi = [
+	{ type: 'tuple', name: 'details', components: PermitDetailsAbi },
+	{ type: 'address', name: 'spender' },
+	{ type: 'uint256', name: 'sigDeadline' },
+] as const satisfies readonly NamedAbiParameter[]
 
 const ABI_DEFINITION = {
 	[CommandType.V3_SWAP_EXACT_IN]: [
@@ -22,6 +66,10 @@ const ABI_DEFINITION = {
 		{ type: 'uint256', name: 'amountOutMinimum' },
 		{ type: 'bytes', name: 'path' },
 		{ type: 'bool', name: 'payerIsUser' },
+	],
+	[CommandType.PERMIT2_PERMIT]: [
+		{ type: 'tuple', name: 'permitSingle', components: PermitSingleAbi },
+		{ type: 'bytes', name: 'signature' },
 	],
 	// [CommandType.V2_SWAP_EXACT_IN]: [
 	// 	{ type: 'address', name: 'recipient' },
@@ -46,11 +94,23 @@ type AbiParameterToPrimitiveType<TAbiParameter extends NamedAbiParameter> =
 		? Address
 		: TAbiParameter['type'] extends 'uint256'
 			? bigint
-			: TAbiParameter['type'] extends 'bytes'
-				? `0x${string}`
-				: TAbiParameter['type'] extends 'bool'
-					? boolean
-					: never
+			: TAbiParameter['type'] extends 'uint160'
+				? bigint
+				: TAbiParameter['type'] extends 'uint48'
+					? bigint
+					: TAbiParameter['type'] extends 'bytes'
+						? `0x${string}`
+						: TAbiParameter['type'] extends 'bool'
+							? boolean
+							: TAbiParameter['type'] extends 'tuple'
+								? TAbiParameter extends {
+										components: readonly NamedAbiParameter[]
+									}
+									? AbiParametersToObject<
+											TAbiParameter['components']
+										>
+									: never
+								: never
 
 type AbiParametersToObject<
 	TAbiParameters extends readonly NamedAbiParameter[],

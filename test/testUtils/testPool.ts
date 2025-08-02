@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import {
-	Chain,
 	Client,
 	ContractFunctionExecutionError,
 	erc20Abi,
@@ -19,7 +18,7 @@ import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'
 
 export type PoolTestConfig = {
-	chain: Chain
+	chainId: number
 	poolType: PoolType
 	poolAddress: Address
 	/** anvil will use rpcUrl for fork or, if not provided, the default rpc url from viem */
@@ -35,7 +34,8 @@ export type PoolTestConfig = {
 }
 
 export function testPool(context: PoolTestConfig) {
-	const { chain, poolAddress, rpcUrl, poolType, assertPoolCreation } = context
+	const { chainId, poolAddress, rpcUrl, poolType, assertPoolCreation } =
+		context
 
 	const AMOUNT_IN_USD = 1000
 
@@ -46,7 +46,7 @@ export function testPool(context: PoolTestConfig) {
 	let priceOracleService: PriceOracleService
 
 	const { mockChainClientService, anvil } = useAnvil({
-		chainId: chain.id,
+		chainId,
 		timeoutStartAnvil: 20000,
 		rpcUrl,
 	})
@@ -67,15 +67,15 @@ export function testPool(context: PoolTestConfig) {
 			],
 		}).compile()
 
-		walletClient = mockChainClientService.getWalletClient(chain.id)
+		walletClient = mockChainClientService.getWalletClient(chainId)
 		botAddress = walletClient.account!.address
 		priceOracleService = app.get(PriceOracleService)
 
-		client = mockChainClientService.getClient(chain.id)
+		client = mockChainClientService.getClient(chainId)
 
 		const poolCreator = app.get(poolCreatorClass)
 
-		pool = await poolCreator.create(poolAddress, chain.id)
+		pool = await poolCreator.create(poolAddress, chainId)
 
 		await setNativeBalance(client, botAddress, 10n ** 36n)
 		await setTokenBalance(
@@ -90,6 +90,8 @@ export function testPool(context: PoolTestConfig) {
 			10n ** 36n,
 			client,
 		)
+
+		await pool.approveInfinite()
 	})
 
 	it('should quote, simulate and swap token0 to token1', async () => {
@@ -140,14 +142,6 @@ export function testPool(context: PoolTestConfig) {
 				abi: erc20Abi,
 				client: walletClient,
 			})
-
-			await tokenInContract.write.approve(
-				[pool.routerAddress, amountIn],
-				{
-					account: walletClient.account!,
-					chain: walletClient.chain,
-				},
-			)
 
 			const tokenInBalanceBefore = await tokenInContract.read.balanceOf([
 				botAddress,

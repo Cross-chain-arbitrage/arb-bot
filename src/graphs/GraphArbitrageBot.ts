@@ -15,7 +15,6 @@ import {
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
-import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { runFuncWithDelay } from '../utils/polling'
 import { GraphExecutor } from './GraphExecutor'
@@ -452,34 +451,37 @@ export class GraphArbitrageBot {
 			)
 			const tx = await this.approveForEdge(edge)
 
-			if (!tx) {
+			if (!tx || tx.length === 0) {
 				this.logger.log('Approve already done or not required')
 			} else {
-				this.logger.log(tx?.transactionHash)
+				this.logger.log(tx)
 			}
 		}
 	}
 
 	private async approveForEdge(
 		edge: Edge,
-	): Promise<TransactionReceipt | undefined> {
+	): Promise<Array<TransactionReceipt | undefined>> {
 		const { from, to } = edge
 
 		switch (edge.actionType) {
 			case ActionType.SWAP:
-				return await (from as Token).approveInfinite(
-					(edge as SwapEdge).pool.routerAddress,
-				)
+				return await (edge as SwapEdge).pool.approveInfinite()
 
 			case ActionType.STARGATE_BRIDGE:
-				return await this.stargate.approveToBridge(from, maxUint256)
+				return [await this.stargate.approveToBridge(from, maxUint256)]
 
 			case ActionType.FUSE_BRIDGE:
-				return await this.fuseBridge.approveToBridge(
-					from,
-					maxUint256,
-					to.chainId,
-				)
+				return [
+					await this.fuseBridge.approveToBridge(
+						from,
+						maxUint256,
+						to.chainId,
+					),
+				]
+
+			default:
+				return []
 		}
 	}
 

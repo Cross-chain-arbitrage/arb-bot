@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import axios from 'axios'
 import { Address } from 'viem'
-import { CHAINS } from './gecko-terminal-chains.constants.ts'
+import { chainIdToGeckoChainId } from './gecko-terminal-chains.constants.ts'
 
 interface GeckoTerminalTokenData {
 	id: string
@@ -95,7 +95,9 @@ export class GeckoTerminalService {
 	}
 
 	validateChain(chain: string) {
-		const some = CHAINS.some((c) => c.id === chain)
+		const some = Object.values(chainIdToGeckoChainId).some(
+			(c) => c === chain,
+		)
 		if (!some) throw new Error(`Chain ${chain} not found`)
 	}
 }

@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common'
-import { getAddress } from 'viem'
+import { getAddress, PublicClient } from 'viem'
 import {
 	callFactoryFunction,
 	callFeeFunction,
 	callToken0Function,
 	callToken1Function,
+	isContractFactoryMatch,
 	isRouterAndQuoterFactoryMatch,
 } from '../../../base/bricks/commonBricks'
+import { RouterType } from '../../../base/bricks/uniV3Bricks'
 import { PoolConstructorParams } from '../../../base/Pool'
 import { PoolCreator } from '../../../base/PoolCreator'
 import { UNIV3_PERIPHERY_CONFIG } from './periphery'
@@ -17,7 +19,28 @@ export class UniV3PoolCreator extends PoolCreator {
 	override _getToken0Address = callToken0Function
 	override _getToken1Address = callToken1Function
 	override _getPoolFactoryAddress = callFactoryFunction
-	override _isPeripheryValid = isRouterAndQuoterFactoryMatch
+
+	override async _isPeripheryValid(
+		periphery: (typeof UNIV3_PERIPHERY_CONFIG)[number][Address],
+		poolFactory: Address,
+		client: PublicClient,
+	) {
+		switch (periphery.routerType) {
+			case RouterType.V1:
+			case RouterType.V2:
+				return isRouterAndQuoterFactoryMatch(
+					periphery,
+					poolFactory,
+					client,
+				)
+			case RouterType.UNIVERSAL:
+				return isContractFactoryMatch(
+					periphery.quoter,
+					poolFactory,
+					client,
+				)
+		}
+	}
 
 	override _getPeripheryFromCollection(
 		chainId: number,
@@ -47,6 +70,9 @@ export class UniV3PoolCreator extends PoolCreator {
 			fee,
 			periphery.quoter,
 			periphery.routerType,
+			periphery.routerType === RouterType.UNIVERSAL
+				? periphery.permit2
+				: undefined,
 		)
 	}
 }
