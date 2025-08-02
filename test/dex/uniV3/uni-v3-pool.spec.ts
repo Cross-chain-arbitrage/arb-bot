@@ -18,7 +18,7 @@ describe('Uniswap V3 pool test', () => {
 		})
 	})
 
-	describe.only('universal router', () => {
+	describe('universal router', () => {
 		const poolAddress = '0x3a076d83d18C434fE3a43250479a90040D06aD5B'
 
 		testPool({
