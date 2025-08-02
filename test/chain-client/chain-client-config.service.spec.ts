@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config'
 import { Test, TestingModule } from '@nestjs/testing'
-import { ChainClientConfigService } from '../../src/chain-client/chain-client.config'
+import { ChainClientConfigService } from '../../src/chain-client/chain-client-config.service'
 
 describe('ChainClientConfigService', () => {
 	let service: ChainClientConfigService

@@ -15,7 +15,7 @@ import {
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
 import { createCustomError } from '../utils/common'
-import { ChainClientConfigService } from './chain-client.config'
+import { ChainClientConfigService } from './chain-client-config.service'
 
 @Injectable()
 export class ChainClientService {
