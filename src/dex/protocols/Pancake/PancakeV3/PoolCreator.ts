@@ -46,7 +46,6 @@ export class PancakeV3PoolCreator extends PoolCreator {
 			},
 			fee,
 			periphery.quoter,
-			periphery.is02Router,
 		)
 	}
 }

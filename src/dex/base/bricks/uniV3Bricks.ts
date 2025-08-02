@@ -97,31 +97,36 @@ export async function simulateSwapUniV3(
 	},
 	params: SwapParams,
 ): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	switch (this.routerType) {
+		case RouterType.V1:
+			return simulateSwapUniV3RouterV1.bind(this)(params)
+		case RouterType.V2:
+			return simulateSwapUniV3RouterV2.bind(this)(params)
+		case RouterType.UNIVERSAL:
+			return simulateSwapUniV3RouterUniversal.bind(this)(params)
+	}
+}
+
+async function getAmountOuts(
+	this: Pool,
+	params: SwapParams,
+): Promise<{ amountOutExpected: bigint; amountOutMinimum: bigint }> {
 	const { amountOut: amountOutExpected } = await this.quoteSwap(params)
+
 	const amountOutMinimum = this.calcMinAmountOut(
 		amountOutExpected,
 		params.slippage ?? this.DEFAULT_SLIPPAGE,
 	)
 
-	switch (this.routerType) {
-		case RouterType.V1:
-			return simulateSwapRouterV1.bind(this)(params, amountOutMinimum)
-		case RouterType.V2:
-			return simulateSwapRouterV2.bind(this)(params, amountOutMinimum)
-		case RouterType.UNIVERSAL:
-			return simulateSwapRouterUniversal.bind(this)(
-				params,
-				amountOutMinimum,
-				amountOutExpected,
-			)
-	}
+	return { amountOutExpected, amountOutMinimum }
 }
 
-async function simulateSwapRouterV1(
+export async function simulateSwapUniV3RouterV1(
 	this: Pool & { routerAddress: Address; fee: number },
 	params: SwapParams,
-	amountOutMinimum: bigint,
 ): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const { amountOutMinimum } = await getAmountOuts.bind(this)(params)
+
 	const args = [
 		{
 			tokenIn: params.tokenIn.address,
@@ -149,11 +154,12 @@ async function simulateSwapRouterV1(
 	}
 }
 
-async function simulateSwapRouterV2(
+export async function simulateSwapUniV3RouterV2(
 	this: Pool & { routerAddress: Address; fee: number },
 	params: SwapParams,
-	amountOutMinimum: bigint,
 ): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const { amountOutMinimum } = await getAmountOuts.bind(this)(params)
+
 	const args = [
 		{
 			tokenIn: params.tokenIn.address,
@@ -180,12 +186,13 @@ async function simulateSwapRouterV2(
 	}
 }
 
-async function simulateSwapRouterUniversal(
+export async function simulateSwapUniV3RouterUniversal(
 	this: Pool & { routerAddress: Address; fee: number },
 	params: SwapParams,
-	amountOutMinimum: bigint,
-	amountOutExpected: bigint,
 ): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const { amountOutMinimum, amountOutExpected } =
+		await getAmountOuts.bind(this)(params)
+
 	const planner = new RoutePlanner()
 
 	planner.addCommand(CommandType.V3_SWAP_EXACT_IN, {
