@@ -12,6 +12,7 @@ import { Pool } from '../dex/base/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
+import { createCustomError } from '../utils/common'
 import {
 	FuseBridgeEdge,
 	StargateBridgeEdge,
@@ -20,13 +21,7 @@ import {
 } from './primitives/Edge'
 import { Graph, GraphError } from './primitives/Graph'
 
-export class GraphBuilderError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, GraphBuilderError.prototype)
-		this.name = 'GraphBuilderError'
-	}
-}
+export const GraphBuilderError = createCustomError('GraphBuilderError')
 
 /**
  * Configuration for Stargate bridge connections
