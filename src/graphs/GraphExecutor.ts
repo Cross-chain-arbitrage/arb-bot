@@ -1,10 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { TransactionReceipt } from 'viem'
-import { ChainClientService } from '../chain-client/chain-client.service'
-import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
-import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { runFnWithRetry } from '../utils/common'
-import { ActionType, Edge } from './primitives/Edge'
+import { CrosschainEdge } from './primitives/edges/crosschain/crosschain-edge'
+import { Edge } from './primitives/edges/edge'
 
 export interface GraphExecutorConfig {
 	path: Edge[]
@@ -24,12 +21,7 @@ export interface GraphExecutorConfig {
 
 @Injectable()
 export class GraphExecutor {
-	constructor(
-		readonly chainClientService: ChainClientService,
-		readonly tokenUtils: TokenUtils,
-		readonly priceOracleService: PriceOracleService,
-		readonly logger: Logger,
-	) {}
+	constructor(readonly logger: Logger) {}
 
 	/**
 	 * Execute the arbitrage path
@@ -52,7 +44,7 @@ export class GraphExecutor {
 
 			await beforeExecuteEdgeHook?.(path, edge, nextAmountIn)
 
-			const beforeExecuteLogMsg = `Start ${edge.actionType} from: ${from.toString()} to:${to.toString()} input:${from.formatUnits(nextAmountIn)}}`
+			const beforeExecuteLogMsg = `Start ${edge.constructor.name} from: ${from.toString()} to:${to.toString()} input:${from.formatUnits(nextAmountIn)}}`
 			this.logger.log(beforeExecuteLogMsg)
 
 			const executionResult = await runFnWithRetry(
@@ -61,7 +53,7 @@ export class GraphExecutor {
 				this.logger,
 			)
 
-			const { executionCostInUsd } = await this.handleExecutionResult(
+			const executionCostInUsd = this.handleExecutionResult(
 				edge,
 				executionResult,
 			)
@@ -82,92 +74,32 @@ export class GraphExecutor {
 	/**
 	 * build and print log and calculate tx cost
 	 */
-	async handleExecutionResult(
+	handleExecutionResult(
 		edge: Edge,
-		executionResult: EdgeExecutionResult<ActionType>,
+		executionResult:
+			| InchainEdgeExecutionResult
+			| CrosschainEdgeExecutionResult,
 	) {
-		let executionResultLogMsg = `\n┌─ ${edge.actionType} COMPLETED ─────────────────────\n`
+		let executionResultLogMsg = `\n┌─ ${edge.constructor.name} COMPLETED ─────────────────────\n`
 		executionResultLogMsg += `│ Output Amount: ${edge.to.formatUnits(executionResult.amountOut)} ${edge.to.symbol}\n`
 
-		let botTxReceipt
-		let executionCostInUsd = 0
+		if (edge instanceof CrosschainEdge) {
+			const { srcTxHash, dstTxHash, costInUsd } =
+				executionResult as CrosschainEdgeExecutionResult
 
-		if (
-			edge.actionType === ActionType.STARGATE_BRIDGE ||
-			edge.actionType === ActionType.FUSE_BRIDGE ||
-			edge.actionType === ActionType.SIMPLE_STARGATE_BRIDGE ||
-			edge.actionType === ActionType.RELAY_BRIDGE ||
-			edge.actionType === ActionType.GAS_ZIP_BRIDGE
-		) {
-			const { srcTxReceipt, dstTxHash, bridgeFee } =
-				executionResult as EdgeExecutionResult<BridgeActionType>
-
-			const bridgeFeeTokenPrice = await this.priceOracleService.getPrice(
-				bridgeFee.underlyingToken,
-			)
-
-			const bridgeFeeInUsd =
-				Number(bridgeFee.formatUnits(bridgeFee.amount)) *
-				bridgeFeeTokenPrice
-
-			executionCostInUsd += bridgeFeeInUsd
-
-			executionResultLogMsg += `│ Source Tx:     ${srcTxReceipt.transactionHash}\n`
+			executionResultLogMsg += `│ Source Tx:     ${srcTxHash}\n`
 			executionResultLogMsg += `│ Destination Tx: ${dstTxHash}\n`
-			executionResultLogMsg += `│ Bridge Fee:    ${bridgeFee.formatUnits(bridgeFee.amount)} ${bridgeFee.symbol} (~$${bridgeFeeInUsd.toFixed(2)})\n`
-
-			botTxReceipt = srcTxReceipt
 		} else {
-			const { txReceipt } =
-				executionResult as EdgeExecutionResult<InchainActionType>
+			const { txHash } = executionResult as InchainEdgeExecutionResult
 
-			executionResultLogMsg += `│ Transaction:   ${txReceipt.transactionHash}\n`
-
-			botTxReceipt = txReceipt
+			executionResultLogMsg += `│ Transaction:   ${txHash}\n`
 		}
 
-		const { nativeCurrency, txCostInNative, txCostInUsd } =
-			await this.getTxCost(edge.from.chainId, botTxReceipt)
-
-		executionCostInUsd += txCostInUsd
-
-		executionResultLogMsg += `│ Gas Cost:      ${nativeCurrency.formatUnits(txCostInNative)} ${nativeCurrency.symbol} (~$${txCostInUsd.toFixed(2)})\n`
+		executionResultLogMsg += `│ Actual Cost:    $${executionResult.costInUsd.toFixed(2)}\n`
 		executionResultLogMsg += `└────────────────────────────────────────────────────\n`
 
 		this.logger.log(executionResultLogMsg)
 
-		return {
-			executionCostInUsd,
-			txCostInNative,
-		}
-	}
-
-	async getTxCost(chainId: number, txReceipt: TransactionReceipt) {
-		const nativeCurrency = this.tokenUtils.getNative(chainId)
-
-		let txCostInNative = 0n
-		try {
-			// viem returns not bigint for one of the values (probably effectiveGasPrice)
-			txCostInNative = txReceipt.gasUsed * txReceipt.effectiveGasPrice
-		} catch (error) {
-			this.logger.error(
-				`Error calculating tx cost in native for tx ${txReceipt.transactionHash}, gasUsed: ${txReceipt.gasUsed}, effectiveGasPrice: ${txReceipt.effectiveGasPrice}`,
-				error,
-			)
-		}
-
-		const txCostInNativeFormatted =
-			nativeCurrency.formatUnits(txCostInNative)
-
-		const nativePrice =
-			await this.priceOracleService.getPrice(nativeCurrency)
-
-		const txCostInUsd = Number(txCostInNativeFormatted) * nativePrice
-
-		return {
-			nativeCurrency,
-			txCostInNative,
-			txCostInUsd,
-		}
+		return executionResult.costInUsd
 	}
 }

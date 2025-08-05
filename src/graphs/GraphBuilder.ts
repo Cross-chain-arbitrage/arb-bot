@@ -1,3 +1,4 @@
+import { Cache } from '@nestjs/cache-manager'
 import { Injectable, Logger } from '@nestjs/common'
 import { fuse } from 'viem/chains'
 import { FUSE_BRIDGE_SUPPORTED_TOKENS } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.constants'
@@ -13,13 +14,13 @@ import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import { createCustomError } from '../utils/common'
-import {
-	FuseBridgeEdge,
-	StargateBridgeEdge,
-	UnwrapEdge,
-	WrapEdge,
-} from './primitives/Edge'
 import { Graph, GraphError } from './primitives/Graph'
+import { FuseBridgeEdge } from './primitives/edges/crosschain/fuse-edge'
+import { StargateBridgeEdge } from './primitives/edges/crosschain/stargate-edge'
+import { EdgeHelperService } from './primitives/edges/edge-helper.service'
+import { SwapEdge } from './primitives/edges/inchain/swap-edge'
+import { UnwrapEdge } from './primitives/edges/inchain/unwrap-edge'
+import { WrapEdge } from './primitives/edges/inchain/wrap-edge'
 
 export const GraphBuilderError = createCustomError('GraphBuilderError')
 
@@ -68,6 +69,8 @@ export class GraphBuilder {
 		private readonly fuseBridgeService: FuseBridgeService,
 		private readonly stargateAPIService: StargateAPIService,
 		private readonly logger: Logger,
+		private readonly edgeHelperService: EdgeHelperService,
+		private readonly cacheService: Cache,
 	) {}
 
 	/**
@@ -87,20 +90,11 @@ export class GraphBuilder {
 			throw new GraphBuilderError('No pools provided')
 		}
 
-		const graph = new Graph(
-			this.tokenUtils,
-			this.chainClientService,
-			buildConfig.edgeCacheTTL,
-		)
+		const graph = new Graph()
 
 		/* ================ Setup Pools (With Tokens) ================ */
 
-		for (const pool of pools) {
-			graph.addDexPool(pool)
-			this.logger.log(
-				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${this.chainClientService.getChainNameById(pool.chainId)})`,
-			)
-		}
+		this.setupPools(graph, pools)
 
 		/* ================ Setup Native Currency and it's Wrapped Versions For Each Chain ================ */
 
@@ -188,19 +182,19 @@ export class GraphBuilder {
 		for (const wrapped of wrappedNativeCurrencies) {
 			graph.addEdge(
 				new WrapEdge(
-					this.chainClientService,
 					wrapped.native,
 					wrapped,
-					graph,
+					this.edgeHelperService,
+					this.cacheService,
 				),
 			)
 
 			graph.addEdge(
 				new UnwrapEdge(
-					this.chainClientService,
-					wrapped,
 					wrapped.native,
-					graph,
+					wrapped,
+					this.edgeHelperService,
+					this.cacheService,
 				),
 			)
 		}
@@ -277,11 +271,12 @@ export class GraphBuilder {
 		for (const pair of pairs) {
 			graph.addEdge(
 				new StargateBridgeEdge(
-					this.chainClientService,
-					this.stargateService,
 					pair[0],
 					pair[1],
-					graph,
+					this.stargateService,
+					this.chainClientService,
+					this.edgeHelperService,
+					this.cacheService,
 				),
 			)
 		}
@@ -329,11 +324,12 @@ export class GraphBuilder {
 			for (const fuseToken of fuseOnOtherChains) {
 				graph.addEdge(
 					new FuseBridgeEdge(
-						this.chainClientService,
-						this.fuseBridgeService,
 						fuseToken,
 						wfuseToken,
-						graph,
+						this.fuseBridgeService,
+						this.chainClientService,
+						this.edgeHelperService,
+						this.cacheService,
 					),
 				)
 				this.logger.log(
@@ -346,11 +342,12 @@ export class GraphBuilder {
 				for (const fuseToken of fuseOnOtherChains) {
 					graph.addEdge(
 						new FuseBridgeEdge(
-							this.chainClientService,
-							this.fuseBridgeService,
 							nativeFuseOnFuse,
 							fuseToken,
-							graph,
+							this.fuseBridgeService,
+							this.chainClientService,
+							this.edgeHelperService,
+							this.cacheService,
 						),
 					)
 					this.logger.log(
@@ -381,20 +378,22 @@ export class GraphBuilder {
 
 				graph.addEdge(
 					new FuseBridgeEdge(
-						this.chainClientService,
-						this.fuseBridgeService,
 						token,
 						tokenOnFuse,
-						graph,
+						this.fuseBridgeService,
+						this.chainClientService,
+						this.edgeHelperService,
+						this.cacheService,
 					),
 				)
 				graph.addEdge(
 					new FuseBridgeEdge(
-						this.chainClientService,
-						this.fuseBridgeService,
 						tokenOnFuse,
 						token,
-						graph,
+						this.fuseBridgeService,
+						this.chainClientService,
+						this.edgeHelperService,
+						this.cacheService,
 					),
 				)
 			}
@@ -409,5 +408,42 @@ export class GraphBuilder {
 
 	private getAllUniqueChainIdsFromPools(pools: Pool[]): number[] {
 		return [...new Set(pools.map((pool) => pool.chainId))]
+	}
+
+	private setupPools(graph: Graph, pools: Pool[]) {
+		for (const pool of pools) {
+			const from = pool.token0
+			const to = pool.token1
+
+			if (!graph.isNodeAdded(from.id)) {
+				graph.addNode(from)
+			}
+			if (!graph.isNodeAdded(to.id)) {
+				graph.addNode(to)
+			}
+
+			graph.addEdge(
+				new SwapEdge(
+					from,
+					to,
+					pool,
+					this.edgeHelperService,
+					this.cacheService,
+				),
+			)
+			graph.addEdge(
+				new SwapEdge(
+					to,
+					from,
+					pool,
+					this.edgeHelperService,
+					this.cacheService,
+				),
+			)
+
+			this.logger.log(
+				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${this.chainClientService.getChainNameById(pool.chainId)})`,
+			)
+		}
 	}
 }

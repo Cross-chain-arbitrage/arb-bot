@@ -1,5 +1,6 @@
 import { createCustomError } from '../utils/common'
-import { Edge, FuseBridgeEdge, StargateBridgeEdge } from './primitives/Edge'
+import { CrosschainEdge } from './primitives/edges/crosschain/crosschain-edge'
+import { Edge } from './primitives/edges/edge'
 import { Graph } from './primitives/Graph'
 
 const GraphOpportunityFinderError = createCustomError(
@@ -133,10 +134,7 @@ export class GraphOpportunityFinder {
 				)
 			}
 
-			if (
-				edge instanceof StargateBridgeEdge ||
-				edge instanceof FuseBridgeEdge
-			) {
+			if (edge instanceof CrosschainEdge) {
 				bridgesCount++
 			}
 

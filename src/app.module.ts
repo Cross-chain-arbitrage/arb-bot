@@ -1,3 +1,4 @@
+import { CacheModule } from '@nestjs/cache-manager'
 import { Logger, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { LoggerModule } from 'nestjs-pino'
@@ -7,6 +8,7 @@ import { DexModule } from './dex/dex.module'
 import { GraphBuilder } from './graphs/GraphBuilder'
 import { GraphExecutor } from './graphs/GraphExecutor'
 import { GraphVisualizer } from './graphs/GraphVisualizer'
+import { EdgeHelperService } from './graphs/primitives/edges/edge-helper.service'
 import { TgArbitrageNotifier } from './modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from './modules/notification/TgBalancesNotifier'
 import { PriceOracleModule } from './modules/price-oracle/price-oracle.module'
@@ -34,6 +36,7 @@ import { transport } from './utils/logging-config'
 			load: [loadConfig],
 			isGlobal: true,
 		}),
+		CacheModule.register(),
 	],
 	providers: [
 		GraphBuilder,
@@ -45,6 +48,7 @@ import { transport } from './utils/logging-config'
 		GraphExecutor,
 		Strategy,
 		Logger,
+		EdgeHelperService,
 	],
 })
 export class AppModule {}

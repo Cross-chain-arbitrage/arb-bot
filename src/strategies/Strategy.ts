@@ -17,7 +17,7 @@ import {
 	GasZipBridgeEdge,
 	RelayBridgeEdge,
 	SimpleStargateBridgeEdge,
-} from '../graphs/primitives/Edge'
+} from '../graphs/primitives/edges/edge'
 import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'

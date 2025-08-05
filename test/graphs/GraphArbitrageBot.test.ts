@@ -12,7 +12,7 @@ import {
 	SwapEdge,
 	UnwrapEdge,
 	WrapEdge,
-} from '../../src/graphs/primitives/Edge'
+} from '../../src/graphs/primitives/edges/edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from '../../src/modules/price-oracle/price-oracle.service'
