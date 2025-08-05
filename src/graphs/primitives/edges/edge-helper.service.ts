@@ -44,12 +44,10 @@ export class EdgeHelperService {
 		from: GraphNode,
 		txReceipt: TransactionReceipt,
 	) {
-		let txCostInNative = 0
+		let txCostInNative = 0n
 		try {
 			// viem returns not bigint for one of the values (probably effectiveGasPrice)
-			txCostInNative = Number(
-				txReceipt.gasUsed * txReceipt.effectiveGasPrice,
-			)
+			txCostInNative = txReceipt.gasUsed * txReceipt.effectiveGasPrice
 		} catch (e) {
 			throw Error(
 				`Error calculating tx cost in native for tx ${txReceipt.transactionHash}, gasUsed: ${txReceipt.gasUsed}, effectiveGasPrice: ${txReceipt.effectiveGasPrice}`,
@@ -60,7 +58,8 @@ export class EdgeHelperService {
 
 		const nativePrice = await this.priceOracleService.getPrice(native)
 
-		const costInUsd = txCostInNative * nativePrice
+		const costInUsd =
+			Number(native.formatUnits(txCostInNative)) * nativePrice
 
 		return costInUsd
 	}
