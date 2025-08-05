@@ -70,7 +70,7 @@ const configScheme = z.object({
 		runCount: z.number(),
 		maxPathLength: z.number(),
 	}),
-	chainClientConfig: chainClientConfigScheme,
+	chainClientConfig: chainClientConfigScheme.optional(),
 })
 
 export function loadConfig() {

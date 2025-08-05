@@ -18,6 +18,8 @@ import { loadConfig } from './strategies/configuration'
 import { Strategy } from './strategies/Strategy'
 import { transport } from './utils/logging-config'
 
+const appConfig = loadConfig()
+
 @Module({
 	imports: [
 		LoggerModule.forRoot({
@@ -30,14 +32,14 @@ import { transport } from './utils/logging-config'
 				},
 			},
 		}),
-		ChainClientModule,
-		DexModule.forRoot(),
-		BridgeModule,
-		PriceOracleModule,
 		ConfigModule.forRoot({
 			load: [loadConfig],
 			isGlobal: true,
 		}),
+		ChainClientModule.forRoot(appConfig.chainClientConfig),
+		DexModule.forRoot(),
+		BridgeModule,
+		PriceOracleModule,
 		CacheModule.register(),
 	],
 	providers: [
