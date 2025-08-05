@@ -5,6 +5,7 @@ import { LoggerModule } from 'nestjs-pino'
 import { BridgeModule } from './bridges/bridge.module'
 import { ChainClientModule } from './chain-client/chain-client.module'
 import { DexModule } from './dex/dex.module'
+import { GasPriceOracleService } from './gas-price-oracle/gas-price-oracle.service'
 import { GraphBuilder } from './graphs/GraphBuilder'
 import { GraphExecutor } from './graphs/GraphExecutor'
 import { GraphVisualizer } from './graphs/GraphVisualizer'
@@ -49,6 +50,7 @@ import { transport } from './utils/logging-config'
 		Strategy,
 		Logger,
 		EdgeHelperService,
+		GasPriceOracleService,
 	],
 })
 export class AppModule {}

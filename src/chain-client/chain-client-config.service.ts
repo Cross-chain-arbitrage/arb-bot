@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config'
 import { Chain, defineChain } from 'viem'
 import { privateKeyToAddress } from 'viem/accounts'
 import { z } from 'zod'
+import { loadConfig } from '../strategies/configuration'
 import { getAlchemyRpcUrl } from '../utils/alchemy'
-import { parsePretty } from '../utils/zod'
 
 function transformAndValidate(rawChains: Record<string, string[]>) {
 	const chains: Record<string, string[]> = {}
@@ -54,7 +54,7 @@ const customChainsScheme = z.array(
 		),
 )
 
-const chainClientConfigScheme = z
+export const chainClientConfigScheme = z
 	.object({
 		rpcProviders: rpcProvidersScheme.optional(),
 		customChains: customChainsScheme.optional(),
@@ -67,12 +67,17 @@ export class ChainClientConfigService implements OnModuleInit {
 	rpcUrls: Record<number, string[]> | undefined
 	customChains: Chain[] | undefined
 
-	constructor(private readonly configService: ConfigService) {}
+	constructor(
+		private readonly configService: ConfigService<
+			ReturnType<typeof loadConfig>,
+			true
+		>,
+	) {}
 
 	public onModuleInit(): void {
-		const chainConfigRaw = this.configService.get('chainClientConfig')
-
-		const chainConfig = parsePretty(chainClientConfigScheme, chainConfigRaw)
+		const chainConfig = this.configService.get('chainClientConfig', {
+			infer: true,
+		})
 
 		this.privateKey = this.getPrivateKey()
 

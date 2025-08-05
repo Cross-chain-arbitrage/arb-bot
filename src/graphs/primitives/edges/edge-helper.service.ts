@@ -1,9 +1,11 @@
+import { Injectable } from '@nestjs/common'
 import { TransactionReceipt } from 'viem'
 import { GasPriceOracleService } from '../../../gas-price-oracle/gas-price-oracle.service'
 import { PriceOracleService } from '../../../modules/price-oracle/price-oracle.service'
 import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
 
+@Injectable()
 export class EdgeHelperService {
 	constructor(
 		private readonly gasPriceOracleService: GasPriceOracleService,
