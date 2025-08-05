@@ -51,12 +51,12 @@ export class RelayBridgeEdge extends CrosschainEdge {
 	private pendingQuoteRequest: Promise<void> | null = null
 
 	constructor(
-		chainClientService: ChainClientService,
-		readonly relay: RelayService,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
-		readonly rateFunctionTTL: number = 5000,
+		chainClientService: ChainClientService,
+		readonly relay: RelayService,
 		cacheService: Cache,
+		readonly rateFunctionTTL: number = 5000,
 	) {
 		super(from, to, cacheService)
 		this.id = `${this.from.id}-${this.to.id}-${RelayBridgeEdge.name}`

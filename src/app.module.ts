@@ -3,7 +3,7 @@ import { Logger, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { LoggerModule } from 'nestjs-pino'
 import { BridgeModule } from './bridges/bridge.module'
-import { ChainClientService } from './chain-client/chain-client.service'
+import { ChainClientModule } from './chain-client/chain-client.module'
 import { DexModule } from './dex/dex.module'
 import { GraphBuilder } from './graphs/GraphBuilder'
 import { GraphExecutor } from './graphs/GraphExecutor'
@@ -29,6 +29,7 @@ import { transport } from './utils/logging-config'
 				},
 			},
 		}),
+		ChainClientModule,
 		DexModule.forRoot(),
 		BridgeModule,
 		PriceOracleModule,
@@ -40,7 +41,6 @@ import { transport } from './utils/logging-config'
 	],
 	providers: [
 		GraphBuilder,
-		ChainClientService,
 		TokenUtils,
 		TgArbitrageNotifier,
 		TgBalancesNotifier,

@@ -8,15 +8,19 @@ import {
 	StargateAPIService,
 } from '../bridges/layerzero-bridges/stargate/stargate-api.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
+import { RelayService } from '../bridges/relay/relay-service'
 import { ChainClientService } from '../chain-client/chain-client.service'
 import { Pool } from '../dex/base/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
+import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
 import { createCustomError } from '../utils/common'
 import { Graph, GraphError } from './primitives/Graph'
 import { FuseBridgeEdge } from './primitives/edges/crosschain/fuse-edge'
+import { RelayBridgeEdge } from './primitives/edges/crosschain/relay-edge'
 import { StargateBridgeEdge } from './primitives/edges/crosschain/stargate-edge'
+import { Edge } from './primitives/edges/edge'
 import { EdgeHelperService } from './primitives/edges/edge-helper.service'
 import { SwapEdge } from './primitives/edges/inchain/swap-edge'
 import { UnwrapEdge } from './primitives/edges/inchain/unwrap-edge'
@@ -40,6 +44,22 @@ interface StargateConfig {
  * @interface
  * @extends {StargateConfig}
  */
+
+type EdgeType = 'wrap' | 'unwrap' | 'swap' | 'stargate' | 'fuse' | 'relay'
+
+type AdditionalEdgeConfig = {
+	from: GraphNode
+	to: GraphNode
+} & (
+	| {
+			type: Exclude<EdgeType, 'swap'>
+	  }
+	| {
+			type: 'swap'
+			pool: Pool
+	  }
+)
+
 export interface GraphBuildConfig {
 	/** The pools to build the graph from */
 	pools: Pool[]
@@ -51,6 +71,8 @@ export interface GraphBuildConfig {
 	slippage?: number
 	/** cache for calling getRate on edges */
 	edgeCacheTTL?: number
+	/** additional edges to add to the graph */
+	additionalEdges?: AdditionalEdgeConfig[]
 }
 
 /**
@@ -71,6 +93,7 @@ export class GraphBuilder {
 		private readonly logger: Logger,
 		private readonly edgeHelperService: EdgeHelperService,
 		private readonly cacheService: Cache,
+		private readonly relayService: RelayService,
 	) {}
 
 	/**
@@ -111,6 +134,12 @@ export class GraphBuilder {
 		/* ================ Setup Fuse Bridges ================ */
 
 		this.setupFuseBridges(graph)
+
+		/* ================ Setup Additional Edges ================ */
+
+		if (buildConfig.additionalEdges) {
+			this.setupAdditionalEdges(graph, buildConfig.additionalEdges)
+		}
 
 		/* ================ Report Result ================ */
 
@@ -444,6 +473,76 @@ export class GraphBuilder {
 			this.logger.log(
 				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${this.chainClientService.getChainNameById(pool.chainId)})`,
 			)
+		}
+	}
+
+	private setupAdditionalEdges(
+		graph: Graph,
+		additionalEdges: AdditionalEdgeConfig[],
+	) {
+		for (const edgeConfig of additionalEdges) {
+			if (!graph.isNodeAdded(edgeConfig.from.id)) {
+				graph.addNode(edgeConfig.from)
+			}
+			if (!graph.isNodeAdded(edgeConfig.to.id)) {
+				graph.addNode(edgeConfig.to)
+			}
+
+			const edge = this.createEdge(edgeConfig)
+			graph.addEdge(edge)
+		}
+	}
+
+	private createEdge(edgeConfig: AdditionalEdgeConfig): Edge {
+		switch (edgeConfig.type) {
+			case 'wrap':
+				return new WrapEdge(
+					edgeConfig.from,
+					edgeConfig.to,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'unwrap':
+				return new UnwrapEdge(
+					edgeConfig.from,
+					edgeConfig.to,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'swap':
+				return new SwapEdge(
+					edgeConfig.from as Token,
+					edgeConfig.to as Token,
+					edgeConfig.pool,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'stargate':
+				return new StargateBridgeEdge(
+					edgeConfig.from,
+					edgeConfig.to,
+					this.stargateService,
+					this.chainClientService,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'fuse':
+				return new FuseBridgeEdge(
+					edgeConfig.from,
+					edgeConfig.to,
+					this.fuseBridgeService,
+					this.chainClientService,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'relay':
+				return new RelayBridgeEdge(
+					edgeConfig.from,
+					edgeConfig.to,
+					this.chainClientService,
+					this.relayService,
+					this.cacheService,
+				)
 		}
 	}
 }

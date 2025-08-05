@@ -12,12 +12,6 @@ import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
 import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
 import { GraphExecutor } from '../graphs/GraphExecutor'
 import { GraphVisualizer } from '../graphs/GraphVisualizer'
-import {
-	ActionType,
-	GasZipBridgeEdge,
-	RelayBridgeEdge,
-	SimpleStargateBridgeEdge,
-} from '../graphs/primitives/edges/edge'
 import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
@@ -39,13 +33,7 @@ export interface StrategyConfig {
 	giveApprovals: boolean
 	startToken: Token | NativeCurrency
 	minProfitUsd: number
-	graphBuildConfig: GraphBuildConfig & {
-		edgeConstructors?: {
-			from: Token | NativeCurrency
-			to: Token | NativeCurrency
-			type: ActionType
-		}[]
-	}
+	graphBuildConfig: GraphBuildConfig
 	graphOptimizerOptions: GraphOptimizerOptions
 	opportunityCheckInterval: number
 	arbitrageExecutionTimeout: number
@@ -91,28 +79,6 @@ export class Strategy implements OnApplicationBootstrap {
 
 		const graphBuilderConfig = config.get('graphBuilderConfig')
 
-		const edgeConstructors: {
-			from: Token
-			to: Token
-			type: ActionType
-		}[] = []
-
-		if (graphBuilderConfig.additionalEdges) {
-			for (const additionalEdge of graphBuilderConfig.additionalEdges) {
-				edgeConstructors.push({
-					from: await this.tokenUtils.fromAddress(
-						additionalEdge.from.address,
-						additionalEdge.from.chainId,
-					),
-					to: await this.tokenUtils.fromAddress(
-						additionalEdge.to.address,
-						additionalEdge.to.chainId,
-					),
-					type: additionalEdge.type as ActionType,
-				})
-			}
-		}
-
 		const strategyConfig: StrategyConfig = {
 			botName: config.get('botName'),
 			dryRun: config.get('isDryRun'),
@@ -128,7 +94,6 @@ export class Strategy implements OnApplicationBootstrap {
 				connectSecondaryChains:
 					graphBuilderConfig.connectSecondaryChains,
 				baseChainId: graphBuilderConfig.baseChainId,
-				edgeConstructors,
 				edgeCacheTTL: graphBuilderConfig.edgeCacheTTL ?? 3000,
 			},
 			graphOptimizerOptions: config.get('graphOptimizerConfig'),
@@ -141,54 +106,6 @@ export class Strategy implements OnApplicationBootstrap {
 		this.logConfig(config)
 		this.logger.log('Building Graph')
 		const graph = await this.graphBuilder.build(config.graphBuildConfig)
-
-		if (config.graphBuildConfig.edgeConstructors) {
-			for (const edgeConstructor of config.graphBuildConfig
-				.edgeConstructors) {
-				switch (edgeConstructor.type) {
-					case ActionType.SIMPLE_STARGATE_BRIDGE:
-						graph.addEdge(
-							new SimpleStargateBridgeEdge(
-								this.chainClientService,
-								this.simpleStargateService,
-								edgeConstructor.from,
-								edgeConstructor.to,
-								graph,
-							),
-						)
-						break
-
-					case ActionType.RELAY_BRIDGE:
-						graph.addEdge(
-							new RelayBridgeEdge(
-								this.chainClientService,
-								this.relayService,
-								edgeConstructor.from,
-								edgeConstructor.to,
-								graph,
-							),
-						)
-						break
-
-					case ActionType.GAS_ZIP_BRIDGE:
-						graph.addEdge(
-							new GasZipBridgeEdge(
-								this.chainClientService,
-								this.gasZipBridge,
-								edgeConstructor.from,
-								edgeConstructor.to,
-								graph,
-							),
-						)
-						break
-
-					default:
-						throw new Error(
-							`${edgeConstructor.type} can be added by more convenient way`,
-						)
-				}
-			}
-		}
 
 		this.logger.log('Initializing PriceOracle')
 
