@@ -220,8 +220,8 @@ export class GraphBuilder {
 
 			graph.addEdge(
 				new UnwrapEdge(
-					wrapped.native,
 					wrapped,
+					wrapped.native,
 					this.edgeHelperService,
 					this.cacheService,
 				),

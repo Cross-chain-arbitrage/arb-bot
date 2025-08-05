@@ -213,6 +213,8 @@ export class GraphArbitrageBot {
 			executionCostInUsd += edge.lastQuote!.costInUsd
 		}
 
+		this.logger.log(`Execution cost: $${executionCostInUsd.toFixed(2)}`)
+
 		const expectedProfit = expectedRevenue - executionCostInUsd
 
 		if (expectedProfit < this.settings.minProfitUsd) {
