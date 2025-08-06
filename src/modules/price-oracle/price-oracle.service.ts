@@ -5,6 +5,7 @@ import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
 import { SolanaNative } from '../../solana/solana-native'
 import { SolanaToken } from '../../solana/solana-token'
+import { SolanaTokenUtils } from '../../solana/solana-token-utils'
 import { createCustomError, isStringsEqual } from '../../utils/common'
 import { chainIdToGeckoChainId } from './gecko-terminal-chains.constants'
 import { GeckoTerminalService } from './gecko-terminal.service'
@@ -28,6 +29,7 @@ export class PriceOracleService {
 
 	constructor(
 		readonly chainClientService: ChainClientService,
+		readonly solanaTokenUtils: SolanaTokenUtils,
 		readonly tokenUtils: TokenUtils,
 		readonly geckoTerminalService: GeckoTerminalService,
 		readonly logger: Logger,
@@ -234,11 +236,9 @@ export class PriceOracleService {
 	private async getLookupCurrency(currency: Currency): Promise<Currency> {
 		switch (true) {
 			case currency instanceof NativeCurrency:
-				return currency.isNative()
-					? this.tokenUtils.getWrappedNative(currency.chainId)
-					: currency
-			case currency instanceof SolanaToken:
-				return currency
+				return this.tokenUtils.getWrappedNative(currency.chainId)
+			case currency instanceof SolanaNative:
+				return this.solanaTokenUtils.getWrappedNative()
 			default:
 				return currency
 		}

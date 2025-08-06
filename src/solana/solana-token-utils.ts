@@ -18,7 +18,7 @@ import {
 type TokenCacheKey = string
 
 @Injectable()
-export class TokenUtils {
+export class SolanaTokenUtils {
 	constructor() {}
 	/* ======== STATE ======== */
 
