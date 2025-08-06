@@ -2,6 +2,7 @@ import { readFileSync } from 'fs'
 import * as yaml from 'js-yaml'
 import { getAddress } from 'viem'
 import { z } from 'zod'
+import { chainClientConfigScheme } from '../chain-client/chain-client-config.service'
 import { PoolType } from '../dex/PoolUtils'
 
 function parseChainIdAddress(val: string) {
@@ -69,6 +70,7 @@ const configScheme = z.object({
 		runCount: z.number(),
 		maxPathLength: z.number(),
 	}),
+	chainClientConfig: chainClientConfigScheme.optional(),
 })
 
 export function loadConfig() {

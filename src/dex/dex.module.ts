@@ -1,5 +1,5 @@
 import { DynamicModule, Module } from '@nestjs/common'
-import { ChainClientService } from '../chain-client/chain-client.service'
+import { ChainClientModule } from '../chain-client/chain-client.module'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { PoolCreator } from './base/PoolCreator'
 import { DEX_REGISTRY_TOKEN, DexRegistry } from './DexRegistry'
@@ -11,9 +11,9 @@ export class DexModule {
 		const poolCreators = Object.values(DexRegistry)
 
 		return {
+			imports: [ChainClientModule],
 			module: DexModule,
 			providers: [
-				ChainClientService,
 				TokenUtils,
 				...poolCreators,
 				{

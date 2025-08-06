@@ -1,12 +1,5 @@
 import { Logger } from '@nestjs/common'
-import {
-	ContractFunctionExecutionError,
-	maxUint256,
-	TransactionReceipt,
-} from 'viem'
-import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
-import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
-import { ChainClientService } from '../chain-client/chain-client.service'
+import { ContractFunctionExecutionError } from 'viem'
 import {
 	OpportunityLog,
 	OpportunityLogType,
@@ -15,11 +8,11 @@ import {
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
-import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { runFuncWithDelay } from '../utils/polling'
 import { GraphExecutor } from './GraphExecutor'
 import { GraphVisualizer } from './GraphVisualizer'
-import { ActionType, Edge, SwapEdge } from './primitives/Edge'
+import { Edge } from './primitives/edges/edge'
+import { SwapEdge } from './primitives/edges/inchain/swap-edge'
 import { Graph } from './primitives/Graph'
 
 const DEFAULT_SETTINGS = {
@@ -51,11 +44,7 @@ export class GraphArbitrageBot {
 			graphOptimizerOptions: GraphOptimizerOptions
 		}>,
 		settings: BotSettings,
-		readonly chainClientService: ChainClientService,
 		readonly graphVisualizer: GraphVisualizer,
-		readonly tokenUtils: TokenUtils,
-		readonly stargate: StargateService,
-		readonly fuseBridge: FuseBridgeService,
 		readonly graphExecutor: GraphExecutor,
 		readonly priceOracleService: PriceOracleService,
 		readonly logger: Logger,
@@ -213,8 +202,10 @@ export class GraphArbitrageBot {
 		let executionCostInUsd = 0
 
 		for (const edge of opportunity.path) {
-			executionCostInUsd += await this.calculateEdgeExecutionCost(edge)
+			executionCostInUsd += edge.lastQuote!.costInUsd
 		}
+
+		this.logger.log(`Execution cost: $${executionCostInUsd.toFixed(2)}`)
 
 		const expectedProfit = expectedRevenue - executionCostInUsd
 
@@ -227,54 +218,6 @@ export class GraphArbitrageBot {
 		}
 
 		return true
-	}
-
-	async calculateEdgeExecutionCost(edge: Edge) {
-		let executionCostInUsd = 0
-
-		const nativeOnFromChain = this.tokenUtils.getNative(edge.from.chainId)
-		const nativePrice =
-			await this.priceOracleService.getPrice(nativeOnFromChain)
-		const gasPrice = await this.chainClientService
-			.getClient(edge.from.chainId)
-			.getGasPrice()
-
-		const txCostInUsd =
-			Number(
-				nativeOnFromChain.formatUnits(
-					gasPrice * edge.lastQuote!.cost.gas,
-				),
-			) * nativePrice
-
-		// TODO: refactor! Relay returns already calculated gas * gasPrice
-		if (edge.actionType === ActionType.RELAY_BRIDGE) {
-			executionCostInUsd += Number(edge.lastQuote!.cost.gas) * nativePrice
-		} else {
-			executionCostInUsd += txCostInUsd
-		}
-
-		if (
-			edge.actionType === ActionType.STARGATE_BRIDGE ||
-			edge.actionType === ActionType.FUSE_BRIDGE ||
-			edge.actionType === ActionType.SIMPLE_STARGATE_BRIDGE
-		) {
-			const bridgeFee = (
-				edge.lastQuote!.cost as EdgeExecutionCost<BridgeActionType>
-			).bridgeFee
-
-			const tokenPrice = await this.priceOracleService.getPrice(
-				bridgeFee.underlyingToken,
-			)
-
-			const txCostInUsd =
-				Number(
-					bridgeFee.underlyingToken.formatUnits(bridgeFee.amount),
-				) * tokenPrice
-
-			executionCostInUsd += txCostInUsd
-		}
-
-		return executionCostInUsd
 	}
 
 	async findAndExecuteArbitrage() {
@@ -412,7 +355,7 @@ export class GraphArbitrageBot {
 		currentEdge: Edge,
 		amountIn: bigint,
 	) {
-		if (currentEdge.actionType !== ActionType.SWAP) return
+		if (!(currentEdge instanceof SwapEdge)) return
 
 		const fromToken = currentEdge.from
 
@@ -443,45 +386,19 @@ export class GraphArbitrageBot {
 	}
 
 	async approveAll() {
-		for (const [edgeId, edge] of this.graphParams.graph.edges) {
+		for (const [, edge] of this.graphParams.graph.edges) {
 			const { from, to } = edge
 
 			this.logger.log(
-				`approving for edge ${edge.actionType} ${from.chainId}:${from.symbol} - ${to.chainId}:${to.symbol}`,
+				`approving for edge ${edge.constructor.name} ${from.chainId}:${from.symbol} - ${to.chainId}:${to.symbol}`,
 			)
-			const tx = await this.approveForEdge(edge)
+			const txs = await edge.approve()
 
-			if (!tx || tx.length === 0) {
+			if (!txs || txs.length === 0) {
 				this.logger.log('Approve already done or not required')
 			} else {
-				this.logger.log(tx)
+				this.logger.log(txs)
 			}
-		}
-	}
-
-	private async approveForEdge(
-		edge: Edge,
-	): Promise<Array<TransactionReceipt | undefined>> {
-		const { from, to } = edge
-
-		switch (edge.actionType) {
-			case ActionType.SWAP:
-				return await (edge as SwapEdge).pool.approveInfinite()
-
-			case ActionType.STARGATE_BRIDGE:
-				return [await this.stargate.approveToBridge(from, maxUint256)]
-
-			case ActionType.FUSE_BRIDGE:
-				return [
-					await this.fuseBridge.approveToBridge(
-						from,
-						maxUint256,
-						to.chainId,
-					),
-				]
-
-			default:
-				return []
 		}
 	}
 

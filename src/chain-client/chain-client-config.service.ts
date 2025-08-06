@@ -1,10 +1,8 @@
-import { Injectable, OnModuleInit } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
+import { Inject, Injectable } from '@nestjs/common'
 import { Chain, defineChain } from 'viem'
 import { privateKeyToAddress } from 'viem/accounts'
 import { z } from 'zod'
 import { getAlchemyRpcUrl } from '../utils/alchemy'
-import { parsePretty } from '../utils/zod'
 
 function transformAndValidate(rawChains: Record<string, string[]>) {
 	const chains: Record<string, string[]> = {}
@@ -54,31 +52,33 @@ const customChainsScheme = z.array(
 		),
 )
 
-const chainClientConfigScheme = z
-	.object({
-		rpcProviders: rpcProvidersScheme.optional(),
-		customChains: customChainsScheme.optional(),
-	})
-	.optional()
+export interface ChainClientConfig {
+	rpcProviders?: Record<number, string[]>
+	customChains?: Chain[]
+}
+
+export const chainClientConfigScheme: z.ZodType<ChainClientConfig> = z.object({
+	rpcProviders: rpcProvidersScheme.optional(),
+	customChains: customChainsScheme.optional(),
+})
+
+export const CHAIN_CLIENT_CONFIG = Symbol('chain-client-config')
 
 @Injectable()
-export class ChainClientConfigService implements OnModuleInit {
-	privateKey!: Hex
+export class ChainClientConfigService {
+	privateKey: Hex
 	rpcUrls: Record<number, string[]> | undefined
 	customChains: Chain[] | undefined
 
-	constructor(private readonly configService: ConfigService) {}
-
-	public onModuleInit(): void {
-		const chainConfigRaw = this.configService.get('chainClientConfig')
-
-		const chainConfig = parsePretty(chainClientConfigScheme, chainConfigRaw)
-
+	constructor(
+		@Inject(CHAIN_CLIENT_CONFIG)
+		private readonly config?: ChainClientConfig,
+	) {
 		this.privateKey = this.getPrivateKey()
 
-		this.rpcUrls = chainConfig?.rpcProviders
+		this.rpcUrls = this.config?.rpcProviders
 
-		this.customChains = chainConfig?.customChains
+		this.customChains = this.config?.customChains
 	}
 
 	private getPrivateKey(): Hex {

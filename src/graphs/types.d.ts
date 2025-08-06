@@ -1,9 +1,7 @@
-import { Hash, TransactionReceipt } from 'viem'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
-import { TokenAmount } from '../primitives/tokens/TokenAmount'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
-import { ActionType, Edge } from './primitives/Edge'
+import { Edge } from './primitives/edges/edge'
 
 declare global {
 	type GraphNode = Token | NativeCurrency | WrappedNative
@@ -25,39 +23,20 @@ declare global {
 
 	type EdgeId = `${GraphNodeId}-${GraphNodeId}-${string}`
 
-	type InchainActionType =
-		| ActionType.SWAP
-		| ActionType.WRAP
-		| ActionType.UNWRAP
-
-	type BridgeActionType =
-		| ActionType.STARGATE_BRIDGE
-		| ActionType.FUSE_BRIDGE
-		| ActionType.RELAY_BRIDGE
-		| ActionType.SIMPLE_STARGATE_BRIDGE
-		| ActionType.GAS_ZIP_BRIDGE
-
-	type EdgeExecutionCost<T extends ActionType = ActionType> = {
-		gas: bigint
-	} & (T extends BridgeActionType
-		? {
-				bridgeFee: TokenAmount
-			}
-		: object)
-
-	type EdgeQuoteResult<T extends ActionType = ActionType> = GetRateResult & {
-		cost: EdgeExecutionCost<T>
+	type EdgeQuoteResult = GetRateResult & {
+		costInUsd: number
 	}
 
-	type EdgeExecutionResult<T extends ActionType> = {
+	type CrosschainEdgeExecutionResult = {
 		amountOut: bigint
-	} & (T extends BridgeActionType
-		? {
-				srcTxReceipt: TransactionReceipt
-				bridgeFee: TokenAmount
-				dstTxHash: Hash
-			}
-		: {
-				txReceipt: TransactionReceipt
-			})
+		srcTxHash: string
+		dstTxHash: string
+		costInUsd: number
+	}
+
+	type InchainEdgeExecutionResult = {
+		amountOut: bigint
+		txHash: string
+		costInUsd: number
+	}
 }

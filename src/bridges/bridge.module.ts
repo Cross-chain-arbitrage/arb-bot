@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { ChainClientService } from '../chain-client/chain-client.service'
+import { ChainClientModule } from '../chain-client/chain-client.module'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { GasZipBridge } from './GasZip/GasZipBridge'
 import { FuseBridgeService } from './layerzero-bridges/fuse-bridge/fuse-bridge.service'
@@ -10,8 +10,8 @@ import { StargateService } from './layerzero-bridges/stargate/stargate-service'
 import { RelayService } from './relay/relay-service'
 
 @Module({
+	imports: [ChainClientModule],
 	providers: [
-		ChainClientService,
 		TokenUtils,
 		LayerZeroScanService,
 		FuseBridgeService,

@@ -2,7 +2,7 @@ import { arbitrum } from 'viem/chains'
 
 import { ClientManager } from '../../src/chain-client/chain-client.service'
 import { GraphExecutor } from '../../src/graphs/GraphExecutor'
-import { WrapEdge } from '../../src/graphs/primitives/Edge'
+import { WrapEdge } from '../../src/graphs/primitives/edges/edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
 import { PriceOracle } from '../../src/modules/price-oracle/price-oracle.service'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
