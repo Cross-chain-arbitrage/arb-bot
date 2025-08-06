@@ -497,15 +497,15 @@ export class GraphBuilder {
 		switch (edgeConfig.type) {
 			case 'wrap':
 				return new WrapEdge(
-					edgeConfig.from,
-					edgeConfig.to,
+					edgeConfig.from as NativeCurrency,
+					edgeConfig.to as WrappedNative,
 					this.edgeHelperService,
 					this.cacheService,
 				)
 			case 'unwrap':
 				return new UnwrapEdge(
-					edgeConfig.from,
-					edgeConfig.to,
+					edgeConfig.from as WrappedNative,
+					edgeConfig.to as NativeCurrency,
 					this.edgeHelperService,
 					this.cacheService,
 				)

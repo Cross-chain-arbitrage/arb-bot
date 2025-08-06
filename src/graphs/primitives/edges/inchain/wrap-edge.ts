@@ -1,6 +1,6 @@
 import { Cache } from '@nestjs/cache-manager'
+import { NativeCurrency } from '../../../../primitives/tokens/NativeCurrency'
 import { WrappedNative } from '../../../../primitives/tokens/WrappedNative'
-import { shortenAddress } from '../../../../utils/common'
 import { EdgeHelperService } from '../edge-helper.service'
 import { InchainEdge } from './inchain-edge'
 
@@ -8,8 +8,8 @@ export class WrapEdge extends InchainEdge {
 	readonly id: EdgeId
 
 	constructor(
-		override readonly from: GraphNode,
-		override readonly to: GraphNode,
+		override readonly from: NativeCurrency,
+		override readonly to: WrappedNative,
 		readonly edgeHelperService: EdgeHelperService,
 		cacheService: Cache,
 	) {
@@ -30,12 +30,6 @@ export class WrapEdge extends InchainEdge {
 	}
 
 	async execute(amountIn: bigint): Promise<InchainEdgeExecutionResult> {
-		if (!(this.to instanceof WrappedNative)) {
-			throw new Error(
-				`Cannot wrap non-WETH token: ${this.to.symbol} ${this.to.chainId} ${shortenAddress(this.to.address)}`,
-			)
-		}
-
 		const receipt = await this.to.deposit(amountIn)
 
 		const costInUsd = await this.edgeHelperService.getActualGasCostInUsd(
