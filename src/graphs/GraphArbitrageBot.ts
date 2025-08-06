@@ -1,8 +1,5 @@
 import { Logger } from '@nestjs/common'
 import { ContractFunctionExecutionError } from 'viem'
-import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
-import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
-import { ChainClientService } from '../chain-client/chain-client.service'
 import {
 	OpportunityLog,
 	OpportunityLogType,
@@ -11,7 +8,6 @@ import {
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
-import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { runFuncWithDelay } from '../utils/polling'
 import { GraphExecutor } from './GraphExecutor'
 import { GraphVisualizer } from './GraphVisualizer'
@@ -48,11 +44,7 @@ export class GraphArbitrageBot {
 			graphOptimizerOptions: GraphOptimizerOptions
 		}>,
 		settings: BotSettings,
-		readonly chainClientService: ChainClientService,
 		readonly graphVisualizer: GraphVisualizer,
-		readonly tokenUtils: TokenUtils,
-		readonly stargate: StargateService,
-		readonly fuseBridge: FuseBridgeService,
 		readonly graphExecutor: GraphExecutor,
 		readonly priceOracleService: PriceOracleService,
 		readonly logger: Logger,
