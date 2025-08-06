@@ -12,7 +12,7 @@ export function calculatePriceDiff(
 	return (actualPrice / expectedPrice) * 100 - 100
 }
 
-export function shortenAddress(address: Address): string {
+export function shortenAddress(address: string): string {
 	return address.slice(0, 6) + '...' + address.slice(-4)
 }
 
@@ -89,4 +89,11 @@ export function createCustomError(errorName: string) {
 			this.name = errorName
 		}
 	}
+}
+
+/**
+ * Compares two strings in a case-insensitive manner
+ */
+export function isStringsEqual(a: string, b: string): boolean {
+	return a.toLowerCase() === b.toLowerCase()
 }

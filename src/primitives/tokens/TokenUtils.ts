@@ -15,7 +15,6 @@ import {
 	STARGATE_NATIVE_ADDRESS,
 } from './NativeCurrency'
 import { Token } from './Token'
-import { TokenMetadata } from './TokenBase'
 import { WrappedNative, wrappedTokens } from './WrappedNative'
 
 type TokenCacheKey = `${number}:${Address}`
