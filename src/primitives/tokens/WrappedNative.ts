@@ -15,7 +15,6 @@ import { WETH_ABI } from '../../abi/weth'
 import { ChainClientService } from '../../chain-client/chain-client.service'
 import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'
-import { TokenMetadata } from './TokenBase'
 import { WrappedNativeError } from './TokenErrors'
 
 export const wrappedTokens: Record<number, Address | undefined> = {

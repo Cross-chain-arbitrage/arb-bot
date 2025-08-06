@@ -1,10 +1,11 @@
 import { SolanaToken } from './solana-token'
 
+export const wrappedSolanaNativeAddress =
+	'So11111111111111111111111111111111111111112'
+
 export class WrappedSolanaNative extends SolanaToken {
 	constructor() {
-		const address = 'So11111111111111111111111111111111111111112'
-
-		super(address, {
+		super(wrappedSolanaNativeAddress, {
 			symbol: 'SOL',
 			decimals: 9,
 		})

@@ -1,8 +1,10 @@
 import { Connection, PublicKey } from '@solana/web3.js'
 import { formatUnits, parseUnits } from './helpers'
 
+export const solanaNativeAddress = 'address-plug'
+
 export class SolanaNative implements BaseToken {
-	address = 'address not exist'
+	address = solanaNativeAddress
 	decimals = 9
 	symbol = 'SOL'
 	name = 'Solana'
