@@ -4,6 +4,8 @@ import { shortenAddress } from '../utils/common'
 import { formatUnits, parseUnits } from './helpers'
 
 export class SolanaToken implements BaseToken {
+	tokenAccCache = new Map<string, string>()
+
 	symbol: string
 	decimals: number
 	name?: string
@@ -23,6 +25,24 @@ export class SolanaToken implements BaseToken {
 
 	async balanceOf(address: string): Promise<bigint> {
 		const connection = new Connection('https://api.mainnet-beta.solana.com')
+
+		const associatedTokenAccount = await this.getTokenAccount(address)
+
+		const tokenAccount = await getAccount(
+			connection,
+			new PublicKey(associatedTokenAccount),
+		)
+
+		const balance = tokenAccount.amount
+
+		return balance
+	}
+
+	async getTokenAccount(address: string): Promise<string> {
+		if (this.tokenAccCache.has(address.toLowerCase())) {
+			return this.tokenAccCache.get(address.toLowerCase())!
+		}
+
 		const mintPublicKey = new PublicKey(this.address)
 		const walletPublicKey = new PublicKey(address)
 
@@ -31,14 +51,12 @@ export class SolanaToken implements BaseToken {
 			walletPublicKey,
 		)
 
-		const tokenAccount = await getAccount(
-			connection,
-			associatedTokenAccount,
+		this.tokenAccCache.set(
+			address.toLowerCase(),
+			associatedTokenAccount.toBase58(),
 		)
 
-		const balance = tokenAccount.amount
-
-		return balance
+		return associatedTokenAccount.toBase58()
 	}
 
 	formatUnits = formatUnits

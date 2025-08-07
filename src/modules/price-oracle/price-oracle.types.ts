@@ -1,9 +1,16 @@
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
+import { SolanaNative } from '../../solana/solana-native'
 import { SolanaToken } from '../../solana/solana-token'
+import { WrappedSolanaNative } from '../../solana/wrapped-native'
 
 export type CurrencyId = string
-export type Currency = Token | NativeCurrency | SolanaToken
+export type Currency =
+	| Token
+	| NativeCurrency
+	| SolanaToken
+	| SolanaNative
+	| WrappedSolanaNative
 
 export interface CurrencyState {
 	price: number
