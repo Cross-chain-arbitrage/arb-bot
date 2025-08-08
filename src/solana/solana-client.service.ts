@@ -1,6 +1,11 @@
 import { base58 } from '@metaplex-foundation/umi/serializers'
 import { Injectable, OnModuleInit } from '@nestjs/common'
-import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js'
+import {
+	Connection,
+	Keypair,
+	SendOptions,
+	VersionedTransaction,
+} from '@solana/web3.js'
 import { createCustomError, getEnvSafe } from '../utils/common'
 
 const SolanaClientServiceError = createCustomError('SolanaClientServiceError')
@@ -21,9 +26,9 @@ export class SolanaClientService implements OnModuleInit {
 		this.walletAddress = this.keypair.publicKey.toBase58()
 	}
 
-	async sendAndConfirmTx(tx: VersionedTransaction) {
+	async sendAndConfirmTx(tx: VersionedTransaction, options?: SendOptions) {
 		const txId = await this.connection.sendTransaction(tx, {
-			skipPreflight: true,
+			...options,
 		})
 
 		const { lastValidBlockHeight, blockhash } =

@@ -1,29 +1,65 @@
+import { Injectable } from '@nestjs/common'
 import {
+	convertViemChainToRelayChain,
 	createClient,
 	Execute,
 	MAINNET_RELAY_API,
-	RelayClient,
+	RelayChain,
+	SvmReceipt,
 } from '@reservoir0x/relay-sdk'
-import { Hash, TransactionReceipt } from 'viem'
+import { adaptSolanaWallet } from '@reservoir0x/relay-solana-wallet-adapter'
+import {
+	sendAndConfirmTransaction,
+	SendOptions,
+	Transaction,
+	TransactionSignature,
+	VersionedTransaction,
+} from '@solana/web3.js'
+import { TransactionReceipt } from 'viem'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
-
-import { Injectable } from '@nestjs/common'
-import { ChainClientService } from '../../chain-client/chain-client.service'
+import { SolanaClientService } from '../../solana/solana-client.service'
+import { SolanaToken } from '../../solana/solana-token'
 import { createCustomError } from '../../utils/common'
 
-//TODO: add validation and write tests
+const SOLANA_CHAIN_ID = 792703809
+
 @Injectable()
 export class RelayService {
-	constructor(private readonly chainClientService: ChainClientService) {}
+	constructor(
+		private readonly chainClientService: ChainClientService,
+		private readonly solanaClientService: SolanaClientService,
+	) {}
+
 	customError = createCustomError('RelayError')
-	client: RelayClient = createClient({
-		baseApiUrl: MAINNET_RELAY_API,
-	})
+
+	private createClient(tokens: (Token | NativeCurrency | SolanaToken)[]) {
+		const chains = tokens.map((token) => {
+			if (token instanceof SolanaToken) {
+				const chain: RelayChain = {
+					displayName: 'Solana',
+					id: SOLANA_CHAIN_ID,
+					name: 'solana',
+				}
+
+				return chain
+			}
+
+			return convertViemChainToRelayChain(
+				this.chainClientService.getChain(token.chainId),
+			)
+		})
+
+		return createClient({
+			baseApiUrl: MAINNET_RELAY_API,
+			chains,
+		})
+	}
 
 	async quote(
-		tokenIn: Token | NativeCurrency,
-		tokenOut: Token | NativeCurrency,
+		tokenIn: Token | NativeCurrency | SolanaToken,
+		tokenOut: Token | NativeCurrency | SolanaToken,
 		amountIn: bigint,
 		slippage: bigint = 10n,
 	): Promise<{
@@ -31,25 +67,29 @@ export class RelayService {
 		gasInNative: bigint
 		rawResult: Execute
 	}> {
-		const walletClient = this.chainClientService.getWalletClient(
-			tokenIn.chainId,
-		)
+		const { chainId: srcChainId, walletAddress: srcAddress } =
+			this.resolveNetworkParams(tokenIn)
+		const { chainId: dstChainId, walletAddress: dstAddress } =
+			this.resolveNetworkParams(tokenOut)
 
 		const quoteArgs = {
-			chainId: tokenIn.chainId,
+			chainId: srcChainId,
 			currency: tokenIn.address,
-			toChainId: tokenOut.chainId,
+			toChainId: dstChainId,
 			toCurrency: tokenOut.address,
 			amount: amountIn.toString(),
 			tradeType: 'EXACT_INPUT',
 			options: {
 				slippageTolerance: slippage.toString(),
 			},
-			user: walletClient.account.address,
-			recipient: walletClient.account.address,
+			user: srcAddress,
+			recipient: dstAddress,
 		} as const
 
-		const quote = await this.client.actions.getQuote(quoteArgs)
+		const quote = await this.createClient([
+			tokenIn,
+			tokenOut,
+		]).actions.getQuote(quoteArgs)
 
 		const amountOut = this.ensureVariable(
 			quote.details?.currencyOut?.amount,
@@ -70,23 +110,62 @@ export class RelayService {
 		}
 	}
 
+	resolveNetworkParams(token: Token | NativeCurrency | SolanaToken) {
+		if (token instanceof SolanaToken) {
+			return {
+				chainId: SOLANA_CHAIN_ID,
+				walletAddress: this.solanaClientService.walletAddress,
+			}
+		} else {
+			return {
+				chainId: token.chainId,
+				walletAddress: this.chainClientService.getWalletClient(
+					token.chainId,
+				).account.address,
+			}
+		}
+	}
+
 	async bridge(
-		tokenIn: Token | NativeCurrency,
-		tokenOut: Token | NativeCurrency,
+		tokenIn: Token | NativeCurrency | SolanaToken,
+		tokenOut: Token | NativeCurrency | SolanaToken,
 		amountIn: bigint,
 		slippage: bigint = 10n,
 	): Promise<{
 		amountOut: bigint
-		srcTxReceipt: TransactionReceipt
-		dstTxHash: Hash
+		srcTxHash: string
+		dstTxHash: string
 		rawResult: { data: Execute; abortController: AbortController }
 	}> {
 		const quote = await this.quote(tokenIn, tokenOut, amountIn, slippage)
 
-		const executionResult = await this.client.actions.execute({
-			quote: quote.rawResult,
-			wallet: this.chainClientService.getWalletClient(tokenIn.chainId),
-		})
+		let executionResult: {
+			data: Execute
+			abortController: AbortController
+		}
+
+		const client = this.createClient([tokenIn, tokenOut])
+
+		if (tokenIn instanceof SolanaToken) {
+			const adaptedWallet = adaptSolanaWallet(
+				this.solanaClientService.walletAddress,
+				SOLANA_CHAIN_ID,
+				this.solanaClientService.connection,
+				this.signAndSendTransaction.bind(this),
+			)
+
+			executionResult = await client.actions.execute({
+				quote: quote.rawResult,
+				wallet: adaptedWallet,
+			})
+		} else {
+			executionResult = await client.actions.execute({
+				quote: quote.rawResult,
+				wallet: this.chainClientService.getWalletClient(
+					tokenIn.chainId,
+				),
+			})
+		}
 
 		const progressState = this.ensureVariable(
 			executionResult.data.steps[0].items[0].progressState,
@@ -103,24 +182,58 @@ export class RelayService {
 			'Amount out not found',
 			executionResult,
 		)
-
 		const srcTxReceipt = this.ensureVariable(
 			executionResult.data.steps[0].items[0].receipt,
 			'Source transaction receipt not found',
 			executionResult,
 		)
 
+		let srcTxHash: string
+
+		if (tokenIn instanceof SolanaToken) {
+			srcTxHash = (srcTxReceipt as SvmReceipt).txHash
+		} else {
+			srcTxHash = (srcTxReceipt as TransactionReceipt).transactionHash
+		}
+
 		const dstTxHash = this.ensureVariable(
 			executionResult.data.steps[0].items[0].txHashes?.[0].txHash,
 			'Destination transaction hash not found',
 			executionResult,
-		) as Hash
+		)
 
 		return {
 			amountOut: BigInt(amountOut),
-			srcTxReceipt: srcTxReceipt as TransactionReceipt,
+			srcTxHash,
 			dstTxHash,
 			rawResult: executionResult,
+		}
+	}
+	private async signAndSendTransaction(
+		transaction: Transaction | VersionedTransaction,
+		options?: SendOptions,
+	): Promise<{
+		signature: TransactionSignature
+	}> {
+		if (transaction instanceof VersionedTransaction) {
+			transaction.sign([this.solanaClientService.keypair])
+			const tx = await this.solanaClientService.sendAndConfirmTx(
+				transaction,
+				options,
+			)
+
+			return { signature: tx }
+		} else {
+			transaction.sign(this.solanaClientService.keypair)
+
+			const txId = await sendAndConfirmTransaction(
+				this.solanaClientService.connection,
+				transaction,
+				[this.solanaClientService.keypair],
+				options,
+			)
+
+			return { signature: txId }
 		}
 	}
 
@@ -128,7 +241,7 @@ export class RelayService {
 		variable: T | undefined,
 		errorMessage: string,
 		trace: object,
-	) {
+	): T {
 		if (!variable) {
 			const error = new this.customError(errorMessage)
 
@@ -140,3 +253,42 @@ export class RelayService {
 		return variable
 	}
 }
+
+// @Module({
+// 	imports: [ChainClientModule.forRoot()],
+// 	providers: [
+// 		RelayService,
+// 		SolanaClientService,
+// 		TokenUtils,
+// 		SolanaTokenUtils,
+// 	],
+// })
+// class AppModule {}
+
+// async function main() {
+// 	const app = await NestFactory.create(AppModule)
+// 	await app.init()
+
+// 	const relayService = app.get(RelayService)
+// 	const tokenUtils = app.get(TokenUtils)
+// 	const solanaTokenUtils = app.get(SolanaTokenUtils)
+
+// 	const usdcOnArbitrum = await tokenUtils.fromAddress(
+// 		'0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+// 		arbitrum.id,
+// 	)
+
+// 	const usdcOnSolana = await solanaTokenUtils.fromAddress<SolanaToken>(
+// 		'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+// 	)
+
+// 	const bridgeResult = await relayService.bridge(
+// 		usdcOnArbitrum,
+// 		usdcOnSolana,
+// 		usdcOnArbitrum.parseUnits('1'),
+// 	)
+
+// 	console.log(bridgeResult)
+// }
+
+// void main()
