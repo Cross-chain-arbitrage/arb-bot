@@ -14,6 +14,7 @@ import { TgArbitrageNotifier } from './modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from './modules/notification/TgBalancesNotifier'
 import { PriceOracleModule } from './modules/price-oracle/price-oracle.module'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
+import { RaydiumService } from './solana/raydium/raydium.service'
 import { SolanaClientService } from './solana/solana-client.service'
 import { SolanaTokenUtils } from './solana/solana-tokens/solana-token-utils'
 import { loadConfig } from './strategies/configuration'
@@ -57,6 +58,7 @@ const appConfig = loadConfig()
 		GasPriceOracleService,
 		SolanaTokenUtils,
 		SolanaClientService,
+		RaydiumService,
 	],
 })
 export class AppModule {}

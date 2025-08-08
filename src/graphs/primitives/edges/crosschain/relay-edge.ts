@@ -100,14 +100,14 @@ export class RelayBridgeEdge extends CrosschainEdge {
 			this.pendingQuoteRequest = this.fetchAndCacheRateFunction(amountIn)
 
 			try {
-				return this.waitForQuoteRequestAndReturnResult(amountIn)
+				return await this.waitForQuoteRequestAndReturnResult(amountIn)
 			} finally {
 				this.pendingQuoteRequest = null
 			}
 		}
 
 		if (!cachedRateFunction) {
-			return this.waitForQuoteRequestAndReturnResult(amountIn)
+			return await this.waitForQuoteRequestAndReturnResult(amountIn)
 		}
 
 		return cachedRateFunction(amountIn)
@@ -123,7 +123,7 @@ export class RelayBridgeEdge extends CrosschainEdge {
 		)
 
 		await this.cacheService.set(
-			`${this.id}-rateFunction`,
+			this.approximatedQuoteFunctionKey,
 			this.buildApproximatedQuoteFunction(
 				amountIn,
 				relayQuote,

@@ -22,6 +22,7 @@ export class GraphOpportunityFinder {
 		startAmount: bigint,
 		graph: Graph,
 		maxDepth: number = 7,
+		maxBridgesCount: number = 2,
 	): Promise<GraphArbitrageOpportunity | null> {
 		const distances = new Map<GraphNodeId, number>()
 		const predecessors = new Map<GraphNodeId, Edge>()
@@ -86,6 +87,7 @@ export class GraphOpportunityFinder {
 								predecessors,
 								startToken,
 								startAmount,
+								maxBridgesCount,
 							)
 
 						return arbitrageOpportunity
@@ -109,6 +111,7 @@ export class GraphOpportunityFinder {
 		predecessors: Map<GraphNodeId, Edge>,
 		startToken: GraphNode,
 		startAmount: bigint,
+		maxBridgesCount: number,
 	): Promise<GraphArbitrageOpportunity> {
 		const edges: Edge[] = []
 		let currentToken: GraphNodeId = startToken.id
@@ -138,9 +141,9 @@ export class GraphOpportunityFinder {
 				bridgesCount++
 			}
 
-			if (bridgesCount > 2) {
+			if (bridgesCount > maxBridgesCount) {
 				throw new GraphOpportunityFinderError(
-					'Too many bridges in the cycle',
+					`Too many bridges in the cycle, max: ${maxBridgesCount}`,
 				)
 			}
 		} while (currentToken !== startToken.id)

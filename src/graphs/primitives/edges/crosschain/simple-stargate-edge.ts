@@ -7,10 +7,10 @@ export class SimpleStargateBridgeEdge extends CrosschainEdge {
 	readonly id: EdgeId
 
 	constructor(
-		readonly simpleStargate: SimpleStargateService,
-		readonly edgeHelperService: EdgeHelperService,
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
+		readonly simpleStargate: SimpleStargateService,
+		readonly edgeHelperService: EdgeHelperService,
 		cacheService: Cache,
 	) {
 		super(from, to, cacheService)

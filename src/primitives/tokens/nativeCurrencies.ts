@@ -28,4 +28,5 @@ export const NATIVE_CURRENCIES: Record<number, TokenMetadata> = {
 	[chains.fuse.id]: createMetadata('FUSE', 'FUSE', 18),
 	[chains.story.id]: createMetadata('IP', 'IP', 18),
 	[chains.bsc.id]: createMetadata('BNB', 'BNB', 18),
+	[1300]: createMetadata('GLUE', 'GLUE', 18),
 } as const

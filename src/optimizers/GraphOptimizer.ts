@@ -23,8 +23,13 @@ export class GraphOptimizer {
 		options: GraphOptimizerOptions,
 		logger: Logger,
 	): Promise<GraphArbitrageOpportunity | null> {
-		const { minStartValueUsd, maxStartValueUsd, runCount, maxPathLength } =
-			options
+		const {
+			minStartValueUsd,
+			maxStartValueUsd,
+			runCount,
+			maxPathLength,
+			maxBridgesCount,
+		} = options
 
 		const algorithmResultsPromises: Promise<GraphArbitrageOpportunity | null>[] =
 			[]
@@ -42,6 +47,7 @@ export class GraphOptimizer {
 					tokenAmount,
 					graph,
 					maxPathLength,
+					maxBridgesCount,
 				).catch((error) => {
 					logger.error(error)
 					return null

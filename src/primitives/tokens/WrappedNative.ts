@@ -29,6 +29,7 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[swellchain.id]: '0x4200000000000000000000000000000000000006',
 	[superposition.id]: '0x1fB719f10b56d7a85DCD32f27f897375fB21cfdd',
 	[bob.id]: '0x4200000000000000000000000000000000000006',
+	[1300]: '0x9a1691D500C54e1d79df2347D170987aa3E527aC',
 }
 
 export class WrappedNative extends Token {

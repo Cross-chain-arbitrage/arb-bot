@@ -92,6 +92,7 @@ const configScheme = z.object({
 		minStartValueUsd: z.number(),
 		maxStartValueUsd: z.number(),
 		runCount: z.number(),
+		maxBridgesCount: z.number(),
 		maxPathLength: z.number(),
 	}),
 	chainClientConfig: chainClientConfigScheme.optional(),
