@@ -1,7 +1,7 @@
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
-import { SolanaToken } from '../solana/solana-token'
+import { SolanaToken } from '../solana/solana-tokens/solana-token'
 import { Edge } from './primitives/edges/edge'
 
 declare global {

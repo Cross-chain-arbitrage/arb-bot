@@ -1,6 +1,6 @@
 import { Cache } from '@nestjs/cache-manager'
 import { RaydiumService } from '../../../../solana/raydium/raydium.service'
-import { SolanaToken } from '../../../../solana/solana-token'
+import { SolanaToken } from '../../../../solana/solana-tokens/solana-token'
 import { EdgeHelperService } from '../edge-helper.service'
 import { InchainEdge } from './inchain-edge'
 

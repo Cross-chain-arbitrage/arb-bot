@@ -1,7 +1,7 @@
 import { Logger, Module } from '@nestjs/common'
 import { ChainClientModule } from '../../chain-client/chain-client.module'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { SolanaTokenUtils } from '../../solana/solana-token-utils'
+import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
 import { GeckoTerminalService } from './gecko-terminal.service'
 import { PriceOracleService } from './price-oracle.service'
 

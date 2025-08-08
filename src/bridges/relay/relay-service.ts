@@ -20,10 +20,8 @@ import { ChainClientService } from '../../chain-client/chain-client.service'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { SolanaClientService } from '../../solana/solana-client.service'
-import { SolanaToken } from '../../solana/solana-token'
+import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { createCustomError } from '../../utils/common'
-
-const SOLANA_CHAIN_ID = 792703809
 
 @Injectable()
 export class RelayService {
@@ -39,7 +37,7 @@ export class RelayService {
 			if (token instanceof SolanaToken) {
 				const chain: RelayChain = {
 					displayName: 'Solana',
-					id: SOLANA_CHAIN_ID,
+					id: token.chainId,
 					name: 'solana',
 				}
 
@@ -67,15 +65,13 @@ export class RelayService {
 		gasInNative: bigint
 		rawResult: Execute
 	}> {
-		const { chainId: srcChainId, walletAddress: srcAddress } =
-			this.resolveNetworkParams(tokenIn)
-		const { chainId: dstChainId, walletAddress: dstAddress } =
-			this.resolveNetworkParams(tokenOut)
+		const srcAddress = this.resolveWalletAddress(tokenIn)
+		const dstAddress = this.resolveWalletAddress(tokenOut)
 
 		const quoteArgs = {
-			chainId: srcChainId,
+			chainId: tokenIn.chainId,
 			currency: tokenIn.address,
-			toChainId: dstChainId,
+			toChainId: tokenOut.chainId,
 			toCurrency: tokenOut.address,
 			amount: amountIn.toString(),
 			tradeType: 'EXACT_INPUT',
@@ -110,20 +106,12 @@ export class RelayService {
 		}
 	}
 
-	resolveNetworkParams(token: Token | NativeCurrency | SolanaToken) {
-		if (token instanceof SolanaToken) {
-			return {
-				chainId: SOLANA_CHAIN_ID,
-				walletAddress: this.solanaClientService.walletAddress,
-			}
-		} else {
-			return {
-				chainId: token.chainId,
-				walletAddress: this.chainClientService.getWalletClient(
-					token.chainId,
-				).account.address,
-			}
-		}
+	resolveWalletAddress(token: Token | NativeCurrency | SolanaToken) {
+		if (token instanceof SolanaToken)
+			return this.solanaClientService.walletAddress
+
+		return this.chainClientService.getWalletClient(token.chainId).account
+			.address
 	}
 
 	async bridge(
@@ -149,7 +137,7 @@ export class RelayService {
 		if (tokenIn instanceof SolanaToken) {
 			const adaptedWallet = adaptSolanaWallet(
 				this.solanaClientService.walletAddress,
-				SOLANA_CHAIN_ID,
+				tokenIn.chainId,
 				this.solanaClientService.connection,
 				this.signAndSendTransaction.bind(this),
 			)

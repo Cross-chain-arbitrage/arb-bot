@@ -1,10 +1,12 @@
 import { getAccount, getAssociatedTokenAddress } from '@solana/spl-token'
 import { Connection, PublicKey } from '@solana/web3.js'
-import { shortenAddress } from '../utils/common'
-import { formatUnits, parseUnits } from './helpers'
+import { shortenAddress } from '../../utils/common'
+import { SOLANA_CHAIN_ID } from '../solana-constants'
+import { formatUnits, parseUnits } from './solana-tokens-helpers'
 
 export class SolanaToken implements BaseToken {
 	tokenAccCache = new Map<string, string>()
+	chainId = SOLANA_CHAIN_ID
 
 	symbol: string
 	decimals: number

@@ -9,8 +9,8 @@ import {
 import axios from 'axios'
 import { createCustomError } from '../../utils/common'
 import { SolanaClientService } from '../solana-client.service'
-import { SolanaNative } from '../solana-native'
-import { SolanaToken } from '../solana-token'
+import { SolanaNative } from '../solana-tokens/solana-native'
+import { SolanaToken } from '../solana-tokens/solana-token'
 import { API_URLS } from './raydium.constants'
 import {
 	PriorityFee,

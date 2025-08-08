@@ -6,9 +6,9 @@ import { GasPriceOracleService } from '../../../gas-price-oracle/gas-price-oracl
 import { PriceOracleService } from '../../../modules/price-oracle/price-oracle.service'
 import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
 import { SolanaClientService } from '../../../solana/solana-client.service'
-import { SolanaNative } from '../../../solana/solana-native'
-import { SolanaToken } from '../../../solana/solana-token'
-import { SolanaTokenUtils } from '../../../solana/solana-token-utils'
+import { SolanaNative } from '../../../solana/solana-tokens/solana-native'
+import { SolanaToken } from '../../../solana/solana-tokens/solana-token'
+import { SolanaTokenUtils } from '../../../solana/solana-tokens/solana-token-utils'
 const MICRO_LAMPORTS_PER_LAMPORT = 10n ** 6n
 const LAMPORTS_FOR_SIGNING = 5000n
 

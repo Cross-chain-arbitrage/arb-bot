@@ -357,9 +357,8 @@ export class GraphArbitrageBot {
 	) {
 		if (!(currentEdge instanceof SwapEdge)) return
 
-		const fromToken = currentEdge.from
-
-		if (fromToken.chainId === this.graphParams.startToken.chainId) return
+		if (currentEdge.from.chainId === this.graphParams.startToken.chainId)
+			return
 
 		const currentRate = await currentEdge.getRate(amountIn)
 

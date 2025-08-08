@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { deflate } from 'pako'
 import { getStargateChainKey } from '../bridges/layerzero-bridges/stargate/stargate.utils'
+import { SOLANA_CHAIN_ID } from '../solana/solana-constants'
 import { Graph } from './primitives/Graph'
 
 @Injectable()
@@ -143,6 +144,9 @@ export class GraphVisualizer {
 
 	private getChainName(chainId: number) {
 		try {
+			if (chainId === SOLANA_CHAIN_ID) {
+				return 'Solana'
+			}
 			return getStargateChainKey(chainId) + ` (${chainId})`
 		} catch (error) {
 			return `Unnamed Chain (${chainId})`
