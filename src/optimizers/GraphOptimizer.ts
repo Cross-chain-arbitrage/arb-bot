@@ -31,8 +31,7 @@ export class GraphOptimizer {
 			maxBridgesCount,
 		} = options
 
-		const algorithmResultsPromises: Promise<GraphArbitrageOpportunity | null>[] =
-			[]
+		const algorithmResults: (GraphArbitrageOpportunity | null)[] = []
 
 		let valueUSD = minStartValueUsd
 
@@ -41,8 +40,8 @@ export class GraphOptimizer {
 				(valueUSD / startTokenUSDPrice).toString(),
 			)
 
-			algorithmResultsPromises.push(
-				GraphOpportunityFinder.findArbOpportunity(
+			algorithmResults.push(
+				await GraphOpportunityFinder.findArbOpportunity(
 					startToken,
 					tokenAmount,
 					graph,
@@ -59,22 +58,22 @@ export class GraphOptimizer {
 			valueUSD += (maxStartValueUsd - minStartValueUsd) / (runCount - 1)
 		}
 
-		const algorithmResultsSettled = await Promise.allSettled(
-			algorithmResultsPromises,
-		)
+		// const algorithmResultsSettled = await Promise.allSettled(
+		// 	algorithmResultsPromises,
+		// )
 
-		// TODO: add logging for failed paths
-		const algorithmResults = algorithmResultsSettled
-			.filter((result) => result.status === 'fulfilled')
-			.map((result) => result.value)
+		// // TODO: add logging for failed paths
+		// const algorithmResults = algorithmResultsSettled
+		// 	.filter((result) => result.status === 'fulfilled')
+		// 	.map((result) => result.value)
 
-		if (algorithmResults.length === 0) {
-			this.handleErrors(algorithmResultsSettled, logger)
+		// if (algorithmResults.length === 0) {
+		// 	this.handleErrors(algorithmResultsSettled, logger)
 
-			throw new GraphOptimizerError(
-				'All optimization attempts failed with errors',
-			)
-		}
+		// 	throw new GraphOptimizerError(
+		// 		'All optimization attempts failed with errors',
+		// 	)
+		// }
 
 		const maxProfitPath = algorithmResults.reduce((max, current) => {
 			if (max === null) {

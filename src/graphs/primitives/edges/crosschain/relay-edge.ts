@@ -46,25 +46,28 @@ export class RelayBridgeEdge extends CrosschainEdge {
 		relayQuote: z.infer<typeof relayQuoteSchema>,
 		costInUsd: number,
 	): (amountIn: bigint) => EdgeQuoteResult {
-		const amountInTokenOutDecimals = Number(
-			convertDecimals(amountIn, this.from, this.to),
-		)
-
 		const relayerFee = Number(relayQuote.fees.relayer.amount)
 		const relayerServiceFee = Number(relayQuote.fees.relayerService.amount)
 		const relayerGasFee = Number(relayQuote.fees.relayerGas.amount)
 
+		const amountInTokenOutDecimals = Number(
+			convertDecimals(amountIn, this.from, this.to),
+		)
 		const k =
 			1 - (relayerFee + relayerServiceFee) / amountInTokenOutDecimals
 
 		const b = -relayerGasFee
 
 		return (amountIn: bigint) => {
+			const amountInTokenOutDecimals = Number(
+				convertDecimals(amountIn, this.from, this.to),
+			)
+
 			const amountOut = k * amountInTokenOutDecimals + b
 
 			return {
-				rate: this.calcRate(amountIn, BigInt(amountOut)),
-				amountOut: BigInt(amountOut),
+				rate: this.calcRate(amountIn, BigInt(Math.floor(amountOut))),
+				amountOut: BigInt(Math.floor(amountOut)),
 				costInUsd: costInUsd,
 			}
 		}

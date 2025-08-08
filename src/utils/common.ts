@@ -30,6 +30,7 @@ export async function runFnWithRetry<T>(
 	fn: () => Promise<T>,
 	maxRetries: number,
 	logger: Logger,
+	retryDelay: number = 1000,
 ): Promise<T> {
 	const errors: Error[] = []
 
@@ -44,6 +45,8 @@ export async function runFnWithRetry<T>(
 				{ err: currentError },
 				`Attempt ${attempt}/${maxRetries} failed:`,
 			)
+
+			await wait(retryDelay)
 		}
 	}
 

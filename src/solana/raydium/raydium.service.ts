@@ -7,7 +7,7 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js'
 import axios from 'axios'
-import { createCustomError } from '../../utils/common'
+import { createCustomError, wait } from '../../utils/common'
 import { SolanaClientService } from '../solana-client.service'
 import { SolanaNative } from '../solana-tokens/solana-native'
 import { SolanaToken } from '../solana-tokens/solana-token'
@@ -39,7 +39,7 @@ export class RaydiumService {
 	priorityFeeCacheKey = 'raydium-priority-fee'
 	priorityFeeCacheTtl = 1000 * 60
 	txVersion = 'V0'
-	defaultSlippage = 10
+	defaultSlippage = 30
 
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -79,14 +79,21 @@ export class RaydiumService {
 
 		const txHash = await this.solanaClientService.sendAndConfirmTx(tx)
 
-		const parsedTx =
-			await this.solanaClientService.connection.getParsedTransaction(
-				txHash,
-				{
-					commitment: 'confirmed',
-					maxSupportedTransactionVersion: 0,
-				},
-			)
+		let parsedTx: ParsedTransactionWithMeta | null = null
+
+		let attempts = 0
+		while (!parsedTx && attempts < 3) {
+			parsedTx =
+				await this.solanaClientService.connection.getParsedTransaction(
+					txHash,
+					{
+						commitment: 'confirmed',
+						maxSupportedTransactionVersion: 0,
+					},
+				)
+			await wait(1000)
+			attempts++
+		}
 
 		if (!parsedTx) throw new RaydiumServiceError('Transaction not found')
 
