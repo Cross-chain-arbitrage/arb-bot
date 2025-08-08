@@ -3,6 +3,7 @@ import { maxUint256 } from 'viem'
 import { StargateService } from '../../../../bridges/layerzero-bridges/stargate/stargate-service'
 import { ChainClientService } from '../../../../chain-client/chain-client.service'
 import { NativeCurrency } from '../../../../primitives/tokens/NativeCurrency'
+import { Token } from '../../../../primitives/tokens/Token'
 import { EdgeHelperService } from '../edge-helper.service'
 import { CrosschainEdge } from './crosschain-edge'
 
@@ -10,8 +11,8 @@ export class StargateBridgeEdge extends CrosschainEdge {
 	readonly id: EdgeId
 
 	constructor(
-		override readonly from: GraphNode,
-		override readonly to: GraphNode,
+		override readonly from: Token | NativeCurrency,
+		override readonly to: Token | NativeCurrency,
 		readonly stargate: StargateService,
 		readonly chainClientService: ChainClientService,
 		readonly edgeHelperService: EdgeHelperService,
@@ -35,7 +36,10 @@ export class StargateBridgeEdge extends CrosschainEdge {
 		)
 
 		const bridgeFeeInUsd =
-			await this.edgeHelperService.getAdditionalCostInUsd(lzFee)
+			await this.edgeHelperService.getAdditionalCostInUsd(
+				lzFee.underlyingToken,
+				lzFee.amount,
+			)
 
 		const rate = this.calcRate(amountIn, amountOut)
 
@@ -64,7 +68,10 @@ export class StargateBridgeEdge extends CrosschainEdge {
 		}
 
 		const bridgeFeeInUsd =
-			await this.edgeHelperService.getAdditionalCostInUsd(lzFee)
+			await this.edgeHelperService.getAdditionalCostInUsd(
+				lzFee.underlyingToken,
+				lzFee.amount,
+			)
 
 		const txCostInUsd = await this.edgeHelperService.getActualGasCostInUsd(
 			this.from,

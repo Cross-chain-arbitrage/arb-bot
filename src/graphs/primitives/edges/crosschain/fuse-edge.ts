@@ -2,6 +2,7 @@ import { Cache } from '@nestjs/cache-manager'
 import { maxUint256 } from 'viem'
 import { FuseBridgeService } from '../../../../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { ChainClientService } from '../../../../chain-client/chain-client.service'
+import { NativeCurrency } from '../../../../primitives/tokens/NativeCurrency'
 import { Token } from '../../../../primitives/tokens/Token'
 import { EdgeHelperService } from '../edge-helper.service'
 import { CrosschainEdge } from './crosschain-edge'
@@ -10,8 +11,8 @@ export class FuseBridgeEdge extends CrosschainEdge {
 	readonly id: EdgeId
 
 	constructor(
-		override readonly from: GraphNode,
-		override readonly to: GraphNode,
+		override readonly from: Token | NativeCurrency,
+		override readonly to: Token | NativeCurrency,
 		readonly fuseBridge: FuseBridgeService,
 		readonly chainClientService: ChainClientService,
 		readonly edgeHelperService: EdgeHelperService,
@@ -42,7 +43,10 @@ export class FuseBridgeEdge extends CrosschainEdge {
 		}
 
 		const bridgeFeeInUsd =
-			await this.edgeHelperService.getAdditionalCostInUsd(lzFee)
+			await this.edgeHelperService.getAdditionalCostInUsd(
+				lzFee.underlyingToken,
+				lzFee.amount,
+			)
 
 		const txCostInUsd = await this.edgeHelperService.getActualGasCostInUsd(
 			this.from,
@@ -72,7 +76,10 @@ export class FuseBridgeEdge extends CrosschainEdge {
 		)
 
 		const bridgeFeeInUsd =
-			await this.edgeHelperService.getAdditionalCostInUsd(lzFee)
+			await this.edgeHelperService.getAdditionalCostInUsd(
+				lzFee.underlyingToken,
+				lzFee.amount,
+			)
 
 		const rate = this.calcRate(amountIn, amountOut)
 
