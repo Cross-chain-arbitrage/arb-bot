@@ -1,17 +1,18 @@
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
 import { Token } from '../primitives/tokens/Token'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
+import { SolanaToken } from '../solana/solana-token'
 import { Edge } from './primitives/edges/edge'
 
 declare global {
-	type GraphNode = Token | NativeCurrency | WrappedNative
+	type GraphNode = Token | NativeCurrency | WrappedNative | SolanaToken
 
 	type GetRateResult = {
 		rate: number // negative log of exchange rate
 		amountOut: bigint
 	}
 
-	type GraphNodeId = TokenId
+	type GraphNodeId = string
 
 	interface GraphArbitrageOpportunity {
 		path: Edge[]

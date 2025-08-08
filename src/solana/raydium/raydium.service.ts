@@ -39,7 +39,7 @@ export class RaydiumService {
 	priorityFeeCacheKey = 'raydium-priority-fee'
 	priorityFeeCacheTtl = 1000 * 60
 	txVersion = 'V0'
-	defaultSlippage = 50
+	defaultSlippage = 10
 
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,

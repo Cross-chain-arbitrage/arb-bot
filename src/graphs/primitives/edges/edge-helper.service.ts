@@ -1,9 +1,16 @@
 import { Injectable } from '@nestjs/common'
-import { TransactionReceipt } from 'viem'
+import { ParsedTransactionWithMeta } from '@solana/web3.js'
+import { Hash, TransactionReceipt } from 'viem'
+import { ChainClientService } from '../../../chain-client/chain-client.service'
 import { GasPriceOracleService } from '../../../gas-price-oracle/gas-price-oracle.service'
 import { PriceOracleService } from '../../../modules/price-oracle/price-oracle.service'
 import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
+import { SolanaClientService } from '../../../solana/solana-client.service'
+import { SolanaToken } from '../../../solana/solana-token'
+import { SolanaTokenUtils } from '../../../solana/solana-token-utils'
+const MICRO_LAMPORTS_PER_LAMPORT = 10n ** 6n
+const LAMPORTS_FOR_SIGNING = 5000n
 
 @Injectable()
 export class EdgeHelperService {
@@ -11,19 +18,46 @@ export class EdgeHelperService {
 		private readonly gasPriceOracleService: GasPriceOracleService,
 		private readonly priceOracleService: PriceOracleService,
 		private readonly tokenUtils: TokenUtils,
+		private readonly solanaClientService: SolanaClientService,
+		private readonly chainClientService: ChainClientService,
+		private readonly solanaTokenUtils: SolanaTokenUtils,
 	) {}
 
+	getNative(from: GraphNode) {
+		if (from instanceof SolanaToken) {
+			return this.solanaTokenUtils.getNative()
+		} else {
+			return this.tokenUtils.getNative(from.chainId)
+		}
+	}
+
 	async getExpectedGasCostInUsd(from: GraphNode, gas: bigint) {
-		const native = this.tokenUtils.getNative(from.chainId)
+		let txCostInNative: bigint
 
-		const gasPrice = await this.gasPriceOracleService.getGasPrice(
-			from.chainId,
-		)
+		if (from instanceof SolanaToken) {
+			const expectedComputeUnitPrice = 15000n // it depends on the highest account's demand across all accounts in tx
 
+			txCostInNative =
+				(expectedComputeUnitPrice * BigInt(gas)) /
+					MICRO_LAMPORTS_PER_LAMPORT +
+				LAMPORTS_FOR_SIGNING
+		} else {
+			const gasPrice = await this.gasPriceOracleService.getGasPrice(
+				from.chainId,
+			)
+
+			txCostInNative = gas * gasPrice
+		}
+
+		return this.getExpectedTxCost(from, txCostInNative)
+	}
+
+	async getExpectedTxCost(from: GraphNode, txCostInNative: bigint) {
+		const native = this.getNative(from)
 		const nativePrice = await this.priceOracleService.getPrice(native)
 
 		const costInUsd =
-			Number(native.formatUnits(gas * gasPrice)) * nativePrice
+			Number(native.formatUnits(txCostInNative)) * nativePrice
 
 		return costInUsd
 	}
@@ -42,25 +76,61 @@ export class EdgeHelperService {
 
 	async getActualGasCostInUsd(
 		from: GraphNode,
-		txReceipt: TransactionReceipt,
+		txResult: TransactionReceipt | ParsedTransactionWithMeta,
 	) {
-		let txCostInNative = 0n
-		try {
-			// viem returns not bigint for one of the values (probably effectiveGasPrice)
-			txCostInNative = txReceipt.gasUsed * txReceipt.effectiveGasPrice
-		} catch (e) {
-			throw Error(
-				`Error calculating tx cost in native for tx ${txReceipt.transactionHash}, gasUsed: ${txReceipt.gasUsed}, effectiveGasPrice: ${txReceipt.effectiveGasPrice}`,
-			)
+		let txCostInNative: bigint
+
+		if (from instanceof SolanaToken) {
+			const parsedTx = txResult as ParsedTransactionWithMeta
+
+			const fee = parsedTx.meta?.fee
+
+			if (!fee) {
+				throw Error(
+					`Meta is not found for tx ${parsedTx.transaction.signatures[0]}`,
+				)
+			}
+
+			txCostInNative = BigInt(fee)
+		} else {
+			const txReceipt = txResult as TransactionReceipt
+
+			try {
+				// viem returns not bigint for one of the values (probably effectiveGasPrice)
+				txCostInNative = txReceipt.gasUsed * txReceipt.effectiveGasPrice
+			} catch (e) {
+				throw Error(
+					`Error calculating tx cost in native for tx ${txReceipt.transactionHash}, gasUsed: ${txReceipt.gasUsed}, effectiveGasPrice: ${txReceipt.effectiveGasPrice}`,
+				)
+			}
 		}
 
-		const native = this.tokenUtils.getNative(from.chainId)
+		return this.getExpectedTxCost(from, txCostInNative)
+	}
 
-		const nativePrice = await this.priceOracleService.getPrice(native)
+	async getTxResult(
+		from: GraphNode,
+		txHash: string,
+	): Promise<ParsedTransactionWithMeta | TransactionReceipt> {
+		if (from instanceof SolanaToken) {
+			const parsedTx =
+				await this.solanaClientService.connection.getParsedTransaction(
+					txHash,
+					{
+						commitment: 'confirmed',
+						maxSupportedTransactionVersion: 0,
+					},
+				)
 
-		const costInUsd =
-			Number(native.formatUnits(txCostInNative)) * nativePrice
+			if (!parsedTx) throw new Error('Transaction not found')
 
-		return costInUsd
+			return parsedTx
+		} else {
+			const publicClient = this.chainClientService.getClient(from.chainId)
+
+			return publicClient.waitForTransactionReceipt({
+				hash: txHash as Hash,
+			})
+		}
 	}
 }

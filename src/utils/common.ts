@@ -97,3 +97,20 @@ export function createCustomError(errorName: string) {
 export function isStringsEqual(a: string, b: string): boolean {
 	return a.toLowerCase() === b.toLowerCase()
 }
+
+export function convertDecimals<T extends { decimals: number }>(
+	value: bigint,
+	from: T,
+	to: T,
+): bigint {
+	const fromDecimals = from.decimals
+	const toDecimals = to.decimals
+
+	const diff = fromDecimals - toDecimals
+
+	if (diff > 0) {
+		return value / 10n ** BigInt(diff)
+	} else {
+		return value * 10n ** BigInt(-diff)
+	}
+}

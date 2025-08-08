@@ -1,7 +1,8 @@
 import { Cache } from '@nestjs/cache-manager'
 import z from 'zod'
 import { RelayService } from '../../../../bridges/relay/relay-service'
-import { ChainClientService } from '../../../../chain-client/chain-client.service'
+import { convertDecimals } from '../../../../utils/common'
+import { EdgeHelperService } from '../edge-helper.service'
 import { CrosschainEdge } from './crosschain-edge'
 
 const feeSchema = z.object({
@@ -23,37 +24,15 @@ const relayQuoteSchema = z.object({
 
 export class RelayBridgeEdge extends CrosschainEdge {
 	// amountOut = k * amountIn + b
-	getRelayRateFunction(
-		amountIn: bigint,
-		relayQuote: z.infer<typeof relayQuoteSchema>,
-		gas: bigint,
-	) {
-		const k =
-			1 -
-			(Number(relayQuote.fees.relayer.amount) +
-				Number(relayQuote.fees.relayerService.amount)) /
-				Number(amountIn)
-
-		const b = -Number(relayQuote.fees.relayerGas.amount)
-
-		return (amountIn: bigint) => {
-			const amountOut = k * Number(amountIn) + b
-			return {
-				rate: this.calcRate(amountIn, BigInt(amountOut)),
-				amountOut: BigInt(amountOut),
-				gas: gas,
-			}
-		}
-	}
-
 	readonly id: EdgeId
+	readonly approximatedQuoteFunctionKey = `${this.id}-approximatedQuoteFunction`
 
 	private pendingQuoteRequest: Promise<void> | null = null
 
 	constructor(
 		override readonly from: GraphNode,
 		override readonly to: GraphNode,
-		chainClientService: ChainClientService,
+		readonly edgeHelperService: EdgeHelperService,
 		readonly relay: RelayService,
 		cacheService: Cache,
 		readonly rateFunctionTTL: number = 5000,
@@ -62,99 +41,116 @@ export class RelayBridgeEdge extends CrosschainEdge {
 		this.id = `${this.from.id}-${this.to.id}-${RelayBridgeEdge.name}`
 	}
 
+	buildApproximatedQuoteFunction(
+		amountIn: bigint,
+		relayQuote: z.infer<typeof relayQuoteSchema>,
+		costInUsd: number,
+	): (amountIn: bigint) => EdgeQuoteResult {
+		const amountInTokenOutDecimals = Number(
+			convertDecimals(amountIn, this.from, this.to),
+		)
+
+		const relayerFee = Number(relayQuote.fees.relayer.amount)
+		const relayerServiceFee = Number(relayQuote.fees.relayerService.amount)
+		const relayerGasFee = Number(relayQuote.fees.relayerGas.amount)
+
+		const k =
+			1 - (relayerFee + relayerServiceFee) / amountInTokenOutDecimals
+
+		const b = -relayerGasFee
+
+		return (amountIn: bigint) => {
+			const amountOut = k * amountInTokenOutDecimals + b
+
+			return {
+				rate: this.calcRate(amountIn, BigInt(amountOut)),
+				amountOut: BigInt(amountOut),
+				costInUsd: costInUsd,
+			}
+		}
+	}
+
+	getApproximatedQuoteFunction() {
+		return this.cacheService.get<
+			ReturnType<typeof this.buildApproximatedQuoteFunction>
+		>(this.approximatedQuoteFunctionKey)
+	}
+
+	async waitForQuoteRequestAndReturnResult(amountIn: bigint) {
+		if (this.pendingQuoteRequest) {
+			await this.pendingQuoteRequest
+		}
+
+		const cachedApproximatedQuoteFunction =
+			await this.getApproximatedQuoteFunction()
+
+		if (!cachedApproximatedQuoteFunction) {
+			throw new Error(
+				'Rate function should be cached after pending request completion',
+			)
+		}
+
+		return cachedApproximatedQuoteFunction(amountIn)
+	}
+
 	async quote(amountIn: bigint): Promise<EdgeQuoteResult> {
-		const cachedRateFunction = await this.cacheService.get<
-			(amountIn: bigint) => {
-				rate: number
-				amountOut: bigint
-				gas: bigint
-			}
-		>(`${this.id}-rateFunction`)
+		const cachedRateFunction = await this.getApproximatedQuoteFunction()
 
-		let rate: number
-		let amountOut: bigint
-		let gas: bigint
+		if (!cachedRateFunction && !this.pendingQuoteRequest) {
+			this.pendingQuoteRequest = this.fetchAndCacheRateFunction(amountIn)
 
-		if (cachedRateFunction) {
-			;({ rate, amountOut, gas } = cachedRateFunction(amountIn))
-		} else {
-			// If there's already a pending request, wait for it to complete
-			if (this.pendingQuoteRequest) {
-				await this.pendingQuoteRequest
-
-				// After waiting, check cache again
-				const cachedRateFunctionAfterWait = await this.cacheService.get<
-					(amountIn: bigint) => {
-						rate: number
-						amountOut: bigint
-						gas: bigint
-					}
-				>(`${this.id}-rateFunction`)
-				if (cachedRateFunctionAfterWait) {
-					;({ rate, amountOut, gas } =
-						cachedRateFunctionAfterWait(amountIn))
-				} else {
-					throw new Error(
-						'Rate function should be cached after pending request completion',
-					)
-				}
-			} else {
-				// Make the request and cache it for other concurrent calls
-				this.pendingQuoteRequest =
-					this.fetchAndCacheRateFunction(amountIn)
-
-				try {
-					await this.pendingQuoteRequest
-
-					// Get the cached rate function that was just set
-					const newCachedRateFunction = await this.cacheService.get<
-						(amountIn: bigint) => {
-							rate: number
-							amountOut: bigint
-							gas: bigint
-						}
-					>(`${this.id}-rateFunction`)
-
-					if (!newCachedRateFunction) {
-						throw new Error(
-							'Rate function should be cached after fetch',
-						)
-					}
-
-					;({ rate, amountOut, gas } =
-						newCachedRateFunction(amountIn))
-				} finally {
-					// Clear the pending request
-					this.pendingQuoteRequest = null
-				}
+			try {
+				return this.waitForQuoteRequestAndReturnResult(amountIn)
+			} finally {
+				this.pendingQuoteRequest = null
 			}
 		}
 
-		return {
-			rate: rate,
-			amountOut: amountOut,
-			costInUsd: 0, //TODO: add cost in usd (Relay returns already calculated gas * gasPrice in quote)
+		if (!cachedRateFunction) {
+			return this.waitForQuoteRequestAndReturnResult(amountIn)
 		}
+
+		return cachedRateFunction(amountIn)
 	}
 
 	private async fetchAndCacheRateFunction(amountIn: bigint): Promise<void> {
 		const quote = await this.relay.quote(this.from, this.to, amountIn)
 		const relayQuote = relayQuoteSchema.parse(quote.rawResult)
 
+		const costInUsd = await this.edgeHelperService.getExpectedTxCost(
+			this.from,
+			quote.gasInNative,
+		)
+
 		await this.cacheService.set(
 			`${this.id}-rateFunction`,
-			this.getRelayRateFunction(amountIn, relayQuote, quote.gasInNative),
+			this.buildApproximatedQuoteFunction(
+				amountIn,
+				relayQuote,
+				costInUsd,
+			),
+			this.rateFunctionTTL,
 		)
 	}
 
 	async execute(amountIn: bigint): Promise<CrosschainEdgeExecutionResult> {
 		const result = await this.relay.bridge(this.from, this.to, amountIn)
 
+		const srcTxResult = await this.edgeHelperService.getTxResult(
+			this.from,
+			result.srcTxHash,
+		)
+
+		const costInUsd = await this.edgeHelperService.getActualGasCostInUsd(
+			this.from,
+			srcTxResult,
+		)
+
 		return {
 			amountOut: result.amountOut,
-			srcTxHash: result.srcTxReceipt.transactionHash,
+			srcTxHash: result.srcTxHash,
 			dstTxHash: result.dstTxHash,
-			costInUsd: 0,
+			costInUsd,
 		}
 	}
 
