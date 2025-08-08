@@ -23,7 +23,7 @@ export class LayerZeroScanService {
 	private readonly pollingInterval: number = 2500
 
 	// Assumes only one message is sent per tx
-	async waitForDeliveryStatus(srcTxHash: Hash) {
+	async waitForDeliveryStatus(srcTxHash: string) {
 		if (!isHash(srcTxHash)) {
 			throw new LayerZeroScanError('srcTxHash is not a valid hash')
 		}

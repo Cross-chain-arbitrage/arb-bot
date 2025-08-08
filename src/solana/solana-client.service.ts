@@ -45,6 +45,15 @@ export class SolanaClientService implements OnModuleInit {
 		return txId
 	}
 
+	getSignedTx(rawTx: string) {
+		const txBuf = Buffer.from(rawTx, 'base64')
+		const tx = VersionedTransaction.deserialize(txBuf)
+
+		tx.sign([this.keypair])
+
+		return tx
+	}
+
 	private getPrivateKeyUint8Array(privateKey: string) {
 		if (this.canBeBase64(privateKey)) {
 			const pk = Buffer.from(privateKey, 'base64')
