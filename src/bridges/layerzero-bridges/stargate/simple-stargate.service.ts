@@ -4,7 +4,6 @@ import axios from 'axios'
 import { ChainClientService } from '../../../chain-client/chain-client.service'
 import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
 import { Token } from '../../../primitives/tokens/Token'
-import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
 import { SolanaClientService } from '../../../solana/solana-client.service'
 import { SolanaToken } from '../../../solana/solana-token'
 import { createCustomError } from '../../../utils/common'
@@ -25,7 +24,6 @@ const AVERAGE_BRIDGE_GAS_COST = 400_000n
 export class SimpleStargateService {
 	constructor(
 		private readonly chainClientService: ChainClientService,
-		private readonly tokenUtils: TokenUtils,
 		private readonly layerZeroScanService: LayerZeroScanService,
 		private readonly solanaClientService: SolanaClientService,
 	) {}
@@ -196,6 +194,7 @@ export class SimpleStargateService {
 // 	const simpleStargateService = app.get(SimpleStargateService)
 // 	const solanaTokenUtils = app.get(SolanaTokenUtils)
 // 	const tokenUtils = app.get(TokenUtils)
+// 	const layerZeroScanService = app.get(LayerZeroScanService)
 
 // 	const anonAddressOnSolana = '9McvH6w97oewLmPxqQEoHUAv3u5iYMyQ9AeZZhguYf1T'
 // 	const anonAddressOnArbitrum = '0x79bbF4508B1391af3A0F4B30bb5FC4aa9ab0E07C'
@@ -208,11 +207,17 @@ export class SimpleStargateService {
 // 		arbitrum.id,
 // 	)
 
-// 	const quote = await simpleStargateService.quote(
-// 		anonOnSolana,
+// 	const bridgeRes = await simpleStargateService.bridge(
 // 		anonOnArbitrum,
-// 		anonOnSolana.parseUnits('0.4'),
+// 		anonOnSolana,
+// 		anonOnArbitrum.parseUnits('0.4'),
 // 	)
+
+// 	console.log(bridgeRes)
+
+// 	const tx = await bridgeRes.waitForTx()
+
+// 	console.log(tx)
 // }
 
 // void main()

@@ -4,7 +4,6 @@ import {
 	MessageStatus,
 } from '@layerzerolabs/scan-client'
 import { Injectable } from '@nestjs/common'
-import { Hash, isHash, zeroHash } from 'viem'
 import { poll } from '../../../utils/polling'
 
 export class LayerZeroScanError extends Error {
@@ -24,10 +23,6 @@ export class LayerZeroScanService {
 
 	// Assumes only one message is sent per tx
 	async waitForDeliveryStatus(srcTxHash: string) {
-		if (!isHash(srcTxHash)) {
-			throw new LayerZeroScanError('srcTxHash is not a valid hash')
-		}
-
 		const condition = (messages: Message[]) =>
 			messages.length >= 1 &&
 			messages[0].status === MessageStatus.DELIVERED
@@ -42,11 +37,7 @@ export class LayerZeroScanService {
 		return messages[0]
 	}
 
-	async getMessagesBySrcTxHash(srcTxHash: Hash): Promise<Message[]> {
-		if (srcTxHash === zeroHash) {
-			throw new LayerZeroScanError('srcTxHash is zero hash')
-		}
-
+	async getMessagesBySrcTxHash(srcTxHash: string): Promise<Message[]> {
 		const client = createClient('mainnet')
 
 		const response = await client.getMessagesBySrcTxHash(srcTxHash)
