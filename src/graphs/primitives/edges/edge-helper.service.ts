@@ -4,9 +4,9 @@ import { Hash, TransactionReceipt } from 'viem'
 import { ChainClientService } from '../../../chain-client/chain-client.service'
 import { GasPriceOracleService } from '../../../gas-price-oracle/gas-price-oracle.service'
 import { PriceOracleService } from '../../../modules/price-oracle/price-oracle.service'
-import { TokenAmount } from '../../../primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
 import { SolanaClientService } from '../../../solana/solana-client.service'
+import { SolanaNative } from '../../../solana/solana-native'
 import { SolanaToken } from '../../../solana/solana-token'
 import { SolanaTokenUtils } from '../../../solana/solana-token-utils'
 const MICRO_LAMPORTS_PER_LAMPORT = 10n ** 6n
@@ -62,14 +62,15 @@ export class EdgeHelperService {
 		return costInUsd
 	}
 
-	async getAdditionalCostInUsd(additionalCost: TokenAmount) {
-		const additionalCostTokenPrice = await this.priceOracleService.getPrice(
-			additionalCost.underlyingToken,
-		)
+	async getAdditionalCostInUsd(
+		token: GraphNode | SolanaNative,
+		amount: bigint,
+	) {
+		const additionalCostTokenPrice =
+			await this.priceOracleService.getPrice(token)
 
 		const additionalCostInUsd =
-			Number(additionalCost.formatUnits(additionalCost.amount)) *
-			additionalCostTokenPrice
+			Number(token.formatUnits(amount)) * additionalCostTokenPrice
 
 		return additionalCostInUsd
 	}
