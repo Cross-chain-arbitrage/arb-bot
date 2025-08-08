@@ -22,10 +22,34 @@ function parseChainIdAddress(val: string) {
 	}
 }
 
-const ChainIdAddressScheme = z.string().transform((val) => {
-	return parseChainIdAddress(val)
-})
+function parseToken(val: string): {
+	chainId: number | 'solana'
+	address: string
+} {
+	const [chainId, address] = val.split(':')
 
+	if (chainId === 'solana') {
+		return {
+			chainId: 'solana',
+			address: address,
+		}
+	}
+
+	const isValidChainId = !isNaN(Number(chainId)) && Number(chainId) > 0
+
+	if (!isValidChainId) {
+		throw new Error(`Invalid chainId: ${chainId}`)
+	}
+
+	return {
+		chainId: parseInt(chainId),
+		address: address,
+	}
+}
+
+const TokenScheme = z.string().transform((val) => {
+	return parseToken(val)
+})
 const poolScheme = z
 	.object({
 		pool: z.string(),
@@ -45,7 +69,7 @@ const configScheme = z.object({
 	botName: z.string(),
 	giveApprovals: z.boolean(),
 	isDryRun: z.boolean(),
-	startTokenId: ChainIdAddressScheme,
+	startTokenId: TokenScheme,
 	minProfitUsd: z.number(),
 	opportunityCheckInterval: z.number(),
 	arbitrageExecutionTimeout: z.number(),
@@ -56,8 +80,8 @@ const configScheme = z.object({
 		additionalEdges: z
 			.array(
 				z.object({
-					from: ChainIdAddressScheme,
-					to: ChainIdAddressScheme,
+					from: TokenScheme,
+					to: TokenScheme,
 					type: z.string(),
 				}),
 			)

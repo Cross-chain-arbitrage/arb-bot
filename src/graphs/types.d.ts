@@ -22,7 +22,7 @@ declare global {
 		profitPercentage: number
 	}
 
-	type EdgeId = `${GraphNodeId}-${GraphNodeId}-${string}`
+	type EdgeId = string
 
 	type EdgeQuoteResult = GetRateResult & {
 		costInUsd: number

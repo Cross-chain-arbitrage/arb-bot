@@ -14,6 +14,8 @@ import { TgArbitrageNotifier } from './modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from './modules/notification/TgBalancesNotifier'
 import { PriceOracleModule } from './modules/price-oracle/price-oracle.module'
 import { TokenUtils } from './primitives/tokens/TokenUtils'
+import { SolanaClientService } from './solana/solana-client.service'
+import { SolanaTokenUtils } from './solana/solana-tokens/solana-token-utils'
 import { loadConfig } from './strategies/configuration'
 import { Strategy } from './strategies/Strategy'
 import { transport } from './utils/logging-config'
@@ -53,6 +55,8 @@ const appConfig = loadConfig()
 		Logger,
 		EdgeHelperService,
 		GasPriceOracleService,
+		SolanaTokenUtils,
+		SolanaClientService,
 	],
 })
 export class AppModule {}

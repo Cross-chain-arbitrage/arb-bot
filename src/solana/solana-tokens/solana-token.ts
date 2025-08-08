@@ -25,6 +25,10 @@ export class SolanaToken implements BaseToken {
 		return `solana:${this.address}`
 	}
 
+	isNative() {
+		return false
+	}
+
 	async balanceOf(address: string): Promise<bigint> {
 		const connection = new Connection('https://api.mainnet-beta.solana.com')
 

@@ -43,7 +43,7 @@ export class Graph {
 		this.nodes.set(node.id, node)
 	}
 
-	getToken(tokenId: TokenId): GraphNode {
+	getToken(tokenId: EdgeId): GraphNode {
 		const token = this.nodes.get(tokenId)
 
 		if (!token) {
@@ -53,7 +53,7 @@ export class Graph {
 		return token
 	}
 
-	isNodeAdded(tokenId: TokenId): boolean {
+	isNodeAdded(tokenId: EdgeId): boolean {
 		return this.nodes.has(tokenId)
 	}
 }

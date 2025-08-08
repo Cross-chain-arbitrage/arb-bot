@@ -9,16 +9,21 @@ import { ChainClientService } from '../chain-client/chain-client.service'
 import { PoolType, PoolUtils } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
-import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
+import {
+	AdditionalEdgeConfig,
+	EdgeType,
+	GraphBuildConfig,
+	GraphBuilder,
+} from '../graphs/GraphBuilder'
 import { GraphExecutor } from '../graphs/GraphExecutor'
 import { GraphVisualizer } from '../graphs/GraphVisualizer'
 import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
-import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
-import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
+import { SolanaToken } from '../solana/solana-tokens/solana-token'
+import { SolanaTokenUtils } from '../solana/solana-tokens/solana-token-utils'
 import { loadConfig } from './configuration'
 
 export interface PoolData {
@@ -31,7 +36,7 @@ export interface StrategyConfig {
 	botName: string
 	dryRun: boolean
 	giveApprovals: boolean
-	startToken: Token | NativeCurrency
+	startToken: GraphNode
 	minProfitUsd: number
 	graphBuildConfig: GraphBuildConfig
 	graphOptimizerOptions: GraphOptimizerOptions
@@ -61,6 +66,7 @@ export class Strategy implements OnApplicationBootstrap {
 		readonly graphExecutor: GraphExecutor,
 		readonly gasZipBridge: GasZipBridge,
 		readonly logger: Logger,
+		readonly solanaTokenUtils: SolanaTokenUtils,
 	) {}
 
 	async onApplicationBootstrap() {
@@ -72,12 +78,21 @@ export class Strategy implements OnApplicationBootstrap {
 
 		const startTokenId = config.get('startTokenId')
 
-		const startToken = await this.tokenUtils.fromAddress(
-			startTokenId.address,
-			startTokenId.chainId,
-		)
+		const startToken = await this.getNode(startTokenId)
 
 		const graphBuilderConfig = config.get('graphBuilderConfig')
+
+		const additionalEdges: AdditionalEdgeConfig[] = []
+		for (const edge of graphBuilderConfig.additionalEdges ?? []) {
+			const from = await this.getNode(edge.from)
+			const to = await this.getNode(edge.to)
+
+			additionalEdges.push({
+				from,
+				to,
+				type: edge.type as EdgeType,
+			})
+		}
 
 		const strategyConfig: StrategyConfig = {
 			botName: config.get('botName'),
@@ -95,11 +110,25 @@ export class Strategy implements OnApplicationBootstrap {
 					graphBuilderConfig.connectSecondaryChains,
 				baseChainId: graphBuilderConfig.baseChainId,
 				edgeCacheTTL: graphBuilderConfig.edgeCacheTTL ?? 3000,
+				additionalEdges: additionalEdges,
 			},
 			graphOptimizerOptions: config.get('graphOptimizerConfig'),
 		}
 
 		await this.run(strategyConfig)
+	}
+
+	async getNode(nodeConfig: { chainId: number | 'solana'; address: string }) {
+		if (nodeConfig.chainId === 'solana') {
+			return this.solanaTokenUtils.fromAddress<SolanaToken>(
+				nodeConfig.address,
+			)
+		}
+
+		return this.tokenUtils.fromAddress(
+			nodeConfig.address as `0x${string}`,
+			nodeConfig.chainId,
+		)
 	}
 
 	async run(config: StrategyConfig) {

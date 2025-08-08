@@ -17,6 +17,10 @@ export class SolanaNative implements BaseToken {
 		return 'solana-native'
 	}
 
+	isNative() {
+		return true
+	}
+
 	toString(): string {
 		return `${this.symbol} (Solana)`
 	}

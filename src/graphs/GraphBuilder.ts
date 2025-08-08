@@ -45,20 +45,14 @@ interface StargateConfig {
  * @extends {StargateConfig}
  */
 
-type EdgeType = 'wrap' | 'unwrap' | 'swap' | 'stargate' | 'fuse' | 'relay'
+export type EdgeType = 'wrap' | 'unwrap' | 'stargate' | 'fuse' | 'relay'
 
-type AdditionalEdgeConfig = {
+export type AdditionalEdgeConfig = {
 	from: GraphNode
 	to: GraphNode
-} & (
-	| {
-			type: Exclude<EdgeType, 'swap'>
-	  }
-	| {
-			type: 'swap'
-			pool: Pool
-	  }
-)
+} & {
+	type: EdgeType
+}
 
 export interface GraphBuildConfig {
 	/** The pools to build the graph from */
@@ -240,7 +234,10 @@ export class GraphBuilder {
 
 		const assetGroups: Map<AssetId, Set<GraphNode>> = new Map()
 
-		const tokensArray = Array.from(graph.nodes.values())
+		const tokensArray = Array.from(graph.nodes.values()) as (
+			| NativeCurrency
+			| Token
+		)[]
 
 		for (const token of tokensArray) {
 			let metadata: StargateTokenMetadata
@@ -300,8 +297,8 @@ export class GraphBuilder {
 		for (const pair of pairs) {
 			graph.addEdge(
 				new StargateBridgeEdge(
-					pair[0],
-					pair[1],
+					pair[0] as Token,
+					pair[1] as Token,
 					this.stargateService,
 					this.chainClientService,
 					this.edgeHelperService,
@@ -353,8 +350,8 @@ export class GraphBuilder {
 			for (const fuseToken of fuseOnOtherChains) {
 				graph.addEdge(
 					new FuseBridgeEdge(
-						fuseToken,
-						wfuseToken,
+						fuseToken as Token,
+						wfuseToken as Token,
 						this.fuseBridgeService,
 						this.chainClientService,
 						this.edgeHelperService,
@@ -371,8 +368,8 @@ export class GraphBuilder {
 				for (const fuseToken of fuseOnOtherChains) {
 					graph.addEdge(
 						new FuseBridgeEdge(
-							nativeFuseOnFuse,
-							fuseToken,
+							nativeFuseOnFuse as NativeCurrency,
+							fuseToken as Token,
 							this.fuseBridgeService,
 							this.chainClientService,
 							this.edgeHelperService,
@@ -407,8 +404,8 @@ export class GraphBuilder {
 
 				graph.addEdge(
 					new FuseBridgeEdge(
-						token,
-						tokenOnFuse,
+						token as Token,
+						tokenOnFuse as Token,
 						this.fuseBridgeService,
 						this.chainClientService,
 						this.edgeHelperService,
@@ -417,8 +414,8 @@ export class GraphBuilder {
 				)
 				graph.addEdge(
 					new FuseBridgeEdge(
-						tokenOnFuse,
-						token,
+						tokenOnFuse as Token,
+						token as Token,
 						this.fuseBridgeService,
 						this.chainClientService,
 						this.edgeHelperService,
@@ -484,6 +481,7 @@ export class GraphBuilder {
 			if (!graph.isNodeAdded(edgeConfig.from.id)) {
 				graph.addNode(edgeConfig.from)
 			}
+
 			if (!graph.isNodeAdded(edgeConfig.to.id)) {
 				graph.addNode(edgeConfig.to)
 			}
@@ -509,18 +507,10 @@ export class GraphBuilder {
 					this.edgeHelperService,
 					this.cacheService,
 				)
-			case 'swap':
-				return new SwapEdge(
-					edgeConfig.from as Token,
-					edgeConfig.to as Token,
-					edgeConfig.pool,
-					this.edgeHelperService,
-					this.cacheService,
-				)
 			case 'stargate':
 				return new StargateBridgeEdge(
-					edgeConfig.from,
-					edgeConfig.to,
+					edgeConfig.from as Token,
+					edgeConfig.to as Token,
 					this.stargateService,
 					this.chainClientService,
 					this.edgeHelperService,
@@ -528,8 +518,8 @@ export class GraphBuilder {
 				)
 			case 'fuse':
 				return new FuseBridgeEdge(
-					edgeConfig.from,
-					edgeConfig.to,
+					edgeConfig.from as Token,
+					edgeConfig.to as Token,
 					this.fuseBridgeService,
 					this.chainClientService,
 					this.edgeHelperService,
@@ -537,9 +527,9 @@ export class GraphBuilder {
 				)
 			case 'relay':
 				return new RelayBridgeEdge(
-					edgeConfig.from,
-					edgeConfig.to,
-					this.chainClientService,
+					edgeConfig.from as Token,
+					edgeConfig.to as Token,
+					this.edgeHelperService,
 					this.relayService,
 					this.cacheService,
 				)
