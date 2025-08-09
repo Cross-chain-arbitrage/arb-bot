@@ -9,11 +9,13 @@ import { LayerZeroScanService } from './layerzero-bridges/layerzero-scan/layerze
 import { SimpleStargateService } from './layerzero-bridges/stargate/simple-stargate.service'
 import { StargateAPIService } from './layerzero-bridges/stargate/stargate-api.service'
 import { StargateService } from './layerzero-bridges/stargate/stargate-service'
+import { RelayApiService } from './relay/relay-api.service'
 import { RelayService } from './relay/relay-service'
 @Module({
 	imports: [ChainClientModule],
 	providers: [
 		TokenUtils,
+		RelayApiService,
 		LayerZeroScanService,
 		FuseBridgeService,
 		StargateService,
