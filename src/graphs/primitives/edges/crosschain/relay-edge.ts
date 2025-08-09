@@ -149,10 +149,14 @@ export class RelayBridgeEdge extends CrosschainEdge {
 			srcTxResult,
 		)
 
+		const dstTx = await result.waitForTx()
+
+		await this.edgeHelperService.getTxResult(this.to, dstTx.dstTxHash)
+
 		return {
 			amountOut: result.amountOut,
 			srcTxHash: result.srcTxHash,
-			dstTxHash: result.dstTxHash,
+			dstTxHash: dstTx.dstTxHash,
 			costInUsd,
 		}
 	}
