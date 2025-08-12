@@ -7,7 +7,7 @@ describe('algebra pool test', () => {
 	const usdtAddress = '0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7'
 
 	testPool({
-		chain: fuse,
+		chainId: fuse.id,
 		poolType: 'ALGEBRA_V1_2',
 		poolAddress: wethUsdtPoolAddress,
 		assertPoolCreation: {

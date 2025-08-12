@@ -8,7 +8,7 @@ describe('Pancake V3 pool test', () => {
 	const usdtAddress = '0x55d398326f99059ff775485246999027b3197955'
 
 	testPool({
-		chain: bsc,
+		chainId: bsc.id,
 		poolType: 'PANCAKE_V3',
 		poolAddress,
 		rpcUrl: getAlchemyRpcUrl(bsc.id),

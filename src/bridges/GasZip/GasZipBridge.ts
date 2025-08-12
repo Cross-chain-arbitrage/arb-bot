@@ -1,8 +1,8 @@
 import TTLCache from '@isaacs/ttlcache'
 import { Injectable } from '@nestjs/common'
 import { parseEther, zeroHash } from 'viem'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import { GasZipBridgeTx } from './GasZipBridgeTx'
 

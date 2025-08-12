@@ -9,10 +9,10 @@ import {
 	sepolia,
 } from 'viem/chains'
 import { FuseBridge } from '../../src/bridges/fuse-bridge/FuseBridge'
+import { ClientManager } from '../../src/chain-client/chain-client.service'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { getAlchemyRpcUrl } from '../../src/utils/alchemy'
-import { ClientManager } from '../../src/utils/ChainClientService'
 import { getAccountAddress } from '../../src/utils/common'
 import { setTokenBalance, useAnvil } from '../testUtils/anvil'
 import { makeSuite } from '../testUtils/makeSuite'

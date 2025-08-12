@@ -12,11 +12,9 @@ import {
 	swellchain,
 } from 'viem/chains'
 import { WETH_ABI } from '../../abi/weth'
-import { ChainClientService } from '../../utils/ChainClientService'
-import { getAccountAddress } from '../../utils/common'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { NativeCurrency } from './NativeCurrency'
 import { Token } from './Token'
-import { TokenMetadata } from './TokenBase'
 import { WrappedNativeError } from './TokenErrors'
 
 export const wrappedTokens: Record<number, Address | undefined> = {
@@ -31,6 +29,7 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[swellchain.id]: '0x4200000000000000000000000000000000000006',
 	[superposition.id]: '0x1fB719f10b56d7a85DCD32f27f897375fB21cfdd',
 	[bob.id]: '0x4200000000000000000000000000000000000006',
+	[1300]: '0x9a1691D500C54e1d79df2347D170987aa3E527aC',
 }
 
 export class WrappedNative extends Token {
@@ -50,7 +49,7 @@ export class WrappedNative extends Token {
 	}
 
 	async deposit(amount: bigint) {
-		const balance = await this.native.balanceOf(getAccountAddress())
+		const balance = await this.native.balanceOf(this.wallet.account.address)
 
 		if (balance < amount) {
 			throw new WrappedNativeError('Insufficient balance')
@@ -74,7 +73,7 @@ export class WrappedNative extends Token {
 	}
 
 	async withdraw(amount: bigint) {
-		const balance = await this.balanceOf(getAccountAddress())
+		const balance = await this.balanceOf(this.wallet.account.address)
 
 		if (balance < amount) {
 			throw new WrappedNativeError('Insufficient balance')

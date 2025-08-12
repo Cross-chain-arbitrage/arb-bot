@@ -1,9 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { isAddressEqual } from 'viem'
+import { ChainClientService } from '../../chain-client/chain-client.service'
+import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
+import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../utils/ChainClientService'
-import { createCustomError } from '../../utils/common'
-import { chainIdToGeckoChainId } from './gecko-terminal-chains.constants.ts'
+import { SolanaNative } from '../../solana/solana-tokens/solana-native'
+import { SolanaToken } from '../../solana/solana-tokens/solana-token'
+import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
+import { createCustomError, isStringsEqual } from '../../utils/common'
+import { chainIdToGeckoChainId } from './gecko-terminal-chains.constants'
 import { GeckoTerminalService } from './gecko-terminal.service'
 import {
 	Currency,
@@ -25,6 +29,7 @@ export class PriceOracleService {
 
 	constructor(
 		readonly chainClientService: ChainClientService,
+		readonly solanaTokenUtils: SolanaTokenUtils,
 		readonly tokenUtils: TokenUtils,
 		readonly geckoTerminalService: GeckoTerminalService,
 		readonly logger: Logger,
@@ -93,7 +98,7 @@ export class PriceOracleService {
 
 		const tokenPrice = await this.geckoTerminalService.getTokenPrice(
 			priceLookupCurrency.address,
-			this.getGeckoId(priceLookupCurrency.chainId),
+			this.getGeckoId(priceLookupCurrency),
 		)
 
 		this.setCurrencyState(priceLookupCurrency, tokenPrice)
@@ -150,10 +155,10 @@ export class PriceOracleService {
 	/* ======== PRIVATE METHODS ======== */
 
 	private async fetchAndUpdateCurrencyStates(
-		chainId: number,
+		geckoChainId: string,
 		currencies: Currency[],
 	) {
-		const lookupAddresses: Address[] = []
+		const lookupAddresses: string[] = []
 
 		for (const currency of currencies) {
 			const priceLookupCurrency = await this.getLookupCurrency(currency)
@@ -164,7 +169,7 @@ export class PriceOracleService {
 		const addressesAndPrices =
 			await this.geckoTerminalService.getTokenPrices(
 				lookupAddresses,
-				this.getGeckoId(chainId),
+				geckoChainId,
 			)
 
 		const currencyStates: CurrencyState[] = []
@@ -173,7 +178,7 @@ export class PriceOracleService {
 			const priceLookupCurrency = await this.getLookupCurrency(currency)
 
 			const addressAndPrice = addressesAndPrices.find((addressAndPrice) =>
-				isAddressEqual(
+				isStringsEqual(
 					addressAndPrice.address,
 					priceLookupCurrency.address,
 				),
@@ -200,15 +205,17 @@ export class PriceOracleService {
 
 	private groupCurrenciesByChain(
 		currencies: Currency[],
-	): Map<number, Currency[]> {
-		const currenciesByChain = new Map<number, Currency[]>()
+	): Map<string, Currency[]> {
+		const currenciesByChain = new Map<string, Currency[]>()
 
 		for (const currency of currencies) {
-			if (!currenciesByChain.has(currency.chainId)) {
-				currenciesByChain.set(currency.chainId, [])
+			const geckoChainId = this.getGeckoId(currency)
+
+			if (!currenciesByChain.has(geckoChainId)) {
+				currenciesByChain.set(geckoChainId, [])
 			}
 
-			currenciesByChain.get(currency.chainId)!.push(currency)
+			currenciesByChain.get(geckoChainId)!.push(currency)
 		}
 
 		return currenciesByChain
@@ -227,9 +234,14 @@ export class PriceOracleService {
 	}
 
 	private async getLookupCurrency(currency: Currency): Promise<Currency> {
-		return currency.isNative()
-			? this.tokenUtils.getWrappedNative(currency.chainId)
-			: currency
+		switch (true) {
+			case currency instanceof NativeCurrency:
+				return this.tokenUtils.getWrappedNative(currency.chainId)
+			case currency instanceof SolanaNative:
+				return this.solanaTokenUtils.getWrappedNative()
+			default:
+				return currency
+		}
 	}
 
 	private async updatePrices(): Promise<void> {
@@ -245,7 +257,7 @@ export class PriceOracleService {
 		}
 	}
 
-	private getGeckoId(chainId: number): string {
+	private getGeckoIdByChainId(chainId: number): string {
 		const chainIdStr = String(chainId) as keyof typeof chainIdToGeckoChainId
 
 		const geckoId = chainIdToGeckoChainId[chainIdStr]
@@ -257,6 +269,23 @@ export class PriceOracleService {
 		}
 
 		return geckoId
+	}
+
+	private getGeckoId(currency: Currency): string {
+		switch (true) {
+			case currency instanceof NativeCurrency:
+				return this.getGeckoIdByChainId(currency.chainId)
+			case currency instanceof Token:
+				return this.getGeckoIdByChainId(currency.chainId)
+			case currency instanceof SolanaNative:
+				return 'solana'
+			case currency instanceof SolanaToken:
+				return 'solana'
+		}
+
+		throw new PriceOracleError(
+			`Can not get GeckoId for currency (should never happen)`,
+		)
 	}
 
 	private async processCachedCurrencies(

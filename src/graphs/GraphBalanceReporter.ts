@@ -1,8 +1,7 @@
 import { Logger } from '@nestjs/common'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
-import { ChainClientService } from '../utils/ChainClientService'
-import { getAccountAddress } from '../utils/common'
 import { GraphArbitrageBot } from './GraphArbitrageBot'
 
 interface NodeWithBalance {
@@ -12,7 +11,6 @@ interface NodeWithBalance {
 }
 
 export class GraphBalanceReporter {
-	addressToCheck: Address
 	private isRunning = false
 	private intervalId: NodeJS.Timeout | null = null
 	private readonly updateInterval: number
@@ -25,7 +23,6 @@ export class GraphBalanceReporter {
 		private readonly logger: Logger,
 		updateInterval: number = 60000, // 60 seconds default
 	) {
-		this.addressToCheck = getAccountAddress()
 		this.updateInterval = updateInterval
 	}
 
@@ -33,6 +30,7 @@ export class GraphBalanceReporter {
 	 * Start periodic balance checking
 	 */
 	start() {
+		return //TODO: make it work and remove return
 		if (this.isRunning) {
 			this.logger.warn('GraphBalanceReporter is already running')
 			return
@@ -102,8 +100,12 @@ export class GraphBalanceReporter {
 	}
 
 	private async getNodeBalanceAndPrice(node: GraphNode) {
+		const addressToCheck = this.chainClientService.getWalletClient(
+			node.chainId,
+		).account.address
+
 		const [balance, price] = await Promise.all([
-			node.balanceOf(this.addressToCheck),
+			node.balanceOf(addressToCheck),
 			this.priceOracleService.getPrice(node).catch(() => 0), // Fallback to 0 if price not available
 		])
 

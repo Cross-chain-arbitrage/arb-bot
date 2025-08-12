@@ -85,10 +85,22 @@ export async function isRouterAndQuoterFactoryMatch(
 	periphery: { router: Address; quoter: Address },
 	poolFactory: Address,
 	client: PublicClient,
+	routerFunctionName?: string,
+	quoterFunctionName?: string,
 ) {
 	const [isRouterMatch, isQuoterMatch] = await Promise.all([
-		isContractFactoryMatch(periphery.router, poolFactory, client),
-		isContractFactoryMatch(periphery.quoter, poolFactory, client),
+		isContractFactoryMatch(
+			periphery.router,
+			poolFactory,
+			client,
+			routerFunctionName,
+		),
+		isContractFactoryMatch(
+			periphery.quoter,
+			poolFactory,
+			client,
+			quoterFunctionName,
+		),
 	])
 
 	return isRouterMatch && isQuoterMatch

@@ -8,7 +8,7 @@ describe('Velodrome V1 pool test', () => {
 	const weeth = '0xA6cB988942610f6731e664379D15fFcfBf282b44'
 
 	testPool({
-		chain: swellchain,
+		chainId: swellchain.id,
 		poolType: 'VELODROME_V1',
 		poolAddress,
 		assertPoolCreation: {

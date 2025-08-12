@@ -5,26 +5,25 @@ import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse
 import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
 import { RelayService } from '../bridges/relay/relay-service'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import { PoolType, PoolUtils } from '../dex/PoolUtils'
 import { GraphArbitrageBot } from '../graphs/GraphArbitrageBot'
 import { GraphBalanceReporter } from '../graphs/GraphBalanceReporter'
-import { GraphBuildConfig, GraphBuilder } from '../graphs/GraphBuilder'
+import {
+	AdditionalEdgeConfig,
+	EdgeType,
+	GraphBuildConfig,
+	GraphBuilder,
+} from '../graphs/GraphBuilder'
 import { GraphExecutor } from '../graphs/GraphExecutor'
 import { GraphVisualizer } from '../graphs/GraphVisualizer'
-import {
-	ActionType,
-	GasZipBridgeEdge,
-	RelayBridgeEdge,
-	SimpleStargateBridgeEdge,
-} from '../graphs/primitives/Edge'
 import { Graph } from '../graphs/primitives/Graph'
 import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { TgBalancesNotifier } from '../modules/notification/TgBalancesNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
-import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
-import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../utils/ChainClientService'
+import { SolanaToken } from '../solana/solana-tokens/solana-token'
+import { SolanaTokenUtils } from '../solana/solana-tokens/solana-token-utils'
 import { loadConfig } from './configuration'
 
 export interface PoolData {
@@ -37,15 +36,9 @@ export interface StrategyConfig {
 	botName: string
 	dryRun: boolean
 	giveApprovals: boolean
-	startToken: Token | NativeCurrency
+	startToken: GraphNode
 	minProfitUsd: number
-	graphBuildConfig: GraphBuildConfig & {
-		edgeConstructors?: {
-			from: Token | NativeCurrency
-			to: Token | NativeCurrency
-			type: ActionType
-		}[]
-	}
+	graphBuildConfig: GraphBuildConfig
 	graphOptimizerOptions: GraphOptimizerOptions
 	opportunityCheckInterval: number
 	arbitrageExecutionTimeout: number
@@ -73,6 +66,7 @@ export class Strategy implements OnApplicationBootstrap {
 		readonly graphExecutor: GraphExecutor,
 		readonly gasZipBridge: GasZipBridge,
 		readonly logger: Logger,
+		readonly solanaTokenUtils: SolanaTokenUtils,
 	) {}
 
 	async onApplicationBootstrap() {
@@ -84,33 +78,20 @@ export class Strategy implements OnApplicationBootstrap {
 
 		const startTokenId = config.get('startTokenId')
 
-		const startToken = await this.tokenUtils.fromAddress(
-			startTokenId.address,
-			startTokenId.chainId,
-		)
+		const startToken = await this.getNode(startTokenId)
 
 		const graphBuilderConfig = config.get('graphBuilderConfig')
 
-		const edgeConstructors: {
-			from: Token
-			to: Token
-			type: ActionType
-		}[] = []
+		const additionalEdges: AdditionalEdgeConfig[] = []
+		for (const edge of graphBuilderConfig.additionalEdges ?? []) {
+			const from = await this.getNode(edge.from)
+			const to = await this.getNode(edge.to)
 
-		if (graphBuilderConfig.additionalEdges) {
-			for (const additionalEdge of graphBuilderConfig.additionalEdges) {
-				edgeConstructors.push({
-					from: await this.tokenUtils.fromAddress(
-						additionalEdge.from.address,
-						additionalEdge.from.chainId,
-					),
-					to: await this.tokenUtils.fromAddress(
-						additionalEdge.to.address,
-						additionalEdge.to.chainId,
-					),
-					type: additionalEdge.type as ActionType,
-				})
-			}
+			additionalEdges.push({
+				from,
+				to,
+				type: edge.type as EdgeType,
+			})
 		}
 
 		const strategyConfig: StrategyConfig = {
@@ -128,8 +109,8 @@ export class Strategy implements OnApplicationBootstrap {
 				connectSecondaryChains:
 					graphBuilderConfig.connectSecondaryChains,
 				baseChainId: graphBuilderConfig.baseChainId,
-				edgeConstructors,
 				edgeCacheTTL: graphBuilderConfig.edgeCacheTTL ?? 3000,
+				additionalEdges: additionalEdges,
 			},
 			graphOptimizerOptions: config.get('graphOptimizerConfig'),
 		}
@@ -137,58 +118,23 @@ export class Strategy implements OnApplicationBootstrap {
 		await this.run(strategyConfig)
 	}
 
+	async getNode(nodeConfig: { chainId: number | 'solana'; address: string }) {
+		if (nodeConfig.chainId === 'solana') {
+			return this.solanaTokenUtils.fromAddress<SolanaToken>(
+				nodeConfig.address,
+			)
+		}
+
+		return this.tokenUtils.fromAddress(
+			nodeConfig.address as `0x${string}`,
+			nodeConfig.chainId,
+		)
+	}
+
 	async run(config: StrategyConfig) {
 		this.logConfig(config)
 		this.logger.log('Building Graph')
 		const graph = await this.graphBuilder.build(config.graphBuildConfig)
-
-		if (config.graphBuildConfig.edgeConstructors) {
-			for (const edgeConstructor of config.graphBuildConfig
-				.edgeConstructors) {
-				switch (edgeConstructor.type) {
-					case ActionType.SIMPLE_STARGATE_BRIDGE:
-						graph.addEdge(
-							new SimpleStargateBridgeEdge(
-								this.chainClientService,
-								this.simpleStargateService,
-								edgeConstructor.from,
-								edgeConstructor.to,
-								graph,
-							),
-						)
-						break
-
-					case ActionType.RELAY_BRIDGE:
-						graph.addEdge(
-							new RelayBridgeEdge(
-								this.chainClientService,
-								this.relayService,
-								edgeConstructor.from,
-								edgeConstructor.to,
-								graph,
-							),
-						)
-						break
-
-					case ActionType.GAS_ZIP_BRIDGE:
-						graph.addEdge(
-							new GasZipBridgeEdge(
-								this.chainClientService,
-								this.gasZipBridge,
-								edgeConstructor.from,
-								edgeConstructor.to,
-								graph,
-							),
-						)
-						break
-
-					default:
-						throw new Error(
-							`${edgeConstructor.type} can be added by more convenient way`,
-						)
-				}
-			}
-		}
 
 		this.logger.log('Initializing PriceOracle')
 
@@ -230,11 +176,7 @@ export class Strategy implements OnApplicationBootstrap {
 				arbitrageExecutionTimeout: config.arbitrageExecutionTimeout,
 				dryRun: config.dryRun,
 			},
-			this.chainClientService,
 			this.graphVisualizer,
-			this.tokenUtils,
-			this.stargateService,
-			this.fuseBridgeService,
 			this.graphExecutor,
 			this.priceOracle,
 			this.logger,

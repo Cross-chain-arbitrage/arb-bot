@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { PublicClient } from 'viem'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { Token } from '../../primitives/tokens/Token'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 import { Pool, PoolConstructorParams } from './Pool'
 

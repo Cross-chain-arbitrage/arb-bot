@@ -1,5 +1,6 @@
 import { createCustomError } from '../utils/common'
-import { Edge, FuseBridgeEdge, StargateBridgeEdge } from './primitives/Edge'
+import { CrosschainEdge } from './primitives/edges/crosschain/crosschain-edge'
+import { Edge } from './primitives/edges/edge'
 import { Graph } from './primitives/Graph'
 
 const GraphOpportunityFinderError = createCustomError(
@@ -21,6 +22,7 @@ export class GraphOpportunityFinder {
 		startAmount: bigint,
 		graph: Graph,
 		maxDepth: number = 7,
+		maxBridgesCount: number = 2,
 	): Promise<GraphArbitrageOpportunity | null> {
 		const distances = new Map<GraphNodeId, number>()
 		const predecessors = new Map<GraphNodeId, Edge>()
@@ -85,6 +87,7 @@ export class GraphOpportunityFinder {
 								predecessors,
 								startToken,
 								startAmount,
+								maxBridgesCount,
 							)
 
 						return arbitrageOpportunity
@@ -108,6 +111,7 @@ export class GraphOpportunityFinder {
 		predecessors: Map<GraphNodeId, Edge>,
 		startToken: GraphNode,
 		startAmount: bigint,
+		maxBridgesCount: number,
 	): Promise<GraphArbitrageOpportunity> {
 		const edges: Edge[] = []
 		let currentToken: GraphNodeId = startToken.id
@@ -133,16 +137,13 @@ export class GraphOpportunityFinder {
 				)
 			}
 
-			if (
-				edge instanceof StargateBridgeEdge ||
-				edge instanceof FuseBridgeEdge
-			) {
+			if (edge instanceof CrosschainEdge) {
 				bridgesCount++
 			}
 
-			if (bridgesCount > 2) {
+			if (bridgesCount > maxBridgesCount) {
 				throw new GraphOpportunityFinderError(
-					'Too many bridges in the cycle',
+					`Too many bridges in the cycle, max: ${maxBridgesCount}`,
 				)
 			}
 		} while (currentToken !== startToken.id)

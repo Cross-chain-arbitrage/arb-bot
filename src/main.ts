@@ -1,11 +1,12 @@
 import { NestFactory } from '@nestjs/core'
 import { Logger } from 'nestjs-pino'
 import { AppModule } from './app.module'
+import { getEnvSafe } from './utils/common'
 
 /* ============ Strategy Config ============ */
 
 async function main() {
-	// const isProd = getEnvSafe('NODE_ENV') === 'production'
+	const isProd = getEnvSafe('NODE_ENV') === 'production'
 	const context = await NestFactory.createApplicationContext(AppModule, {
 		bufferLogs: true,
 	})

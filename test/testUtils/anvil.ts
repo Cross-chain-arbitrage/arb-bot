@@ -11,7 +11,7 @@ import {
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
-import { ChainClientService } from '../../src/utils/ChainClientService'
+import { ChainClientService } from '../../src/chain-client/chain-client.service'
 
 /* ======== useAnvil ======== */
 
@@ -25,14 +25,14 @@ const testMnemonic =
  * Starts anvil in describe() and replace viem rpc url and private key
  */
 export function useAnvil(anvilConfig: AnvilConfig) {
-	const chain = Object.values(chains).find(
+	let chain: chains.Chain | undefined
+
+	chain = Object.values(chains).find(
 		(chain) => chain.id === anvilConfig.chainId,
-	) as chains.Chain
+	)
 
 	if (!chain) {
-		throw new Error(
-			`Chain with id ${anvilConfig.chainId} not found in viem chains`,
-		)
+		chain = createUnknownChain(anvilConfig)
 	}
 
 	const defaultRpcUrl = chain.rpcUrls.default.http[0]
@@ -94,6 +94,27 @@ export function useAnvil(anvilConfig: AnvilConfig) {
 	} as ChainClientService
 
 	return { anvil, mockChainClientService }
+}
+
+function createUnknownChain(anvilConfig: AnvilConfig) {
+	if (!anvilConfig.rpcUrl) {
+		throw new Error(
+			`Chain with id ${anvilConfig.chainId} not found in viem chains and no rpcUrl provided for creating unknown chain`,
+		)
+	}
+
+	return defineChain({
+		id: anvilConfig.chainId,
+		name: 'Unknown chain',
+		rpcUrls: {
+			default: { http: [anvilConfig.rpcUrl] },
+		},
+		nativeCurrency: {
+			name: 'Unknown currency',
+			symbol: 'UNKNOWN',
+			decimals: 18,
+		},
+	})
 }
 
 class Anvil {

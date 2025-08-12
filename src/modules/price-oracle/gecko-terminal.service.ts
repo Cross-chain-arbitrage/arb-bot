@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
-import axios from 'axios'
+import axios, { isAxiosError } from 'axios'
 import { Address } from 'viem'
-import { CHAINS } from './gecko-terminal-chains.constants.ts'
+import { geckoTerminalChains } from './gecko-terminal-chains.constants'
 
 interface GeckoTerminalTokenData {
 	id: string
@@ -24,6 +24,13 @@ interface GeckoTerminalTokenData {
 	}
 }
 
+interface GeckoTerminalChain {
+	id: string
+	type: string
+	attributes: {
+		name: string
+	}
+}
 // docs say that you can retrieve up to 30 addresses in one request
 const BATCH_SIZE = 30
 
@@ -32,7 +39,7 @@ export class GeckoTerminalService {
 	private readonly baseUrl: string = 'https://api.geckoterminal.com/api/v2'
 
 	async getTokenData(
-		address: Address,
+		address: string,
 		network: string,
 	): Promise<GeckoTerminalTokenData> {
 		this.validateChain(network)
@@ -45,7 +52,7 @@ export class GeckoTerminalService {
 		return data.data
 	}
 
-	async getTokenPrice(address: Address, network: string): Promise<number> {
+	async getTokenPrice(address: string, network: string): Promise<number> {
 		this.validateChain(network)
 
 		const tokenData = await this.getTokenData(address, network)
@@ -53,9 +60,9 @@ export class GeckoTerminalService {
 	}
 
 	async getTokenPrices(
-		addresses: Address[],
+		addresses: string[],
 		network: string,
-	): Promise<{ address: Address; price: number }[]> {
+	): Promise<{ address: string; price: number }[]> {
 		this.validateChain(network)
 
 		const allTokens: GeckoTerminalTokenData[] = []
@@ -95,7 +102,39 @@ export class GeckoTerminalService {
 	}
 
 	validateChain(chain: string) {
-		const some = CHAINS.some((c) => c.id === chain)
+		const some = geckoTerminalChains.some((c) => c.id === chain)
 		if (!some) throw new Error(`Chain ${chain} not found`)
+	}
+
+	async getNetworks(): Promise<GeckoTerminalChain[]> {
+		const networks: GeckoTerminalChain[] = []
+
+		let page = 1
+
+		while (true) {
+			try {
+				const { data } = await axios.get<{
+					data: GeckoTerminalChain[]
+				}>(`/networks`, {
+					baseURL: this.baseUrl,
+					params: {
+						page,
+					},
+				})
+				networks.push(...data.data)
+				page++
+			} catch (error) {
+				if (
+					isAxiosError(error) &&
+					error.response?.status === 404 &&
+					page !== 1
+				)
+					break
+
+				throw error
+			}
+		}
+
+		return networks
 	}
 }

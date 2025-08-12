@@ -1,12 +1,3 @@
-interface GeckoTerminalChain {
-	id: string
-	type: string
-	attributes: {
-		name: string
-		coingecko_asset_platform_id: string | null
-	}
-}
-
 export const chainIdToGeckoChainId = {
 	'1': 'eth',
 	'10': 'optimism',
@@ -57,6 +48,7 @@ export const chainIdToGeckoChainId = {
 	'1234': 'step-network',
 	'1284': 'glmr',
 	'1285': 'movr',
+	'1300': 'glue',
 	'1329': 'sei-network',
 	'1514': 'story',
 	'1559': 'tenet',
@@ -94,7 +86,15 @@ export const chainIdToGeckoChainId = {
 	'60808': 'bob-network',
 }
 
-export const CHAINS: GeckoTerminalChain[] = [
+interface GeckoTerminalChain {
+	id: string
+	type: string
+	attributes: {
+		name: string
+		coingecko_asset_platform_id: string | null
+	}
+}
+export const geckoTerminalChains: GeckoTerminalChain[] = [
 	{
 		id: 'eth',
 		type: 'network',
@@ -202,7 +202,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'fuse',
 		type: 'network',
-		attributes: { name: 'Fuse', coingecko_asset_platform_id: 'fuse' },
+		attributes: {
+			name: 'Fuse',
+			coingecko_asset_platform_id: 'fuse',
+		},
 	},
 	{
 		id: 'kcc',
@@ -223,7 +226,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'celo',
 		type: 'network',
-		attributes: { name: 'CELO', coingecko_asset_platform_id: 'celo' },
+		attributes: {
+			name: 'CELO',
+			coingecko_asset_platform_id: 'celo',
+		},
 	},
 	{
 		id: 'xdai',
@@ -412,7 +418,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'kava',
 		type: 'network',
-		attributes: { name: 'Kava', coingecko_asset_platform_id: 'kava' },
+		attributes: {
+			name: 'Kava',
+			coingecko_asset_platform_id: 'kava',
+		},
 	},
 	{
 		id: 'bitgert',
@@ -569,7 +578,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'onus',
 		type: 'network',
-		attributes: { name: 'ONUS', coingecko_asset_platform_id: 'onus' },
+		attributes: {
+			name: 'ONUS',
+			coingecko_asset_platform_id: 'onus',
+		},
 	},
 	{
 		id: 'aptos',
@@ -582,7 +594,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'core',
 		type: 'network',
-		attributes: { name: 'Core', coingecko_asset_platform_id: 'core' },
+		attributes: {
+			name: 'Core',
+			coingecko_asset_platform_id: 'core',
+		},
 	},
 	{
 		id: 'filecoin',
@@ -715,7 +730,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'base',
 		type: 'network',
-		attributes: { name: 'Base', coingecko_asset_platform_id: 'base' },
+		attributes: {
+			name: 'Base',
+			coingecko_asset_platform_id: 'base',
+		},
 	},
 	{
 		id: 'bitrock',
@@ -784,7 +802,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'beam',
 		type: 'network',
-		attributes: { name: 'Beam', coingecko_asset_platform_id: 'beam' },
+		attributes: {
+			name: 'Beam',
+			coingecko_asset_platform_id: 'beam',
+		},
 	},
 	{
 		id: 'scroll',
@@ -821,7 +842,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'mode',
 		type: 'network',
-		attributes: { name: 'Mode', coingecko_asset_platform_id: 'mode' },
+		attributes: {
+			name: 'Mode',
+			coingecko_asset_platform_id: 'mode',
+		},
 	},
 	{
 		id: 'defimetachain',
@@ -914,7 +938,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'xai',
 		type: 'network',
-		attributes: { name: 'Xai', coingecko_asset_platform_id: 'xai' },
+		attributes: {
+			name: 'Xai',
+			coingecko_asset_platform_id: 'xai',
+		},
 	},
 	{
 		id: 'immutable-zkevm',
@@ -1023,7 +1050,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'bevm',
 		type: 'network',
-		attributes: { name: 'BEVM', coingecko_asset_platform_id: 'bevm' },
+		attributes: {
+			name: 'BEVM',
+			coingecko_asset_platform_id: 'bevm',
+		},
 	},
 	{
 		id: 'rss3-vsl-mainnet',
@@ -1188,7 +1218,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'onchain',
 		type: 'network',
-		attributes: { name: 'OnChain', coingecko_asset_platform_id: null },
+		attributes: {
+			name: 'OnChain',
+			coingecko_asset_platform_id: null,
+		},
 	},
 	{
 		id: 'jib-chain',
@@ -1241,7 +1274,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'ham',
 		type: 'network',
-		attributes: { name: 'Ham', coingecko_asset_platform_id: 'ham' },
+		attributes: {
+			name: 'Ham',
+			coingecko_asset_platform_id: 'ham',
+		},
 	},
 	{
 		id: 'rootstock',
@@ -1294,7 +1330,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'rari',
 		type: 'network',
-		attributes: { name: 'Rari', coingecko_asset_platform_id: 'rari' },
+		attributes: {
+			name: 'Rari',
+			coingecko_asset_platform_id: 'rari',
+		},
 	},
 	{
 		id: 'nahmii',
@@ -1347,12 +1386,18 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'tron',
 		type: 'network',
-		attributes: { name: 'Tron', coingecko_asset_platform_id: 'tron' },
+		attributes: {
+			name: 'Tron',
+			coingecko_asset_platform_id: 'tron',
+		},
 	},
 	{
 		id: 'mint',
 		type: 'network',
-		attributes: { name: 'Mint', coingecko_asset_platform_id: 'mint' },
+		attributes: {
+			name: 'Mint',
+			coingecko_asset_platform_id: 'mint',
+		},
 	},
 	{
 		id: 'swanchain',
@@ -1373,12 +1418,18 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'canxium',
 		type: 'network',
-		attributes: { name: 'Canxium', coingecko_asset_platform_id: null },
+		attributes: {
+			name: 'Canxium',
+			coingecko_asset_platform_id: null,
+		},
 	},
 	{
 		id: 'shape',
 		type: 'network',
-		attributes: { name: 'Shape', coingecko_asset_platform_id: null },
+		attributes: {
+			name: 'Shape',
+			coingecko_asset_platform_id: null,
+		},
 	},
 	{
 		id: 'world-chain',
@@ -1399,7 +1450,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'meld',
 		type: 'network',
-		attributes: { name: 'Meld', coingecko_asset_platform_id: 'meld' },
+		attributes: {
+			name: 'Meld',
+			coingecko_asset_platform_id: 'meld',
+		},
 	},
 	{
 		id: 'morph-l2',
@@ -1468,7 +1522,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'ql1',
 		type: 'network',
-		attributes: { name: 'QL1', coingecko_asset_platform_id: 'ql1' },
+		attributes: {
+			name: 'QL1',
+			coingecko_asset_platform_id: 'ql1',
+		},
 	},
 	{
 		id: 'duckchain',
@@ -1529,12 +1586,18 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'ink',
 		type: 'network',
-		attributes: { name: 'Ink', coingecko_asset_platform_id: 'ink' },
+		attributes: {
+			name: 'Ink',
+			coingecko_asset_platform_id: 'ink',
+		},
 	},
 	{
 		id: 'vana',
 		type: 'network',
-		attributes: { name: 'Vana', coingecko_asset_platform_id: 'vana' },
+		attributes: {
+			name: 'Vana',
+			coingecko_asset_platform_id: 'vana',
+		},
 	},
 	{
 		id: 'electroneum',
@@ -1579,7 +1642,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'lisk',
 		type: 'network',
-		attributes: { name: 'Lisk', coingecko_asset_platform_id: 'lisk' },
+		attributes: {
+			name: 'Lisk',
+			coingecko_asset_platform_id: 'lisk',
+		},
 	},
 	{
 		id: 'educhain',
@@ -1592,12 +1658,18 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'xrpl',
 		type: 'network',
-		attributes: { name: 'XRPL', coingecko_asset_platform_id: 'xrp' },
+		attributes: {
+			name: 'XRPL',
+			coingecko_asset_platform_id: 'xrp',
+		},
 	},
 	{
 		id: 'ao',
 		type: 'network',
-		attributes: { name: 'AO', coingecko_asset_platform_id: null },
+		attributes: {
+			name: 'AO',
+			coingecko_asset_platform_id: null,
+		},
 	},
 	{
 		id: 'shido-network',
@@ -1618,7 +1690,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'artela',
 		type: 'network',
-		attributes: { name: 'Artela', coingecko_asset_platform_id: null },
+		attributes: {
+			name: 'Artela',
+			coingecko_asset_platform_id: null,
+		},
 	},
 	{
 		id: 'parex',
@@ -1671,7 +1746,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'hela',
 		type: 'network',
-		attributes: { name: 'Hela', coingecko_asset_platform_id: 'hela' },
+		attributes: {
+			name: 'Hela',
+			coingecko_asset_platform_id: 'hela',
+		},
 	},
 	{
 		id: 'hyperevm',
@@ -1692,7 +1770,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'corn',
 		type: 'network',
-		attributes: { name: 'Corn', coingecko_asset_platform_id: 'corn' },
+		attributes: {
+			name: 'Corn',
+			coingecko_asset_platform_id: 'corn',
+		},
 	},
 	{
 		id: 'hyperliquid',
@@ -1729,7 +1810,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'saga',
 		type: 'network',
-		attributes: { name: 'Saga', coingecko_asset_platform_id: 'saga' },
+		attributes: {
+			name: 'Saga',
+			coingecko_asset_platform_id: 'saga',
+		},
 	},
 	{
 		id: 'superseed',
@@ -1758,7 +1842,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'goat',
 		type: 'network',
-		attributes: { name: 'Goat', coingecko_asset_platform_id: null },
+		attributes: {
+			name: 'Goat',
+			coingecko_asset_platform_id: null,
+		},
 	},
 	{
 		id: 'sonic-svm',
@@ -1779,7 +1866,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'lens',
 		type: 'network',
-		attributes: { name: 'Lens', coingecko_asset_platform_id: null },
+		attributes: {
+			name: 'Lens',
+			coingecko_asset_platform_id: null,
+		},
 	},
 	{
 		id: 'plume-network',
@@ -1792,7 +1882,10 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'hemi',
 		type: 'network',
-		attributes: { name: 'Hemi', coingecko_asset_platform_id: 'hemi' },
+		attributes: {
+			name: 'Hemi',
+			coingecko_asset_platform_id: 'hemi',
+		},
 	},
 	{
 		id: 'sophon',
@@ -1861,6 +1954,89 @@ export const CHAINS: GeckoTerminalChain[] = [
 	{
 		id: 'wax',
 		type: 'network',
-		attributes: { name: 'Wax', coingecko_asset_platform_id: null },
+		attributes: {
+			name: 'Wax',
+			coingecko_asset_platform_id: 'wax',
+		},
+	},
+	{
+		id: 'hydra-chain',
+		type: 'network',
+		attributes: {
+			name: 'Hydra Chain',
+			coingecko_asset_platform_id: 'hydra',
+		},
+	},
+	{
+		id: 'katana',
+		type: 'network',
+		attributes: {
+			name: 'Katana',
+			coingecko_asset_platform_id: 'katana',
+		},
+	},
+	{
+		id: 'opengpu',
+		type: 'network',
+		attributes: {
+			name: 'OpenGPU',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'redbelly-network',
+		type: 'network',
+		attributes: {
+			name: 'Redbelly Network',
+			coingecko_asset_platform_id: 'redbelly-network',
+		},
+	},
+	{
+		id: 'botanix',
+		type: 'network',
+		attributes: {
+			name: 'Botanix',
+			coingecko_asset_platform_id: 'botanix',
+		},
+	},
+	{
+		id: 'quai-network',
+		type: 'network',
+		attributes: {
+			name: 'Quai Network',
+			coingecko_asset_platform_id: 'quai-network',
+		},
+	},
+	{
+		id: 'glue',
+		type: 'network',
+		attributes: {
+			name: 'Glue',
+			coingecko_asset_platform_id: 'glue',
+		},
+	},
+	{
+		id: 'near',
+		type: 'network',
+		attributes: {
+			name: 'Near',
+			coingecko_asset_platform_id: 'near-protocol',
+		},
+	},
+	{
+		id: 'xrpl-evm',
+		type: 'network',
+		attributes: {
+			name: 'XRPL EVM',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'tac',
+		type: 'network',
+		attributes: {
+			name: 'TAC',
+			coingecko_asset_platform_id: 'tac',
+		},
 	},
 ]

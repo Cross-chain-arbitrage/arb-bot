@@ -6,7 +6,7 @@ import {
 	FuseBridgeEdge,
 	StargateBridgeEdge,
 	SwapEdge,
-} from '../../src/graphs/primitives/Edge'
+} from '../../src/graphs/primitives/edges/edge'
 import { Graph, GraphError } from '../../src/graphs/primitives/Graph'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'

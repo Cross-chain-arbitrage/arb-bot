@@ -8,7 +8,7 @@ describe.skip('algebra v1.9 pool test', () => {
 	const usdcAddress = '0xFbDa5F676cB37624f28265A144A48B0d6e87d3b6'
 
 	testPool({
-		chain: gravity,
+		chainId: gravity.id,
 		poolType: 'ALGEBRA_V1_9',
 		poolAddress: wethUsdcPoolAddress,
 		assertPoolCreation: {

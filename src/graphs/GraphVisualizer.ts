@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { deflate } from 'pako'
 import { getStargateChainKey } from '../bridges/layerzero-bridges/stargate/stargate.utils'
+import { SOLANA_CHAIN_ID } from '../solana/solana-constants'
 import { Graph } from './primitives/Graph'
 
 @Injectable()
@@ -53,7 +54,7 @@ export class GraphVisualizer {
 		// Vertical path format with italic actions
 		for (let i = 0; i < path.length; i++) {
 			const edge = path[i]
-			result += `${edge.from.toString()}\n    │ ${edge.actionType.toLowerCase()}\n`
+			result += `${edge.from.toString()}\n    │ ${edge.constructor.name.toLowerCase()}\n`
 		}
 		// Add the last node
 		result += `${path[path.length - 1].to.toString()}\n\n`
@@ -120,12 +121,12 @@ export class GraphVisualizer {
 		}
 
 		for (const [, edge] of graph.edges) {
-			const { from, to, actionType } = edge
+			const { from, to } = edge
 
 			const edgeLabel =
 				edge.lastQuote === undefined
-					? `|"${actionType}" undefined|`
-					: `|"${actionType} ${edge.lastQuote.rate.toFixed(4)}"|`
+					? `|"${edge.constructor.name}" undefined|`
+					: `|"${edge.constructor.name} ${edge.lastQuote.rate.toFixed(4)}"|`
 
 			str += `\n\t${this.getNodeId(from.id)} --> ${edgeLabel} ${this.getNodeId(to.id)}`
 		}
@@ -143,6 +144,9 @@ export class GraphVisualizer {
 
 	private getChainName(chainId: number) {
 		try {
+			if (chainId === SOLANA_CHAIN_ID) {
+				return 'Solana'
+			}
 			return getStargateChainKey(chainId) + ` (${chainId})`
 		} catch (error) {
 			return `Unnamed Chain (${chainId})`

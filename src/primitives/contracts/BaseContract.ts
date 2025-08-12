@@ -1,5 +1,5 @@
 import { Address, getAddress, isAddress } from 'viem'
-import { ChainClientService } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 
 export class BaseContractError extends Error {
 	constructor(message: string) {

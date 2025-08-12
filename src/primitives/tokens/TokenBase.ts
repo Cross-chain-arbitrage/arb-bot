@@ -1,15 +1,9 @@
 import { Address, formatUnits, isAddressEqual, parseUnits } from 'viem'
-import { ChainClientService } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { shortenAddress } from '../../utils/common'
 import { BaseContract } from '../contracts/BaseContract'
 
-export interface TokenMetadata {
-	symbol: string
-	name?: string
-	decimals: number
-}
-
-export abstract class TokenBase extends BaseContract {
+export abstract class TokenBase extends BaseContract implements BaseToken {
 	public readonly symbol: string
 	public readonly decimals: number
 	public readonly name?: string

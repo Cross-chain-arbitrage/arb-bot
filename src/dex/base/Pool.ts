@@ -5,9 +5,9 @@ import {
 	isAddressEqual,
 	TransactionReceipt,
 } from 'viem'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { BaseContract } from '../../primitives/contracts/BaseContract'
 import { Token } from '../../primitives/tokens/Token'
-import { ChainClientService } from '../../utils/ChainClientService'
 import { createCustomError } from '../../utils/common'
 
 /**
@@ -280,5 +280,12 @@ export abstract class Pool extends BaseContract {
 		const BASIS_POINTS = 10000n
 
 		return (expectedAmountOut * (BASIS_POINTS - slippage)) / BASIS_POINTS
+	}
+
+	async approveInfinite() {
+		const receipt0 = await this.token0.approveInfinite(this.routerAddress)
+		const receipt1 = await this.token1.approveInfinite(this.routerAddress)
+
+		return [receipt0, receipt1]
 	}
 }

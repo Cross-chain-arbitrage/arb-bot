@@ -31,7 +31,7 @@ export class LZBridgeTx implements BridgeTx {
 
 	async waitForBridgeToFinish(): Promise<Message> {
 		const message = await this.layerZeroScanService.waitForDeliveryStatus(
-			this.srcTx.hash as Hash,
+			this.srcTx.hash,
 		)
 
 		this.dstTx = new Tx(message.dstTxHash as Hash, message.dstChainId)

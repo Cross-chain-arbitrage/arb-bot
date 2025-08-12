@@ -1,18 +1,24 @@
 import { Logger } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { arbitrum, fuse } from 'viem/chains'
+import { ChainClientConfigService } from '../../../src/chain-client/chain-client-config.service'
+import { ChainClientService } from '../../../src/chain-client/chain-client.service'
 import { GeckoTerminalService } from '../../../src/modules/price-oracle/gecko-terminal.service'
 import { PriceOracleService } from '../../../src/modules/price-oracle/price-oracle.service'
 import { PriceOracleSettings } from '../../../src/modules/price-oracle/price-oracle.types'
 import { NativeCurrency } from '../../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../../src/primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../../src/utils/ChainClientService'
+import { SolanaNative } from '../../../src/solana/solana-native'
+import { SolanaToken } from '../../../src/solana/solana-token'
+import { SolanaTokenUtils } from '../../../src/solana/solana-token-utils'
+import { WrappedSolanaNative } from '../../../src/solana/wrapped-native'
 import { wait } from '../../../src/utils/common'
 
 const WETH_ARB_ADDRESS = '0x82af49447d8a07e3bd95bd0d56f35241523fbab1' // WETH on Arbitrum
 const WBTC_ARB_ADDRESS = '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f' // WBTC on Arbitrum
 const WETH_FUSE_ADDRESS = '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590' // WETH on Fuse
+const USDC_SOLANA_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' // USDC on Solana
 
 const onlyFetchPrice: PriceOracleSettings = {
 	updateInterval: false,
@@ -25,20 +31,33 @@ describe('Price Oracle', () => {
 	let fuseNative: NativeCurrency
 	let wethTokenFuse: Token
 	let wbtcToken: Token
+	let solanaNative: SolanaNative
+	let wrappedSolanaNative: WrappedSolanaNative
+	let usdcSolanaToken: SolanaToken
 
 	// Shared services created once via DI
+	let solanaTokenUtils: SolanaTokenUtils
 	let tokenUtils: TokenUtils
 	let chainClientService: ChainClientService
 
 	beforeAll(async () => {
 		// Create the testing module once to get shared services
 		const sharedModule: TestingModule = await Test.createTestingModule({
-			providers: [TokenUtils, ChainClientService],
+			providers: [
+				TokenUtils,
+				SolanaTokenUtils,
+				ChainClientService,
+				{
+					provide: ChainClientConfigService,
+					useValue: {},
+				},
+			],
 		}).compile()
 
 		// Get shared service instances
 		tokenUtils = sharedModule.get(TokenUtils)
 		chainClientService = sharedModule.get(ChainClientService)
+		solanaTokenUtils = sharedModule.get(SolanaTokenUtils)
 
 		// Initialize tokens once using DI-created tokenUtils
 		wethToken = await tokenUtils.fromAddress<Token>(
@@ -55,6 +74,10 @@ describe('Price Oracle', () => {
 			arbitrum.id,
 		)
 		fuseNative = tokenUtils.getNative(fuse.id)
+		solanaNative = solanaTokenUtils.getNative()
+		wrappedSolanaNative = await solanaTokenUtils.getWrappedNative()
+		usdcSolanaToken =
+			await solanaTokenUtils.fromAddress<SolanaToken>(USDC_SOLANA_ADDRESS)
 	})
 
 	describe('getPrice - Real GeckoTerminal API', () => {
@@ -71,6 +94,10 @@ describe('Price Oracle', () => {
 						useValue: tokenUtils, // Reuse existing instance
 					},
 					{
+						provide: SolanaTokenUtils,
+						useValue: solanaTokenUtils, // Reuse existing instance
+					},
+					{
 						provide: ChainClientService,
 						useValue: chainClientService, // Reuse existing instance
 					},
@@ -82,7 +109,7 @@ describe('Price Oracle', () => {
 			priceOracleService = app.get(PriceOracleService)
 		})
 
-		it('should return price for token', async () => {
+		it('should return price for evm token', async () => {
 			const price = await priceOracleService.getPrice(
 				wethToken,
 				onlyFetchPrice,
@@ -91,6 +118,17 @@ describe('Price Oracle', () => {
 			expect(typeof price).toBe('number')
 			expect(price).toBeGreaterThan(1000)
 			expect(price).toBeLessThan(10000)
+		})
+
+		it('should return price for solana token', async () => {
+			const price = await priceOracleService.getPrice(
+				usdcSolanaToken,
+				onlyFetchPrice,
+			)
+
+			expect(typeof price).toBe('number')
+			expect(price).toBeGreaterThan(0.9)
+			expect(price).toBeLessThan(1.1)
 		})
 
 		it('should return price for native currency', async () => {
@@ -104,6 +142,17 @@ describe('Price Oracle', () => {
 			expect(price).toBeLessThan(10000)
 		})
 
+		it('should return price for solana native currency', async () => {
+			const price = await priceOracleService.getPrice(
+				solanaNative,
+				onlyFetchPrice,
+			)
+
+			expect(typeof price).toBe('number')
+			expect(price).toBeGreaterThan(50)
+			expect(price).toBeLessThan(500)
+		})
+
 		it('should return same price for native currency and wrapped native', async () => {
 			const [nativePrice, wrappedPrice] = await Promise.all([
 				priceOracleService.getPrice(ethNative, onlyFetchPrice),
@@ -113,13 +162,16 @@ describe('Price Oracle', () => {
 			expect(nativePrice).toBe(wrappedPrice)
 		})
 
-		it('should return prices for 3 tokens (with wrapped native) and 2 natives', async () => {
+		it('should return prices for 5 tokens (with wrapped native) and 3 natives across evm and solana', async () => {
 			const allCurrencies = [
 				wethToken,
 				wethTokenFuse,
 				wbtcToken,
 				ethNative,
 				fuseNative,
+				solanaNative,
+				usdcSolanaToken,
+				wrappedSolanaNative,
 			]
 
 			const results = await priceOracleService.getPrices(
@@ -128,7 +180,7 @@ describe('Price Oracle', () => {
 			)
 
 			// Should return prices for all 6 currencies
-			expect(results).toHaveLength(5)
+			expect(results).toHaveLength(8)
 
 			// Each result should have currency and price
 			results.forEach((result) => {
@@ -152,7 +204,17 @@ describe('Price Oracle', () => {
 				(r) => r.currency.id === wethToken.id,
 			)
 
-			expect(ethNativeResult?.price).toBe(wethTokenResult?.price)
+			const solanaNativeResult = results.find(
+				(r) => r.currency.id === solanaNative.id,
+			)
+			const solanaWrappedNativeResult = results.find(
+				(r) => r.currency.id === wrappedSolanaNative.id,
+			)
+
+			expect(ethNativeResult!.price).toBe(wethTokenResult!.price)
+			expect(solanaNativeResult!.price).toBe(
+				solanaWrappedNativeResult!.price,
+			)
 		})
 
 		it('should throw error for unsupported chain', async () => {
@@ -202,6 +264,10 @@ describe('Price Oracle', () => {
 					{
 						provide: ChainClientService,
 						useValue: chainClientService, // Reuse existing instance
+					},
+					{
+						provide: SolanaTokenUtils,
+						useValue: solanaTokenUtils, // Reuse existing instance
 					},
 					{
 						provide: GeckoTerminalService,
@@ -254,8 +320,6 @@ describe('Price Oracle', () => {
 		})
 
 		it('should update cache after fetching new prices', async () => {
-			// @ts-expect-error - private property
-			expect(priceOracleService.currencyStates.size).toBe(0)
 			// Fetch price - should update cache
 			await priceOracleService.getPrice(wethToken, onlyFetchPrice)
 

@@ -1,18 +1,21 @@
 import { Module } from '@nestjs/common'
+import { ChainClientModule } from '../chain-client/chain-client.module'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../utils/ChainClientService'
+import { SolanaClientService } from '../solana/solana-client.service'
+import { SolanaTokenUtils } from '../solana/solana-tokens/solana-token-utils'
 import { GasZipBridge } from './GasZip/GasZipBridge'
 import { FuseBridgeService } from './layerzero-bridges/fuse-bridge/fuse-bridge.service'
 import { LayerZeroScanService } from './layerzero-bridges/layerzero-scan/layerzero-scan.service'
 import { SimpleStargateService } from './layerzero-bridges/stargate/simple-stargate.service'
 import { StargateAPIService } from './layerzero-bridges/stargate/stargate-api.service'
 import { StargateService } from './layerzero-bridges/stargate/stargate-service'
+import { RelayApiService } from './relay/relay-api.service'
 import { RelayService } from './relay/relay-service'
-
 @Module({
+	imports: [ChainClientModule],
 	providers: [
-		ChainClientService,
 		TokenUtils,
+		RelayApiService,
 		LayerZeroScanService,
 		FuseBridgeService,
 		StargateService,
@@ -20,6 +23,8 @@ import { RelayService } from './relay/relay-service'
 		SimpleStargateService,
 		RelayService,
 		GasZipBridge,
+		SolanaTokenUtils,
+		SolanaClientService,
 	],
 	exports: [
 		FuseBridgeService,

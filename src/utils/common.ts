@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common'
 import dotenv from 'dotenv'
 import { BaseError, Hex, pad } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
 
 export const wait = (ms: number): Promise<void> =>
 	new Promise((resolve) => setTimeout(resolve, ms))
@@ -13,7 +12,7 @@ export function calculatePriceDiff(
 	return (actualPrice / expectedPrice) * 100 - 100
 }
 
-export function shortenAddress(address: Address): string {
+export function shortenAddress(address: string): string {
 	return address.slice(0, 6) + '...' + address.slice(-4)
 }
 
@@ -31,6 +30,7 @@ export async function runFnWithRetry<T>(
 	fn: () => Promise<T>,
 	maxRetries: number,
 	logger: Logger,
+	retryDelay: number = 1000,
 ): Promise<T> {
 	const errors: Error[] = []
 
@@ -45,6 +45,8 @@ export async function runFnWithRetry<T>(
 				{ err: currentError },
 				`Attempt ${attempt}/${maxRetries} failed:`,
 			)
+
+			await wait(retryDelay)
 		}
 	}
 
@@ -79,23 +81,6 @@ export function padAddressToBytes32(address: Address): Hex {
 
 dotenv.config()
 
-export function getPrivateKey(): Hex {
-	const privateKey = process.env[`PRIVATE_KEY`]
-
-	if (!privateKey) {
-		throw new Error(`Private key not found`)
-	}
-
-	return privateKey as Hex
-}
-
-export function getAccountAddress() {
-	const pk = getPrivateKey()
-	const account = privateKeyToAccount(pk)
-
-	return account.address
-}
-
 export function createCustomError(errorName: string) {
 	return class CustomError extends Error {
 		constructor(
@@ -106,5 +91,29 @@ export function createCustomError(errorName: string) {
 			Object.setPrototypeOf(this, new.target.prototype)
 			this.name = errorName
 		}
+	}
+}
+
+/**
+ * Compares two strings in a case-insensitive manner
+ */
+export function isStringsEqual(a: string, b: string): boolean {
+	return a.toLowerCase() === b.toLowerCase()
+}
+
+export function convertDecimals<T extends { decimals: number }>(
+	value: bigint,
+	from: T,
+	to: T,
+): bigint {
+	const fromDecimals = from.decimals
+	const toDecimals = to.decimals
+
+	const diff = fromDecimals - toDecimals
+
+	if (diff > 0) {
+		return value / 10n ** BigInt(diff)
+	} else {
+		return value * 10n ** BigInt(-diff)
 	}
 }

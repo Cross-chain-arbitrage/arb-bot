@@ -1,6 +1,6 @@
 import { Address, isAddressEqual } from 'viem'
-import { ChainClientService } from '../../utils/ChainClientService'
-import { TokenBase, TokenMetadata } from './TokenBase'
+import { ChainClientService } from '../../chain-client/chain-client.service'
+import { TokenBase } from './TokenBase'
 import { NativeCurrencyError } from './TokenErrors'
 
 export const NATIVE_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'

@@ -1,15 +1,16 @@
 import { Logger, Module } from '@nestjs/common'
 import { TokenUtils } from '../../primitives/tokens/TokenUtils'
-import { ChainClientService } from '../../utils/ChainClientService'
+import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
 import { GeckoTerminalService } from './gecko-terminal.service'
 import { PriceOracleService } from './price-oracle.service'
 
 @Module({
+	imports: [],
 	providers: [
+		SolanaTokenUtils,
 		PriceOracleService,
 		GeckoTerminalService,
 		TokenUtils,
-		ChainClientService,
 		Logger,
 	],
 	exports: [PriceOracleService],

@@ -1,32 +1,37 @@
+import { Cache } from '@nestjs/cache-manager'
 import { Injectable, Logger } from '@nestjs/common'
 import { fuse } from 'viem/chains'
 import { FUSE_BRIDGE_SUPPORTED_TOKENS } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.constants'
 import { FuseBridgeService } from '../bridges/layerzero-bridges/fuse-bridge/fuse-bridge.service'
+import { SimpleStargateService } from '../bridges/layerzero-bridges/stargate/simple-stargate.service'
 import {
 	StargateAPIError,
 	StargateAPIService,
 } from '../bridges/layerzero-bridges/stargate/stargate-api.service'
 import { StargateService } from '../bridges/layerzero-bridges/stargate/stargate-service'
+import { RelayService } from '../bridges/relay/relay-service'
+import { ChainClientService } from '../chain-client/chain-client.service'
 import { Pool } from '../dex/base/Pool'
 import { NativeCurrency } from '../primitives/tokens/NativeCurrency'
+import { Token } from '../primitives/tokens/Token'
 import { TokenUtils } from '../primitives/tokens/TokenUtils'
 import { WrappedNative } from '../primitives/tokens/WrappedNative'
-import { ChainClientService } from '../utils/ChainClientService'
-import {
-	FuseBridgeEdge,
-	StargateBridgeEdge,
-	UnwrapEdge,
-	WrapEdge,
-} from './primitives/Edge'
+import { RaydiumService } from '../solana/raydium/raydium.service'
+import { SolanaToken } from '../solana/solana-tokens/solana-token'
+import { createCustomError } from '../utils/common'
 import { Graph, GraphError } from './primitives/Graph'
+import { FuseBridgeEdge } from './primitives/edges/crosschain/fuse-edge'
+import { RelayBridgeEdge } from './primitives/edges/crosschain/relay-edge'
+import { SimpleStargateBridgeEdge } from './primitives/edges/crosschain/simple-stargate-edge'
+import { StargateBridgeEdge } from './primitives/edges/crosschain/stargate-edge'
+import { Edge } from './primitives/edges/edge'
+import { EdgeHelperService } from './primitives/edges/edge-helper.service'
+import { RaydiumEdge } from './primitives/edges/inchain/raydium-edge'
+import { SwapEdge } from './primitives/edges/inchain/swap-edge'
+import { UnwrapEdge } from './primitives/edges/inchain/unwrap-edge'
+import { WrapEdge } from './primitives/edges/inchain/wrap-edge'
 
-export class GraphBuilderError extends Error {
-	constructor(message: string) {
-		super(message)
-		Object.setPrototypeOf(this, GraphBuilderError.prototype)
-		this.name = 'GraphBuilderError'
-	}
-}
+export const GraphBuilderError = createCustomError('GraphBuilderError')
 
 /**
  * Configuration for Stargate bridge connections
@@ -44,6 +49,23 @@ interface StargateConfig {
  * @interface
  * @extends {StargateConfig}
  */
+
+export type EdgeType =
+	| 'wrap'
+	| 'unwrap'
+	| 'stargate'
+	| 'fuse'
+	| 'relay'
+	| 'raydium'
+	| 'simpleStargate'
+
+export type AdditionalEdgeConfig = {
+	from: GraphNode
+	to: GraphNode
+} & {
+	type: EdgeType
+}
+
 export interface GraphBuildConfig {
 	/** The pools to build the graph from */
 	pools: Pool[]
@@ -55,6 +77,8 @@ export interface GraphBuildConfig {
 	slippage?: number
 	/** cache for calling getRate on edges */
 	edgeCacheTTL?: number
+	/** additional edges to add to the graph */
+	additionalEdges?: AdditionalEdgeConfig[]
 }
 
 /**
@@ -73,6 +97,11 @@ export class GraphBuilder {
 		private readonly fuseBridgeService: FuseBridgeService,
 		private readonly stargateAPIService: StargateAPIService,
 		private readonly logger: Logger,
+		private readonly edgeHelperService: EdgeHelperService,
+		private readonly cacheService: Cache,
+		private readonly relayService: RelayService,
+		private readonly raydiumService: RaydiumService,
+		private readonly simpleStargateService: SimpleStargateService,
 	) {}
 
 	/**
@@ -92,20 +121,17 @@ export class GraphBuilder {
 			throw new GraphBuilderError('No pools provided')
 		}
 
-		const graph = new Graph(
-			this.tokenUtils,
-			this.chainClientService,
-			buildConfig.edgeCacheTTL,
-		)
+		const graph = new Graph()
+
+		/* ================ Setup Additional Edges ================ */
+
+		if (buildConfig.additionalEdges) {
+			this.setupAdditionalEdges(graph, buildConfig.additionalEdges)
+		}
 
 		/* ================ Setup Pools (With Tokens) ================ */
 
-		for (const pool of pools) {
-			graph.addDexPool(pool)
-			this.logger.log(
-				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${this.chainClientService.getChainNameById(pool.chainId)})`,
-			)
-		}
+		this.setupPools(graph, pools)
 
 		/* ================ Setup Native Currency and it's Wrapped Versions For Each Chain ================ */
 
@@ -193,19 +219,19 @@ export class GraphBuilder {
 		for (const wrapped of wrappedNativeCurrencies) {
 			graph.addEdge(
 				new WrapEdge(
-					this.chainClientService,
 					wrapped.native,
 					wrapped,
-					graph,
+					this.edgeHelperService,
+					this.cacheService,
 				),
 			)
 
 			graph.addEdge(
 				new UnwrapEdge(
-					this.chainClientService,
 					wrapped,
 					wrapped.native,
-					graph,
+					this.edgeHelperService,
+					this.cacheService,
 				),
 			)
 		}
@@ -224,7 +250,11 @@ export class GraphBuilder {
 
 		const tokensArray = Array.from(graph.nodes.values())
 
-		for (const token of tokensArray) {
+		const filteredTokensArray = tokensArray.filter(
+			(token) => !(token instanceof SolanaToken),
+		) as (NativeCurrency | Token)[]
+
+		for (const token of filteredTokensArray) {
 			let metadata: StargateTokenMetadata
 
 			try {
@@ -282,11 +312,12 @@ export class GraphBuilder {
 		for (const pair of pairs) {
 			graph.addEdge(
 				new StargateBridgeEdge(
-					this.chainClientService,
+					pair[0] as Token,
+					pair[1] as Token,
 					this.stargateService,
-					pair[0],
-					pair[1],
-					graph,
+					this.chainClientService,
+					this.edgeHelperService,
+					this.cacheService,
 				),
 			)
 		}
@@ -300,6 +331,8 @@ export class GraphBuilder {
 		const assetGroups: Map<AssetId, Set<GraphNode>> = new Map()
 
 		for (const node of graph.nodes.values()) {
+			if (node instanceof SolanaToken) continue
+
 			const supportedTokens = FUSE_BRIDGE_SUPPORTED_TOKENS.map(
 				(token) => `${token.chainId}:${token.address.toLowerCase()}`,
 			)
@@ -334,11 +367,12 @@ export class GraphBuilder {
 			for (const fuseToken of fuseOnOtherChains) {
 				graph.addEdge(
 					new FuseBridgeEdge(
-						this.chainClientService,
+						fuseToken as Token,
+						wfuseToken as Token,
 						this.fuseBridgeService,
-						fuseToken,
-						wfuseToken,
-						graph,
+						this.chainClientService,
+						this.edgeHelperService,
+						this.cacheService,
 					),
 				)
 				this.logger.log(
@@ -351,11 +385,12 @@ export class GraphBuilder {
 				for (const fuseToken of fuseOnOtherChains) {
 					graph.addEdge(
 						new FuseBridgeEdge(
-							this.chainClientService,
+							nativeFuseOnFuse as NativeCurrency,
+							fuseToken as Token,
 							this.fuseBridgeService,
-							nativeFuseOnFuse,
-							fuseToken,
-							graph,
+							this.chainClientService,
+							this.edgeHelperService,
+							this.cacheService,
 						),
 					)
 					this.logger.log(
@@ -386,20 +421,22 @@ export class GraphBuilder {
 
 				graph.addEdge(
 					new FuseBridgeEdge(
-						this.chainClientService,
+						token as Token,
+						tokenOnFuse as Token,
 						this.fuseBridgeService,
-						token,
-						tokenOnFuse,
-						graph,
+						this.chainClientService,
+						this.edgeHelperService,
+						this.cacheService,
 					),
 				)
 				graph.addEdge(
 					new FuseBridgeEdge(
-						this.chainClientService,
+						tokenOnFuse as Token,
+						token as Token,
 						this.fuseBridgeService,
-						tokenOnFuse,
-						token,
-						graph,
+						this.chainClientService,
+						this.edgeHelperService,
+						this.cacheService,
 					),
 				)
 			}
@@ -414,5 +451,121 @@ export class GraphBuilder {
 
 	private getAllUniqueChainIdsFromPools(pools: Pool[]): number[] {
 		return [...new Set(pools.map((pool) => pool.chainId))]
+	}
+
+	private setupPools(graph: Graph, pools: Pool[]) {
+		for (const pool of pools) {
+			const from = pool.token0
+			const to = pool.token1
+
+			if (!graph.isNodeAdded(from.id)) {
+				graph.addNode(from)
+			}
+			if (!graph.isNodeAdded(to.id)) {
+				graph.addNode(to)
+			}
+
+			graph.addEdge(
+				new SwapEdge(
+					from,
+					to,
+					pool,
+					this.edgeHelperService,
+					this.cacheService,
+				),
+			)
+			graph.addEdge(
+				new SwapEdge(
+					to,
+					from,
+					pool,
+					this.edgeHelperService,
+					this.cacheService,
+				),
+			)
+
+			this.logger.log(
+				`Added Pool ${pool.token0.symbol} <-> ${pool.token1.symbol} (${this.chainClientService.getChainNameById(pool.chainId)})`,
+			)
+		}
+	}
+
+	private setupAdditionalEdges(
+		graph: Graph,
+		additionalEdges: AdditionalEdgeConfig[],
+	) {
+		for (const edgeConfig of additionalEdges) {
+			if (!graph.isNodeAdded(edgeConfig.from.id)) {
+				graph.addNode(edgeConfig.from)
+			}
+
+			if (!graph.isNodeAdded(edgeConfig.to.id)) {
+				graph.addNode(edgeConfig.to)
+			}
+
+			const edge = this.createEdge(edgeConfig)
+			graph.addEdge(edge)
+		}
+	}
+
+	private createEdge(edgeConfig: AdditionalEdgeConfig): Edge {
+		switch (edgeConfig.type) {
+			case 'wrap':
+				return new WrapEdge(
+					edgeConfig.from as NativeCurrency,
+					edgeConfig.to as WrappedNative,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'unwrap':
+				return new UnwrapEdge(
+					edgeConfig.from as WrappedNative,
+					edgeConfig.to as NativeCurrency,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'stargate':
+				return new StargateBridgeEdge(
+					edgeConfig.from as Token,
+					edgeConfig.to as Token,
+					this.stargateService,
+					this.chainClientService,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'fuse':
+				return new FuseBridgeEdge(
+					edgeConfig.from as Token,
+					edgeConfig.to as Token,
+					this.fuseBridgeService,
+					this.chainClientService,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'relay':
+				return new RelayBridgeEdge(
+					edgeConfig.from as Token,
+					edgeConfig.to as Token,
+					this.edgeHelperService,
+					this.relayService,
+					this.cacheService,
+				)
+			case 'raydium':
+				return new RaydiumEdge(
+					edgeConfig.from as SolanaToken,
+					edgeConfig.to as SolanaToken,
+					this.raydiumService,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+			case 'simpleStargate':
+				return new SimpleStargateBridgeEdge(
+					edgeConfig.from,
+					edgeConfig.to,
+					this.simpleStargateService,
+					this.edgeHelperService,
+					this.cacheService,
+				)
+		}
 	}
 }

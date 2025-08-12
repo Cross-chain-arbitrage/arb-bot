@@ -14,30 +14,19 @@ import {
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
-import { arbitrum, base, bsc, mainnet, story } from 'viem/chains'
-import { getAlchemyRpcUrl } from './alchemy'
-import { createCustomError, getPrivateKey } from './common'
-
-const CUSTOM_RPC_URLS: Record<number, string> = {
-	[mainnet.id]: getAlchemyRpcUrl(mainnet.id),
-	[arbitrum.id]: getAlchemyRpcUrl(arbitrum.id),
-	[bsc.id]: getAlchemyRpcUrl(bsc.id),
-	[story.id]: getAlchemyRpcUrl(story.id),
-	// [lightlinkPhoenix.id]: `https://endpoints.omniatech.io/v1/lightlink/phoenix/bcd6910e361449d088886a7bfe37586c`,
-	// [fuse.id]: `https://lb.drpc.org/ogrpc?network=fuse&dkey=REDACTED_API_KEY`,
-	// [hemi.id]: `https://endpoints.omniatech.io/v1/hemi/mainnet/0292053309264c18932589701ab5020a`,
-	[base.id]: getAlchemyRpcUrl(base.id),
-} as const
+import { createCustomError } from '../utils/common'
+import { ChainClientConfigService } from './chain-client-config.service'
 
 @Injectable()
 export class ChainClientService {
+	constructor(private readonly config: ChainClientConfigService) {}
+
 	public customError = createCustomError('ChainClientService')
 
 	private clients: Map<
 		number,
 		PublicClient<FallbackTransport, Chain, undefined, undefined>
 	> = new Map()
-	private customRpcUrls: Map<number, URL> = new Map()
 
 	private walletClients: Map<
 		number,
@@ -56,7 +45,7 @@ export class ChainClientService {
 		const transport = this.getTransport(chainId)
 
 		const client = createWalletClient({
-			account: privateKeyToAccount(getPrivateKey()),
+			account: privateKeyToAccount(this.config.privateKey),
 			chain,
 			transport,
 		})
@@ -119,23 +108,14 @@ export class ChainClientService {
 			transports.push(http(defaultRpcUrl, defaultTransportConfig))
 		}
 
-		/* ======== Insert Custom Transports ======== */
+		/* ======== Insert Additional Transports ======== */
 
-		const customRpcUrl = this.customRpcUrls.get(chainId)?.toString()
+		const additionalRpcUrls = this.config.rpcUrls?.[chainId]
 
-		if (customRpcUrl) {
-			transports.push(http(customRpcUrl, defaultTransportConfig))
-		}
-
-		const customTransportFromCollection = CUSTOM_RPC_URLS[chainId]
-
-		if (
-			customTransportFromCollection &&
-			customTransportFromCollection !== customRpcUrl
-		) {
-			transports.push(
-				http(customTransportFromCollection, defaultTransportConfig),
-			)
+		if (additionalRpcUrls) {
+			additionalRpcUrls.forEach((rpcUrl) => {
+				transports.push(http(rpcUrl, defaultTransportConfig))
+			})
 		}
 
 		/* ======== Build Fallback Transport ======== */
@@ -159,44 +139,20 @@ export class ChainClientService {
 		}
 	}
 
-	//TODO: update this method with nestjs behavior
-	/**
-	 * MUST be called before client creation in `getClient()` call
-	 * Otherwise, the client will not use the custom rpc url
-	 * @param chainId
-	 * @param rpcUrl - optional, if not provided, the custom rpc url will be fetched from the `CUSTOM_RPC_URLS` map
-	 */
-	useCustomRpcUrl(chainId: number, rpcUrl?: string): void {
-		if (rpcUrl) {
-			const url = new URL(rpcUrl)
-			this.customRpcUrls.set(chainId, url)
-			return
-		}
-
-		const customRpcUrl = this.getCustomRpcUrl(chainId) as string
-
-		if (!customRpcUrl) {
-			throw new this.customError(
-				`Custom rpc url not found for chain ${chainId}`,
-			)
-		}
-
-		const url = new URL(customRpcUrl)
-		this.customRpcUrls.set(chainId, url)
-	}
-
-	getCustomRpcUrl(chainId: number): string | undefined {
-		return CUSTOM_RPC_URLS[chainId]
-	}
-
 	findChainById(chainId: number): Chain {
-		const chain = Object.values(chains).find(
+		let chain: Chain | undefined = Object.values(chains).find(
 			(chain) => chain.id === chainId,
 		)
 
 		if (!chain) {
+			chain = this.config.customChains?.find(
+				(chain) => chain.id === chainId,
+			)
+		}
+
+		if (!chain) {
 			throw new this.customError(
-				`Chain with id ${chainId} not found in viem chains`,
+				`Chain with id ${chainId} not found in viem chains and custom chains`,
 			)
 		}
 

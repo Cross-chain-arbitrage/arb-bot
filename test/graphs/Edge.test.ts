@@ -4,8 +4,9 @@ import { arbitrum, fuse } from 'viem/chains'
 import { FuseBridge } from '../../src/bridges/fuse-bridge/FuseBridge'
 import { FuseBridgeTx } from '../../src/bridges/fuse-bridge/FuseBridgeTx'
 import { StargateBridgeTx } from '../../src/bridges/stargate/StargateBridgeTx'
-import { PoolUtils } from '../../src/dex/PoolUtils'
+import { ClientManager } from '../../src/chain-client/chain-client.service'
 import { Pool } from '../../src/dex/base/Pool'
+import { PoolUtils } from '../../src/dex/PoolUtils'
 import { UniV3Pool } from '../../src/dex/protocols/Uni/UniV3/Pool'
 import {
 	FuseBridgeEdge,
@@ -13,13 +14,12 @@ import {
 	SwapEdge,
 	UnwrapEdge,
 	WrapEdge,
-} from '../../src/graphs/primitives/Edge'
+} from '../../src/graphs/primitives/edges/edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../src/primitives/tokens/WrappedNative'
-import { ClientManager } from '../../src/utils/ChainClientService'
 import { getAlchemyRpcUrl } from '../../src/utils/alchemy'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'
 import { makeSuite } from '../testUtils/makeSuite'

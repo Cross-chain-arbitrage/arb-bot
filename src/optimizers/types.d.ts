@@ -3,4 +3,5 @@ type GraphOptimizerOptions = {
 	maxStartValueUsd: number
 	runCount: number
 	maxPathLength: number
+	maxBridgesCount: number
 }

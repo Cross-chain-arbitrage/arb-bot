@@ -6,9 +6,9 @@ import {
 	maxUint256,
 	TransactionReceipt,
 } from 'viem'
-import { ChainClientService } from '../../utils/ChainClientService'
+import { ChainClientService } from '../../chain-client/chain-client.service'
 import { NATIVE_ADDRESS, STARGATE_NATIVE_ADDRESS } from './NativeCurrency'
-import { TokenBase, TokenMetadata } from './TokenBase'
+import { TokenBase } from './TokenBase'
 import { TokenError } from './TokenErrors'
 
 export class Token extends TokenBase {
