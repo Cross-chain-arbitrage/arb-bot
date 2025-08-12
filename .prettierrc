@@ -4,5 +4,13 @@
 	"useTabs": true,
 	"trailingComma": "all",
 	"singleQuote": true,
-	"plugins": ["prettier-plugin-organize-imports"]
+	"plugins": ["prettier-plugin-organize-imports"],
+	"overrides": [
+		{
+			"files": ["**/*.yaml", "**/*.yml"],
+			"options": {
+				"tabWidth": 2
+			}
+		}
+	]
 }
