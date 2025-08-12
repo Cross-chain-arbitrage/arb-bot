@@ -9,8 +9,11 @@ import { SolanaClientService } from '../../../solana/solana-client.service'
 import { SolanaNative } from '../../../solana/solana-tokens/solana-native'
 import { SolanaToken } from '../../../solana/solana-tokens/solana-token'
 import { SolanaTokenUtils } from '../../../solana/solana-tokens/solana-token-utils'
+import { createCustomError, wait } from '../../../utils/common'
 const MICRO_LAMPORTS_PER_LAMPORT = 10n ** 6n
 const LAMPORTS_FOR_SIGNING = 5000n
+
+const EdgeHelperServiceError = createCustomError('EdgeHelperServiceError')
 
 @Injectable()
 export class EdgeHelperService {
@@ -114,19 +117,34 @@ export class EdgeHelperService {
 		txHash: string,
 	): Promise<ParsedTransactionWithMeta | TransactionReceipt> {
 		if (from instanceof SolanaToken) {
+			// const { lastValidBlockHeight, blockhash } =
+			// 	await this.solanaClientService.connection.getLatestBlockhash('')
+
+			await this.solanaClientService.connection.confirmTransaction(
+				txHash,
+				'finalized',
+			)
+
+			await wait(1000) // sometimes parsed tx is not available immediately, TODO: fix with more elegant solution
 			const parsedTx =
 				await this.solanaClientService.connection.getParsedTransaction(
 					txHash,
 					{
-						commitment: 'confirmed',
+						commitment: 'finalized',
 						maxSupportedTransactionVersion: 0,
 					},
 				)
 
-			if (!parsedTx) throw new Error('Transaction not found')
+			if (!parsedTx)
+				throw new EdgeHelperServiceError(
+					`Transaction ${txHash} not found`,
+					from,
+				)
 
 			return parsedTx
 		} else {
+			await wait(1000) // sometimes parsed tx is not available immediately, TODO: fix with more elegant solution
+
 			const publicClient = this.chainClientService.getClient(from.chainId)
 
 			return publicClient.waitForTransactionReceipt({

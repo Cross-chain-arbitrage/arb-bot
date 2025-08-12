@@ -11,7 +11,7 @@ import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
 import { Token } from '../../primitives/tokens/Token'
 import { SolanaClientService } from '../../solana/solana-client.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { createCustomError } from '../../utils/common'
+import { createCustomError, wait } from '../../utils/common'
 import { poll } from '../../utils/polling'
 import { RelayApiService } from './relay-api.service'
 import { ExecutionFullStatus } from './schemas/relay-execution-status.scheme'
@@ -138,8 +138,16 @@ export class RelayService {
 		return {
 			amountOut: BigInt(quote.rawResult.details.currencyOut.amount),
 			srcTxHash,
-			waitForTx: () =>
-				this.waitExecution(quote.rawResult.steps[0].requestId),
+			waitForTx: async () => {
+				const res = await this.waitExecution(
+					quote.rawResult.steps[0].requestId,
+				)
+
+				//relay is too fast, so it's possible error when we can't find this tx TODO: fix
+				await wait(2000)
+
+				return res
+			},
 		}
 	}
 
@@ -147,7 +155,7 @@ export class RelayService {
 		const res = (await poll(
 			() => this.relayApiService.getExecutionStatus(requestId),
 			(status) => status.status === 'success',
-			1000,
+			500,
 			MAX_EXECUTION_TIME,
 		)) as ExecutionFullStatus
 

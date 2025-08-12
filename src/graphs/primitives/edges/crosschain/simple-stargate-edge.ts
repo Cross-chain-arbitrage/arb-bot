@@ -48,8 +48,6 @@ export class SimpleStargateBridgeEdge extends CrosschainEdge {
 		const { amountOut, feeInNative, txHash, waitForTx } =
 			await this.simpleStargate.bridge(this.from, this.to, amountIn)
 
-		const message = await waitForTx()
-
 		const srcTxResult = await this.edgeHelperService.getTxResult(
 			this.from,
 			txHash,
@@ -59,6 +57,7 @@ export class SimpleStargateBridgeEdge extends CrosschainEdge {
 			this.from,
 			srcTxResult,
 		)
+		const message = await waitForTx()
 
 		const native = this.edgeHelperService.getNative(this.from)
 
@@ -67,6 +66,11 @@ export class SimpleStargateBridgeEdge extends CrosschainEdge {
 				native,
 				feeInNative,
 			)
+
+		await this.edgeHelperService.getTxResult(
+			this.to,
+			message.dstTxHash as string,
+		)
 
 		return {
 			amountOut,

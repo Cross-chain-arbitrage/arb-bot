@@ -40,7 +40,7 @@ export class SolanaClientService implements OnModuleInit {
 				lastValidBlockHeight,
 				signature: txId,
 			},
-			'confirmed',
+			'finalized',
 		)
 
 		if (txResult.value.err !== null) {

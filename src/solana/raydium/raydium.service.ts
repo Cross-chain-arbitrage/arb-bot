@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import {
 	Connection,
 	ParsedTransactionWithMeta,
+	SendTransactionError,
 	TokenBalance,
 	VersionedTransaction,
 } from '@solana/web3.js'
@@ -67,42 +68,82 @@ export class RaydiumService {
 		}
 	}
 
-	async swap(params: SwapParams) {
-		const quote = await this.quote(params)
+	async swap(
+		params: SwapParams,
+	): Promise<{ tx: ParsedTransactionWithMeta; amountOut: bigint }> {
+		try {
+			const quote = await this.quote(params)
 
-		const rawTx = await this.getTransaction(quote.rawQuote, params)
+			const rawTx = await this.getTransaction(quote.rawQuote, params)
 
-		const txBuf = Buffer.from(rawTx, 'base64')
-		const tx = VersionedTransaction.deserialize(txBuf)
+			const txBuf = Buffer.from(rawTx, 'base64')
+			const tx = VersionedTransaction.deserialize(txBuf)
 
-		tx.sign([this.solanaClientService.keypair])
+			tx.sign([this.solanaClientService.keypair])
 
-		const txHash = await this.solanaClientService.sendAndConfirmTx(tx)
+			const txHash = await this.solanaClientService.sendAndConfirmTx(tx)
 
-		let parsedTx: ParsedTransactionWithMeta | null = null
+			let parsedTx: ParsedTransactionWithMeta | null = null
 
-		let attempts = 0
-		while (!parsedTx && attempts < 3) {
-			parsedTx =
-				await this.solanaClientService.connection.getParsedTransaction(
-					txHash,
-					{
-						commitment: 'confirmed',
-						maxSupportedTransactionVersion: 0,
-					},
+			let attempts = 0
+			while (!parsedTx && attempts < 3) {
+				parsedTx =
+					await this.solanaClientService.connection.getParsedTransaction(
+						txHash,
+						{
+							commitment: 'finalized',
+							maxSupportedTransactionVersion: 0,
+						},
+					)
+				await wait(1000)
+				attempts++
+			}
+
+			if (!parsedTx)
+				throw new RaydiumServiceError('Transaction not found')
+
+			const amountOut = await this.parseAmountOut(
+				params.tokenOut,
+				parsedTx,
+			)
+
+			return {
+				tx: parsedTx,
+				amountOut,
+			}
+		} catch (error) {
+			if (this.isRewardTimestampError(error)) {
+				return this.swap(params)
+			}
+
+			throw error
+		}
+	}
+
+	/**
+	 * This error occurs when the program checks a timestamp related to rewards.
+	 * The function where it happens does not include a timestamp argument, so this is a bug in Raydium.
+	 */
+	isRewardTimestampError(error: unknown) {
+		let isRewardTimestampError = false
+
+		if (error instanceof SendTransactionError) {
+			const logs = error.logs
+
+			if (logs) {
+				const errorLog = logs.find((log) =>
+					log.includes(
+						'AnchorError thrown in programs/amm/src/states/pool.rs:357',
+					),
 				)
-			await wait(1000)
-			attempts++
+
+				if (errorLog) {
+					isRewardTimestampError = true
+				}
+			}
 		}
 
-		if (!parsedTx) throw new RaydiumServiceError('Transaction not found')
-
-		const amountOut = await this.parseAmountOut(params.tokenOut, parsedTx)
-
-		return {
-			tx: parsedTx,
-			amountOut,
-		}
+		return isRewardTimestampError
 	}
 
 	async parseAmountOut(

@@ -355,6 +355,8 @@ export class GraphArbitrageBot {
 		currentEdge: Edge,
 		amountIn: bigint,
 	) {
+		//TODO: fix graph and return functionality
+		return
 		if (!(currentEdge instanceof SwapEdge)) return
 
 		if (currentEdge.from.chainId === this.graphParams.startToken.chainId)

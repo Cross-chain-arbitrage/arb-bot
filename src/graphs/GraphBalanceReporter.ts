@@ -30,6 +30,7 @@ export class GraphBalanceReporter {
 	 * Start periodic balance checking
 	 */
 	start() {
+		return //TODO: make it work and remove return
 		if (this.isRunning) {
 			this.logger.warn('GraphBalanceReporter is already running')
 			return
