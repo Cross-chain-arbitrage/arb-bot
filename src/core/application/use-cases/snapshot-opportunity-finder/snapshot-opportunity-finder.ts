@@ -3,7 +3,7 @@ import {
 	BellmanFord,
 	GraphArbitrageOpportunity,
 } from '../../../domain/services/bellman-ford'
-import { WeightedGraphSnapshot } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { GraphSnapshot } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { PriceOracle } from '../../interfaces/price-oracle'
 import { FindOpportunityOptions } from './types'
 
@@ -12,7 +12,7 @@ export class SnapshotOpportunityFinder {
 	constructor(private readonly priceOracle: PriceOracle) {}
 
 	async findOpportunity(
-		weightedGraphSnapshot: WeightedGraphSnapshot,
+		graphSnapshot: GraphSnapshot,
 		options: FindOpportunityOptions,
 	) {
 		const { minStartValueUsd, maxStartValueUsd, runCount, startToken } =
@@ -35,7 +35,7 @@ export class SnapshotOpportunityFinder {
 				BellmanFord.findNegativeSumCycle(
 					startToken,
 					tokenAmount,
-					weightedGraphSnapshot,
+					graphSnapshot,
 				),
 			)
 

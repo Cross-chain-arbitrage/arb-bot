@@ -1,6 +1,6 @@
 import { Token } from '../../../domain/entities/token'
 
-export type FindOpportunityOptions = {
+export type SnapshotFindOpportunityOptions = {
 	minStartValueUsd: number
 	maxStartValueUsd: number
 	runCount: number

@@ -1,10 +1,7 @@
 import { createCustomError } from '../../../utils/common'
 import { Edge } from '../entities/edge'
 import { Node, NodeId } from '../entities/node'
-import {
-	Quote,
-	WeightedGraphSnapshot,
-} from '../value-objects/weighted-graph-snapshot'
+import { GraphSnapshot, Quote } from '../value-objects/weighted-graph-snapshot'
 
 const GraphOpportunityFinderError = createCustomError(
 	'GraphOpportunityFinderError',
@@ -28,9 +25,9 @@ export class BellmanFord {
 	static findNegativeSumCycle(
 		startToken: Node,
 		startAmount: bigint,
-		weightedGraphSnapshot: WeightedGraphSnapshot,
+		graphSnapshot: GraphSnapshot,
 	): GraphArbitrageOpportunity | null {
-		const { graph } = weightedGraphSnapshot
+		const { graph } = graphSnapshot
 
 		const distances = new Map<GraphNodeId, number>()
 		const predecessors = new Map<GraphNodeId, Edge>()
@@ -57,10 +54,7 @@ export class BellmanFord {
 				if (fromDistance === undefined) continue
 
 				quotes.push({
-					quote: weightedGraphSnapshot.getQuote(
-						edge.id,
-						currentAmount,
-					),
+					quote: graphSnapshot.getQuote(edge.id, currentAmount),
 					edge,
 				})
 			}
@@ -94,7 +88,7 @@ export class BellmanFord {
 							predecessors,
 							startToken,
 							startAmount,
-							weightedGraphSnapshot,
+							graphSnapshot,
 						)
 
 						return arbitrageOpportunity
@@ -117,7 +111,7 @@ export class BellmanFord {
 		predecessors: Map<NodeId, Edge>,
 		startToken: Node,
 		startAmount: bigint,
-		weightedGraphSnapshot: WeightedGraphSnapshot,
+		graphSnapshot: GraphSnapshot,
 	): GraphArbitrageOpportunity {
 		const edges: Edge[] = []
 		let currentToken: NodeId = startToken.id
@@ -146,7 +140,7 @@ export class BellmanFord {
 		let amount = startAmount
 
 		for (const edge of edges) {
-			const quote = weightedGraphSnapshot.getQuote(edge.id, amount)
+			const quote = graphSnapshot.getQuote(edge.id, amount)
 			amount = quote.amountOut
 			path.push({ edge, quote })
 		}

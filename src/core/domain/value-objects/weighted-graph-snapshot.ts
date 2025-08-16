@@ -6,7 +6,7 @@ export type Quote = {
 	amountOut: bigint
 }
 
-export interface WeightedGraphSnapshot {
+export interface GraphSnapshot {
 	graph: Graph
 	getQuote(edgeId: EdgeId, amountIn: bigint): Quote
 }
