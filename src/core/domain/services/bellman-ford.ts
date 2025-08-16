@@ -1,7 +1,10 @@
 import { createCustomError } from '../../../utils/common'
-import { Edge, Quote } from '../entities/edge'
-import { Graph } from '../entities/graph'
+import { Edge } from '../entities/edge'
 import { Node, NodeId } from '../entities/node'
+import {
+	Quote,
+	WeightedGraphSnapshot,
+} from '../value-objects/weighted-graph-snapshot'
 
 const GraphOpportunityFinderError = createCustomError(
 	'GraphOpportunityFinderError',
@@ -10,6 +13,7 @@ const GraphOpportunityFinderError = createCustomError(
 export interface GraphArbitrageOpportunity {
 	path: { edge: Edge; quote: Quote }[]
 	startAmount: bigint
+	endAmount: bigint
 }
 
 export class BellmanFord {
@@ -21,11 +25,13 @@ export class BellmanFord {
 	 * @param graph - The graph containing all possible trading paths
 	 * @returns - {@link GraphArbitrageOpportunity} or null, if no opportunity found
 	 */
-	static async findNegativeSumCycle(
+	static findNegativeSumCycle(
 		startToken: Node,
 		startAmount: bigint,
-		graph: Graph,
-	): Promise<GraphArbitrageOpportunity | null> {
+		weightedGraphSnapshot: WeightedGraphSnapshot,
+	): GraphArbitrageOpportunity | null {
+		const { graph } = weightedGraphSnapshot
+
 		const distances = new Map<GraphNodeId, number>()
 		const predecessors = new Map<GraphNodeId, Edge>()
 		const amounts = new Map<GraphNodeId, bigint>()
@@ -51,13 +57,13 @@ export class BellmanFord {
 				if (fromDistance === undefined) continue
 
 				quotes.push({
-					quote: edge.getQuote(currentAmount),
+					quote: weightedGraphSnapshot.getQuote(
+						edge.id,
+						currentAmount,
+					),
 					edge,
 				})
 			}
-
-			const quotePromises = quotes.map(({ quote }) => quote)
-			await Promise.all(quotePromises)
 
 			for (const { quote, edge } of quotes) {
 				const from = edge.from
@@ -88,6 +94,7 @@ export class BellmanFord {
 							predecessors,
 							startToken,
 							startAmount,
+							weightedGraphSnapshot,
 						)
 
 						return arbitrageOpportunity
@@ -110,6 +117,7 @@ export class BellmanFord {
 		predecessors: Map<NodeId, Edge>,
 		startToken: Node,
 		startAmount: bigint,
+		weightedGraphSnapshot: WeightedGraphSnapshot,
 	): GraphArbitrageOpportunity {
 		const edges: Edge[] = []
 		let currentToken: NodeId = startToken.id
@@ -138,14 +146,15 @@ export class BellmanFord {
 		let amount = startAmount
 
 		for (const edge of edges) {
-			const quote = edge.getQuote(amount)
+			const quote = weightedGraphSnapshot.getQuote(edge.id, amount)
 			amount = quote.amountOut
-			path.push({ edge, quote: edge.getQuote(amount) })
+			path.push({ edge, quote })
 		}
 
 		return {
 			path,
-			startAmount,
+			startAmount: amount,
+			endAmount: amount,
 		}
 	}
 }
