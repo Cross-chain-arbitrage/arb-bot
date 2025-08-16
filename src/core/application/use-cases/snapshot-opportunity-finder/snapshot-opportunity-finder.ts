@@ -5,7 +5,7 @@ import {
 } from '../../../domain/services/bellman-ford'
 import { GraphSnapshot } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { PriceOracle } from '../../interfaces/price-oracle'
-import { FindOpportunityOptions } from './types'
+import { SnapshotFindOpportunityOptions } from './types'
 
 @Injectable()
 export class SnapshotOpportunityFinder {
@@ -13,7 +13,7 @@ export class SnapshotOpportunityFinder {
 
 	async findOpportunity(
 		graphSnapshot: GraphSnapshot,
-		options: FindOpportunityOptions,
+		options: SnapshotFindOpportunityOptions,
 	) {
 		const { minStartValueUsd, maxStartValueUsd, runCount, startToken } =
 			options
