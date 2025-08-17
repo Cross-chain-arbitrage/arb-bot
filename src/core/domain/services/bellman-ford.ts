@@ -7,8 +7,10 @@ const GraphOpportunityFinderError = createCustomError(
 	'GraphOpportunityFinderError',
 )
 
+export type Path = { edge: Edge; quote: Quote }[]
+
 export interface GraphArbitrageOpportunity {
-	path: { edge: Edge; quote: Quote }[]
+	path: Path
 	startAmount: bigint
 	endAmount: bigint
 }
