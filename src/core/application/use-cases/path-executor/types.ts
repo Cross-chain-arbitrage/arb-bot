@@ -24,28 +24,17 @@ export interface PathExecutorParams {
 		amountIn: bigint,
 	) => void
 
-	beforeConfirmEdgeHook?: (
-		path: Path,
-		currentStep: Step,
-		amountIn: bigint,
-	) => void
+	beforeConfirmEdgeHook?: (path: Path, currentStep: Step) => void
 	afterConfirmEdgeHook?: (
 		path: Path,
 		currentStep: Step,
-		amountIn: bigint,
 		amountOut: bigint,
 	) => void
 
-	beforeGetExecutionCostHook?: (
-		path: Path,
-		currentStep: Step,
-		amountIn: bigint,
-		amountOut: bigint,
-	) => void
+	beforeGetExecutionCostHook?: (path: Path, currentStep: Step) => void
 	afterGetExecutionCostHook?: (
 		path: Path,
 		currentStep: Step,
-		amountIn: bigint,
 		costInUsd: number,
 	) => void
 }

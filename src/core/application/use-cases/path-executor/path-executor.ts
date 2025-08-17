@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
+import { Step } from '../../../domain/services/bellman-ford'
 import {
 	EdgeActionProvider,
 	EdgeActionProviderRegistry,
@@ -20,24 +21,22 @@ export class PathExecutor {
 		let nextAmountIn = params.startAmount
 		let totalExecutionCostInUsd = 0
 
-		for (const { edge } of params.path) {
-			const actionProvider = this.edgeActionProviderRegistry[edge.id]
-
+		for (const step of params.path) {
 			const executionResult = await this.executeEdge(
 				params,
-				actionProvider,
+				step,
 				nextAmountIn,
 			)
 
 			const confirmationResult = await this.confirmEdge(
 				params,
-				actionProvider,
+				step,
 				executionResult,
 			)
 
 			const executionCostResult = await this.getExecutionCostEdge(
 				params,
-				actionProvider,
+				step,
 				executionResult,
 			)
 
@@ -54,42 +53,68 @@ export class PathExecutor {
 
 	private async executeEdge(
 		params: PathExecutorParams,
-		actionProvider: EdgeActionProvider,
+		step: Step,
 		nextAmountIn: bigint,
 	) {
+		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
+
+		params.beforeExecuteEdgeHook?.(params.path, step, nextAmountIn)
+
 		const executionResult = params.executeWrapper
 			? await params.executeWrapper(
 					actionProvider.execute.bind(actionProvider),
 				)
 			: await actionProvider.execute(nextAmountIn)
 
+		params.afterExecuteEdgeHook?.(params.path, step, nextAmountIn)
+
 		return executionResult
 	}
 
 	private async confirmEdge(
 		params: PathExecutorParams,
-		actionProvider: EdgeActionProvider,
+		step: Step,
 		executionResult: Awaited<ReturnType<EdgeActionProvider['execute']>>,
 	) {
+		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
+
+		params.beforeConfirmEdgeHook?.(params.path, step)
+
 		const confirmationResult = params.confirmWrapper
 			? await params.confirmWrapper(
 					actionProvider.confirm.bind(actionProvider),
 				)
 			: await actionProvider.confirm(executionResult.actionId)
 
+		params.afterConfirmEdgeHook?.(
+			params.path,
+			step,
+			confirmationResult.amountOut,
+		)
+
 		return confirmationResult
 	}
 
 	private async getExecutionCostEdge(
 		params: PathExecutorParams,
-		actionProvider: EdgeActionProvider,
+		step: Step,
 		executionResult: Awaited<ReturnType<EdgeActionProvider['execute']>>,
 	) {
+		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
+
+		params.beforeGetExecutionCostHook?.(params.path, step)
+
 		const executionCostResult = params.getExecutionCostWrapper
 			? await params.getExecutionCostWrapper(
 					actionProvider.getExecutionCost.bind(actionProvider),
 				)
 			: await actionProvider.getExecutionCost(executionResult.actionId)
+
+		params.afterGetExecutionCostHook?.(
+			params.path,
+			step,
+			executionCostResult.costInUsd,
+		)
 
 		return executionCostResult
 	}
