@@ -16,25 +16,36 @@ export class GraphBuilder {
 		graph: Graph
 		edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry
 	}> {
-		const graph = await this.buildGraph(plugins)
+		const edgeOwners: Record<
+			EdgeId,
+			GraphQuoteProviderPlugin & GraphBuilderPlugin
+		> = {}
+
+		const graph = await this.buildGraph(plugins, (edge, plugin) => {
+			edgeOwners[edge.id] = plugin
+		})
 
 		const edgeQuoteProviderRegistry = this.buildQuoteProviderRegistry(
 			graph,
 			plugins,
+			edgeOwners,
 		)
 
 		return { graph, edgeQuoteProviderRegistry }
 	}
 
-	async buildGraph(plugins: GraphBuilderPlugin[]): Promise<Graph> {
+	async buildGraph<T extends GraphBuilderPlugin>(
+		plugins: T[],
+		onEdgeAdded: (edge: Edge, plugin: T) => void,
+	): Promise<Graph> {
 		const graph = new Graph()
 
 		await this.addPossibleNodes(graph, plugins)
 
-		await this.addDeterminedNodesAndEdges(graph, plugins)
+		await this.addDeterminedNodesAndEdges(graph, plugins, onEdgeAdded)
 
 		// it's the last step because we need to define all nodes first
-		await this.addPossibleEdges(graph, plugins)
+		await this.addPossibleEdges(graph, plugins, onEdgeAdded)
 
 		return graph
 	}
@@ -42,24 +53,32 @@ export class GraphBuilder {
 	buildQuoteProviderRegistry(
 		graph: Graph,
 		plugins: GraphQuoteProviderPlugin[],
+		edgeOwners: Record<
+			EdgeId,
+			GraphQuoteProviderPlugin & GraphBuilderPlugin
+		>,
 	): EdgeQuoteProviderRegistry {
 		const edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry = {}
 
-		for (const plugin of plugins) {
+		plugins.forEach(() => {
 			for (const edge of graph.edges.values()) {
-				// TODO: fix bag with creating quote providers for edges not from its plugin
-				const edgeQuoteProvider = plugin.buildEdgeQuoteProvider(edge)
+				const edgeOwner = edgeOwners[edge.id]
+
+				if (!edgeOwner) continue
+
+				const edgeQuoteProvider = edgeOwner.buildEdgeQuoteProvider(edge)
 
 				edgeQuoteProviderRegistry[edge.id] = edgeQuoteProvider
 			}
-		}
+		})
 
 		return edgeQuoteProviderRegistry
 	}
 
-	private async addPossibleEdges(
+	private async addPossibleEdges<T extends GraphBuilderPlugin>(
 		graph: Graph,
-		plugins: GraphBuilderPlugin[],
+		plugins: T[],
+		onEdgeAdded: (edge: Edge, plugin: T) => void,
 	) {
 		for (const plugin of plugins) {
 			if (!plugin.findPossibleEdges) continue
@@ -69,14 +88,17 @@ export class GraphBuilder {
 			)
 
 			edges.forEach((edge) => {
-				this.addEdgeIfNotExists(graph, edge)
+				if (this.addEdgeIfNotExists(graph, edge)) {
+					onEdgeAdded(edge, plugin)
+				}
 			})
 		}
 	}
 
-	private async addDeterminedNodesAndEdges(
+	private async addDeterminedNodesAndEdges<T extends GraphBuilderPlugin>(
 		graph: Graph,
-		plugins: GraphBuilderPlugin[],
+		plugins: T[],
+		onEdgeAdded: (edge: Edge, plugin: T) => void,
 	) {
 		for (const plugin of plugins) {
 			if (!plugin.getDeterminedNodesAndEdges) continue
@@ -87,7 +109,9 @@ export class GraphBuilder {
 			})
 
 			edges.forEach((edge) => {
-				this.addEdgeIfNotExists(graph, edge)
+				if (this.addEdgeIfNotExists(graph, edge)) {
+					onEdgeAdded(edge, plugin)
+				}
 			})
 		}
 	}
@@ -112,7 +136,10 @@ export class GraphBuilder {
 
 		if (!existingNode) {
 			graph.addNode(node)
+			return true
 		}
+
+		return false
 	}
 
 	private addEdgeIfNotExists(graph: Graph, edge: Edge) {
@@ -120,6 +147,9 @@ export class GraphBuilder {
 
 		if (!existingEdge) {
 			graph.addEdge(edge)
+			return true
 		}
+
+		return false
 	}
 }
