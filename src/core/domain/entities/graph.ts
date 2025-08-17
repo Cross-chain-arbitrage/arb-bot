@@ -34,7 +34,7 @@ export class Graph {
 		this.edges.set(edge.id, edge)
 	}
 
-	addNode(node: GraphNode) {
+	addNode(node: Node) {
 		if (this.nodes.has(node.id)) {
 			throw new GraphError(`Node ${node.id} already exists`)
 		}
@@ -42,7 +42,7 @@ export class Graph {
 		this.nodes.set(node.id, node)
 	}
 
-	isNodeAdded(nodeId: GraphNodeId): boolean {
+	isNodeAdded(nodeId: NodeId): boolean {
 		return this.nodes.has(nodeId)
 	}
 }
