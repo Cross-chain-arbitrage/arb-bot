@@ -1,33 +1,86 @@
 import { Edge } from '../../../domain/entities/edge'
 import { Graph } from '../../../domain/entities/graph'
 import { Node } from '../../../domain/entities/node'
+import { EdgeQuoteProviderRegistry } from '../../interfaces/edge-quote-provider'
 import {
-	EdgeQuoteProvider,
-	EdgeQuoteProviderRegistry,
-} from '../../interfaces/edge-quote-provider'
-import { GraphPlugin } from '../../interfaces/graph-plugin'
+	GraphBuilderPlugin,
+	GraphQuoteProviderPlugin,
+} from '../../interfaces/graph-plugin'
 
 export class GraphBuilder {
 	constructor() {}
 
-	async buildGraph(plugins: GraphPlugin[]): Promise<{
+	async buildGraphWithQuoteProviders(
+		plugins: (GraphBuilderPlugin & GraphQuoteProviderPlugin)[],
+	): Promise<{
 		graph: Graph
 		edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry
 	}> {
+		const graph = await this.buildGraph(plugins)
+
+		const edgeQuoteProviderRegistry = this.buildQuoteProviderRegistry(
+			graph,
+			plugins,
+		)
+
+		return { graph, edgeQuoteProviderRegistry }
+	}
+
+	async buildGraph(plugins: GraphBuilderPlugin[]): Promise<Graph> {
 		const graph = new Graph()
 
-		for (const plugin of plugins) {
-			if (plugin.discoverNodes) {
-				const nodes = await plugin.discoverNodes()
+		await this.addPossibleNodes(graph, plugins)
 
-				nodes.forEach((node) => {
-					this.addNodeIfNotExists(graph, node)
-				})
+		await this.addDeterminedNodesAndEdges(graph, plugins)
+
+		// it's the last step because we need to define all nodes first
+		await this.addPossibleEdges(graph, plugins)
+
+		return graph
+	}
+
+	buildQuoteProviderRegistry(
+		graph: Graph,
+		plugins: GraphQuoteProviderPlugin[],
+	): EdgeQuoteProviderRegistry {
+		const edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry = {}
+
+		for (const plugin of plugins) {
+			for (const edge of graph.edges.values()) {
+				// TODO: fix bag with creating quote providers for edges not from its plugin
+				const edgeQuoteProvider = plugin.buildEdgeQuoteProvider(edge)
+
+				edgeQuoteProviderRegistry[edge.id] = edgeQuoteProvider
 			}
 		}
 
+		return edgeQuoteProviderRegistry
+	}
+
+	private async addPossibleEdges(
+		graph: Graph,
+		plugins: GraphBuilderPlugin[],
+	) {
 		for (const plugin of plugins) {
-			const { nodes, edges } = await plugin.applyManual()
+			if (!plugin.findPossibleEdges) continue
+
+			const edges = await plugin.findPossibleEdges(
+				Array.from(graph.nodes.values()),
+			)
+
+			edges.forEach((edge) => {
+				this.addEdgeIfNotExists(graph, edge)
+			})
+		}
+	}
+
+	private async addDeterminedNodesAndEdges(
+		graph: Graph,
+		plugins: GraphBuilderPlugin[],
+	) {
+		for (const plugin of plugins) {
+			if (!plugin.getDeterminedNodesAndEdges) continue
+			const { nodes, edges } = await plugin.getDeterminedNodesAndEdges()
 
 			nodes.forEach((node) => {
 				this.addNodeIfNotExists(graph, node)
@@ -37,35 +90,21 @@ export class GraphBuilder {
 				this.addEdgeIfNotExists(graph, edge)
 			})
 		}
+	}
 
+	private async addPossibleNodes(
+		graph: Graph,
+		plugins: GraphBuilderPlugin[],
+	) {
 		for (const plugin of plugins) {
-			if (plugin.buildEdges) {
-				const edges = await plugin.buildEdges(
-					Array.from(graph.nodes.values()),
-				)
+			if (!plugin.findPossibleNodes) continue
 
-				edges.forEach((edge) => {
-					this.addEdgeIfNotExists(graph, edge)
-				})
-			}
+			const nodes = await plugin.findPossibleNodes()
+
+			nodes.forEach((node) => {
+				this.addNodeIfNotExists(graph, node)
+			})
 		}
-
-		const edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry = {}
-
-		for (const plugin of plugins) {
-			for (const edge of graph.edges.values()) {
-				const quoteFn = plugin.buildQuoteFn(edge)
-
-				const edgeQuoteProvider: EdgeQuoteProvider = {
-					edge: edge,
-					buildGetQuoteFunction: quoteFn,
-				}
-
-				edgeQuoteProviderRegistry[edge.id] = edgeQuoteProvider
-			}
-		}
-
-		return { graph, edgeQuoteProviderRegistry }
 	}
 
 	private addNodeIfNotExists(graph: Graph, node: Node) {

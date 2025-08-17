@@ -24,7 +24,7 @@ export class GraphSnapshotBuilder {
 		for (const [edgeId] of graph.edges) {
 			const provider = this.edgeQuoteProviderRegistry[edgeId]
 
-			const fn = await provider.buildGetQuoteFunction()
+			const fn = await provider.buildEdgeSnapshotFn()
 
 			fns.set(edgeId, fn)
 		}
