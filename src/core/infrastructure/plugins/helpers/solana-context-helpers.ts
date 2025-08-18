@@ -1,3 +1,4 @@
+import { ParsedTransactionWithMeta } from '@solana/web3.js'
 import { PriceOracle } from '../../../application/interfaces/price-oracle'
 import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
 
@@ -34,4 +35,24 @@ export async function getUsdCostOfNativeAmount(
 	const costInUsd = Number(native.formatUnits(nativeAmount)) * nativePrice
 
 	return costInUsd
+}
+
+export async function getTxCostInUsd(
+	this: {
+		solanaTokenUtils: SolanaTokenUtils
+		priceOracle: PriceOracle
+	},
+	txResult: ParsedTransactionWithMeta,
+) {
+	const fee = txResult.meta?.fee
+
+	if (!fee) {
+		throw Error(
+			`Meta is not found for tx ${txResult.transaction.signatures[0]}`,
+		)
+	}
+
+	const txCostInNative = BigInt(fee)
+
+	return getUsdCostOfNativeAmount.bind(this)(txCostInNative)
 }

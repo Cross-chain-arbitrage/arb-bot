@@ -68,9 +68,13 @@ export class RaydiumService {
 		}
 	}
 
-	async swap(
-		params: SwapParams,
-	): Promise<{ tx: ParsedTransactionWithMeta; amountOut: bigint }> {
+	async swap(params: SwapParams): Promise<{
+		txId: string
+		waitForResult: () => Promise<{
+			amountOut: bigint
+			parsedTx: ParsedTransactionWithMeta
+		}>
+	}> {
 		try {
 			const quote = await this.quote(params)
 
@@ -81,35 +85,15 @@ export class RaydiumService {
 
 			tx.sign([this.solanaClientService.keypair])
 
-			const txHash = await this.solanaClientService.sendAndConfirmTx(tx)
-
-			let parsedTx: ParsedTransactionWithMeta | null = null
-
-			let attempts = 0
-			while (!parsedTx && attempts < 3) {
-				parsedTx =
-					await this.solanaClientService.connection.getParsedTransaction(
-						txHash,
-						{
-							commitment: 'finalized',
-							maxSupportedTransactionVersion: 0,
-						},
-					)
-				await wait(1000)
-				attempts++
-			}
-
-			if (!parsedTx)
-				throw new RaydiumServiceError('Transaction not found')
-
-			const amountOut = await this.parseAmountOut(
-				params.tokenOut,
-				parsedTx,
-			)
+			const txId = await this.solanaClientService.sendAndConfirmTx(tx)
 
 			return {
-				tx: parsedTx,
-				amountOut,
+				txId,
+				waitForResult: this.waitForResult.bind(
+					this,
+					txId,
+					params.tokenOut,
+				),
 			}
 		} catch (error) {
 			if (this.isRewardTimestampError(error)) {
@@ -117,6 +101,39 @@ export class RaydiumService {
 			}
 
 			throw error
+		}
+	}
+
+	async waitForResult(
+		txId: string,
+		tokenOut: SolanaToken | SolanaNative,
+	): Promise<{
+		amountOut: bigint
+		parsedTx: ParsedTransactionWithMeta
+	}> {
+		let parsedTx: ParsedTransactionWithMeta | null = null
+
+		let attempts = 0
+		while (!parsedTx && attempts < 3) {
+			parsedTx =
+				await this.solanaClientService.connection.getParsedTransaction(
+					txId,
+					{
+						commitment: 'finalized',
+						maxSupportedTransactionVersion: 0,
+					},
+				)
+			await wait(1000)
+			attempts++
+		}
+
+		if (!parsedTx) throw new RaydiumServiceError('Transaction not found')
+
+		const amountOut = await this.parseAmountOut(tokenOut, parsedTx)
+
+		return {
+			amountOut,
+			parsedTx,
 		}
 	}
 
