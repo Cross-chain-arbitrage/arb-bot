@@ -4,9 +4,9 @@ import { Node } from '../../../domain/entities/node'
 import { EdgeActionProviderRegistry } from '../../interfaces/edge-action-provider'
 import { EdgeQuoteProviderRegistry } from '../../interfaces/edge-quote-provider'
 import {
-	GraphActionProviderPlugin,
+	ActionProviderPlugin,
 	GraphBuilderPlugin,
-	GraphQuoteProviderPlugin,
+	QuoteProviderPlugin,
 } from '../../interfaces/graph-plugin'
 
 export class GraphBuilder {
@@ -46,7 +46,7 @@ export class GraphBuilder {
 	buildActionProviderRegistry(
 		graph: Graph,
 		plugins: GraphBuilderPlugin[],
-		edgeOwners: Record<EdgeId, GraphActionProviderPlugin>,
+		edgeOwners: Record<EdgeId, ActionProviderPlugin>,
 	): EdgeActionProviderRegistry {
 		const edgeActionProviderRegistry: EdgeActionProviderRegistry = {}
 
@@ -68,8 +68,8 @@ export class GraphBuilder {
 
 	buildQuoteProviderRegistry(
 		graph: Graph,
-		plugins: GraphQuoteProviderPlugin[],
-		edgeOwners: Record<EdgeId, GraphQuoteProviderPlugin>,
+		plugins: QuoteProviderPlugin[],
+		edgeOwners: Record<EdgeId, QuoteProviderPlugin>,
 	): EdgeQuoteProviderRegistry {
 		const edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry = {}
 

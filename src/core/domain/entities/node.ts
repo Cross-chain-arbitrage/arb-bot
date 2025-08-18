@@ -1,5 +1,5 @@
 export type NodeId = string
 
-export interface Node {
+export type Node<T = object> = {
 	id: NodeId
-}
+} & T

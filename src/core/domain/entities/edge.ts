@@ -2,8 +2,8 @@ import { Node } from './node'
 
 export type EdgeId = string
 
-export interface Edge {
+export type Edge<T = object> = {
 	id: EdgeId
-	from: Node
-	to: Node
+	from: Node<T>
+	to: Node<T>
 }

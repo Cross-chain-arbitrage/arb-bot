@@ -1,4 +1,6 @@
+import { Token } from '../../domain/entities/token'
+
 export interface PriceOracle {
-	getPrice(token: string): Promise<number>
-	getPrices(tokens: string[]): Promise<Record<string, number>>
+	getPrice(token: Token): Promise<number>
+	getPrices(tokens: Token[]): Promise<Record<string, number>>
 }

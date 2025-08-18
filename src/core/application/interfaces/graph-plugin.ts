@@ -15,10 +15,10 @@ export interface GraphBuilderPlugin extends GraphPlugin {
 	getDeterminedNodesAndEdges?(): Promise<{ nodes: Node[]; edges: Edge[] }>
 }
 
-export interface GraphQuoteProviderPlugin extends GraphPlugin {
+export interface QuoteProviderPlugin extends GraphPlugin {
 	buildEdgeQuoteProvider(edge: Edge): EdgeQuoteProvider
 }
 
-export interface GraphActionProviderPlugin extends GraphPlugin {
+export interface ActionProviderPlugin extends GraphPlugin {
 	buildEdgeActionProvider(edge: Edge): EdgeActionProvider
 }
