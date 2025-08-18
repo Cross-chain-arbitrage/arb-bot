@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import {
 	BellmanFord,
-	GraphArbitrageOpportunity,
+	GraphArbitrageCycle,
 } from '../../../domain/services/bellman-ford'
 import { GraphSnapshot } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { PriceOracle } from '../../interfaces/price-oracle'
-import { SnapshotFindOpportunityOptions } from './types'
+import {
+	GraphArbitrageOpportunity,
+	SnapshotFindOpportunityParams,
+} from './types'
 
 @Injectable()
 export class SnapshotOpportunityFinder {
@@ -13,16 +16,16 @@ export class SnapshotOpportunityFinder {
 
 	async findOpportunity(
 		graphSnapshot: GraphSnapshot,
-		options: SnapshotFindOpportunityOptions,
-	) {
+		params: SnapshotFindOpportunityParams,
+	): Promise<GraphArbitrageOpportunity | null> {
 		const { minStartValueUsd, maxStartValueUsd, runCount, startToken } =
-			options
+			params
 
 		const startTokenUSDPrice = await this.priceOracle.getPrice(
 			startToken.address,
 		)
 
-		const algorithmResults: (GraphArbitrageOpportunity | null)[] = []
+		const algorithmResults: (GraphArbitrageCycle | null)[] = []
 
 		let valueUSD = minStartValueUsd
 
@@ -65,6 +68,13 @@ export class SnapshotOpportunityFinder {
 			return max
 		}, algorithmResults[0])
 
-		return maxProfitPath
+		if (!maxProfitPath) {
+			return null
+		}
+
+		return {
+			...maxProfitPath,
+			startToken,
+		}
 	}
 }

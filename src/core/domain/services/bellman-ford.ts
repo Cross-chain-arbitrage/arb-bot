@@ -10,7 +10,7 @@ const GraphOpportunityFinderError = createCustomError(
 export type Step = { edge: Edge; quote: Quote }
 export type Path = Step[]
 
-export interface GraphArbitrageOpportunity {
+export interface GraphArbitrageCycle {
 	path: Path
 	startAmount: bigint
 	endAmount: bigint
@@ -23,13 +23,13 @@ export class BellmanFord {
 	 * @param startToken - The token to start the arbitrage from
 	 * @param startAmount - The amount of tokens to start with
 	 * @param graph - The graph containing all possible trading paths
-	 * @returns - {@link GraphArbitrageOpportunity} or null, if no opportunity found
+	 * @returns - {@link GraphArbitrageCycle} or null, if no opportunity found
 	 */
 	static findNegativeSumCycle(
 		startToken: Node,
 		startAmount: bigint,
 		graphSnapshot: GraphSnapshot,
-	): GraphArbitrageOpportunity | null {
+	): GraphArbitrageCycle | null {
 		const { graph } = graphSnapshot
 
 		const distances = new Map<GraphNodeId, number>()
@@ -115,7 +115,7 @@ export class BellmanFord {
 		startToken: Node,
 		startAmount: bigint,
 		graphSnapshot: GraphSnapshot,
-	): GraphArbitrageOpportunity {
+	): GraphArbitrageCycle {
 		const edges: Edge[] = []
 		let currentToken: NodeId = startToken.id
 
