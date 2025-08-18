@@ -24,6 +24,7 @@ export abstract class Edge {
 		await this.cacheService.set(
 			`${this.id}-${amountIn.toString()}`,
 			quoteResult,
+			5000,
 		)
 
 		return quoteResult
