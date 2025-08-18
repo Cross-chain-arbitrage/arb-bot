@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import {
-	ConfirmingResult,
-	EdgeActionProvider,
-	ExecutingResult,
+	InchainActionProvider,
+	InchainConfirmingResult,
+	InchainExecutingResult,
 } from '../../../application/interfaces/edge-action-provider'
 import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
 import { PriceOracle } from '../../../application/interfaces/price-oracle'
@@ -26,8 +26,9 @@ export class RaydiumActionProviderPlugin
 		super()
 	}
 
-	buildEdgeActionProvider(edge: Edge<SolanaToken>): EdgeActionProvider {
+	buildEdgeActionProvider(edge: Edge<SolanaToken>): InchainActionProvider {
 		return {
+			kind: 'inchain',
 			edge,
 			execute: this.execute.bind(this, edge),
 		}
@@ -36,7 +37,7 @@ export class RaydiumActionProviderPlugin
 	async execute(
 		edge: Edge<SolanaToken>,
 		amountIn: bigint,
-	): Promise<ExecutingResult> {
+	): Promise<InchainExecutingResult> {
 		const result = await this.raydiumService.swap({
 			tokenIn: edge.from,
 			tokenOut: edge.to,
@@ -44,14 +45,14 @@ export class RaydiumActionProviderPlugin
 		})
 
 		return {
-			actionId: result.txId,
+			txId: result.txId,
 			confirm: this.confirm.bind(this, result),
 		}
 	}
 
 	async confirm(
 		swapResult: Awaited<ReturnType<typeof this.raydiumService.swap>>,
-	): Promise<ConfirmingResult> {
+	): Promise<InchainConfirmingResult> {
 		const { amountOut, parsedTx } = await swapResult.waitForResult()
 
 		return {
