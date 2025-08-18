@@ -44,6 +44,8 @@ export class ArbitrageFinder {
 		return null
 	}
 
+	//TODO: add logging
+
 	isValidOpportunity(
 		validationResult: ValidationResult,
 		opportunity: GraphArbitrageOpportunity | null,
