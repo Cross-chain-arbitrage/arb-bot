@@ -1,8 +1,10 @@
 import { Edge } from '../../../domain/entities/edge'
 import { Graph } from '../../../domain/entities/graph'
 import { Node } from '../../../domain/entities/node'
+import { EdgeActionProviderRegistry } from '../../interfaces/edge-action-provider'
 import { EdgeQuoteProviderRegistry } from '../../interfaces/edge-quote-provider'
 import {
+	GraphActionProviderPlugin,
 	GraphBuilderPlugin,
 	GraphQuoteProviderPlugin,
 } from '../../interfaces/graph-plugin'
@@ -10,28 +12,19 @@ import {
 export class GraphBuilder {
 	constructor() {}
 
-	async buildGraphWithQuoteProviders(
-		plugins: (GraphBuilderPlugin & GraphQuoteProviderPlugin)[],
+	async buildGraphWithEdgeOwners<T extends GraphBuilderPlugin>(
+		plugins: T[],
 	): Promise<{
 		graph: Graph
-		edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry
+		edgeOwners: Record<EdgeId, T>
 	}> {
-		const edgeOwners: Record<
-			EdgeId,
-			GraphQuoteProviderPlugin & GraphBuilderPlugin
-		> = {}
+		const edgeOwners: Record<EdgeId, T> = {}
 
 		const graph = await this.buildGraph(plugins, (edge, plugin) => {
 			edgeOwners[edge.id] = plugin
 		})
 
-		const edgeQuoteProviderRegistry = this.buildQuoteProviderRegistry(
-			graph,
-			plugins,
-			edgeOwners,
-		)
-
-		return { graph, edgeQuoteProviderRegistry }
+		return { graph, edgeOwners }
 	}
 
 	async buildGraph<T extends GraphBuilderPlugin>(
@@ -50,13 +43,33 @@ export class GraphBuilder {
 		return graph
 	}
 
+	buildActionProviderRegistry(
+		graph: Graph,
+		plugins: GraphBuilderPlugin[],
+		edgeOwners: Record<EdgeId, GraphActionProviderPlugin>,
+	): EdgeActionProviderRegistry {
+		const edgeActionProviderRegistry: EdgeActionProviderRegistry = {}
+
+		plugins.forEach(() => {
+			for (const edge of graph.edges.values()) {
+				const edgeOwner = edgeOwners[edge.id]
+
+				if (!edgeOwner) continue
+
+				const edgeActionProvider =
+					edgeOwner.buildEdgeActionProvider(edge)
+
+				edgeActionProviderRegistry[edge.id] = edgeActionProvider
+			}
+		})
+
+		return edgeActionProviderRegistry
+	}
+
 	buildQuoteProviderRegistry(
 		graph: Graph,
 		plugins: GraphQuoteProviderPlugin[],
-		edgeOwners: Record<
-			EdgeId,
-			GraphQuoteProviderPlugin & GraphBuilderPlugin
-		>,
+		edgeOwners: Record<EdgeId, GraphQuoteProviderPlugin>,
 	): EdgeQuoteProviderRegistry {
 		const edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry = {}
 
