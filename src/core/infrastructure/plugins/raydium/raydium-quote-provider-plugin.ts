@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { scaleLinear } from 'd3-scale'
+
 import {
 	EdgeQuoteProvider,
 	EdgeSnapshotFn,
@@ -9,11 +10,11 @@ import { QuoteProviderPlugin } from '../../../application/interfaces/graph-plugi
 import { PriceOracle } from '../../../application/interfaces/price-oracle'
 import { Edge } from '../../../domain/entities/edge'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
 import { getExpectedTxCostInUsd } from '../helpers/solana-context-helpers'
 import { RaydiumGraphPlugin } from './raydium-graph-plugin'
-import { RaydiumService } from './service/raydium.service'
 import { InterpolationParams } from './types'
 
 @Injectable()

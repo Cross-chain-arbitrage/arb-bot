@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+
 import {
 	InchainActionProvider,
 	InchainConfirmingResult,
@@ -7,11 +8,11 @@ import {
 import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
 import { PriceOracle } from '../../../application/interfaces/price-oracle'
 import { Edge } from '../../../domain/entities/edge'
+import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
 import { getTxCostInUsd } from '../helpers/solana-context-helpers'
 import { RaydiumGraphPlugin } from './raydium-graph-plugin'
-import { RaydiumService } from './service/raydium.service'
 
 @Injectable()
 export class RaydiumActionProviderPlugin
