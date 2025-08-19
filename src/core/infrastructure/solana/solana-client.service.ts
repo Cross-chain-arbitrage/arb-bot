@@ -26,28 +26,22 @@ export class SolanaClientService implements OnModuleInit {
 		this.walletAddress = this.keypair.publicKey.toBase58()
 	}
 
-	async sendAndConfirmTx(tx: VersionedTransaction, options?: SendOptions) {
+	async sendTx(tx: VersionedTransaction, options?: SendOptions) {
 		const txId = await this.connection.sendTransaction(tx, {
 			...options,
 		})
 
-		const { lastValidBlockHeight, blockhash } =
-			await this.connection.getLatestBlockhash()
-
-		const txResult = await this.connection.confirmTransaction(
-			{
-				blockhash,
-				lastValidBlockHeight,
-				signature: txId,
-			},
-			'finalized',
-		)
-
-		if (txResult.value.err !== null) {
-			throw new SolanaClientServiceError('Transaction reverted', txResult)
-		}
-
 		return txId
+	}
+
+	async waitForParsedTransaction(txId: string) {
+		// TODO: expand this method with different commitments and test it
+		const parsedTx = await this.connection.getParsedTransaction(txId, {
+			commitment: 'finalized',
+			maxSupportedTransactionVersion: 0,
+		})
+
+		return parsedTx!
 	}
 
 	getSignedTx(rawTx: string) {

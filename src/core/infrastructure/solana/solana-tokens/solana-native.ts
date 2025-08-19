@@ -1,11 +1,10 @@
 import { Connection, PublicKey } from '@solana/web3.js'
-import { SOLANA_CHAIN_ID } from '../solana-constants'
 import { formatUnits, parseUnits } from './solana-tokens-helpers'
 
 export const solanaNativeAddress = 'address-plug'
 
 export class SolanaNative implements BaseToken {
-	chainId = SOLANA_CHAIN_ID
+	chainId = 'solana' as const
 	address = solanaNativeAddress
 	decimals = 9
 	symbol = 'SOL'

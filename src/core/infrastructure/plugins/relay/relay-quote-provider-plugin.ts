@@ -80,7 +80,7 @@ export class RelayQuoteProviderPlugin
 		const relayQuote = relayQuoteSchema.parse(quote.rawResult)
 
 		const costInUsd = await getExpectedTxCostInUsd.bind(this)(
-			edge.from,
+			edge.from.chainId,
 			quote.gasInNative,
 		)
 

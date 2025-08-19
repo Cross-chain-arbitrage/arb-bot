@@ -8,10 +8,10 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js'
 import axios from 'axios'
-import { SolanaClientService } from '../../../solana/solana-client.service'
 import { SolanaNative } from '../../../solana/solana-tokens/solana-native'
-import { SolanaToken } from '../../../solana/solana-tokens/solana-token'
 import { createCustomError, wait } from '../../../utils/common'
+import { SolanaClientService } from '../solana/solana-client.service'
+import { SolanaToken } from '../solana/solana-tokens/solana-token'
 import { API_URLS } from './raydium.constants'
 import {
 	PriorityFee,
@@ -85,7 +85,7 @@ export class RaydiumService {
 
 			tx.sign([this.solanaClientService.keypair])
 
-			const txId = await this.solanaClientService.sendAndConfirmTx(tx)
+			const txId = await this.solanaClientService.sendTx(tx)
 
 			return {
 				txId,

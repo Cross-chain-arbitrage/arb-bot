@@ -6,13 +6,13 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js'
 import { Hash } from 'viem'
-import { ChainClientService } from '../../chain-client/chain-client.service'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
-import { SolanaClientService } from '../../solana/solana-client.service'
-import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { createCustomError, wait } from '../../utils/common'
-import { poll } from '../../utils/polling'
+import { createCustomError, wait } from '../../../utils/common'
+import { poll } from '../../../utils/polling'
+import { ChainClientService } from '../evm/chain-client/chain-client.service'
+import { NativeCurrency } from '../evm/primitives/tokens/NativeCurrency'
+import { Token } from '../evm/primitives/tokens/Token'
+import { SolanaClientService } from '../solana/solana-client.service'
+import { SolanaToken } from '../solana/solana-tokens/solana-token'
 import { RelayApiService } from './relay-api.service'
 import { ExecutionFullStatus } from './schemas/relay-execution-status.scheme'
 import {
@@ -25,6 +25,8 @@ import {
 } from './schemas/relay-quite-solana-src.schema'
 
 const MAX_EXECUTION_TIME = 60_000
+
+const SOLANA_RELAY_CHAIN_ID = 792703809
 
 @Injectable()
 export class RelayService {
@@ -52,8 +54,14 @@ export class RelayService {
 		const quote = await this.relayApiService.getQuote({
 			user: srcAddress,
 			recipient: dstAddress,
-			originChainId: tokenIn.chainId,
-			destinationChainId: tokenOut.chainId,
+			originChainId:
+				tokenIn.chainId === 'solana'
+					? SOLANA_RELAY_CHAIN_ID
+					: Number(tokenIn.chainId),
+			destinationChainId:
+				tokenOut.chainId === 'solana'
+					? SOLANA_RELAY_CHAIN_ID
+					: Number(tokenOut.chainId),
 			amount: Number(amountIn),
 			originCurrency: tokenIn.address,
 			destinationCurrency: tokenOut.address,
@@ -83,7 +91,9 @@ export class RelayService {
 	): Promise<{
 		amountOut: bigint
 		srcTxHash: string
-		waitForTx: () => Promise<{ dstTxHash: string }>
+		waitForBridge: () => Promise<{
+			dstTxHash: string
+		}>
 	}> {
 		const quote = await this.quote(tokenIn, tokenOut, amountIn, slippage)
 
@@ -121,8 +131,7 @@ export class RelayService {
 
 			transaction.sign([this.solanaClientService.keypair])
 
-			srcTxHash =
-				await this.solanaClientService.sendAndConfirmTx(transaction)
+			srcTxHash = await this.solanaClientService.sendTx(transaction)
 		} else {
 			const txArgs = quote.rawResult.steps[0].items[0].data as EvmTxArgs
 
@@ -138,7 +147,7 @@ export class RelayService {
 		return {
 			amountOut: BigInt(quote.rawResult.details.currencyOut.amount),
 			srcTxHash,
-			waitForTx: async () => {
+			waitForBridge: async () => {
 				const res = await this.waitExecution(
 					quote.rawResult.steps[0].requestId,
 				)
