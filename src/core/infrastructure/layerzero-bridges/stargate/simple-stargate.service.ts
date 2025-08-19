@@ -1,12 +1,13 @@
 import { Message } from '@layerzerolabs/scan-client'
 import { Injectable } from '@nestjs/common'
 import axios from 'axios'
-import { ChainClientService } from '../../../chain-client/chain-client.service'
-import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
-import { Token } from '../../../primitives/tokens/Token'
-import { SolanaClientService } from '../../../solana/solana-client.service'
-import { SolanaToken } from '../../../solana/solana-tokens/solana-token'
-import { createCustomError } from '../../../utils/common'
+
+import { createCustomError } from '../../../../utils/common'
+import { ChainClientService } from '../../evm/chain-client/chain-client.service'
+import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
+import { Token } from '../../evm/primitives/tokens/Token'
+import { SolanaClientService } from '../../solana/solana-client.service'
+import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
 import { STARGATE_CHAINS } from './dumped/chains'
 import {
@@ -130,7 +131,7 @@ export class SimpleStargateService {
 				quote.steps[0].transaction.data,
 			)
 
-			txHash = await this.solanaClientService.sendAndConfirmTx(signedTx)
+			txHash = await this.solanaClientService.sendTx(signedTx)
 		} else {
 			const walletClient = this.chainClientService.getWalletClient(
 				tokenIn.chainId,

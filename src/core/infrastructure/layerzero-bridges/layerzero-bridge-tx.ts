@@ -1,8 +1,8 @@
 import { Message } from '@layerzerolabs/scan-client'
 import { Hash } from 'viem'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
-import { Tx } from '../../primitives/transactions/transaction'
+import { NativeCurrency } from '../evm/primitives/tokens/NativeCurrency'
+import { Token } from '../evm/primitives/tokens/Token'
+import { Tx } from '../evm/primitives/transactions/transaction'
 import { LayerZeroScanService } from './layerzero-scan/layerzero-scan.service'
 
 export interface BridgeTx {
