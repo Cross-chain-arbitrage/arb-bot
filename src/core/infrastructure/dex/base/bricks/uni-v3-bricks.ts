@@ -1,0 +1,315 @@
+import { DecodeEventLogReturnType, toHex } from 'viem'
+import { PERMIT2_ABI } from '../../../evm/abi/permit2'
+import { UNI_UNIVERSAL_ROUTER_ABI } from '../../../evm/abi/uni-universal-router'
+import { UNIV3_POOL_SWAP_EVENT_ABI } from '../../../evm/abi/uniV3/uniV3Pool'
+import { UNIV3_QUOTER_ABI } from '../../../evm/abi/uniV3/uniV3Quoter'
+import { UNIV3_ROUTER_ABI } from '../../../evm/abi/uniV3/uniV3Router'
+import { UNIV3_ROUTER02_ABI } from '../../../evm/abi/uniV3/uniV3Router02'
+import { Token } from '../../../evm/primitives/tokens/Token'
+import { Pool } from '../pool'
+import { CommandType, RoutePlanner } from './uni-universal-router-planner'
+
+export async function getPriceFromSlot(
+	this: Pool,
+	slotFunctionName: string,
+	sqrtPriceX96Index: number,
+): Promise<{ price: number; sqrtPriceX96: bigint }> {
+	const client = this.chainClientService.getClient(this.chainId)
+
+	const result = await client.readContract({
+		address: this.address,
+		abi: this.poolAbi,
+		functionName: slotFunctionName,
+	})
+
+	const sqrtPriceX96 = (result as bigint[])[sqrtPriceX96Index]
+
+	const price = sqrtPriceX96ToPrice.bind(this)(sqrtPriceX96)
+
+	return { price, sqrtPriceX96 }
+}
+
+export function sqrtPriceX96ToPrice(this: Pool, sqrtPriceX96: bigint): number {
+	const sqrtPrice = Number(sqrtPriceX96) / 2 ** 96
+	const price = sqrtPrice ** 2
+	return price * 10 ** (this.token0.decimals - this.token1.decimals)
+}
+
+export function priceToSqrtPriceX96(this: Pool, price: number): bigint {
+	const adjustedPrice =
+		price / 10 ** (this.token0.decimals - this.token1.decimals)
+	const sqrtPrice = Math.sqrt(adjustedPrice)
+	return BigInt(Math.floor(sqrtPrice * 2 ** 96))
+}
+
+export async function quoteSwapUniV3(
+	this: Pool & {
+		quoterAddress: Address
+		fee: number
+	},
+	params: SwapParams,
+): Promise<bigint> {
+	const { result } = await this.client.simulateContract({
+		address: this.quoterAddress,
+		abi: UNIV3_QUOTER_ABI,
+		functionName: 'quoteExactInputSingle',
+		account: this.account,
+		args: [
+			{
+				tokenIn: params.tokenIn.address,
+				tokenOut: params.tokenOut.address,
+				amountIn: params.amountIn,
+				fee: this.fee,
+				sqrtPriceLimitX96: 0n,
+			},
+		],
+	})
+
+	return result[0]
+}
+
+export function defineAmountsFromEventUniV3(
+	this: Pool,
+	swapEvent: DecodeEventLogReturnType<typeof UNIV3_POOL_SWAP_EVENT_ABI>,
+	tokenIn: Token,
+	tokenOut: Token,
+): { amountOut: bigint; amountIn: bigint } {
+	const zeroForOne = this.zeroForOne(tokenIn, tokenOut)
+
+	const { amount0, amount1 } = swapEvent.args
+
+	const [amountIn, amountOut] = zeroForOne
+		? [amount0, -amount1]
+		: [amount1, -amount0]
+
+	return { amountOut, amountIn }
+}
+
+export enum RouterType {
+	V1 = 'v1',
+	V2 = 'v2',
+	UNIVERSAL = 'universal',
+}
+export async function simulateSwapUniV3(
+	this: Pool & {
+		routerAddress: Address
+		fee: number
+		routerType: RouterType
+		permit2Address?: Address
+	},
+	params: SwapParams,
+): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	switch (this.routerType) {
+		case RouterType.V1:
+			return simulateSwapUniV3RouterV1.bind(this)(params)
+		case RouterType.V2:
+			return simulateSwapUniV3RouterV2.bind(this)(params)
+		case RouterType.UNIVERSAL:
+			return simulateSwapUniV3RouterUniversal.bind(this)(params)
+	}
+}
+
+async function getAmountOuts(
+	this: Pool,
+	params: SwapParams,
+): Promise<{ amountOutExpected: bigint; amountOutMinimum: bigint }> {
+	const { amountOut: amountOutExpected } = await this.quoteSwap(params)
+
+	const amountOutMinimum = this.calcMinAmountOut(
+		amountOutExpected,
+		params.slippage ?? this.DEFAULT_SLIPPAGE,
+	)
+
+	return { amountOutExpected, amountOutMinimum }
+}
+
+export async function simulateSwapUniV3RouterV1(
+	this: Pool & { routerAddress: Address; fee: number },
+	params: SwapParams,
+): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const { amountOutMinimum } = await getAmountOuts.bind(this)(params)
+
+	const args = [
+		{
+			tokenIn: params.tokenIn.address,
+			tokenOut: params.tokenOut.address,
+			fee: this.fee,
+			recipient: this.account.address,
+			deadline: this.calcDeadline(60 * 5),
+			amountIn: params.amountIn,
+			amountOutMinimum,
+			sqrtPriceLimitX96: 0n,
+		},
+	] as const
+
+	const { result: amountOut, request } = await this.client.simulateContract({
+		address: this.routerAddress,
+		abi: UNIV3_ROUTER_ABI,
+		functionName: 'exactInputSingle',
+		account: this.account,
+		args,
+	})
+
+	return {
+		amountOut,
+		request: request as unknown as SimulateRequestWithAccount,
+	}
+}
+
+export async function simulateSwapUniV3RouterV2(
+	this: Pool & { routerAddress: Address; fee: number },
+	params: SwapParams,
+): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const { amountOutMinimum } = await getAmountOuts.bind(this)(params)
+
+	const args = [
+		{
+			tokenIn: params.tokenIn.address,
+			tokenOut: params.tokenOut.address,
+			fee: this.fee,
+			recipient: this.account.address,
+			amountIn: params.amountIn,
+			amountOutMinimum,
+			sqrtPriceLimitX96: 0n,
+		},
+	] as const
+
+	const { result: amountOut, request } = await this.client.simulateContract({
+		address: this.routerAddress,
+		abi: UNIV3_ROUTER02_ABI,
+		functionName: 'exactInputSingle',
+		account: this.account,
+		args,
+	})
+
+	return {
+		amountOut,
+		request: request as unknown as SimulateRequestWithAccount,
+	}
+}
+
+async function generatePermit2Signature(
+	this: Pool & { permit2Address: Address },
+	permitSingle: {
+		details: {
+			token: Address
+			amount: bigint
+			expiration: bigint
+			nonce: bigint
+		}
+		spender: Address
+		sigDeadline: bigint
+	},
+): Promise<`0x${string}`> {
+	// EIP-712 domain for Permit2
+	const domain = {
+		name: 'Permit2',
+		chainId: this.chainId,
+		verifyingContract: this.permit2Address,
+	}
+
+	// EIP-712 types for PermitSingle
+	const types = {
+		PermitSingle: [
+			{ name: 'details', type: 'PermitDetails' },
+			{ name: 'spender', type: 'address' },
+			{ name: 'sigDeadline', type: 'uint256' },
+		],
+		PermitDetails: [
+			{ name: 'token', type: 'address' },
+			{ name: 'amount', type: 'uint160' },
+			{ name: 'expiration', type: 'uint48' },
+			{ name: 'nonce', type: 'uint48' },
+		],
+	}
+
+	// Sign the typed data
+	const signature = await this.wallet.signTypedData({
+		domain,
+		types,
+		primaryType: 'PermitSingle',
+		message: permitSingle,
+	})
+
+	return signature
+}
+
+export async function simulateSwapUniV3RouterUniversal(
+	this: Pool & {
+		routerAddress: Address
+		fee: number
+		permit2Address?: Address
+	},
+	params: SwapParams,
+): Promise<{ amountOut: bigint; request: SimulateRequestWithAccount }> {
+	const { amountOutMinimum, amountOutExpected } =
+		await getAmountOuts.bind(this)(params)
+
+	const planner = new RoutePlanner()
+
+	const [, , nonce] = await this.client.readContract({
+		address: this.permit2Address!,
+		abi: PERMIT2_ABI,
+		functionName: 'allowance',
+		args: [
+			this.wallet.account.address,
+			params.tokenIn.address,
+			this.routerAddress,
+		],
+	})
+
+	const permitSingle = {
+		details: {
+			token: params.tokenIn.address,
+			amount: params.amountIn,
+			expiration: this.calcDeadline(60),
+			nonce: BigInt(nonce),
+		},
+		spender: this.routerAddress,
+		sigDeadline: this.calcDeadline(60),
+	}
+
+	const signature = await generatePermit2Signature.bind(
+		this as Pool & { permit2Address: Address },
+	)(permitSingle)
+
+	planner.addCommand(CommandType.PERMIT2_PERMIT, {
+		permitSingle,
+		signature,
+	})
+
+	planner.addCommand(CommandType.V3_SWAP_EXACT_IN, {
+		recipient: this.account.address,
+		amountIn: params.amountIn,
+		amountOutMinimum,
+		path: buildPath.bind(this)(params.tokenIn, params.tokenOut),
+		payerIsUser: true,
+	})
+
+	const { request } = await this.client.simulateContract({
+		address: this.routerAddress,
+		abi: UNI_UNIVERSAL_ROUTER_ABI,
+		functionName: 'execute',
+		account: this.account.address,
+		args: [planner.commands, planner.inputs],
+	})
+
+	return {
+		amountOut: amountOutExpected,
+		request: request as unknown as SimulateRequestWithAccount,
+	}
+}
+
+function buildPath(
+	this: Pool & { fee: number },
+	tokenIn: Token,
+	tokenOut: Token,
+): Bytes {
+	let path = '0x'
+
+	path += tokenIn.address.slice(2)
+	path += toHex(this.fee, { size: 3 }).slice(2)
+	path += tokenOut.address.slice(2)
+
+	return path as Bytes
+}

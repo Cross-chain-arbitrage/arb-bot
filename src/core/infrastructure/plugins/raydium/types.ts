@@ -1,12 +1,9 @@
+import { InterpolationParams } from '../helpers/interpolation-helper'
+
 export type RaydiumConfig = {
 	edges: {
 		from: string
 		to: string
 	}[]
-}
-
-export type InterpolationParams = {
-	minStartValueUsd: number
-	maxStartValueUsd: number
-	runCount: number
+	interpolationParams: InterpolationParams
 }
