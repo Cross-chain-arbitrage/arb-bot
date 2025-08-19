@@ -1,10 +1,15 @@
-import { Injectable } from '@nestjs/common'
-import { PriceOracle } from '../../../application/interfaces/price-oracle'
+import { Inject, Injectable } from '@nestjs/common'
+import {
+	PRICE_ORACLE_TOKEN,
+	PriceOracle,
+} from '../../../application/interfaces/price-oracle'
 import { Token } from '../../../domain/entities/token'
 
 @Injectable()
 export class PriceOracleHelper {
-	constructor(readonly priceOracle: PriceOracle) {}
+	constructor(
+		@Inject(PRICE_ORACLE_TOKEN) readonly priceOracle: PriceOracle,
+	) {}
 
 	async estimateTokenAmountFromUsd(
 		token: Token,

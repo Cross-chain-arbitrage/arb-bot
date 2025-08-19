@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import {
 	BellmanFord,
 	GraphArbitrageCycle,
 } from '../../../../domain/services/bellman-ford'
 import { GraphSnapshot } from '../../../../domain/value-objects/weighted-graph-snapshot'
-import { PriceOracle } from '../../../interfaces/price-oracle'
+import {
+	PRICE_ORACLE_TOKEN,
+	PriceOracle,
+} from '../../../interfaces/price-oracle'
 import {
 	GraphArbitrageOpportunity,
 	SnapshotFindOpportunityParams,
@@ -12,7 +15,9 @@ import {
 
 @Injectable()
 export class SnapshotOpportunityFinder {
-	constructor(private readonly priceOracle: PriceOracle) {}
+	constructor(
+		@Inject(PRICE_ORACLE_TOKEN) private readonly priceOracle: PriceOracle,
+	) {}
 
 	async findOpportunity(
 		graphSnapshot: GraphSnapshot,

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { ArbitrageExecutor } from '../executing/arbitrage-executor/arbitrage-executor'
+import { ArbitrageExecutor } from '../execution/arbitrage-executor/arbitrage-executor'
 import { ArbitrageFinder } from '../finding/arbitrage-finder/arbitrage-finder'
 
 @Injectable()

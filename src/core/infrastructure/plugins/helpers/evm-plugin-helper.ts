@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { Hash } from 'viem'
 import { TransactionReceipt } from 'viem/_types/types/transaction'
-import { PriceOracle } from '../../../application/interfaces/price-oracle'
+import {
+	PRICE_ORACLE_TOKEN,
+	PriceOracle,
+} from '../../../application/interfaces/price-oracle'
 import { ChainClientService } from '../../evm/chain-client/chain-client.service'
 import { GasPriceOracleService } from '../../evm/gas-price-oracle/gas-price-oracle.service'
 import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
@@ -12,8 +15,8 @@ export class EvmPluginHelper extends PluginHelper {
 	constructor(
 		readonly gasPriceOracleService: GasPriceOracleService,
 		readonly tokenUtils: TokenUtils,
-		readonly priceOracle: PriceOracle,
 		readonly chainClientService: ChainClientService,
+		@Inject(PRICE_ORACLE_TOKEN) readonly priceOracle: PriceOracle,
 	) {
 		super()
 	}

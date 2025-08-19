@@ -1,6 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { ParsedTransactionWithMeta } from '@solana/web3.js'
-import { PriceOracle } from '../../../application/interfaces/price-oracle'
+import {
+	PRICE_ORACLE_TOKEN,
+	PriceOracle,
+} from '../../../application/interfaces/price-oracle'
 import { SolanaClientService } from '../../solana/solana-client.service'
 import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
 import { PluginHelper } from './plugin-helper'
@@ -12,7 +15,7 @@ const LAMPORTS_FOR_SIGNING = 5000n
 export class SolanaPluginHelper extends PluginHelper {
 	constructor(
 		readonly solanaTokenUtils: SolanaTokenUtils,
-		readonly priceOracle: PriceOracle,
+		@Inject(PRICE_ORACLE_TOKEN) readonly priceOracle: PriceOracle,
 		readonly solanaClientService: SolanaClientService,
 	) {
 		super()

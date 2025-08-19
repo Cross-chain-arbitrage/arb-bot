@@ -1,12 +1,17 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { Token } from '../../../../domain/entities/token'
-import { PriceOracle } from '../../../interfaces/price-oracle'
+import {
+	PRICE_ORACLE_TOKEN,
+	PriceOracle,
+} from '../../../interfaces/price-oracle'
 import { GraphArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
 import { OpportunityValidatorParams, ValidationResult } from './types'
 
 @Injectable()
 export class OpportunityValidator {
-	constructor(private readonly priceOracle: PriceOracle) {}
+	constructor(
+		@Inject(PRICE_ORACLE_TOKEN) private readonly priceOracle: PriceOracle,
+	) {}
 
 	async validateOpportunity(
 		opportunity: GraphArbitrageOpportunity | null,
