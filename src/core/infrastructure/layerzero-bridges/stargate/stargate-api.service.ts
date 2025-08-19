@@ -1,10 +1,11 @@
 import TTLCache from '@isaacs/ttlcache'
 import axios from 'axios'
 import { isAddressEqual } from 'viem'
-import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
-import { Token } from '../../../primitives/tokens/Token'
-import { TokenUtils } from '../../../primitives/tokens/TokenUtils'
-import { createCustomError } from '../../../utils/common'
+
+import { createCustomError } from '../../../../utils/common'
+import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
+import { Token } from '../../evm/primitives/tokens/Token'
+import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { getStargateChainKey } from './stargate.utils'
 
 export const StargateAPIError = createCustomError('StargateAPIError')

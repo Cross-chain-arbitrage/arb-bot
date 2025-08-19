@@ -1,7 +1,8 @@
 import { Hash } from 'viem'
-import { NativeCurrency } from '../../../primitives/tokens/NativeCurrency'
-import { Token } from '../../../primitives/tokens/Token'
-import { createCustomError } from '../../../utils/common'
+
+import { createCustomError } from '../../../../utils/common'
+import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
+import { Token } from '../../evm/primitives/tokens/Token'
 import { LZBridgeTx } from '../layerzero-bridge-tx'
 import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
 
