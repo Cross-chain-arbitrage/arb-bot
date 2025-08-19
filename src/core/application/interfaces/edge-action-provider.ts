@@ -2,47 +2,45 @@ import { Edge, EdgeId } from '../../domain/entities/edge'
 
 /* ======== INCHAIN ======== */
 
-export type InchainConfirmingResult = {
+export type InchainConfirmation = {
 	amountOut: bigint
 	getExecutionCost: () => Promise<{ costInUsd: number }>
 }
 
-export type InchainExecutingResult = {
+export type InchainExecution = {
 	txId: string
-	confirm: () => Promise<InchainConfirmingResult>
+	confirm: () => Promise<InchainConfirmation>
 }
 
 export interface InchainActionProvider {
 	kind: 'inchain'
 	edge: Edge
-	execute(amountIn: bigint): Promise<InchainExecutingResult>
+	execute(amountIn: bigint): Promise<InchainExecution>
 }
 
 /* ======== CROSSCHAIN ======== */
 
-export type CrosschainConfirmingResult = {
+export type CrosschainConfirmation = {
 	amountOut: bigint
 	dstTxId: string
 	getExecutionCost: () => Promise<{ costInUsd: number }>
 }
 
-export type CrosschainExecutingResult = {
+export type CrosschainExecution = {
 	srcTxId: string
-	confirm: () => Promise<CrosschainConfirmingResult>
+	confirm: () => Promise<CrosschainConfirmation>
 }
 
 export interface CrosschainActionProvider {
 	kind: 'crosschain'
 	edge: Edge
-	execute(amountIn: bigint): Promise<CrosschainExecutingResult>
+	execute(amountIn: bigint): Promise<CrosschainExecution>
 }
 
 /* ======== REGISTRY ======== */
 
-export type ConfirmingResult =
-	| InchainConfirmingResult
-	| CrosschainConfirmingResult
-export type ExecutingResult = InchainExecutingResult | CrosschainExecutingResult
+export type Confirmation = InchainConfirmation | CrosschainConfirmation
+export type Execution = InchainExecution | CrosschainExecution
 
 export type EdgeActionProvider =
 	| InchainActionProvider

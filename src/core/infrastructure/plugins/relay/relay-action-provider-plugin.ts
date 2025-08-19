@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common'
 
 import {
 	CrosschainActionProvider,
-	CrosschainConfirmingResult,
-	CrosschainExecutingResult,
+	CrosschainConfirmation,
+	CrosschainExecution,
 } from '../../../application/interfaces/edge-action-provider'
 import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
@@ -39,7 +39,7 @@ export class RelayActionProviderPlugin
 	async execute(
 		edge: Edge<SolanaToken>,
 		amountIn: bigint,
-	): Promise<CrosschainExecutingResult> {
+	): Promise<CrosschainExecution> {
 		const result = await this.relayService.bridge(
 			edge.from,
 			edge.to,
@@ -55,7 +55,7 @@ export class RelayActionProviderPlugin
 	async confirm(
 		edge: Edge<SolanaToken | Token | NativeCurrency>,
 		bridgeResult: Awaited<ReturnType<typeof this.relayService.bridge>>,
-	): Promise<CrosschainConfirmingResult> {
+	): Promise<CrosschainConfirmation> {
 		const awaitedBridge = await bridgeResult.waitForBridge()
 
 		return {

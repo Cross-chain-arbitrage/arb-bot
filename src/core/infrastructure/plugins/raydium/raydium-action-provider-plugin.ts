@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common'
 
 import {
 	InchainActionProvider,
-	InchainConfirmingResult,
-	InchainExecutingResult,
+	InchainConfirmation,
+	InchainExecution,
 } from '../../../application/interfaces/edge-action-provider'
 import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
@@ -37,7 +37,7 @@ export class RaydiumActionProviderPlugin
 	async execute(
 		edge: Edge<SolanaToken>,
 		amountIn: bigint,
-	): Promise<InchainExecutingResult> {
+	): Promise<InchainExecution> {
 		const result = await this.raydiumService.swap({
 			tokenIn: edge.from,
 			tokenOut: edge.to,
@@ -52,7 +52,7 @@ export class RaydiumActionProviderPlugin
 
 	async confirm(
 		swapResult: Awaited<ReturnType<typeof this.raydiumService.swap>>,
-	): Promise<InchainConfirmingResult> {
+	): Promise<InchainConfirmation> {
 		const { amountOut, parsedTx } = await swapResult.waitForResult()
 
 		return {

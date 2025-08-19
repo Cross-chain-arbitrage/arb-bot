@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import {
 	CrosschainActionProvider,
-	CrosschainConfirmingResult,
-	CrosschainExecutingResult,
+	CrosschainConfirmation,
+	CrosschainExecution,
 } from '../../../application/interfaces/edge-action-provider'
 import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
@@ -39,7 +39,7 @@ export class StargateActionProviderPlugin
 	async execute(
 		edge: Edge<Token | NativeCurrency>,
 		amountIn: bigint,
-	): Promise<CrosschainExecutingResult> {
+	): Promise<CrosschainExecution> {
 		const bridgeResult = await this.stargateService.bridge(
 			edge.from,
 			edge.to,
@@ -55,7 +55,7 @@ export class StargateActionProviderPlugin
 	async confirm(
 		edge: Edge<Token | NativeCurrency>,
 		bridgeResult: Awaited<ReturnType<typeof this.stargateService.bridge>>,
-	): Promise<CrosschainConfirmingResult> {
+	): Promise<CrosschainConfirmation> {
 		const bridgeTx = bridgeResult.bridgeTx
 
 		await bridgeTx.waitForBridgeToFinish()

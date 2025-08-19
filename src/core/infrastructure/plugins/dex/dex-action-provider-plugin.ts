@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import {
 	EdgeActionProvider,
-	InchainConfirmingResult,
-	InchainExecutingResult,
+	InchainConfirmation,
+	InchainExecution,
 } from '../../../application/interfaces/edge-action-provider'
 import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
@@ -31,7 +31,7 @@ export class DexActionProviderPlugin
 	async execute(
 		edge: Edge<Token>,
 		amountIn: bigint,
-	): Promise<InchainExecutingResult> {
+	): Promise<InchainExecution> {
 		const pool = this.edgeIdToPool[edge.id]
 
 		if (!pool) {
@@ -53,7 +53,7 @@ export class DexActionProviderPlugin
 	async confirm(
 		edge: Edge<Token>,
 		swapResult: Awaited<ReturnType<Pool['swap']>>,
-	): Promise<InchainConfirmingResult> {
+	): Promise<InchainConfirmation> {
 		const { amountOut, receipt } = await swapResult.waitForResult()
 
 		return {

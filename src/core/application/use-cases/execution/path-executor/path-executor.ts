@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { Step } from '../../../../domain/services/bellman-ford'
 import {
-	ConfirmingResult,
+	Confirmation,
 	EdgeActionProviderRegistry,
-	ExecutingResult,
+	Execution,
 } from '../../../interfaces/edge-action-provider'
 import { PathExecutorParams } from './types'
 
@@ -75,7 +75,7 @@ export class PathExecutor {
 	private async confirmEdge(
 		params: PathExecutorParams,
 		step: Step,
-		executingResult: ExecutingResult,
+		executingResult: Execution,
 	) {
 		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
 
@@ -99,7 +99,7 @@ export class PathExecutor {
 	private async getExecutionCostEdge(
 		params: PathExecutorParams,
 		step: Step,
-		confirmingResult: ConfirmingResult,
+		confirmingResult: Confirmation,
 	) {
 		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
 

@@ -1,6 +1,6 @@
 import { Path, Step } from '../../../../domain/services/bellman-ford'
 import {
-	ConfirmingResult,
+	Confirmation,
 	EdgeActionProvider,
 } from '../../../interfaces/edge-action-provider'
 
@@ -13,7 +13,7 @@ export interface PathExecutorParams {
 	startAmount: bigint
 
 	executeWrapper?: Wrapper<EdgeActionProvider['execute']>
-	confirmWrapper?: Wrapper<() => Promise<ConfirmingResult>>
+	confirmWrapper?: Wrapper<() => Promise<Confirmation>>
 	getExecutionCostWrapper?: Wrapper<() => Promise<{ costInUsd: number }>>
 
 	beforeExecuteEdgeHook?: (
