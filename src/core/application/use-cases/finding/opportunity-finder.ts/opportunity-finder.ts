@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { Graph } from '../../../domain/entities/graph'
+import { Graph } from '../../../../domain/entities/graph'
 import { GraphSnapshotBuilder } from '../graph-snapshot-builder/gpaph-snapshot-builder'
 import { SnapshotOpportunityFinder } from '../snapshot-opportunity-finder/snapshot-opportunity-finder'
 import {

@@ -39,6 +39,11 @@ export interface CrosschainActionProvider {
 
 /* ======== REGISTRY ======== */
 
+export type ConfirmingResult =
+	| InchainConfirmingResult
+	| CrosschainConfirmingResult
+export type ExecutingResult = InchainExecutingResult | CrosschainExecutingResult
+
 export type EdgeActionProvider =
 	| InchainActionProvider
 	| CrosschainActionProvider

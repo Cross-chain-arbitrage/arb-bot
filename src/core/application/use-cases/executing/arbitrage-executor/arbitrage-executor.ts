@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
+import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
 import { PathExecutor } from '../path-executor/path-executor'
 import { PathExecutorParams } from '../path-executor/types'
-import { GraphArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
 
 @Injectable()
 export class ArbitrageExecutor {

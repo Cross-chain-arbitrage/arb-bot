@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common'
 import {
 	BellmanFord,
 	GraphArbitrageCycle,
-} from '../../../domain/services/bellman-ford'
-import { GraphSnapshot } from '../../../domain/value-objects/weighted-graph-snapshot'
-import { PriceOracle } from '../../interfaces/price-oracle'
+} from '../../../../domain/services/bellman-ford'
+import { GraphSnapshot } from '../../../../domain/value-objects/weighted-graph-snapshot'
+import { PriceOracle } from '../../../interfaces/price-oracle'
 import {
 	GraphArbitrageOpportunity,
 	SnapshotFindOpportunityParams,
@@ -21,9 +21,7 @@ export class SnapshotOpportunityFinder {
 		const { minStartValueUsd, maxStartValueUsd, runCount, startToken } =
 			params
 
-		const startTokenUSDPrice = await this.priceOracle.getPrice(
-			startToken.address,
-		)
+		const startTokenUSDPrice = await this.priceOracle.getPrice(startToken)
 
 		const algorithmResults: (GraphArbitrageCycle | null)[] = []
 

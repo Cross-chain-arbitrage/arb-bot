@@ -1,5 +1,5 @@
-import { Token } from '../../../domain/entities/token'
-import { GraphArbitrageCycle } from '../../../domain/services/bellman-ford'
+import { Token } from '../../../../domain/entities/token'
+import { GraphArbitrageCycle } from '../../../../domain/services/bellman-ford'
 
 export type SnapshotFindOpportunityParams = {
 	minStartValueUsd: number

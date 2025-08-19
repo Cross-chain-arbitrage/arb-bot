@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { Graph } from '../../../domain/entities/graph'
+import { Graph } from '../../../../domain/entities/graph'
 import { OpportunityFinder } from '../opportunity-finder.ts/opportunity-finder'
 import { OpportunityValidator } from '../opportunity-validator/opportunity-validator'
 import { ValidationResult } from '../opportunity-validator/types'

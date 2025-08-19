@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { Graph } from '../../../domain/entities/graph'
+import { Graph } from '../../../../domain/entities/graph'
 import {
 	GraphSnapshot,
 	Quote,
-} from '../../../domain/value-objects/weighted-graph-snapshot'
-import { EdgeQuoteProviderRegistry } from '../../interfaces/edge-quote-provider'
+} from '../../../../domain/value-objects/weighted-graph-snapshot'
+import { EdgeQuoteProviderRegistry } from '../../../interfaces/edge-quote-provider'
 
 const EDGE_QUOTE_PROVIDER_REGISTRY_TOKEN = Symbol(
 	'EDGE_QUOTE_PROVIDER_REGISTRY_TOKEN',

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
-import { Token } from '../../../domain/entities/token'
-import { PriceOracle } from '../../interfaces/price-oracle'
+import { Token } from '../../../../domain/entities/token'
+import { PriceOracle } from '../../../interfaces/price-oracle'
 import { GraphArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
 import { OpportunityValidatorParams, ValidationResult } from './types'
 
@@ -63,9 +63,7 @@ export class OpportunityValidator {
 
 		const amountStartFormatted = Number(startToken.formatUnits(amountStart))
 
-		const startTokenPrice = await this.priceOracle.getPrice(
-			startToken.address,
-		)
+		const startTokenPrice = await this.priceOracle.getPrice(startToken)
 
 		return (amountEndFormatted - amountStartFormatted) * startTokenPrice
 	}

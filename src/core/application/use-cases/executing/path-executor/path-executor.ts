@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { Step } from '../../../domain/services/bellman-ford'
+import { Step } from '../../../../domain/services/bellman-ford'
 import {
-	EdgeActionProvider,
+	ConfirmingResult,
 	EdgeActionProviderRegistry,
-} from '../../interfaces/edge-action-provider'
+	ExecutingResult,
+} from '../../../interfaces/edge-action-provider'
 import { PathExecutorParams } from './types'
 
 const EDGE_ACTION_PROVIDER_REGISTRY_TOKEN = Symbol(
@@ -37,7 +38,7 @@ export class PathExecutor {
 			const executionCostResult = await this.getExecutionCostEdge(
 				params,
 				step,
-				executionResult,
+				confirmationResult,
 			)
 
 			totalExecutionCostInUsd += executionCostResult.costInUsd
@@ -74,7 +75,7 @@ export class PathExecutor {
 	private async confirmEdge(
 		params: PathExecutorParams,
 		step: Step,
-		executionResult: Awaited<ReturnType<EdgeActionProvider['execute']>>,
+		executingResult: ExecutingResult,
 	) {
 		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
 
@@ -82,9 +83,9 @@ export class PathExecutor {
 
 		const confirmationResult = params.confirmWrapper
 			? await params.confirmWrapper(
-					actionProvider.confirm.bind(actionProvider),
+					executingResult.confirm.bind(actionProvider),
 				)
-			: await actionProvider.confirm(executionResult.actionId)
+			: await executingResult.confirm()
 
 		params.afterConfirmEdgeHook?.(
 			params.path,
@@ -98,7 +99,7 @@ export class PathExecutor {
 	private async getExecutionCostEdge(
 		params: PathExecutorParams,
 		step: Step,
-		executionResult: Awaited<ReturnType<EdgeActionProvider['execute']>>,
+		confirmingResult: ConfirmingResult,
 	) {
 		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
 
@@ -106,9 +107,9 @@ export class PathExecutor {
 
 		const executionCostResult = params.getExecutionCostWrapper
 			? await params.getExecutionCostWrapper(
-					actionProvider.getExecutionCost.bind(actionProvider),
+					confirmingResult.getExecutionCost.bind(actionProvider),
 				)
-			: await actionProvider.getExecutionCost(executionResult.actionId)
+			: await confirmingResult.getExecutionCost()
 
 		params.afterGetExecutionCostHook?.(
 			params.path,
