@@ -9,6 +9,7 @@
 	},
 	"scripts": {
 		"new-dex": "hygen dex new",
+		"new-plugin": "hygen plugin new",
 		"test": "jest",
 		"test:logs": "ENABLE_LOGS=true jest",
 		"lint": "npx eslint src",
