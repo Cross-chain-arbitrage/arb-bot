@@ -4,20 +4,13 @@ import {
 	EdgeSnapshotFn,
 } from '../../../application/interfaces/edge-quote-provider'
 import { QuoteProviderPlugin } from '../../../application/interfaces/graph-plugin'
-import { PriceOracle } from '../../../application/interfaces/price-oracle'
 import { Edge } from '../../../domain/entities/edge'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
-import { GasPriceOracleService } from '../../evm/gas-price-oracle/gas-price-oracle.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { StargateService } from '../../layerzero-bridges/stargate/stargate-service'
-import {
-	estimateTokenAmountFromUsd,
-	estimateUsdFromTokenAmount,
-} from '../helpers/context-helpers'
-import { getExpectedTxCostInUsd } from '../helpers/evm-context-helpers'
-import { calcRate } from '../helpers/helpers'
+import { EvmPluginHelper } from '../helpers/evm-plugin-helper'
+import { PriceOracleHelper } from '../helpers/price-oracle-helper'
 import { StargateGraphPlugin } from './stargate-graph-plugin'
 
 const QUOTE_USD_AMOUNT_IN = 500
@@ -29,9 +22,8 @@ export class StargateQuoteProviderPlugin
 {
 	constructor(
 		private readonly stargateService: StargateService,
-		readonly priceOracle: PriceOracle,
-		readonly tokenUtils: TokenUtils,
-		readonly gasPriceOracleService: GasPriceOracleService,
+		readonly evmPluginHelper: EvmPluginHelper,
+		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super()
 	}
@@ -50,10 +42,11 @@ export class StargateQuoteProviderPlugin
 	async buildSnapshotFn(
 		edge: Edge<Token | NativeCurrency>,
 	): Promise<EdgeSnapshotFn> {
-		const amountIn = await estimateTokenAmountFromUsd.bind(this)(
-			edge.from,
-			QUOTE_USD_AMOUNT_IN,
-		)
+		const amountIn =
+			await this.priceOracleHelper.estimateTokenAmountFromUsd(
+				edge.from,
+				QUOTE_USD_AMOUNT_IN,
+			)
 
 		const { amountOut, lzFee, gas } =
 			await this.stargateService.quoteBridge(
@@ -62,15 +55,16 @@ export class StargateQuoteProviderPlugin
 				edge.to.chainId,
 			)
 
-		const txCostInUsd = await getExpectedTxCostInUsd.bind(this)(
+		const txCostInUsd = await this.evmPluginHelper.getExpectedTxCostInUsd(
 			edge.from.chainId,
 			gas,
 		)
 
-		const bridgeFeeInUsd = await estimateUsdFromTokenAmount.bind(this)(
-			lzFee.underlyingToken,
-			lzFee.amount,
-		)
+		const bridgeFeeInUsd =
+			await this.priceOracleHelper.estimateUsdFromTokenAmount(
+				lzFee.underlyingToken,
+				lzFee.amount,
+			)
 
 		const executionCostInUsd = bridgeFeeInUsd + txCostInUsd
 
@@ -94,7 +88,7 @@ export class StargateQuoteProviderPlugin
 			const amountOut = BigInt(Math.floor(amountOutNumber))
 
 			return {
-				rate: calcRate(amountIn, amountOut),
+				rate: this.evmPluginHelper.calcRate(amountIn, amountOut),
 				amountOut,
 				executionCostInUsd: costInUsd,
 			}

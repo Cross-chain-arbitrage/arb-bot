@@ -6,12 +6,11 @@ import {
 	InchainExecutingResult,
 } from '../../../application/interfaces/edge-action-provider'
 import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
-import { PriceOracle } from '../../../application/interfaces/price-oracle'
 import { Edge } from '../../../domain/entities/edge'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { getTxCostInUsd } from '../helpers/solana-context-helpers'
+import { PriceOracleHelper } from '../helpers/price-oracle-helper'
+import { SolanaPluginHelper } from '../helpers/solana-plugin-helper'
 import { RaydiumGraphPlugin } from './raydium-graph-plugin'
 
 @Injectable()
@@ -21,8 +20,8 @@ export class RaydiumActionProviderPlugin
 {
 	constructor(
 		private readonly raydiumService: RaydiumService,
-		readonly solanaTokenUtils: SolanaTokenUtils,
-		readonly priceOracle: PriceOracle,
+		readonly solanaPluginHelper: SolanaPluginHelper,
+		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super()
 	}
@@ -59,7 +58,8 @@ export class RaydiumActionProviderPlugin
 		return {
 			amountOut,
 			getExecutionCost: async () => {
-				const costInUsd = await getTxCostInUsd.bind(this)(parsedTx)
+				const costInUsd =
+					await this.solanaPluginHelper.getTxCostInUsd(parsedTx)
 
 				return {
 					costInUsd,

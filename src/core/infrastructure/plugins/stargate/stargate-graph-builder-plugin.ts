@@ -9,7 +9,7 @@ import {
 	StargateAPIError,
 	StargateAPIService,
 } from '../../layerzero-bridges/stargate/stargate-api.service'
-import { generateEdgeId } from '../helpers/context-helpers'
+import { PluginHelper } from '../helpers/plugin-helper'
 import { StargateGraphPlugin } from './stargate-graph-plugin'
 
 @Injectable()
@@ -20,6 +20,7 @@ export class StargateGraphBuilderPlugin
 	constructor(
 		readonly configService: ConfigService,
 		readonly stargateAPIService: StargateAPIService,
+		readonly pluginHelper: PluginHelper,
 	) {
 		super()
 	}
@@ -90,7 +91,11 @@ export class StargateGraphBuilderPlugin
 			const edge: Edge = {
 				from: pair[0],
 				to: pair[1],
-				id: generateEdgeId.bind(this)(pair[0], pair[1]),
+				id: this.pluginHelper.generateEdgeId(
+					this.name,
+					pair[0],
+					pair[1],
+				),
 			}
 
 			edges.push(edge)

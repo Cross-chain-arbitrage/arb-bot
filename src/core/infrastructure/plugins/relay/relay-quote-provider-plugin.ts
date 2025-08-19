@@ -6,19 +6,14 @@ import {
 	EdgeSnapshotFn,
 } from '../../../application/interfaces/edge-quote-provider'
 import { QuoteProviderPlugin } from '../../../application/interfaces/graph-plugin'
-import { PriceOracle } from '../../../application/interfaces/price-oracle'
 import { Edge } from '../../../domain/entities/edge'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
-import { GasPriceOracleService } from '../../evm/gas-price-oracle/gas-price-oracle.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { RelayService } from '../../relay/relay-service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { estimateTokenAmountFromUsd } from '../helpers/context-helpers'
-import { calcRate } from '../helpers/helpers'
-import { getExpectedTxCostInUsd } from '../helpers/solana-evm-context-helpers'
+import { PriceOracleHelper } from '../helpers/price-oracle-helper'
+import { SolanaEvmPluginHelper } from '../helpers/solana-evm-plugin-helper'
 import { RelayGraphPlugin } from './relay-graph-plugin'
 
 const QUOTE_USD_AMOUNT_IN = 500
@@ -47,10 +42,8 @@ export class RelayQuoteProviderPlugin
 {
 	constructor(
 		private readonly relayService: RelayService,
-		readonly priceOracle: PriceOracle,
-		readonly solanaTokenUtils: SolanaTokenUtils,
-		readonly tokenUtils: TokenUtils,
-		readonly gasPriceOracleService: GasPriceOracleService,
+		readonly solanaEvmPluginHelper: SolanaEvmPluginHelper,
+		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super()
 	}
@@ -67,10 +60,11 @@ export class RelayQuoteProviderPlugin
 	}
 
 	async buildSnapshotFn(edge: Edge<SolanaToken | Token | NativeCurrency>) {
-		const amountIn = await estimateTokenAmountFromUsd.bind(this)(
-			edge.from,
-			QUOTE_USD_AMOUNT_IN,
-		)
+		const amountIn =
+			await this.priceOracleHelper.estimateTokenAmountFromUsd(
+				edge.from,
+				QUOTE_USD_AMOUNT_IN,
+			)
 
 		const quote = await this.relayService.quote(
 			edge.from,
@@ -79,10 +73,11 @@ export class RelayQuoteProviderPlugin
 		)
 		const relayQuote = relayQuoteSchema.parse(quote.rawResult)
 
-		const costInUsd = await getExpectedTxCostInUsd.bind(this)(
-			edge.from.chainId,
-			quote.gasInNative,
-		)
+		const costInUsd =
+			await this.solanaEvmPluginHelper.getExpectedTxCostInUsd(
+				edge.from.chainId,
+				quote.gasInNative,
+			)
 
 		return this.buildApproximatedQuoteFunction(
 			edge,
@@ -118,7 +113,10 @@ export class RelayQuoteProviderPlugin
 			const amountOut = k * amountInTokenOutDecimals + b
 
 			return {
-				rate: calcRate(amountIn, BigInt(Math.floor(amountOut))),
+				rate: this.solanaEvmPluginHelper.calcRate(
+					amountIn,
+					BigInt(Math.floor(amountOut)),
+				),
 				amountOut: BigInt(Math.floor(amountOut)),
 				executionCostInUsd: costInUsd,
 			}

@@ -7,14 +7,12 @@ import {
 	EdgeSnapshotFn,
 } from '../../../application/interfaces/edge-quote-provider'
 import { QuoteProviderPlugin } from '../../../application/interfaces/graph-plugin'
-import { PriceOracle } from '../../../application/interfaces/price-oracle'
 import { Edge } from '../../../domain/entities/edge'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { calcRate } from '../helpers/helpers'
-import { getExpectedTxCostInUsd } from '../helpers/solana-context-helpers'
+import { PriceOracleHelper } from '../helpers/price-oracle-helper'
+import { SolanaPluginHelper } from '../helpers/solana-plugin-helper'
 import { RaydiumGraphPlugin } from './raydium-graph-plugin'
 import { InterpolationParams } from './types'
 
@@ -26,8 +24,8 @@ export class RaydiumQuoteProviderPlugin
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly raydiumService: RaydiumService,
-		readonly priceOracle: PriceOracle,
-		readonly solanaTokenUtils: SolanaTokenUtils,
+		readonly solanaPluginHelper: SolanaPluginHelper,
+		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super()
 	}
@@ -51,8 +49,6 @@ export class RaydiumQuoteProviderPlugin
 		const { minStartValueUsd, maxStartValueUsd, runCount } =
 			interpolationParams!
 
-		const fromTokenPrice = await this.priceOracle.getPrice(from)
-
 		const amountsInFormatter: number[] = []
 		const amountsOutFormatter: number[] = []
 		const promises = []
@@ -62,11 +58,13 @@ export class RaydiumQuoteProviderPlugin
 				minStartValueUsd +
 				((maxStartValueUsd - minStartValueUsd) * i) / runCount
 
-			const amountInFormatted = usdAmountIn / fromTokenPrice
+			const amountIn =
+				await this.priceOracleHelper.estimateTokenAmountFromUsd(
+					from,
+					usdAmountIn,
+				)
 
-			const amountIn = from.parseUnits(amountInFormatted.toString())
-
-			amountsInFormatter.push(amountInFormatted)
+			amountsInFormatter.push(Number(from.formatUnits(amountIn)))
 
 			promises.push(
 				this.raydiumService.quote({
@@ -79,9 +77,10 @@ export class RaydiumQuoteProviderPlugin
 
 		const results = await Promise.all(promises)
 
-		const executionCostInUsd = await getExpectedTxCostInUsd.bind(this)(
-			results[0].amountOut,
-		)
+		const executionCostInUsd =
+			await this.solanaPluginHelper.getExpectedTxCostInUsd(
+				results[0].amountOut,
+			)
 
 		for (const result of results) {
 			const amountOutFormatted = Number(to.formatUnits(result.amountOut))
@@ -97,7 +96,7 @@ export class RaydiumQuoteProviderPlugin
 			const amountOut = to.parseUnits(amountOutFormatted.toString())
 
 			return {
-				rate: calcRate(amountIn, amountOut),
+				rate: this.solanaPluginHelper.calcRate(amountIn, amountOut),
 				amountOut,
 				executionCostInUsd: executionCostInUsd,
 			}

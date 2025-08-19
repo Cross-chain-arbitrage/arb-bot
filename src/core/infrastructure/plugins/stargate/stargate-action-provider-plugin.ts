@@ -5,15 +5,12 @@ import {
 	CrosschainExecutingResult,
 } from '../../../application/interfaces/edge-action-provider'
 import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
-import { PriceOracle } from '../../../application/interfaces/price-oracle'
 import { Edge } from '../../../domain/entities/edge'
-import { ChainClientService } from '../../evm/chain-client/chain-client.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { StargateService } from '../../layerzero-bridges/stargate/stargate-service'
-import { estimateUsdFromTokenAmount } from '../helpers/context-helpers'
-import { getTxCostInUsd } from '../helpers/evm-context-helpers'
+import { EvmPluginHelper } from '../helpers/evm-plugin-helper'
+import { PriceOracleHelper } from '../helpers/price-oracle-helper'
 import { StargateGraphPlugin } from './stargate-graph-plugin'
 
 @Injectable()
@@ -23,9 +20,8 @@ export class StargateActionProviderPlugin
 {
 	constructor(
 		private readonly stargateService: StargateService,
-		private readonly chainClientService: ChainClientService,
-		readonly priceOracle: PriceOracle,
-		readonly tokenUtils: TokenUtils,
+		readonly evmPluginHelper: EvmPluginHelper,
+		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super()
 	}
@@ -73,19 +69,21 @@ export class StargateActionProviderPlugin
 			amountOut: bridgeResult.amountOut,
 			getExecutionCost: async () => {
 				const parsedTx =
-					await this.chainClientService.waitForTransactionReceipt(
+					await this.evmPluginHelper.waitForTransactionReceipt(
 						edge.from.chainId,
 						bridgeTx.srcTx.hash,
 					)
 
-				const txCostInUsd = await getTxCostInUsd.bind(this)(
+				const txCostInUsd = await this.evmPluginHelper.getTxCostInUsd(
 					edge.from.chainId,
 					parsedTx,
 				)
 
-				const bridgeFeeInUsd = await estimateUsdFromTokenAmount.bind(
-					this,
-				)(bridgeResult.lzFee.underlyingToken, bridgeResult.lzFee.amount)
+				const bridgeFeeInUsd =
+					await this.priceOracleHelper.estimateUsdFromTokenAmount(
+						bridgeResult.lzFee.underlyingToken,
+						bridgeResult.lzFee.amount,
+					)
 
 				return {
 					costInUsd: txCostInUsd + bridgeFeeInUsd,

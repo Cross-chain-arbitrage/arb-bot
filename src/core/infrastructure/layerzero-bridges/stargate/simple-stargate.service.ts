@@ -1,7 +1,6 @@
 import { Message } from '@layerzerolabs/scan-client'
 import { Injectable } from '@nestjs/common'
 import axios from 'axios'
-
 import { createCustomError } from '../../../../utils/common'
 import { ChainClientService } from '../../evm/chain-client/chain-client.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
@@ -118,7 +117,7 @@ export class SimpleStargateService {
 		amountOut: bigint
 		feeInNative: bigint
 		txHash: string
-		waitForTx: () => Promise<Message>
+		waitForBridge: () => Promise<Message>
 	}> {
 		const quoteResult = await this.requestQuote(tokenIn, tokenOut, amountIn)
 
@@ -159,7 +158,7 @@ export class SimpleStargateService {
 		return {
 			amountOut: BigInt(quoteResult.quotes[0].dstAmount),
 			feeInNative: BigInt(quoteResult.quotes[0].fees[0].amount),
-			waitForTx: () =>
+			waitForBridge: () =>
 				this.layerZeroScanService.waitForDeliveryStatus(txHash),
 			txHash,
 		}

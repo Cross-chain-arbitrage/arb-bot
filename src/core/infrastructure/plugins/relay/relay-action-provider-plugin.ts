@@ -6,20 +6,13 @@ import {
 	CrosschainExecutingResult,
 } from '../../../application/interfaces/edge-action-provider'
 import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
-import { PriceOracle } from '../../../application/interfaces/price-oracle'
 import { Edge } from '../../../domain/entities/edge'
-import { ChainClientService } from '../../evm/chain-client/chain-client.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { RelayService } from '../../relay/relay-service'
-import { SolanaClientService } from '../../solana/solana-client.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import {
-	getTxCostInUsd,
-	waitForTxResult,
-} from '../helpers/solana-evm-context-helpers'
+import { PriceOracleHelper } from '../helpers/price-oracle-helper'
+import { SolanaEvmPluginHelper } from '../helpers/solana-evm-plugin-helper'
 import { RelayGraphPlugin } from './relay-graph-plugin'
 
 @Injectable()
@@ -29,11 +22,8 @@ export class RelayActionProviderPlugin
 {
 	constructor(
 		private readonly relayService: RelayService,
-		readonly solanaTokenUtils: SolanaTokenUtils,
-		readonly priceOracle: PriceOracle,
-		readonly solanaClientService: SolanaClientService,
-		readonly chainClientService: ChainClientService,
-		readonly tokenUtils: TokenUtils,
+		readonly solanaEvmPluginHelper: SolanaEvmPluginHelper,
+		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super()
 	}
@@ -72,15 +62,17 @@ export class RelayActionProviderPlugin
 			dstTxId: awaitedBridge.dstTxHash,
 			amountOut: bridgeResult.amountOut,
 			getExecutionCost: async () => {
-				const parsedTx = await waitForTxResult.bind(this)(
-					edge.from.chainId,
-					bridgeResult.srcTxHash,
-				)
+				const parsedTx =
+					await this.solanaEvmPluginHelper.waitForTxResult(
+						edge.from.chainId,
+						bridgeResult.srcTxHash,
+					)
 
-				const costInUsd = await getTxCostInUsd.bind(this)(
-					edge.from.chainId,
-					parsedTx,
-				)
+				const costInUsd =
+					await this.solanaEvmPluginHelper.getTxCostInUsd(
+						edge.from.chainId,
+						parsedTx,
+					)
 
 				return {
 					costInUsd,

@@ -34,16 +34,6 @@ export class SolanaClientService implements OnModuleInit {
 		return txId
 	}
 
-	async waitForParsedTransaction(txId: string) {
-		// TODO: expand this method with different commitments and test it
-		const parsedTx = await this.connection.getParsedTransaction(txId, {
-			commitment: 'finalized',
-			maxSupportedTransactionVersion: 0,
-		})
-
-		return parsedTx!
-	}
-
 	getSignedTx(rawTx: string) {
 		const txBuf = Buffer.from(rawTx, 'base64')
 		const tx = VersionedTransaction.deserialize(txBuf)
