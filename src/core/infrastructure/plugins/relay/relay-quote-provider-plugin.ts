@@ -91,6 +91,7 @@ export class RelayQuoteProviderPlugin
 			costInUsd,
 		)
 	}
+
 	buildApproximatedQuoteFunction(
 		edge: Edge<SolanaToken | Token | NativeCurrency>,
 		amountIn: bigint,

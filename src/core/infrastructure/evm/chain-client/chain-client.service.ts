@@ -5,10 +5,12 @@ import {
 	createWalletClient,
 	fallback,
 	FallbackTransport,
+	Hash,
 	http,
 	HttpTransportConfig,
 	LocalAccount,
 	PublicClient,
+	TransactionReceipt,
 	Transport,
 	WalletClient,
 } from 'viem'
@@ -191,5 +193,14 @@ export class ChainClientService {
 			}, fullName)
 			.trim()
 		return nameWithoutKeywords
+	}
+
+	async waitForTransactionReceipt(
+		chainId: number,
+		txHash: Hash,
+	): Promise<TransactionReceipt> {
+		const client = this.getClient(chainId)
+
+		return client.waitForTransactionReceipt({ hash: txHash })
 	}
 }
