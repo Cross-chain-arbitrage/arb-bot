@@ -13,6 +13,7 @@ import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
+import { calcRate } from '../helpers/helpers'
 import { getExpectedTxCostInUsd } from '../helpers/solana-context-helpers'
 import { RaydiumGraphPlugin } from './raydium-graph-plugin'
 import { InterpolationParams } from './types'
@@ -96,14 +97,10 @@ export class RaydiumQuoteProviderPlugin
 			const amountOut = to.parseUnits(amountOutFormatted.toString())
 
 			return {
-				rate: this.calcRate(amountIn, amountOut),
+				rate: calcRate(amountIn, amountOut),
 				amountOut,
 				executionCostInUsd: executionCostInUsd,
 			}
 		}
-	}
-
-	calcRate(amountIn: bigint, amountOut: bigint) {
-		return -Math.log(Number(amountOut) / Number(amountIn))
 	}
 }
