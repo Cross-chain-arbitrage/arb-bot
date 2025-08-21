@@ -45,12 +45,12 @@ export class GraphBuilder {
 		return graph
 	}
 
-	buildActionProviderRegistry(
+	buildExecutorRegistry(
 		graph: Graph,
 		plugins: ExecutorPlugin[],
 		edgeOwners: Record<EdgeId, PluginId>,
 	): EdgeExecutorRegistry {
-		const edgeActionProviderRegistry: EdgeExecutorRegistry = {}
+		const edgeExecutorRegistry: EdgeExecutorRegistry = {}
 
 		plugins.forEach(() => {
 			for (const edge of graph.edges.values()) {
@@ -62,11 +62,11 @@ export class GraphBuilder {
 
 				const edgeActionProvider = plugin.buildEdgeExecutor(edge)
 
-				edgeActionProviderRegistry[edge.id] = edgeActionProvider
+				edgeExecutorRegistry[edge.id] = edgeActionProvider
 			}
 		})
 
-		return edgeActionProviderRegistry
+		return edgeExecutorRegistry
 	}
 
 	buildSnapshotBuilderRegistry(

@@ -7,15 +7,15 @@ import {
 } from '../../../interfaces/edge-executor'
 import { PathExecutorParams } from './types'
 
-const EDGE_ACTION_PROVIDER_REGISTRY_TOKEN = Symbol(
-	'EDGE_ACTION_PROVIDER_REGISTRY_TOKEN',
+export const EDGE_EXECUTOR_REGISTRY_TOKEN = Symbol(
+	'EDGE_EXECUTOR_REGISTRY_TOKEN',
 )
 
 @Injectable()
 export class PathExecutor {
 	constructor(
-		@Inject(EDGE_ACTION_PROVIDER_REGISTRY_TOKEN)
-		private readonly edgeActionProviderRegistry: EdgeExecutorRegistry,
+		@Inject(EDGE_EXECUTOR_REGISTRY_TOKEN)
+		private readonly edgeExecutorRegistry: EdgeExecutorRegistry,
 	) {}
 
 	async executePath(params: PathExecutorParams) {
@@ -57,7 +57,7 @@ export class PathExecutor {
 		step: Step,
 		nextAmountIn: bigint,
 	) {
-		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
+		const actionProvider = this.edgeExecutorRegistry[step.edge.id]
 
 		params.beforeExecuteEdgeHook?.(params.path, step, nextAmountIn)
 
@@ -77,7 +77,7 @@ export class PathExecutor {
 		step: Step,
 		executingResult: Execution,
 	) {
-		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
+		const actionProvider = this.edgeExecutorRegistry[step.edge.id]
 
 		params.beforeConfirmEdgeHook?.(params.path, step)
 
@@ -101,7 +101,7 @@ export class PathExecutor {
 		step: Step,
 		confirmingResult: Confirmation,
 	) {
-		const actionProvider = this.edgeActionProviderRegistry[step.edge.id]
+		const actionProvider = this.edgeExecutorRegistry[step.edge.id]
 
 		params.beforeGetExecutionCostHook?.(params.path, step)
 

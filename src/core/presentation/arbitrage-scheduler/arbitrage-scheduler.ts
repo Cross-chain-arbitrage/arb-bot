@@ -11,6 +11,7 @@ export class ArbitrageScheduler {
 	// TODO: read expressively from config
 	@Cron(CronExpression.EVERY_10_SECONDS, { waitForCompletion: true })
 	async findAndExecuteOpportunity() {
+		console.log('Finding and executing opportunity')
 		await this.arbitrageOrchestrator.findAndExecuteOpportunity()
 	}
 }

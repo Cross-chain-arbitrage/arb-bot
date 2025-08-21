@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
-import { NestFactory } from '@nestjs/core'
 import { SnapshotPlugin } from '../../core/application/interfaces/graph-plugin'
 import {
 	ArbitrageFinder,
@@ -15,7 +13,6 @@ import { OpportunityValidator } from '../../core/application/use-cases/finding/o
 import { SnapshotOpportunityFinder } from '../../core/application/use-cases/finding/snapshot-opportunity-finder/snapshot-opportunity-finder'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
 import { GraphWithEdgeOwners } from '../../core/application/use-cases/graph-builder/types'
-import { PriceOracleModule } from '../../core/infrastructure/price-oracle/price-oracle.module'
 import {
 	GRAPH_WITH_EDGE_OWNERS_TOKEN,
 	GraphBuilderModule,
@@ -23,12 +20,7 @@ import {
 import { snapshotPluginModules, snapshotPlugins } from './snapshot-plugins'
 
 @Module({
-	imports: [
-		ConfigModule.forRoot({ isGlobal: true }),
-		PriceOracleModule,
-		GraphBuilderModule,
-		...snapshotPluginModules,
-	],
+	imports: [GraphBuilderModule, ...snapshotPluginModules],
 	providers: [
 		ArbitrageFinder,
 		OpportunityFinder,
@@ -61,10 +53,6 @@ import { snapshotPluginModules, snapshotPlugins } from './snapshot-plugins'
 			},
 		},
 	],
+	exports: [ArbitrageFinder],
 })
-export class AppModule {}
-
-async function main() {
-	const app = await NestFactory.create(AppModule)
-}
-void main()
+export class ArbitrageFinderModule {}
