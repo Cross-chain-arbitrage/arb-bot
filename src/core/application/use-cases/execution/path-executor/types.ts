@@ -1,8 +1,5 @@
 import { Path, Step } from '../../../../domain/services/bellman-ford'
-import {
-	Confirmation,
-	EdgeActionProvider,
-} from '../../../interfaces/edge-action-provider'
+import { Confirmation, EdgeExecutor } from '../../../interfaces/edge-executor'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFn = (...args: any[]) => any
@@ -12,7 +9,7 @@ export interface PathExecutorParams {
 	path: Path
 	startAmount: bigint
 
-	executeWrapper?: Wrapper<EdgeActionProvider['execute']>
+	executeWrapper?: Wrapper<EdgeExecutor['execute']>
 	confirmWrapper?: Wrapper<() => Promise<Confirmation>>
 	getExecutionCostWrapper?: Wrapper<() => Promise<{ costInUsd: number }>>
 

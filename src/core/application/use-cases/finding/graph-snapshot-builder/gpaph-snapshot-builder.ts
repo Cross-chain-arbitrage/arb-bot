@@ -4,17 +4,17 @@ import {
 	GraphSnapshot,
 	Quote,
 } from '../../../../domain/value-objects/weighted-graph-snapshot'
-import { EdgeQuoteProviderRegistry } from '../../../interfaces/edge-quote-provider'
+import { EdgeSnapshotBuilderRegistry } from '../../../interfaces/edge-snapshot-builder'
 
-const EDGE_QUOTE_PROVIDER_REGISTRY_TOKEN = Symbol(
-	'EDGE_QUOTE_PROVIDER_REGISTRY_TOKEN',
+export const EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN = Symbol(
+	'EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN',
 )
 
 @Injectable()
 export class GraphSnapshotBuilder {
 	constructor(
-		@Inject(EDGE_QUOTE_PROVIDER_REGISTRY_TOKEN)
-		private readonly edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry,
+		@Inject(EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN)
+		private readonly edgeSnapshotBuilderRegistry: EdgeSnapshotBuilderRegistry,
 	) {}
 
 	async buildSnapshot(graph: Graph): Promise<GraphSnapshot> {
@@ -22,7 +22,7 @@ export class GraphSnapshotBuilder {
 
 		// TODO: make it parallel
 		for (const [edgeId] of graph.edges) {
-			const provider = this.edgeQuoteProviderRegistry[edgeId]
+			const provider = this.edgeSnapshotBuilderRegistry[edgeId]
 
 			const fn = await provider.buildEdgeSnapshotFn()
 

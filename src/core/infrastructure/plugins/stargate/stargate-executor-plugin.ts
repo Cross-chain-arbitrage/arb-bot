@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common'
 import {
-	CrosschainActionProvider,
 	CrosschainConfirmation,
 	CrosschainExecution,
-} from '../../../application/interfaces/edge-action-provider'
-import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
+	CrosschainExecutor,
+} from '../../../application/interfaces/edge-executor'
+import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { StargateService } from '../../layerzero-bridges/stargate/stargate-service'
 import { EvmPluginHelper } from '../helpers/evm-plugin-helper'
 import { PriceOracleHelper } from '../helpers/price-oracle-helper'
-import { StargateGraphPlugin } from './stargate-graph-plugin'
+import { StargatePlugin } from './stargate-plugin'
 
 @Injectable()
-export class StargateActionProviderPlugin
-	extends StargateGraphPlugin
-	implements ActionProviderPlugin
+export class StargateExecutorPlugin
+	extends StargatePlugin
+	implements ExecutorPlugin
 {
 	constructor(
 		private readonly stargateService: StargateService,
@@ -26,9 +26,7 @@ export class StargateActionProviderPlugin
 		super()
 	}
 
-	buildEdgeActionProvider(
-		edge: Edge<Token | NativeCurrency>,
-	): CrosschainActionProvider {
+	buildEdgeExecutor(edge: Edge<Token | NativeCurrency>): CrosschainExecutor {
 		return {
 			kind: 'crosschain',
 			edge,

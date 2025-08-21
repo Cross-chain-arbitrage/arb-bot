@@ -1,34 +1,35 @@
 import { Injectable } from '@nestjs/common'
-
 import {
-	CrosschainActionProvider,
 	CrosschainConfirmation,
 	CrosschainExecution,
-} from '../../../application/interfaces/edge-action-provider'
-import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
+	CrosschainExecutor,
+} from '../../../application/interfaces/edge-executor'
+import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { RelayService } from '../../relay/relay-service'
+import { SimpleStargateService } from '../../layerzero-bridges/stargate/simple-stargate.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { PriceOracleHelper } from '../helpers/price-oracle-helper'
 import { SolanaEvmPluginHelper } from '../helpers/solana-evm-plugin-helper'
-import { RelayGraphPlugin } from './relay-graph-plugin'
+import { SimpleStargatePlugin } from './simple-stargate-plugin'
 
 @Injectable()
-export class RelayActionProviderPlugin
-	extends RelayGraphPlugin
-	implements ActionProviderPlugin
+export class SimpleStargateExecutorPlugin
+	extends SimpleStargatePlugin
+	implements ExecutorPlugin
 {
 	constructor(
-		private readonly relayService: RelayService,
+		readonly simpleStargateService: SimpleStargateService,
 		readonly solanaEvmPluginHelper: SolanaEvmPluginHelper,
 		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super()
 	}
 
-	buildEdgeActionProvider(edge: Edge<SolanaToken>): CrosschainActionProvider {
+	buildEdgeExecutor(
+		edge: Edge<Token | NativeCurrency | SolanaToken>,
+	): CrosschainExecutor {
 		return {
 			kind: 'crosschain',
 			edge,
@@ -37,35 +38,43 @@ export class RelayActionProviderPlugin
 	}
 
 	async execute(
-		edge: Edge<SolanaToken>,
+		edge: Edge<Token | NativeCurrency | SolanaToken>,
 		amountIn: bigint,
 	): Promise<CrosschainExecution> {
-		const result = await this.relayService.bridge(
+		const result = await this.simpleStargateService.bridge(
 			edge.from,
 			edge.to,
 			amountIn,
 		)
 
 		return {
-			srcTxId: result.srcTxHash,
+			srcTxId: result.txHash,
 			confirm: this.confirm.bind(this, edge, result),
 		}
 	}
 
 	async confirm(
 		edge: Edge<SolanaToken | Token | NativeCurrency>,
-		bridgeResult: Awaited<ReturnType<typeof this.relayService.bridge>>,
+		bridgeResult: Awaited<
+			ReturnType<typeof this.simpleStargateService.bridge>
+		>,
 	): Promise<CrosschainConfirmation> {
 		const awaitedBridge = await bridgeResult.waitForBridge()
 
+		const dstTxId = awaitedBridge.dstTxHash
+
+		if (!dstTxId) {
+			throw new Error('Destination transaction not found')
+		}
+
 		return {
-			dstTxId: awaitedBridge.dstTxHash,
+			dstTxId,
 			amountOut: bridgeResult.amountOut,
 			getExecutionCost: async () => {
 				const parsedTx =
 					await this.solanaEvmPluginHelper.waitForTxResult(
 						edge.from.chainId,
-						bridgeResult.srcTxHash,
+						bridgeResult.txHash,
 					)
 
 				const costInUsd =

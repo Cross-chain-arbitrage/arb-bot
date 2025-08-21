@@ -5,7 +5,6 @@ import {
 	CurrencyState,
 	PriceOracle,
 } from '../../application/interfaces/price-oracle'
-import { ChainClientService } from '../evm/chain-client/chain-client.service'
 import { NativeCurrency } from '../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../evm/primitives/tokens/Token'
 import { TokenUtils } from '../evm/primitives/tokens/TokenUtils'
@@ -28,7 +27,6 @@ export class PriceOracleService implements PriceOracle {
 	private priceUpdater: NodeJS.Timeout | undefined
 
 	constructor(
-		readonly chainClientService: ChainClientService,
 		readonly solanaTokenUtils: SolanaTokenUtils,
 		readonly tokenUtils: TokenUtils,
 		readonly geckoTerminalService: GeckoTerminalService,

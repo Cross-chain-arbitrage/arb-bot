@@ -2,9 +2,9 @@ import { Inject, Injectable } from '@nestjs/common'
 import { Step } from '../../../../domain/services/bellman-ford'
 import {
 	Confirmation,
-	EdgeActionProviderRegistry,
+	EdgeExecutorRegistry,
 	Execution,
-} from '../../../interfaces/edge-action-provider'
+} from '../../../interfaces/edge-executor'
 import { PathExecutorParams } from './types'
 
 const EDGE_ACTION_PROVIDER_REGISTRY_TOKEN = Symbol(
@@ -15,7 +15,7 @@ const EDGE_ACTION_PROVIDER_REGISTRY_TOKEN = Symbol(
 export class PathExecutor {
 	constructor(
 		@Inject(EDGE_ACTION_PROVIDER_REGISTRY_TOKEN)
-		private readonly edgeActionProviderRegistry: EdgeActionProviderRegistry,
+		private readonly edgeActionProviderRegistry: EdgeExecutorRegistry,
 	) {}
 
 	async executePath(params: PathExecutorParams) {

@@ -1,9 +1,10 @@
 import { Address, formatUnits, isAddressEqual, parseUnits } from 'viem'
 import { shortenAddress } from '../../../../../utils/common'
+import { Token } from '../../../../domain/entities/token'
 import { ChainClientService } from '../../chain-client/chain-client.service'
 import { BaseContract } from '../contracts/BaseContract'
 
-export abstract class TokenBase extends BaseContract implements BaseToken {
+export abstract class TokenBase extends BaseContract implements Token {
 	public readonly symbol: string
 	public readonly decimals: number
 	public readonly name?: string

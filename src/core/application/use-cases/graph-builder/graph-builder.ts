@@ -1,35 +1,37 @@
+import { Injectable, Logger } from '@nestjs/common'
 import { Edge } from '../../../domain/entities/edge'
 import { Graph } from '../../../domain/entities/graph'
 import { Node } from '../../../domain/entities/node'
-import { EdgeActionProviderRegistry } from '../../interfaces/edge-action-provider'
-import { EdgeQuoteProviderRegistry } from '../../interfaces/edge-quote-provider'
+import { EdgeExecutorRegistry } from '../../interfaces/edge-executor'
+import { EdgeSnapshotBuilderRegistry } from '../../interfaces/edge-snapshot-builder'
 import {
-	ActionProviderPlugin,
-	GraphBuilderPlugin,
-	QuoteProviderPlugin,
+	ExecutorPlugin,
+	GraphPlugin,
+	SnapshotPlugin,
 } from '../../interfaces/graph-plugin'
+import { GraphWithEdgeOwners, PluginId } from './types'
 
+@Injectable()
 export class GraphBuilder {
+	private readonly logger = new Logger(GraphBuilder.name)
+
 	constructor() {}
 
-	async buildGraphWithEdgeOwners<T extends GraphBuilderPlugin>(
-		plugins: T[],
-	): Promise<{
-		graph: Graph
-		edgeOwners: Record<EdgeId, T>
-	}> {
-		const edgeOwners: Record<EdgeId, T> = {}
+	async buildGraphWithEdgeOwners(
+		plugins: GraphPlugin[],
+	): Promise<GraphWithEdgeOwners> {
+		const edgeOwners: Record<EdgeId, PluginId> = {}
 
 		const graph = await this.buildGraph(plugins, (edge, plugin) => {
-			edgeOwners[edge.id] = plugin
+			edgeOwners[edge.id] = plugin.id
 		})
 
 		return { graph, edgeOwners }
 	}
 
-	async buildGraph<T extends GraphBuilderPlugin>(
-		plugins: T[],
-		onEdgeAdded: (edge: Edge, plugin: T) => void,
+	async buildGraph(
+		plugins: GraphPlugin[],
+		onEdgeAdded: (edge: Edge, plugin: GraphPlugin) => void,
 	): Promise<Graph> {
 		const graph = new Graph()
 
@@ -45,19 +47,20 @@ export class GraphBuilder {
 
 	buildActionProviderRegistry(
 		graph: Graph,
-		plugins: GraphBuilderPlugin[],
-		edgeOwners: Record<EdgeId, ActionProviderPlugin>,
-	): EdgeActionProviderRegistry {
-		const edgeActionProviderRegistry: EdgeActionProviderRegistry = {}
+		plugins: ExecutorPlugin[],
+		edgeOwners: Record<EdgeId, PluginId>,
+	): EdgeExecutorRegistry {
+		const edgeActionProviderRegistry: EdgeExecutorRegistry = {}
 
 		plugins.forEach(() => {
 			for (const edge of graph.edges.values()) {
-				const edgeOwner = edgeOwners[edge.id]
+				const pluginId = edgeOwners[edge.id]
 
-				if (!edgeOwner) continue
+				const plugin = plugins.find((p) => p.id === pluginId)
 
-				const edgeActionProvider =
-					edgeOwner.buildEdgeActionProvider(edge)
+				if (!plugin) throw new Error(`Plugin ${pluginId} not found`)
+
+				const edgeActionProvider = plugin.buildEdgeExecutor(edge)
 
 				edgeActionProviderRegistry[edge.id] = edgeActionProvider
 			}
@@ -66,35 +69,39 @@ export class GraphBuilder {
 		return edgeActionProviderRegistry
 	}
 
-	buildQuoteProviderRegistry(
+	buildSnapshotBuilderRegistry(
 		graph: Graph,
-		plugins: QuoteProviderPlugin[],
-		edgeOwners: Record<EdgeId, QuoteProviderPlugin>,
-	): EdgeQuoteProviderRegistry {
-		const edgeQuoteProviderRegistry: EdgeQuoteProviderRegistry = {}
+		plugins: SnapshotPlugin[],
+		edgeOwners: Record<EdgeId, PluginId>,
+	): EdgeSnapshotBuilderRegistry {
+		const edgeSnapshotBuilderRegistry: EdgeSnapshotBuilderRegistry = {}
 
 		plugins.forEach(() => {
 			for (const edge of graph.edges.values()) {
-				const edgeOwner = edgeOwners[edge.id]
+				const pluginId = edgeOwners[edge.id]
 
-				if (!edgeOwner) continue
+				const plugin = plugins.find((p) => p.id === pluginId)
 
-				const edgeQuoteProvider = edgeOwner.buildEdgeQuoteProvider(edge)
+				if (!plugin) throw new Error(`Plugin ${pluginId} not found`)
 
-				edgeQuoteProviderRegistry[edge.id] = edgeQuoteProvider
+				const edgeQuoteProvider = plugin.buildEdgeSnapshotBuilder(edge)
+
+				edgeSnapshotBuilderRegistry[edge.id] = edgeQuoteProvider
 			}
 		})
 
-		return edgeQuoteProviderRegistry
+		return edgeSnapshotBuilderRegistry
 	}
 
-	private async addPossibleEdges<T extends GraphBuilderPlugin>(
+	private async addPossibleEdges(
 		graph: Graph,
-		plugins: T[],
-		onEdgeAdded: (edge: Edge, plugin: T) => void,
+		plugins: GraphPlugin[],
+		onEdgeAdded: (edge: Edge, plugin: GraphPlugin) => void,
 	) {
 		for (const plugin of plugins) {
 			if (!plugin.findPossibleEdges) continue
+
+			this.logger.log(`Finding possible edges for plugin ${plugin.id}`)
 
 			const edges = await plugin.findPossibleEdges(
 				Array.from(graph.nodes.values()),
@@ -108,13 +115,18 @@ export class GraphBuilder {
 		}
 	}
 
-	private async addDeterminedNodesAndEdges<T extends GraphBuilderPlugin>(
+	private async addDeterminedNodesAndEdges(
 		graph: Graph,
-		plugins: T[],
-		onEdgeAdded: (edge: Edge, plugin: T) => void,
+		plugins: GraphPlugin[],
+		onEdgeAdded: (edge: Edge, plugin: GraphPlugin) => void,
 	) {
 		for (const plugin of plugins) {
 			if (!plugin.getDeterminedNodesAndEdges) continue
+
+			this.logger.log(
+				`Getting determined nodes and edges for plugin ${plugin.id}`,
+			)
+
 			const { nodes, edges } = await plugin.getDeterminedNodesAndEdges()
 
 			nodes.forEach((node) => {
@@ -129,12 +141,11 @@ export class GraphBuilder {
 		}
 	}
 
-	private async addPossibleNodes(
-		graph: Graph,
-		plugins: GraphBuilderPlugin[],
-	) {
+	private async addPossibleNodes(graph: Graph, plugins: GraphPlugin[]) {
 		for (const plugin of plugins) {
 			if (!plugin.findPossibleNodes) continue
+
+			this.logger.log(`Finding possible nodes for plugin ${plugin.id}`)
 
 			const nodes = await plugin.findPossibleNodes()
 
@@ -148,7 +159,10 @@ export class GraphBuilder {
 		const existingNode = graph.nodes.get(node.id)
 
 		if (!existingNode) {
+			this.logger.log(`Adding node ${node.id}`)
+
 			graph.addNode(node)
+
 			return true
 		}
 
@@ -159,7 +173,10 @@ export class GraphBuilder {
 		const existingEdge = graph.edges.get(edge.id)
 
 		if (!existingEdge) {
+			this.logger.log(`Adding edge ${edge.id}`)
+
 			graph.addEdge(edge)
+
 			return true
 		}
 

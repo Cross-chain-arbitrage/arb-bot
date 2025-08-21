@@ -4,7 +4,7 @@ import { formatUnits, parseUnits } from './solana-tokens-helpers'
 
 export const solanaNativeAddress = 'address-plug'
 
-export class SolanaNative implements BaseToken {
+export class SolanaNative implements Token {
 	chainId = SOLANA_CHAIN_ID
 	address = solanaNativeAddress
 	decimals = 9

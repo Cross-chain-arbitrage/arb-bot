@@ -1,13 +1,13 @@
 import { Edge } from '../../domain/entities/edge'
 import { Node } from '../../domain/entities/node'
-import { EdgeActionProvider } from './edge-action-provider'
-import { EdgeQuoteProvider } from './edge-quote-provider'
+import { EdgeExecutor } from './edge-executor'
+import { EdgeSnapshotBuilder } from './edge-snapshot-builder'
 
-export interface GraphPlugin {
-	name: string
+export interface Plugin {
+	id: string
 }
 
-export interface GraphBuilderPlugin extends GraphPlugin {
+export interface GraphPlugin extends Plugin {
 	findPossibleNodes?(): Promise<Node[]>
 
 	findPossibleEdges?(nodes: Node[]): Promise<Edge[]>
@@ -15,10 +15,10 @@ export interface GraphBuilderPlugin extends GraphPlugin {
 	getDeterminedNodesAndEdges?(): Promise<{ nodes: Node[]; edges: Edge[] }>
 }
 
-export interface QuoteProviderPlugin extends GraphPlugin {
-	buildEdgeQuoteProvider(edge: Edge): EdgeQuoteProvider
+export interface SnapshotPlugin extends Plugin {
+	buildEdgeSnapshotBuilder(edge: Edge): EdgeSnapshotBuilder
 }
 
-export interface ActionProviderPlugin extends GraphPlugin {
-	buildEdgeActionProvider(edge: Edge): EdgeActionProvider
+export interface ExecutorPlugin extends Plugin {
+	buildEdgeExecutor(edge: Edge): EdgeExecutor
 }

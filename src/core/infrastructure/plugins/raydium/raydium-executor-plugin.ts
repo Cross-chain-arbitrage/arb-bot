@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common'
 
 import {
-	InchainActionProvider,
 	InchainConfirmation,
 	InchainExecution,
-} from '../../../application/interfaces/edge-action-provider'
-import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
+	InchainExecutor,
+} from '../../../application/interfaces/edge-executor'
+import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { PriceOracleHelper } from '../helpers/price-oracle-helper'
 import { SolanaPluginHelper } from '../helpers/solana-plugin-helper'
-import { RaydiumGraphPlugin } from './raydium-graph-plugin'
+import { RaydiumPlugin } from './raydium-plugin'
 
 @Injectable()
-export class RaydiumActionProviderPlugin
-	extends RaydiumGraphPlugin
-	implements ActionProviderPlugin
+export class RaydiumExecutorPlugin
+	extends RaydiumPlugin
+	implements ExecutorPlugin
 {
 	constructor(
 		private readonly raydiumService: RaydiumService,
@@ -26,7 +26,7 @@ export class RaydiumActionProviderPlugin
 		super()
 	}
 
-	buildEdgeActionProvider(edge: Edge<SolanaToken>): InchainActionProvider {
+	buildEdgeExecutor(edge: Edge<SolanaToken>): InchainExecutor {
 		return {
 			kind: 'inchain',
 			edge,

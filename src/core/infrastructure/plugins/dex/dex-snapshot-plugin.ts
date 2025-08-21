@@ -1,32 +1,31 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import {
-	EdgeQuoteProvider,
+	EdgeSnapshotBuilder,
 	EdgeSnapshotFn,
-} from '../../../application/interfaces/edge-quote-provider'
-import { QuoteProviderPlugin } from '../../../application/interfaces/graph-plugin'
+} from '../../../application/interfaces/edge-snapshot-builder'
+import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { EvmPluginHelper } from '../helpers/evm-plugin-helper'
 import { InterpolationHelper } from '../helpers/interpolation-helper'
-import { DexGraphPlugin } from './dex-graph-plugin'
+import { DexPlugin } from './dex-plugin'
+import { EdgeToPoolRegistry } from './edge-to-pool-registry'
 import { DexConfig } from './types'
 
 @Injectable()
-export class DexQuoteProviderPlugin
-	extends DexGraphPlugin
-	implements QuoteProviderPlugin
-{
+export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly interpolationHelper: InterpolationHelper,
 		private readonly evmPluginHelper: EvmPluginHelper,
+		private readonly edgeToPoolRegistry: EdgeToPoolRegistry,
 	) {
 		super()
 	}
 
-	buildEdgeQuoteProvider(edge: Edge<Token>): EdgeQuoteProvider {
+	buildEdgeSnapshotBuilder(edge: Edge<Token>): EdgeSnapshotBuilder {
 		return {
 			edge,
 			buildEdgeSnapshotFn: async () => {
@@ -36,11 +35,7 @@ export class DexQuoteProviderPlugin
 	}
 
 	async buildSnapshotFn(edge: Edge<Token>): Promise<EdgeSnapshotFn> {
-		const pool = this.edgeIdToPool[edge.id]
-
-		if (!pool) {
-			throw new Error('Pool not found with edge id: ' + edge.id)
-		}
+		const pool = this.edgeToPoolRegistry.getPool(edge)
 
 		const config = this.configService.get<DexConfig>('dex')
 

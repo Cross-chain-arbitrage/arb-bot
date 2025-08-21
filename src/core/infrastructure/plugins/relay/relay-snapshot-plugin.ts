@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common'
 import z from 'zod'
 import { convertDecimals } from '../../../../utils/common'
 import {
-	EdgeQuoteProvider,
+	EdgeSnapshotBuilder,
 	EdgeSnapshotFn,
-} from '../../../application/interfaces/edge-quote-provider'
-import { QuoteProviderPlugin } from '../../../application/interfaces/graph-plugin'
+} from '../../../application/interfaces/edge-snapshot-builder'
+import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
@@ -14,7 +14,7 @@ import { RelayService } from '../../relay/relay-service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { PriceOracleHelper } from '../helpers/price-oracle-helper'
 import { SolanaEvmPluginHelper } from '../helpers/solana-evm-plugin-helper'
-import { RelayGraphPlugin } from './relay-graph-plugin'
+import { RelayPlugin } from './relay-plugin'
 
 const QUOTE_USD_AMOUNT_IN = 500
 
@@ -36,10 +36,7 @@ const relayQuoteSchema = z.object({
 })
 
 @Injectable()
-export class RelayQuoteProviderPlugin
-	extends RelayGraphPlugin
-	implements QuoteProviderPlugin
-{
+export class RelaySnapshotPlugin extends RelayPlugin implements SnapshotPlugin {
 	constructor(
 		private readonly relayService: RelayService,
 		readonly solanaEvmPluginHelper: SolanaEvmPluginHelper,
@@ -48,9 +45,9 @@ export class RelayQuoteProviderPlugin
 		super()
 	}
 
-	buildEdgeQuoteProvider(
+	buildEdgeSnapshotBuilder(
 		edge: Edge<SolanaToken | Token | NativeCurrency>,
-	): EdgeQuoteProvider {
+	): EdgeSnapshotBuilder {
 		return {
 			edge,
 			buildEdgeSnapshotFn: async () => {

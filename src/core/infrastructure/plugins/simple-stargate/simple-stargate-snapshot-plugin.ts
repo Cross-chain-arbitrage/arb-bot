@@ -1,36 +1,37 @@
 import { Injectable } from '@nestjs/common'
 import {
-	EdgeQuoteProvider,
+	EdgeSnapshotBuilder,
 	EdgeSnapshotFn,
-} from '../../../application/interfaces/edge-quote-provider'
-import { QuoteProviderPlugin } from '../../../application/interfaces/graph-plugin'
+} from '../../../application/interfaces/edge-snapshot-builder'
+import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { StargateService } from '../../layerzero-bridges/stargate/stargate-service'
-import { EvmPluginHelper } from '../helpers/evm-plugin-helper'
+import { SimpleStargateService } from '../../layerzero-bridges/stargate/simple-stargate.service'
+import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { PriceOracleHelper } from '../helpers/price-oracle-helper'
-import { StargateGraphPlugin } from './stargate-graph-plugin'
+import { SolanaEvmPluginHelper } from '../helpers/solana-evm-plugin-helper'
+import { SimpleStargatePlugin } from './simple-stargate-plugin'
 
 const QUOTE_USD_AMOUNT_IN = 500
 
 @Injectable()
-export class StargateQuoteProviderPlugin
-	extends StargateGraphPlugin
-	implements QuoteProviderPlugin
+export class SimpleStargateSnapshotPlugin
+	extends SimpleStargatePlugin
+	implements SnapshotPlugin
 {
 	constructor(
-		private readonly stargateService: StargateService,
-		readonly evmPluginHelper: EvmPluginHelper,
+		readonly simpleStargateService: SimpleStargateService,
 		readonly priceOracleHelper: PriceOracleHelper,
+		readonly solanaEvmPluginHelper: SolanaEvmPluginHelper,
 	) {
 		super()
 	}
 
-	buildEdgeQuoteProvider(
-		edge: Edge<Token | NativeCurrency>,
-	): EdgeQuoteProvider {
+	buildEdgeSnapshotBuilder(
+		edge: Edge<Token | NativeCurrency | SolanaToken>,
+	): EdgeSnapshotBuilder {
 		return {
 			edge,
 			buildEdgeSnapshotFn: async () => {
@@ -40,7 +41,7 @@ export class StargateQuoteProviderPlugin
 	}
 
 	async buildSnapshotFn(
-		edge: Edge<Token | NativeCurrency>,
+		edge: Edge<Token | NativeCurrency | SolanaToken>,
 	): Promise<EdgeSnapshotFn> {
 		const amountIn =
 			await this.priceOracleHelper.estimateTokenAmountFromUsd(
@@ -48,22 +49,19 @@ export class StargateQuoteProviderPlugin
 				QUOTE_USD_AMOUNT_IN,
 			)
 
-		const { amountOut, lzFee, gas } =
-			await this.stargateService.quoteBridge(
-				edge.from,
-				amountIn,
-				edge.to.chainId,
+		const { amountOut, gas, feeInNative } =
+			await this.simpleStargateService.quote(edge.from, edge.to, amountIn)
+
+		const txCostInUsd =
+			await this.solanaEvmPluginHelper.getExpectedTxCostInUsd(
+				edge.from.chainId,
+				gas,
 			)
 
-		const txCostInUsd = await this.evmPluginHelper.getExpectedTxCostInUsd(
-			edge.from.chainId,
-			gas,
-		)
-
 		const bridgeFeeInUsd =
-			await this.priceOracleHelper.estimateUsdFromTokenAmount(
-				lzFee.underlyingToken,
-				lzFee.amount,
+			await this.solanaEvmPluginHelper.getUsdCostOfNativeAmount(
+				edge.from.chainId,
+				feeInNative,
 			)
 
 		const executionCostInUsd = bridgeFeeInUsd + txCostInUsd
@@ -88,7 +86,7 @@ export class StargateQuoteProviderPlugin
 			const amountOut = BigInt(Math.floor(amountOutNumber))
 
 			return {
-				rate: this.evmPluginHelper.calcRate(amountIn, amountOut),
+				rate: this.solanaEvmPluginHelper.calcRate(amountIn, amountOut),
 				amountOut,
 				executionCostInUsd: costInUsd,
 			}

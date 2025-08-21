@@ -1,26 +1,27 @@
 import { Injectable } from '@nestjs/common'
 import {
-	EdgeActionProvider,
+	EdgeExecutor,
 	InchainConfirmation,
 	InchainExecution,
-} from '../../../application/interfaces/edge-action-provider'
-import { ActionProviderPlugin } from '../../../application/interfaces/graph-plugin'
+} from '../../../application/interfaces/edge-executor'
+import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Pool } from '../../dex/base/pool'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { EvmPluginHelper } from '../helpers/evm-plugin-helper'
-import { DexGraphPlugin } from './dex-graph-plugin'
+import { DexPlugin } from './dex-plugin'
+import { EdgeToPoolRegistry } from './edge-to-pool-registry'
 
 @Injectable()
-export class DexActionProviderPlugin
-	extends DexGraphPlugin
-	implements ActionProviderPlugin
-{
-	constructor(private readonly evmPluginHelper: EvmPluginHelper) {
+export class DexExecutorPlugin extends DexPlugin implements ExecutorPlugin {
+	constructor(
+		private readonly evmPluginHelper: EvmPluginHelper,
+		private readonly edgeToPoolRegistry: EdgeToPoolRegistry,
+	) {
 		super()
 	}
 
-	buildEdgeActionProvider(edge: Edge<Token>): EdgeActionProvider {
+	buildEdgeExecutor(edge: Edge<Token>): EdgeExecutor {
 		return {
 			kind: 'inchain',
 			edge,
@@ -32,11 +33,7 @@ export class DexActionProviderPlugin
 		edge: Edge<Token>,
 		amountIn: bigint,
 	): Promise<InchainExecution> {
-		const pool = this.edgeIdToPool[edge.id]
-
-		if (!pool) {
-			throw new Error('Pool not found with edge id: ' + edge.id)
-		}
+		const pool = this.edgeToPoolRegistry.getPool(edge)
 
 		const swapResult = await pool.swap({
 			tokenIn: edge.from,

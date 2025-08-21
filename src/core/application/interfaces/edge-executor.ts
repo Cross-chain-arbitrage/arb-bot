@@ -12,7 +12,7 @@ export type InchainExecution = {
 	confirm: () => Promise<InchainConfirmation>
 }
 
-export interface InchainActionProvider {
+export interface InchainExecutor {
 	kind: 'inchain'
 	edge: Edge
 	execute(amountIn: bigint): Promise<InchainExecution>
@@ -31,7 +31,7 @@ export type CrosschainExecution = {
 	confirm: () => Promise<CrosschainConfirmation>
 }
 
-export interface CrosschainActionProvider {
+export interface CrosschainExecutor {
 	kind: 'crosschain'
 	edge: Edge
 	execute(amountIn: bigint): Promise<CrosschainExecution>
@@ -42,10 +42,8 @@ export interface CrosschainActionProvider {
 export type Confirmation = InchainConfirmation | CrosschainConfirmation
 export type Execution = InchainExecution | CrosschainExecution
 
-export type EdgeActionProvider =
-	| InchainActionProvider
-	| CrosschainActionProvider
+export type EdgeExecutor = InchainExecutor | CrosschainExecutor
 
-export interface EdgeActionProviderRegistry {
-	[edgeId: EdgeId]: EdgeActionProvider
+export interface EdgeExecutorRegistry {
+	[edgeId: EdgeId]: EdgeExecutor
 }

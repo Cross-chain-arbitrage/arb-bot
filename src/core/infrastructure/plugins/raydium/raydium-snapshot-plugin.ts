@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 
 import {
-	EdgeQuoteProvider,
+	EdgeSnapshotBuilder,
 	EdgeSnapshotFn,
-} from '../../../application/interfaces/edge-quote-provider'
-import { QuoteProviderPlugin } from '../../../application/interfaces/graph-plugin'
+} from '../../../application/interfaces/edge-snapshot-builder'
+import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { RaydiumService } from '../../raydium/raydium.service'
@@ -16,12 +16,12 @@ import {
 } from '../helpers/interpolation-helper'
 import { PriceOracleHelper } from '../helpers/price-oracle-helper'
 import { SolanaPluginHelper } from '../helpers/solana-plugin-helper'
-import { RaydiumGraphPlugin } from './raydium-graph-plugin'
+import { RaydiumPlugin } from './raydium-plugin'
 
 @Injectable()
-export class RaydiumQuoteProviderPlugin
-	extends RaydiumGraphPlugin
-	implements QuoteProviderPlugin
+export class RaydiumSnapshotPlugin
+	extends RaydiumPlugin
+	implements SnapshotPlugin
 {
 	constructor(
 		private readonly configService: ConfigService,
@@ -33,7 +33,7 @@ export class RaydiumQuoteProviderPlugin
 		super()
 	}
 
-	buildEdgeQuoteProvider(edge: Edge<SolanaToken>): EdgeQuoteProvider {
+	buildEdgeSnapshotBuilder(edge: Edge<SolanaToken>): EdgeSnapshotBuilder {
 		return {
 			edge,
 			buildEdgeSnapshotFn: async () => {

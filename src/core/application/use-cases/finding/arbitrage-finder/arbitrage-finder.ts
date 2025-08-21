@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Graph } from '../../../../domain/entities/graph'
 import { OpportunityFinder } from '../opportunity-finder.ts/opportunity-finder'
@@ -6,7 +6,7 @@ import { OpportunityValidator } from '../opportunity-validator/opportunity-valid
 import { ValidationResult } from '../opportunity-validator/types'
 import { GraphArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
 
-const GRAPH_TOKEN = Symbol('GRAPH_TOKEN')
+export const GRAPH_TOKEN = Symbol('GRAPH_TOKEN')
 
 @Injectable()
 export class ArbitrageFinder {
@@ -14,7 +14,6 @@ export class ArbitrageFinder {
 		private readonly opportunityFinder: OpportunityFinder,
 		private readonly opportunityValidator: OpportunityValidator,
 		private readonly configService: ConfigService,
-		private readonly logger: Logger,
 		@Inject(GRAPH_TOKEN) private readonly graph: Graph,
 	) {}
 

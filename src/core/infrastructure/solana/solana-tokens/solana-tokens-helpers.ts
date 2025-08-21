@@ -1,4 +1,6 @@
-export function formatUnits(this: BaseToken, amount: bigint): string {
+import { Token } from '../../../domain/entities/token'
+
+export function formatUnits(this: Token, amount: bigint): string {
 	let display = amount.toString()
 
 	const negative = display.startsWith('-')
@@ -17,7 +19,7 @@ export function formatUnits(this: BaseToken, amount: bigint): string {
 	}`
 }
 
-export function parseUnits(this: BaseToken, amount: string | bigint): bigint {
+export function parseUnits(this: Token, amount: string | bigint): bigint {
 	const value = amount.toString()
 	if (!/^(-?)([0-9]*)\.?([0-9]*)$/.test(value))
 		throw new Error(`Invalid decimal number: ${value}`)
