@@ -18,6 +18,5 @@ export type ValidationResult =
 						expectedRevenue: number
 						expectedProfit: number
 						executionCostUsd: number
-						minProfitUsd: number
 				  }
 	  }

@@ -1,0 +1,3 @@
+export const GRAPH_WITH_EDGE_OWNERS_TOKEN = Symbol(
+	'GRAPH_WITH_EDGE_OWNERS_TOKEN',
+)

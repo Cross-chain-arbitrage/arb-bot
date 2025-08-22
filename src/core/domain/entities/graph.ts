@@ -9,9 +9,9 @@ export class GraphError extends Error {
 	}
 }
 
-export class Graph {
+export class Graph<T extends object = object> {
 	edges: Map<EdgeId, Edge> = new Map()
-	nodes: Map<NodeId, Node> = new Map()
+	nodes: Map<NodeId, Node<T>> = new Map()
 
 	constructor() {}
 
@@ -34,7 +34,7 @@ export class Graph {
 		this.edges.set(edge.id, edge)
 	}
 
-	addNode(node: Node) {
+	addNode(node: Node<T>) {
 		if (this.nodes.has(node.id)) {
 			throw new GraphError(`Node ${node.id} already exists`)
 		}

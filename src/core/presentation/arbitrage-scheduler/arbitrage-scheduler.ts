@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { ArbitrageOrchestrator } from '../../application/use-cases/arbitrage-orchestrator/arbitrage-orchestrator'
 
 @Injectable()
-export class ArbitrageScheduler {
+export class ArbitrageScheduler implements OnModuleInit {
 	constructor(
 		private readonly arbitrageOrchestrator: ArbitrageOrchestrator,
 	) {}
@@ -11,7 +11,10 @@ export class ArbitrageScheduler {
 	// TODO: read expressively from config
 	@Cron(CronExpression.EVERY_10_SECONDS, { waitForCompletion: true })
 	async findAndExecuteOpportunity() {
-		console.log('Finding and executing opportunity')
 		await this.arbitrageOrchestrator.findAndExecuteOpportunity()
+	}
+
+	onModuleInit() {
+		this.arbitrageOrchestrator.reportGraph()
 	}
 }

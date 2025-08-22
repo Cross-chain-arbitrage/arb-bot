@@ -11,12 +11,10 @@ import {
 import { OpportunityFinder } from '../../core/application/use-cases/finding/opportunity-finder.ts/opportunity-finder'
 import { OpportunityValidator } from '../../core/application/use-cases/finding/opportunity-validator/opportunity-validator'
 import { SnapshotOpportunityFinder } from '../../core/application/use-cases/finding/snapshot-opportunity-finder/snapshot-opportunity-finder'
+import { GRAPH_WITH_EDGE_OWNERS_TOKEN } from '../../core/application/use-cases/graph-builder/di-tokens'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
 import { GraphWithEdgeOwners } from '../../core/application/use-cases/graph-builder/types'
-import {
-	GRAPH_WITH_EDGE_OWNERS_TOKEN,
-	GraphBuilderModule,
-} from '../builder/graph-builder.module'
+import { GraphBuilderModule } from '../builder/graph-builder.module'
 import { snapshotPluginModules, snapshotPlugins } from './snapshot-plugins'
 
 @Module({

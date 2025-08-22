@@ -46,7 +46,6 @@ export class OpportunityValidator {
 					expectedRevenue,
 					expectedProfit,
 					executionCostUsd: totalExecutionCostInUsd,
-					minProfitUsd: params.minProfitUsd,
 				},
 			}
 		}

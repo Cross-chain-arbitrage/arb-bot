@@ -5,12 +5,10 @@ import {
 	EDGE_EXECUTOR_REGISTRY_TOKEN,
 	PathExecutor,
 } from '../../core/application/use-cases/execution/path-executor/path-executor'
+import { GRAPH_WITH_EDGE_OWNERS_TOKEN } from '../../core/application/use-cases/graph-builder/di-tokens'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
 import { GraphWithEdgeOwners } from '../../core/application/use-cases/graph-builder/types'
-import {
-	GRAPH_WITH_EDGE_OWNERS_TOKEN,
-	GraphBuilderModule,
-} from '../builder/graph-builder.module'
+import { GraphBuilderModule } from '../builder/graph-builder.module'
 import { executorPluginModules, executorPlugins } from './executor-plugins'
 
 @Module({
