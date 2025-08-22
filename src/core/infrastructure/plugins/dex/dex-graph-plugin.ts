@@ -6,6 +6,7 @@ import { Node } from '../../../domain/entities/node'
 import { Pool } from '../../dex/base/pool'
 import { PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
+import { DEX_CONFIG_KEY } from './configuration/dex-config'
 import { DexPlugin } from './dex-plugin'
 import { EdgeToPoolRegistry } from './edge-to-pool-registry'
 import { DexConfig } from './types'
@@ -23,7 +24,7 @@ export class DexGraphPlugin extends DexPlugin implements GraphPlugin {
 	}
 
 	async findPossibleNodes(): Promise<Node[]> {
-		const config = this.configService.get<DexConfig>('dex')
+		const config = this.configService.get<DexConfig>(DEX_CONFIG_KEY)
 
 		this.pools = await this.poolUtils.createPools(config!.pools)
 

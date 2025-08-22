@@ -10,10 +10,10 @@ import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { EvmPluginHelper } from '../helpers/evm-plugin-helper'
 import { InterpolationHelper } from '../helpers/interpolation-helper'
+import { DEX_CONFIG_KEY } from './configuration/dex-config'
 import { DexPlugin } from './dex-plugin'
 import { EdgeToPoolRegistry } from './edge-to-pool-registry'
 import { DexConfig } from './types'
-
 @Injectable()
 export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 	constructor(
@@ -37,7 +37,7 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 	async buildSnapshotFn(edge: Edge<Token>): Promise<EdgeSnapshotFn> {
 		const pool = this.edgeToPoolRegistry.getPool(edge)
 
-		const config = this.configService.get<DexConfig>('dex')
+		const config = this.configService.get<DexConfig>(DEX_CONFIG_KEY)
 
 		const { interpolation, results } =
 			await this.interpolationHelper.buildInterpolation(

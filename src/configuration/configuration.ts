@@ -2,11 +2,16 @@ import { readFileSync } from 'fs'
 import * as yaml from 'js-yaml'
 import { z } from 'zod'
 import { ARBITRAGE_FINDER_CONFIG_KEY } from '../core/application/use-cases/finding/arbitrage-finder/arbitrage-finder'
+import {
+	DEX_CONFIG_KEY,
+	dexConfigScheme,
+} from '../core/infrastructure/plugins/dex/configuration/dex-config'
 import { parsePretty } from '../utils/zod'
 import { arbitrageFinderConfigScheme } from './arbitrage-finder-config'
 
-const configScheme = z.object({
+export const configScheme = z.object({
 	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigScheme,
+	[DEX_CONFIG_KEY]: dexConfigScheme,
 })
 
 export function loadConfig() {
