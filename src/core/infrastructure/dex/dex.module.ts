@@ -51,7 +51,7 @@ const dexNames = Object.keys(DexRegistry) as PoolType[]
 			},
 		},
 	],
-	exports: [PoolUtils],
+	exports: [PoolUtils, DEX_REGISTRY_TOKEN],
 })
 export class DexModule {}
 

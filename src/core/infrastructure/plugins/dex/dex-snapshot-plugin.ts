@@ -14,6 +14,7 @@ import { DEX_CONFIG_KEY } from './configuration/dex-config'
 import { DexPlugin } from './dex-plugin'
 import { EdgeToPoolRegistry } from './edge-to-pool-registry'
 import { DexConfig } from './types'
+
 @Injectable()
 export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 	constructor(
@@ -23,6 +24,7 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 		private readonly edgeToPoolRegistry: EdgeToPoolRegistry,
 	) {
 		super()
+		console.log('DexSnapshotPlugin', edgeToPoolRegistry)
 	}
 
 	buildEdgeSnapshotBuilder(edge: Edge<Token>): EdgeSnapshotBuilder {

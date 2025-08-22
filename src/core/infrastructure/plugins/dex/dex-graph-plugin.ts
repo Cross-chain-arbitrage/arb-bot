@@ -21,12 +21,17 @@ export class DexGraphPlugin extends DexPlugin implements GraphPlugin {
 		readonly edgeToPoolRegistry: EdgeToPoolRegistry,
 	) {
 		super()
+		console.log('DexGraphPlugin', edgeToPoolRegistry)
 	}
 
 	async findPossibleNodes(): Promise<Node[]> {
 		const config = this.configService.get<DexConfig>(DEX_CONFIG_KEY)
 
-		this.pools = await this.poolUtils.createPools(config!.pools)
+		const poolsForSpecificDex = config!.pools.filter(
+			(pool) => pool.type === this.id,
+		)
+
+		this.pools = await this.poolUtils.createPools(poolsForSpecificDex)
 
 		const nodes: Node[] = []
 
