@@ -9,6 +9,7 @@ import {
 	GraphSnapshotBuilder,
 } from '../../core/application/use-cases/finding/graph-snapshot-builder/gpaph-snapshot-builder'
 import { OpportunityFinder } from '../../core/application/use-cases/finding/opportunity-finder.ts/opportunity-finder'
+import { OpportunityReporter } from '../../core/application/use-cases/finding/opportunity-reporter/opportunity-reporter'
 import { OpportunityValidator } from '../../core/application/use-cases/finding/opportunity-validator/opportunity-validator'
 import { SnapshotOpportunityFinder } from '../../core/application/use-cases/finding/snapshot-opportunity-finder/snapshot-opportunity-finder'
 import { GRAPH_WITH_EDGE_OWNERS_TOKEN } from '../../core/application/use-cases/graph-builder/di-tokens'
@@ -25,6 +26,7 @@ import { snapshotPluginModules, snapshotPlugins } from './snapshot-plugins'
 		OpportunityValidator,
 		SnapshotOpportunityFinder,
 		GraphSnapshotBuilder,
+		OpportunityReporter,
 		{
 			provide: GRAPH_TOKEN,
 			inject: [GRAPH_WITH_EDGE_OWNERS_TOKEN],

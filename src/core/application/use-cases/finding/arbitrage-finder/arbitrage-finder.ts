@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
 import { OpportunityFinder } from '../opportunity-finder.ts/opportunity-finder'
+import { OpportunityReporter } from '../opportunity-reporter/opportunity-reporter'
 import { OpportunityValidator } from '../opportunity-validator/opportunity-validator'
 import {
 	OpportunityValidatorParams,
@@ -15,6 +16,7 @@ import {
 import { ArbitrageFinderConfig } from './types'
 
 export const GRAPH_TOKEN = Symbol('GRAPH_TOKEN')
+export const ARBITRAGE_FINDER_CONFIG_KEY = 'arbitrageFinder'
 
 @Injectable()
 export class ArbitrageFinder implements OnModuleInit {
@@ -26,30 +28,34 @@ export class ArbitrageFinder implements OnModuleInit {
 		private readonly opportunityValidator: OpportunityValidator,
 		private readonly configService: ConfigService,
 		@Inject(GRAPH_TOKEN) readonly graph: Graph<Token>,
+		private readonly opportunityReporter: OpportunityReporter,
 	) {}
 
 	onModuleInit() {
-		const config =
-			this.configService.get<ArbitrageFinderConfig>('arbitrageFinder')
+		const config = this.configService.get<ArbitrageFinderConfig>(
+			ARBITRAGE_FINDER_CONFIG_KEY,
+		)
 
 		if (!config) {
 			throw new Error('Arbitrage finder config not found')
 		}
 
-		const startToken = this.graph.nodes.get(config.finding.startTokenId)
+		const startToken = this.graph.nodes.get(
+			config.opportunityFinding.startTokenId,
+		)
 
 		if (!startToken) {
 			throw new Error('Start token not found')
 		}
 
 		this.snapshotFindOpportunityParams = {
-			minStartValueUsd: config.finding.minStartValueUsd,
-			maxStartValueUsd: config.finding.maxStartValueUsd,
-			runCount: config.finding.runCount,
+			minStartValueUsd: config.opportunityFinding.minStartValueUsd,
+			maxStartValueUsd: config.opportunityFinding.maxStartValueUsd,
+			runCount: config.opportunityFinding.runCount,
 			startToken,
 		}
 
-		this.opportunityValidatorParams = config.validation
+		this.opportunityValidatorParams = config.opportunityValidation
 	}
 
 	async findArbitrage() {
@@ -64,13 +70,16 @@ export class ArbitrageFinder implements OnModuleInit {
 				this.opportunityValidatorParams,
 			)
 
+		this.opportunityReporter.reportOpportunity(
+			opportunity,
+			validationResult,
+		)
+
 		if (this.isValidOpportunity(validationResult, opportunity))
 			return opportunity
 
 		return null
 	}
-
-	//TODO: add logging
 
 	isValidOpportunity(
 		validationResult: ValidationResult,

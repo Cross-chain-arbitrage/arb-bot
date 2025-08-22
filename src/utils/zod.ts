@@ -12,5 +12,7 @@ export function parsePretty<T>(scheme: z.ZodType<T>, raw: unknown) {
 		if (error instanceof ZodError) {
 			throw new Error(z.prettifyError(error))
 		}
+
+		throw error
 	}
 }

@@ -8,9 +8,9 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js'
 import axios from 'axios'
-import { SolanaNative } from '../../../solana/solana-tokens/solana-native'
 import { createCustomError, wait } from '../../../utils/common'
 import { SolanaClientService } from '../solana/solana-client.service'
+import { SolanaNative } from '../solana/solana-tokens/solana-native'
 import { SolanaToken } from '../solana/solana-tokens/solana-token'
 import { API_URLS } from './raydium.constants'
 import {

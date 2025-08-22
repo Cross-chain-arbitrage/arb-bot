@@ -1,12 +1,11 @@
 export type ArbitrageFinderConfig = {
-	finding: {
+	opportunityFinding: {
 		minStartValueUsd: number
 		maxStartValueUsd: number
 		runCount: number
 		startTokenId: string
 	}
-	validation: {
+	opportunityValidation: {
 		minProfitUsd: number
-		minDuration: number
 	}
 }
