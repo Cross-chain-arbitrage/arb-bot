@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { ScaleLinear, scaleLinear } from 'd3-scale'
 import { Edge } from '../../../domain/entities/edge'
 import { Token } from '../../../domain/entities/token'
@@ -9,6 +10,7 @@ export type InterpolationParams = {
 	runCount: number
 }
 
+@Injectable()
 export class InterpolationHelper {
 	constructor(private readonly priceOracleHelper: PriceOracleHelper) {}
 

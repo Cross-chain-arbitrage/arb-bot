@@ -56,8 +56,10 @@ export class BellmanFord {
 				if (!currentAmount) continue
 				if (fromDistance === undefined) continue
 
+				const quote = graphSnapshot.getQuote(edge.id, currentAmount)
+
 				quotes.push({
-					quote: graphSnapshot.getQuote(edge.id, currentAmount),
+					quote,
 					edge,
 				})
 			}

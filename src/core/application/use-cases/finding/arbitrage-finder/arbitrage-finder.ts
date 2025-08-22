@@ -40,8 +40,11 @@ export class ArbitrageFinder implements OnModuleInit {
 			throw new Error('Arbitrage finder config not found')
 		}
 
-		const startToken = this.graph.nodes.get(
-			config.opportunityFinding.startTokenId,
+		// TODO: Figure out how to do it properly
+		const startToken = Array.from(this.graph.nodes.values()).find(
+			(node) =>
+				node.id.toLowerCase() ===
+				config.opportunityFinding.startTokenId.toLowerCase(),
 		)
 
 		if (!startToken) {

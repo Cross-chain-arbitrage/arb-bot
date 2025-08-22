@@ -1,42 +1,59 @@
-import { DynamicModule, Module } from '@nestjs/common'
-import { ChainClientModule } from '../../../chain-client/chain-client.module'
-import { TokenUtils } from '../evm/primitives/tokens/TokenUtils'
+import { Module } from '@nestjs/common'
+import { EvmModule } from '../evm/evm.module'
 import { PoolCreator } from './base/pool-creator'
 import { DEX_REGISTRY_TOKEN, DexRegistry } from './dex-registry'
-import { PoolUtils } from './pool-utils'
+import { PoolType, PoolUtils } from './pool-utils'
 
-@Module({})
-export class DexModule {
-	static forRoot(): DynamicModule {
-		const poolCreators = Object.values(DexRegistry)
+const allPoolCreatorClasses = Object.values(DexRegistry)
+const dexNames = Object.keys(DexRegistry) as PoolType[]
 
-		return {
-			imports: [ChainClientModule],
-			module: DexModule,
-			providers: [
-				TokenUtils,
-				...poolCreators,
-				{
-					provide: DEX_REGISTRY_TOKEN,
-					useFactory: (...poolCreators: PoolCreator[]) => {
-						const registry: Record<string, PoolCreator> = {}
+/**
+ * Goals for this module:
+ * 1) Provide type hints in PoolUtils.createPool when passing poolType
+ * 2) Minimize boilerplate code
+ *
+ * Implementation:
+ * 1) Single registry maps all pool creators to their names for PoolUtils
+ * 2) Factory pattern creates the DEX_REGISTRY_TOKEN
+ */
+@Module({
+	imports: [EvmModule],
+	providers: [
+		PoolUtils,
+		...allPoolCreatorClasses,
+		{
+			provide: DEX_REGISTRY_TOKEN,
+			inject: allPoolCreatorClasses,
+			// DexRegistry contains classes, but we need their instances
+			useFactory: (...poolCreatorInstances: PoolCreator[]) => {
+				const registry: Record<string, PoolCreator> = {}
 
-						const keys = Object.keys(DexRegistry)
+				dexNames.forEach((dexName, index) => {
+					const poolCreatorClass = allPoolCreatorClasses[index]
 
-						keys.forEach((key, index) => {
-							registry[key] = poolCreators[index]
-						})
+					// Find the instance that matches this class
+					const poolCreatorInstance = poolCreatorInstances.find(
+						(poolCreatorInstance) =>
+							poolCreatorInstance.constructor.name ===
+							poolCreatorClass.name,
+					)
 
-						return registry
-					},
-					inject: poolCreators,
-				},
-				PoolUtils,
-			],
-			exports: [PoolUtils],
-		}
-	}
-}
+					if (!poolCreatorInstance) {
+						throw new Error(
+							`Pool creator instance not found for ${poolCreatorClass.name}`,
+						)
+					}
+
+					registry[dexName] = poolCreatorInstance
+				})
+
+				return registry
+			},
+		},
+	],
+	exports: [PoolUtils],
+})
+export class DexModule {}
 
 // async function main() {
 // 	const app = await NestFactory.createApplicationContext(DexModule.forRoot())

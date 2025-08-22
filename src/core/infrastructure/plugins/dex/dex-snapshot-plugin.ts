@@ -59,7 +59,9 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 			)
 
 		return (amountIn: bigint): Quote => {
-			const amountOutFormatted = interpolation(Number(amountIn))
+			const amountInFormatted = edge.from.formatUnits(amountIn)
+
+			const amountOutFormatted = interpolation(Number(amountInFormatted))
 			const amountOut = edge.to.parseUnits(amountOutFormatted.toString())
 
 			return {

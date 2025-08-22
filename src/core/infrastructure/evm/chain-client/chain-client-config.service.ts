@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Chain, defineChain } from 'viem'
 import { privateKeyToAddress } from 'viem/accounts'
@@ -64,12 +64,14 @@ export const chainClientConfigScheme: z.ZodType<ChainClientConfig> = z.object({
 })
 
 @Injectable()
-export class ChainClientConfigService {
-	privateKey: Hex
+export class ChainClientConfigService implements OnModuleInit {
+	privateKey!: Hex
 	rpcUrls: Record<number, string[]> | undefined
 	customChains: Chain[] | undefined
 
-	constructor(private readonly configService: ConfigService) {
+	constructor(private readonly configService: ConfigService) {}
+
+	onModuleInit() {
 		const config = this.configService.get<ChainClientConfig>('chainClient')
 
 		this.privateKey = this.getPrivateKey()
