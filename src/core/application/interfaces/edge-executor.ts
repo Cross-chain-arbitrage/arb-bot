@@ -11,7 +11,7 @@ export type InchainConfirmation = {
 	  }
 	| {
 			status: 'failure'
-			reason: unknown
+			reason: string
 	  }
 )
 
@@ -38,7 +38,7 @@ export type CrosschainConfirmation = {
 	  }
 	| {
 			status: 'failure'
-			reason: unknown
+			reason: string
 	  }
 )
 

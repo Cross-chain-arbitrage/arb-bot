@@ -50,7 +50,7 @@ export class PathExecutor {
 	) {
 		let amountOut: bigint | undefined
 		let executionCostInUsd = 0
-		let error: unknown
+		let failureReason: string
 
 		for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
 			this.telemetry.onProcessStepStart(step.edge, amountIn)
@@ -76,7 +76,7 @@ export class PathExecutor {
 					confirmation.reason,
 				)
 				executionCostInUsd += executionCost.costInUsd
-				error = confirmation.reason
+				failureReason = confirmation.reason
 
 				if (attempt < policy.maxAttempts) {
 					await wait(
@@ -87,13 +87,7 @@ export class PathExecutor {
 		}
 
 		if (!amountOut) {
-			if (error instanceof Error) {
-				throw error
-			} else {
-				throw new Error(
-					`Execution failed, reason: ${JSON.stringify(error)}`,
-				)
-			}
+			throw new Error(`Execution failed, reason: ${failureReason!}`)
 		}
 
 		return {

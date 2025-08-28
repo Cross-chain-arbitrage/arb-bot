@@ -101,8 +101,32 @@ export abstract class Pool extends BaseContract {
 		}
 	}
 
-	async waitForResult(txHash: Hash, params: SwapParams) {
-		const receipt = await this.getReceiptSuccessTx(txHash)
+	async waitForResult(
+		txHash: Hash,
+		params: SwapParams,
+	): Promise<
+		| {
+				status: 'success'
+				receipt: TransactionReceipt
+				amountOut: bigint
+		  }
+		| {
+				status: 'reverted'
+				receipt: TransactionReceipt
+		  }
+	> {
+		const receipt = await this.client.waitForTransactionReceipt({
+			hash: txHash,
+		})
+
+		const status = receipt.status === 'success' ? 'success' : 'reverted'
+
+		if (status === 'reverted') {
+			return {
+				status,
+				receipt,
+			}
+		}
 
 		const { amountOut } = this.parseSwapAmounts(
 			receipt,
@@ -110,7 +134,7 @@ export abstract class Pool extends BaseContract {
 			params.tokenOut,
 		)
 
-		return { amountOut, receipt }
+		return { status, receipt, amountOut }
 	}
 
 	parseSwapAmounts(
@@ -254,15 +278,6 @@ export abstract class Pool extends BaseContract {
 		if (params.amountIn <= 0n) {
 			throw new this.customError('amountIn cannot be 0 or negative')
 		}
-	}
-
-	async getReceiptSuccessTx(hash: Hash) {
-		const receipt = await this.client.waitForTransactionReceipt({ hash })
-
-		if (receipt.status !== 'success')
-			throw new this.customError(`Swap failed, tx: ${hash}`)
-
-		return receipt
 	}
 
 	multiplyGas(gas: bigint) {

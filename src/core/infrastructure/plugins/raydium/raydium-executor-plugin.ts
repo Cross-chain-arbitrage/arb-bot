@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 
+import { ParsedTransactionWithMeta } from '@solana/web3.js'
 import {
 	InchainConfirmation,
 	InchainExecution,
@@ -54,18 +55,28 @@ export class RaydiumExecutorPlugin
 	async confirm(
 		swapResult: Awaited<ReturnType<typeof this.raydiumService.swap>>,
 	): Promise<InchainConfirmation> {
-		const { amountOut, parsedTx } = await swapResult.waitForResult()
+		const result = await swapResult.waitForResult()
 
-		return {
-			amountOut,
-			getExecutionCost: async () => {
-				const costInUsd =
-					await this.solanaTxCostUtils.getTxCostInUsd(parsedTx)
-
-				return {
-					costInUsd,
-				}
-			},
+		if (result.status === 'failed') {
+			return {
+				status: 'failure',
+				reason: 'Swap failed',
+				getExecutionCost: this.getExecutionCost.bind(
+					this,
+					result.parsedTx,
+				),
+			}
 		}
+		return {
+			status: 'success',
+			amountOut: result.amountOut,
+			getExecutionCost: this.getExecutionCost.bind(this, result.parsedTx),
+		}
+	}
+
+	async getExecutionCost(parsedTx: ParsedTransactionWithMeta) {
+		const costInUsd = await this.solanaTxCostUtils.getTxCostInUsd(parsedTx)
+
+		return { costInUsd }
 	}
 }

@@ -70,10 +70,17 @@ export class RaydiumService {
 
 	async swap(params: SwapParams): Promise<{
 		txId: string
-		waitForResult: () => Promise<{
-			amountOut: bigint
-			parsedTx: ParsedTransactionWithMeta
-		}>
+		waitForResult: () => Promise<
+			| {
+					status: 'success'
+					amountOut: bigint
+					parsedTx: ParsedTransactionWithMeta
+			  }
+			| {
+					status: 'failed'
+					parsedTx: ParsedTransactionWithMeta
+			  }
+		>
 	}> {
 		try {
 			const quote = await this.quote(params)
@@ -104,13 +111,20 @@ export class RaydiumService {
 		}
 	}
 
-	async waitForResult(
+	private async waitForResult(
 		txId: string,
 		tokenOut: SolanaToken | SolanaNative,
-	): Promise<{
-		amountOut: bigint
-		parsedTx: ParsedTransactionWithMeta
-	}> {
+	): Promise<
+		| {
+				status: 'success'
+				amountOut: bigint
+				parsedTx: ParsedTransactionWithMeta
+		  }
+		| {
+				status: 'failed'
+				parsedTx: ParsedTransactionWithMeta
+		  }
+	> {
 		let parsedTx: ParsedTransactionWithMeta | null = null
 
 		let attempts = 0
@@ -129,9 +143,16 @@ export class RaydiumService {
 
 		if (!parsedTx) throw new RaydiumServiceError('Transaction not found')
 
+		if (parsedTx.meta?.err) {
+			return {
+				status: 'failed',
+				parsedTx,
+			}
+		}
 		const amountOut = await this.parseAmountOut(tokenOut, parsedTx)
 
 		return {
+			status: 'success',
 			amountOut,
 			parsedTx,
 		}

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { TransactionReceipt } from 'viem'
 import {
 	EdgeExecutor,
 	InchainConfirmation,
@@ -54,20 +55,38 @@ export class DexExecutorPlugin extends DexPlugin implements ExecutorPlugin {
 		edge: Edge<Token>,
 		swapResult: Awaited<ReturnType<Pool['swap']>>,
 	): Promise<InchainConfirmation> {
-		const { amountOut, receipt } = await swapResult.waitForResult()
+		const result = await swapResult.waitForResult()
+
+		if (result.status === 'reverted') {
+			return {
+				status: 'failure',
+				reason: 'Swap reverted',
+				getExecutionCost: this.getExecutionCost.bind(
+					this,
+					edge,
+					result.receipt,
+				),
+			}
+		}
+		return {
+			status: 'success',
+			amountOut: result.amountOut,
+			getExecutionCost: this.getExecutionCost.bind(
+				this,
+				edge,
+				result.receipt,
+			),
+		}
+	}
+
+	async getExecutionCost(edge: Edge<Token>, receipt: TransactionReceipt) {
+		const txCostInUsd = await this.evmTxCostUtils.getTxCostInUsd(
+			edge.from.chainId,
+			receipt,
+		)
 
 		return {
-			amountOut,
-			getExecutionCost: async () => {
-				const txCostInUsd = await this.evmTxCostUtils.getTxCostInUsd(
-					edge.from.chainId,
-					receipt,
-				)
-
-				return {
-					costInUsd: txCostInUsd,
-				}
-			},
+			costInUsd: txCostInUsd,
 		}
 	}
 }
