@@ -9,7 +9,7 @@ import {
 	StargateAPIError,
 	StargateAPIService,
 } from '../../layerzero-bridges/stargate/stargate-api.service'
-import { PluginHelper } from '../helpers/plugin-helper'
+import { PluginHelper } from '../shared-utils/plugin-helper'
 import { StargatePlugin } from './stargate-plugin'
 
 @Injectable()

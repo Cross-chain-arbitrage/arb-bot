@@ -1,4 +1,5 @@
 import { Address, isAddressEqual } from 'viem'
+import { TokenMetadata } from '../../../../domain/entities/token'
 import { ChainClientService } from '../../chain-client/chain-client.service'
 import { TokenBase } from './TokenBase'
 import { NativeCurrencyError } from './TokenErrors'

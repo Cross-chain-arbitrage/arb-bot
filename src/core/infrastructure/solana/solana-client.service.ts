@@ -3,6 +3,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common'
 import {
 	Connection,
 	Keypair,
+	ParsedTransactionWithMeta,
 	SendOptions,
 	VersionedTransaction,
 } from '@solana/web3.js'
@@ -70,5 +71,17 @@ export class SolanaClientService implements OnModuleInit {
 		const base58Regex =
 			/^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/
 		return base58Regex.test(str)
+	}
+
+	async waitForParsedTransaction(
+		txId: string,
+	): Promise<ParsedTransactionWithMeta> {
+		// TODO: expand this method with different commitments and test it
+		const parsedTx = await this.connection.getParsedTransaction(txId, {
+			commitment: 'finalized',
+			maxSupportedTransactionVersion: 0,
+		})
+
+		return parsedTx!
 	}
 }

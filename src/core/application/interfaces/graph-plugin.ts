@@ -3,11 +3,7 @@ import { Node } from '../../domain/entities/node'
 import { EdgeExecutor } from './edge-executor'
 import { EdgeSnapshotBuilder } from './edge-snapshot-builder'
 
-export interface Plugin {
-	id: string
-}
-
-export interface GraphPlugin extends Plugin {
+export interface GraphPlugin {
 	findPossibleNodes?(): Promise<Node[]>
 
 	findPossibleEdges?(nodes: Node[]): Promise<Edge[]>
@@ -15,10 +11,16 @@ export interface GraphPlugin extends Plugin {
 	getDeterminedNodesAndEdges?(): Promise<{ nodes: Node[]; edges: Edge[] }>
 }
 
-export interface SnapshotPlugin extends Plugin {
-	buildEdgeSnapshotBuilder(edge: Edge): EdgeSnapshotBuilder
+export interface EdgeHandlerPlugin {
+	canHandle(edge: Edge): boolean | Promise<boolean>
 }
 
-export interface ExecutorPlugin extends Plugin {
-	buildEdgeExecutor(edge: Edge): EdgeExecutor
+export interface SnapshotPlugin extends EdgeHandlerPlugin {
+	buildEdgeSnapshotBuilder(
+		edge: Edge,
+	): EdgeSnapshotBuilder | Promise<EdgeSnapshotBuilder>
+}
+
+export interface ExecutorPlugin extends EdgeHandlerPlugin {
+	buildEdgeExecutor(edge: Edge): EdgeExecutor | Promise<EdgeExecutor>
 }

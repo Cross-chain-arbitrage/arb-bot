@@ -1,4 +1,5 @@
-import { Edge, EdgeId } from '../../domain/entities/edge'
+import { Edge } from '../../domain/entities/edge'
+import { EdgeId } from '../../domain/value-objects/edge-id'
 import { Quote } from '../../domain/value-objects/weighted-graph-snapshot'
 
 export type EdgeSnapshotFn = (amountIn: bigint) => Quote

@@ -1,7 +1,7 @@
 import { getAccount, getAssociatedTokenAddress } from '@solana/spl-token'
 import { Connection, PublicKey } from '@solana/web3.js'
 import { shortenAddress } from '../../../../utils/common'
-import { Token } from '../../../domain/entities/token'
+import { Token, TokenMetadata } from '../../../domain/entities/token'
 import { formatUnits, parseUnits } from './solana-tokens-helpers'
 
 export class SolanaToken implements Token {

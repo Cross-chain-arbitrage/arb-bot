@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { deflate } from 'pako'
+import { isAddress } from 'viem'
+import { shortenAddress } from '../../../utils/common'
 import { GraphVisualizer } from '../../application/interfaces/graph-visualizer'
-import { GraphWithEdgeOwners } from '../../application/use-cases/graph-builder/types'
+import { Graph } from '../../domain/entities/graph'
+import { ChannelIdUtils } from '../../domain/services/channel-id-utils'
+import { EdgeIdUtils } from '../../domain/services/edge-id-utils'
+import { TokenId } from '../../domain/value-objects/token-id'
 
 interface VisualizableNode {
 	id: string
@@ -11,8 +16,8 @@ interface VisualizableNode {
 
 @Injectable()
 export class MermaidVisualizer implements GraphVisualizer {
-	getLinkToGraph(graphWithEdgeOwners: GraphWithEdgeOwners<VisualizableNode>) {
-		const mermaidCode = this.graphToMermaid(graphWithEdgeOwners)
+	getLinkToGraph(graph: Graph<VisualizableNode>) {
+		const mermaidCode = this.graphToMermaid(graph)
 
 		return this.generateViewLink(mermaidCode)
 	}
@@ -48,11 +53,11 @@ export class MermaidVisualizer implements GraphVisualizer {
 	/**
 	 * Returns a Mermaid graph string with nodes and edges
 	 */
-	graphToMermaid(graphWithEdgeOwners: GraphWithEdgeOwners<VisualizableNode>) {
+	graphToMermaid(graph: Graph<VisualizableNode>) {
 		let str = `flowchart TB`
 		const nodesBySubgraph = new Map<string, VisualizableNode[]>()
 
-		for (const node of graphWithEdgeOwners.graph.nodes.values()) {
+		for (const node of graph.nodes.values()) {
 			const subgraph = nodesBySubgraph.get(this.getSubgraphId(node))
 
 			if (!subgraph) {
@@ -74,12 +79,15 @@ export class MermaidVisualizer implements GraphVisualizer {
 			str += `\n\tend`
 		}
 
-		for (const [, edge] of graphWithEdgeOwners.graph.edges) {
+		for (const [, edge] of graph.edges) {
 			const { from, to } = edge
 
-			const edgeOwner = graphWithEdgeOwners.edgeOwners[edge.id]
+			const channelId = EdgeIdUtils.parseId(edge.id).channelId
+			const { protocol, instance } = ChannelIdUtils.parseId(channelId)
 
-			const edgeLabel = `|"${edgeOwner}"|`
+			const isInstanceAddress = isAddress(instance)
+
+			const edgeLabel = `|"${protocol}${isInstanceAddress ? ` ${shortenAddress(instance)}` : ''}"|`
 
 			str += `\n\t${this.getNodeId(from.id)} --> ${edgeLabel} ${this.getNodeId(to.id)}`
 		}
@@ -87,8 +95,8 @@ export class MermaidVisualizer implements GraphVisualizer {
 		return str
 	}
 
-	private getNodeId(graphNodeId: GraphNodeId) {
-		return `Node_${graphNodeId.split(':').join('_')}`
+	private getNodeId(tokenId: TokenId) {
+		return `Node_${tokenId.split(':').join('_')}`
 	}
 
 	private getSubgraphId(node: VisualizableNode) {

@@ -1,34 +1,14 @@
-import { Injectable, Module } from '@nestjs/common'
-import { DexRegistry } from '../../../dex/dex-registry'
+import { Module } from '@nestjs/common'
 import { DexModule } from '../../../dex/dex.module'
 import { EvmModule } from '../../../evm/evm.module'
-import { EvmPluginHelper } from '../../helpers/evm-plugin-helper'
-import { InterpolationHelper } from '../../helpers/interpolation-helper'
-import { PriceOracleHelper } from '../../helpers/price-oracle-helper'
+import { EvmUtilsModule } from '../../shared-utils/chain-specific/evm/evm-utils.module'
+import { InterpolationHelper } from '../../shared-utils/interpolation-helper'
+import { PriceOracleHelper } from '../../shared-utils/price-oracle-helper'
 import { DexSnapshotPlugin } from '../dex-snapshot-plugin'
-import { EdgeToPoolRegistryModule } from '../edge-to-pool-registry'
-
-export const dexSnapshotPlugins = Object.keys(DexRegistry).map((dexName) => {
-	@Injectable()
-	class DexSnapshotPluginWithOverriddenId extends DexSnapshotPlugin {
-		override overriddenId = dexName
-	}
-
-	Object.defineProperty(DexSnapshotPluginWithOverriddenId, 'name', {
-		value: dexName + 'SnapshotPlugin',
-	})
-
-	return DexSnapshotPluginWithOverriddenId
-})
 
 @Module({
-	imports: [EvmModule, DexModule, EdgeToPoolRegistryModule],
-	providers: [
-		EvmPluginHelper,
-		PriceOracleHelper,
-		InterpolationHelper,
-		...dexSnapshotPlugins,
-	],
-	exports: [...dexSnapshotPlugins],
+	imports: [EvmModule, DexModule, EvmUtilsModule],
+	providers: [PriceOracleHelper, InterpolationHelper, DexSnapshotPlugin],
+	exports: [DexSnapshotPlugin],
 })
 export class DexSnapshotPluginModule {}

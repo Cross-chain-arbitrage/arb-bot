@@ -1,7 +1,7 @@
-import { GraphWithEdgeOwners } from '../use-cases/graph-builder/types'
+import { Graph } from '../../domain/entities/graph'
 
 export interface GraphVisualizer {
-	getLinkToGraph(graphWithEdgeOwners: GraphWithEdgeOwners): string
+	getLinkToGraph(graph: Graph): string
 }
 
 export const GRAPH_VISUALIZER_TOKEN = Symbol('GRAPH_VISUALIZER_TOKEN')

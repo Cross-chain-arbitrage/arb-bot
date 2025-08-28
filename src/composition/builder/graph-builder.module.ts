@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 import { GraphPlugin } from '../../core/application/interfaces/graph-plugin'
-import { GRAPH_WITH_EDGE_OWNERS_TOKEN } from '../../core/application/use-cases/graph-builder/di-tokens'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
+import { GRAPH_TOKEN } from '../../core/application/use-cases/graph-builder/graph-token'
 import { graphPluginModules, graphPlugins } from './graph-plugins'
 
 @Module({
@@ -9,18 +9,16 @@ import { graphPluginModules, graphPlugins } from './graph-plugins'
 	providers: [
 		GraphBuilder,
 		{
-			provide: GRAPH_WITH_EDGE_OWNERS_TOKEN,
-
+			provide: GRAPH_TOKEN,
 			inject: [GraphBuilder, ...graphPlugins],
-
 			useFactory: async (
 				graphBuilder: GraphBuilder,
-				...pluginModules: GraphPlugin[]
+				...graphPlugins: GraphPlugin[]
 			) => {
-				return graphBuilder.buildGraphWithEdgeOwners(pluginModules)
+				return await graphBuilder.buildGraph(graphPlugins)
 			},
 		},
 	],
-	exports: [GRAPH_WITH_EDGE_OWNERS_TOKEN, GraphBuilder],
+	exports: [GRAPH_TOKEN, GraphBuilder],
 })
 export class GraphBuilderModule {}

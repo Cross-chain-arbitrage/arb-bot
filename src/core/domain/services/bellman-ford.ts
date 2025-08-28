@@ -32,9 +32,9 @@ export class BellmanFord {
 	): GraphArbitrageCycle | null {
 		const { graph } = graphSnapshot
 
-		const distances = new Map<GraphNodeId, number>()
-		const predecessors = new Map<GraphNodeId, Edge>()
-		const amounts = new Map<GraphNodeId, bigint>()
+		const distances = new Map<NodeId, number>()
+		const predecessors = new Map<NodeId, Edge>()
+		const amounts = new Map<NodeId, bigint>()
 
 		// Initialize
 		distances.set(startToken.id, 0)

@@ -1,11 +1,16 @@
-export interface Token {
-	id: string
+import { TokenId } from '../value-objects/token-id'
+
+export interface TokenMetadata {
+	symbol: string
+	name?: string
+	decimals: number
+}
+
+export type Token = {
+	id: TokenId
 
 	address: string
-	name?: string
-	symbol: string
-	decimals: number
 
 	formatUnits(amount: bigint): string
 	parseUnits(amount: string | bigint): bigint
-}
+} & TokenMetadata

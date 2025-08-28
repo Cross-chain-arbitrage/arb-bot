@@ -1,6 +1,7 @@
 import { Address, formatUnits, isAddressEqual, parseUnits } from 'viem'
 import { shortenAddress } from '../../../../../utils/common'
-import { Token } from '../../../../domain/entities/token'
+import { Token, TokenMetadata } from '../../../../domain/entities/token'
+import { TokenId } from '../../../../domain/value-objects/token-id'
 import { ChainClientService } from '../../chain-client/chain-client.service'
 import { BaseContract } from '../contracts/BaseContract'
 
@@ -48,7 +49,7 @@ export abstract class TokenBase extends BaseContract implements Token {
 	}
 
 	get id(): TokenId {
-		return `${this.chainId}:${this.address.toLowerCase() as Address}`
+		return `eip155:${this.chainId}:${this.address.toLowerCase() as Address}`
 	}
 
 	override toString(): string {

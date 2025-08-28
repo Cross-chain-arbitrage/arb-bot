@@ -1,4 +1,3 @@
-import { EdgeId } from '../entities/edge'
 import { Graph } from '../entities/graph'
 
 export type Quote = {
@@ -9,5 +8,5 @@ export type Quote = {
 
 export interface GraphSnapshot {
 	graph: Graph
-	getQuote(edgeId: EdgeId, amountIn: bigint): Quote
+	getQuote(edgeId: string, amountIn: bigint): Quote
 }

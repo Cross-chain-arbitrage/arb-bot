@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { Graph } from '../../../../domain/entities/graph'
+import { EdgeId } from '../../../../domain/value-objects/edge-id'
 import {
 	GraphSnapshot,
 	Quote,

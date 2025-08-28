@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import {
 	EdgeExecutor,
 	InchainConfirmation,
@@ -7,34 +8,36 @@ import {
 import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Pool } from '../../dex/base/pool'
+import { PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { EvmPluginHelper } from '../helpers/evm-plugin-helper'
+import { EvmTxCostUtils } from '../shared-utils/chain-specific/evm/evm-tx-cost.utils'
 import { DexPlugin } from './dex-plugin'
-import { EdgeToPoolRegistry } from './edge-to-pool-registry'
 
 @Injectable()
 export class DexExecutorPlugin extends DexPlugin implements ExecutorPlugin {
 	constructor(
-		private readonly evmPluginHelper: EvmPluginHelper,
-		private readonly edgeToPoolRegistry: EdgeToPoolRegistry,
+		poolUtils: PoolUtils,
+		configService: ConfigService,
+		private readonly evmTxCostUtils: EvmTxCostUtils,
 	) {
-		super()
+		super(poolUtils, configService)
 	}
 
-	buildEdgeExecutor(edge: Edge<Token>): EdgeExecutor {
+	async buildEdgeExecutor(edge: Edge<Token>): Promise<EdgeExecutor> {
+		const pool = await this.getPool(edge)
+
 		return {
 			kind: 'inchain',
 			edge,
-			execute: this.execute.bind(this, edge),
+			execute: this.execute.bind(this, edge, pool),
 		}
 	}
 
 	async execute(
 		edge: Edge<Token>,
+		pool: Pool,
 		amountIn: bigint,
 	): Promise<InchainExecution> {
-		const pool = this.edgeToPoolRegistry.getPool(edge)
-
 		const swapResult = await pool.swap({
 			tokenIn: edge.from,
 			tokenOut: edge.to,
@@ -56,7 +59,7 @@ export class DexExecutorPlugin extends DexPlugin implements ExecutorPlugin {
 		return {
 			amountOut,
 			getExecutionCost: async () => {
-				const txCostInUsd = await this.evmPluginHelper.getTxCostInUsd(
+				const txCostInUsd = await this.evmTxCostUtils.getTxCostInUsd(
 					edge.from.chainId,
 					receipt,
 				)

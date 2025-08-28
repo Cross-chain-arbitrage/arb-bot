@@ -3,23 +3,20 @@ import { ParsedTransactionWithMeta } from '@solana/web3.js'
 import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
-} from '../../../application/interfaces/price-oracle'
-import { SolanaClientService } from '../../solana/solana-client.service'
-import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { PluginHelper } from './plugin-helper'
+} from '../../../../../application/interfaces/price-oracle'
+import { SolanaClientService } from '../../../../solana/solana-client.service'
+import { SolanaTokenUtils } from '../../../../solana/solana-tokens/solana-token-utils'
 
 const MICRO_LAMPORTS_PER_LAMPORT = 10n ** 6n
 const LAMPORTS_FOR_SIGNING = 5000n
 
 @Injectable()
-export class SolanaPluginHelper extends PluginHelper {
+export class SolanaTxCostUtils {
 	constructor(
 		readonly solanaTokenUtils: SolanaTokenUtils,
 		@Inject(PRICE_ORACLE_TOKEN) readonly priceOracle: PriceOracle,
 		readonly solanaClientService: SolanaClientService,
-	) {
-		super()
-	}
+	) {}
 
 	async getExpectedTxCostInUsd(unitConsumption: bigint): Promise<number> {
 		const expectedComputeUnitPrice = 15000n // it depends on the highest account's demand across all accounts in tx
@@ -53,21 +50,5 @@ export class SolanaPluginHelper extends PluginHelper {
 		const txCostInNative = BigInt(fee)
 
 		return this.getUsdCostOfNativeAmount(txCostInNative)
-	}
-
-	async waitForParsedTransaction(
-		txId: string,
-	): Promise<ParsedTransactionWithMeta> {
-		// TODO: expand this method with different commitments and test it
-		const parsedTx =
-			await this.solanaClientService.connection.getParsedTransaction(
-				txId,
-				{
-					commitment: 'finalized',
-					maxSupportedTransactionVersion: 0,
-				},
-			)
-
-		return parsedTx!
 	}
 }

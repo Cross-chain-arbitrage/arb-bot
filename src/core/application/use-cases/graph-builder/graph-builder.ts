@@ -5,11 +5,11 @@ import { Node } from '../../../domain/entities/node'
 import { EdgeExecutorRegistry } from '../../interfaces/edge-executor'
 import { EdgeSnapshotBuilderRegistry } from '../../interfaces/edge-snapshot-builder'
 import {
+	EdgeHandlerPlugin,
 	ExecutorPlugin,
 	GraphPlugin,
 	SnapshotPlugin,
 } from '../../interfaces/graph-plugin'
-import { GraphWithEdgeOwners, PluginId } from './types'
 
 @Injectable()
 export class GraphBuilder {
@@ -17,100 +17,94 @@ export class GraphBuilder {
 
 	constructor() {}
 
-	async buildGraphWithEdgeOwners(
-		plugins: GraphPlugin[],
-	): Promise<GraphWithEdgeOwners> {
-		const edgeOwners: Record<EdgeId, PluginId> = {}
-
-		const graph = await this.buildGraph(plugins, (edge, plugin) => {
-			edgeOwners[edge.id] = plugin.id
-		})
-
-		return { graph, edgeOwners }
-	}
-
-	async buildGraph(
-		plugins: GraphPlugin[],
-		onEdgeAdded: (edge: Edge, plugin: GraphPlugin) => void,
-	): Promise<Graph> {
+	async buildGraph(plugins: GraphPlugin[]): Promise<Graph> {
 		const graph = new Graph()
 
 		await this.addPossibleNodes(graph, plugins)
 
-		await this.addDeterminedNodesAndEdges(graph, plugins, onEdgeAdded)
+		await this.addDeterminedNodesAndEdges(graph, plugins)
 
 		// it's the last step because we need to define all nodes first
-		await this.addPossibleEdges(graph, plugins, onEdgeAdded)
+		await this.addPossibleEdges(graph, plugins)
 
 		return graph
 	}
 
-	buildExecutorRegistry(
+	async buildExecutorRegistry(
 		graph: Graph,
 		plugins: ExecutorPlugin[],
-		edgeOwners: Record<EdgeId, PluginId>,
-	): EdgeExecutorRegistry {
+	): Promise<EdgeExecutorRegistry> {
 		const edgeExecutorRegistry: EdgeExecutorRegistry = {}
 
-		plugins.forEach(() => {
-			for (const edge of graph.edges.values()) {
-				const pluginId = edgeOwners[edge.id]
+		for (const edge of graph.edges.values()) {
+			const pluginCanHandle = await this.getPluginCanHandle(edge, plugins)
 
-				const plugin = plugins.find((p) => p.id === pluginId)
+			const edgeExecutorProvider =
+				await pluginCanHandle.buildEdgeExecutor(edge)
 
-				if (!plugin) throw new Error(`Plugin ${pluginId} not found`)
-
-				const edgeActionProvider = plugin.buildEdgeExecutor(edge)
-
-				edgeExecutorRegistry[edge.id] = edgeActionProvider
-			}
-		})
+			edgeExecutorRegistry[edge.id] = edgeExecutorProvider
+		}
 
 		return edgeExecutorRegistry
 	}
+	async getPluginCanHandle<T extends EdgeHandlerPlugin>(
+		edge: Edge,
+		plugins: T[],
+	): Promise<T> {
+		let pluginCanHandleCount = 0
+		let pluginCanHandle: T | undefined
 
-	buildSnapshotBuilderRegistry(
+		await Promise.all(
+			plugins.map(async (plugin) => {
+				const canHandle = await plugin.canHandle(edge)
+
+				if (canHandle) {
+					pluginCanHandleCount++
+					pluginCanHandle = plugin
+				}
+			}),
+		)
+
+		if (!pluginCanHandle) throw new Error(`No plugin can handle ${edge.id}`)
+
+		if (pluginCanHandleCount > 1)
+			throw new Error(`Multiple plugins can handle ${edge.id}`)
+
+		return pluginCanHandle
+	}
+
+	async buildSnapshotBuilderRegistry(
 		graph: Graph,
 		plugins: SnapshotPlugin[],
-		edgeOwners: Record<EdgeId, PluginId>,
-	): EdgeSnapshotBuilderRegistry {
+	): Promise<EdgeSnapshotBuilderRegistry> {
 		const edgeSnapshotBuilderRegistry: EdgeSnapshotBuilderRegistry = {}
 
-		plugins.forEach(() => {
-			for (const edge of graph.edges.values()) {
-				const pluginId = edgeOwners[edge.id]
+		for (const edge of graph.edges.values()) {
+			const pluginCanHandle = await this.getPluginCanHandle(edge, plugins)
 
-				const plugin = plugins.find((p) => p.id === pluginId)
+			const edgeQuoteProvider =
+				await pluginCanHandle.buildEdgeSnapshotBuilder(edge)
 
-				if (!plugin) throw new Error(`Plugin ${pluginId} not found`)
-
-				const edgeQuoteProvider = plugin.buildEdgeSnapshotBuilder(edge)
-
-				edgeSnapshotBuilderRegistry[edge.id] = edgeQuoteProvider
-			}
-		})
+			edgeSnapshotBuilderRegistry[edge.id] = edgeQuoteProvider
+		}
 
 		return edgeSnapshotBuilderRegistry
 	}
 
-	private async addPossibleEdges(
-		graph: Graph,
-		plugins: GraphPlugin[],
-		onEdgeAdded: (edge: Edge, plugin: GraphPlugin) => void,
-	) {
+	private async addPossibleEdges(graph: Graph, plugins: GraphPlugin[]) {
 		for (const plugin of plugins) {
 			if (!plugin.findPossibleEdges) continue
 
-			this.logger.log(`Finding possible edges for plugin ${plugin.id}`)
+			this.logger.log(
+				`Finding possible edges for ${plugin.constructor.name}`,
+			)
 
 			const edges = await plugin.findPossibleEdges(
 				Array.from(graph.nodes.values()),
 			)
 
 			edges.forEach((edge) => {
-				if (this.addEdgeIfNotExists(graph, edge)) {
-					onEdgeAdded(edge, plugin)
-				}
+				this.addEdgeIfNotExists(graph, edge)
 			})
 		}
 	}
@@ -118,13 +112,12 @@ export class GraphBuilder {
 	private async addDeterminedNodesAndEdges(
 		graph: Graph,
 		plugins: GraphPlugin[],
-		onEdgeAdded: (edge: Edge, plugin: GraphPlugin) => void,
 	) {
 		for (const plugin of plugins) {
 			if (!plugin.getDeterminedNodesAndEdges) continue
 
 			this.logger.log(
-				`Getting determined nodes and edges for plugin ${plugin.id}`,
+				`Getting determined nodes and edges for ${plugin.constructor.name}`,
 			)
 
 			const { nodes, edges } = await plugin.getDeterminedNodesAndEdges()
@@ -134,9 +127,7 @@ export class GraphBuilder {
 			})
 
 			edges.forEach((edge) => {
-				if (this.addEdgeIfNotExists(graph, edge)) {
-					onEdgeAdded(edge, plugin)
-				}
+				this.addEdgeIfNotExists(graph, edge)
 			})
 		}
 	}
@@ -145,7 +136,9 @@ export class GraphBuilder {
 		for (const plugin of plugins) {
 			if (!plugin.findPossibleNodes) continue
 
-			this.logger.log(`Finding possible nodes for plugin ${plugin.id}`)
+			this.logger.log(
+				`Finding possible nodes for ${plugin.constructor.name}`,
+			)
 
 			const nodes = await plugin.findPossibleNodes()
 

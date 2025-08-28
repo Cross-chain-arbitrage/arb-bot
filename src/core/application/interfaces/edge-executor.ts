@@ -1,4 +1,4 @@
-import { Edge, EdgeId } from '../../domain/entities/edge'
+import { Edge } from '../../domain/entities/edge'
 
 /* ======== INCHAIN ======== */
 
@@ -45,5 +45,5 @@ export type Execution = InchainExecution | CrosschainExecution
 export type EdgeExecutor = InchainExecutor | CrosschainExecutor
 
 export interface EdgeExecutorRegistry {
-	[edgeId: EdgeId]: EdgeExecutor
+	[edgeId: string]: EdgeExecutor
 }

@@ -7,30 +7,32 @@ import {
 } from '../../../application/interfaces/edge-snapshot-builder'
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
+import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
+import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { SolanaTxCostUtils } from '../shared-utils/chain-specific/solana/solana-tx-cost.utils'
 import {
 	InterpolationHelper,
 	InterpolationParams,
-} from '../helpers/interpolation-helper'
-import { PriceOracleHelper } from '../helpers/price-oracle-helper'
-import { SolanaPluginHelper } from '../helpers/solana-plugin-helper'
-import { RaydiumPlugin } from './raydium-plugin'
+} from '../shared-utils/interpolation-helper'
+import { PriceOracleHelper } from '../shared-utils/price-oracle-helper'
+import { RAYDIUM_PROTOCOL } from './raydium-plugin-constants'
 
 @Injectable()
 export class RaydiumSnapshotPlugin
-	extends RaydiumPlugin
+	extends EdgeHandler
 	implements SnapshotPlugin
 {
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly raydiumService: RaydiumService,
-		readonly solanaPluginHelper: SolanaPluginHelper,
+		readonly solanaTxCostUtils: SolanaTxCostUtils,
 		readonly priceOracleHelper: PriceOracleHelper,
 		readonly interpolationHelper: InterpolationHelper,
 	) {
-		super()
+		super(RAYDIUM_PROTOCOL)
 	}
 
 	buildEdgeSnapshotBuilder(edge: Edge<SolanaToken>): EdgeSnapshotBuilder {
@@ -63,7 +65,7 @@ export class RaydiumSnapshotPlugin
 			)
 
 		const executionCostInUsd =
-			await this.solanaPluginHelper.getExpectedTxCostInUsd(
+			await this.solanaTxCostUtils.getExpectedTxCostInUsd(
 				results[0].amountOut,
 			)
 
@@ -72,7 +74,7 @@ export class RaydiumSnapshotPlugin
 			const amountOut = to.parseUnits(amountOutFormatted.toString())
 
 			return {
-				rate: this.solanaPluginHelper.calcRate(amountIn, amountOut),
+				rate: calcRate(amountIn, amountOut),
 				amountOut,
 				executionCostInUsd: executionCostInUsd,
 			}

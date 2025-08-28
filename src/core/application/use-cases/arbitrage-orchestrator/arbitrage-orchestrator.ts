@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
+import { Graph } from '../../../domain/entities/graph'
 import {
 	GRAPH_VISUALIZER_TOKEN,
 	GraphVisualizer,
 } from '../../interfaces/graph-visualizer'
 import { ArbitrageExecutor } from '../execution/arbitrage-executor/arbitrage-executor'
 import { ArbitrageFinder } from '../finding/arbitrage-finder/arbitrage-finder'
-import { GRAPH_WITH_EDGE_OWNERS_TOKEN } from '../graph-builder/di-tokens'
-import { GraphWithEdgeOwners } from '../graph-builder/types'
+import { GRAPH_TOKEN } from '../graph-builder/graph-token'
 @Injectable()
 export class ArbitrageOrchestrator {
 	logger = new Logger(ArbitrageOrchestrator.name)
@@ -18,8 +18,8 @@ export class ArbitrageOrchestrator {
 		@Inject(GRAPH_VISUALIZER_TOKEN)
 		private readonly graphVisualizer: GraphVisualizer,
 
-		@Inject(GRAPH_WITH_EDGE_OWNERS_TOKEN)
-		private readonly graphWithEdgeOwners: GraphWithEdgeOwners,
+		@Inject(GRAPH_TOKEN)
+		private readonly graph: Graph,
 	) {}
 
 	async findAndExecuteOpportunity() {
@@ -31,9 +31,7 @@ export class ArbitrageOrchestrator {
 	}
 
 	reportGraph() {
-		const link = this.graphVisualizer.getLinkToGraph(
-			this.graphWithEdgeOwners,
-		)
+		const link = this.graphVisualizer.getLinkToGraph(this.graph)
 
 		this.logger.log(link)
 	}

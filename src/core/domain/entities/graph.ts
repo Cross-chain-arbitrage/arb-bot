@@ -1,4 +1,5 @@
-import { Edge, EdgeId } from './edge'
+import { EdgeId } from '../value-objects/edge-id'
+import { Edge } from './edge'
 import { Node, NodeId } from './node'
 
 export class GraphError extends Error {

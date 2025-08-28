@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { ParsedTransactionWithMeta } from '@solana/web3.js'
-import { Hash, TransactionReceipt } from 'viem'
-import { EvmPluginHelper } from './evm-plugin-helper'
-import { PluginHelper } from './plugin-helper'
-import { SolanaPluginHelper } from './solana-plugin-helper'
+import { TransactionReceipt } from 'viem'
+import { PluginHelper } from '../../plugin-helper'
+import { EvmPluginHelper } from '../evm/evm-tx-cost.utils'
+import { SolanaPluginHelper } from '../solana/solana-tx-cost.utils'
 
 @Injectable()
 export class SolanaEvmPluginHelper extends PluginHelper {
@@ -59,20 +59,6 @@ export class SolanaEvmPluginHelper extends PluginHelper {
 		return this.evmPluginHelper.getTxCostInUsd(
 			chainId,
 			txResult as TransactionReceipt,
-		)
-	}
-
-	async waitForTxResult(
-		chainId: number | 'solana',
-		txId: string,
-	): Promise<ParsedTransactionWithMeta | TransactionReceipt> {
-		if (chainId === 'solana') {
-			return this.solanaPluginHelper.waitForParsedTransaction(txId)
-		}
-
-		return this.evmPluginHelper.waitForTransactionReceipt(
-			chainId,
-			txId as Hash,
 		)
 	}
 }

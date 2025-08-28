@@ -1,4 +1,5 @@
 import * as chains from 'viem/chains'
+import { TokenMetadata } from '../../../../domain/entities/token'
 
 export const ETH_METADATA = {
 	symbol: 'ETH',

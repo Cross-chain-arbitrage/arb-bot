@@ -3,19 +3,16 @@ import { ConfigService } from '@nestjs/config'
 import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
-import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { RaydiumPlugin } from './raydium-plugin'
+import { SolanaGraphBuildingUtils } from '../shared-utils/chain-specific/solana/solana-graph-building.utils'
+import { RAYDIUM_PROTOCOL } from './raydium-plugin-constants'
 import { RaydiumConfig } from './types'
 
 @Injectable()
-export class RaydiumGraphPlugin extends RaydiumPlugin implements GraphPlugin {
+export class RaydiumGraphPlugin implements GraphPlugin {
 	constructor(
+		private readonly solanaGraphBuildingUtils: SolanaGraphBuildingUtils,
 		private readonly configService: ConfigService,
-		private readonly solanaTokenUtils: SolanaTokenUtils,
-	) {
-		super()
-	}
+	) {}
 
 	async getDeterminedNodesAndEdges(): Promise<{
 		nodes: Node[]
@@ -23,35 +20,11 @@ export class RaydiumGraphPlugin extends RaydiumPlugin implements GraphPlugin {
 	}> {
 		const raydiumConfig = this.configService.get<RaydiumConfig>('raydium')
 
-		const nodes: Node[] = []
-		const edges: Edge[] = []
-
-		if (!raydiumConfig) {
-			return {
-				nodes,
-				edges,
-			}
-		}
-
-		// TODO: create separate service for this
-		for (const edgeConstructor of raydiumConfig.edges) {
-			const from = await this.solanaTokenUtils.fromAddress<SolanaToken>(
-				edgeConstructor.from,
+		const { nodes, edges } =
+			await this.solanaGraphBuildingUtils.getNodesAndEdgesFromConfig(
+				raydiumConfig?.edges,
+				RAYDIUM_PROTOCOL,
 			)
-			const to = await this.solanaTokenUtils.fromAddress<SolanaToken>(
-				edgeConstructor.to,
-			)
-
-			nodes.push(from, to)
-
-			const edge = {
-				from,
-				to,
-				id: `${from.id}-${to.id}-${this.id}`,
-			}
-
-			edges.push(edge)
-		}
 
 		return {
 			nodes,

@@ -1,5 +1,7 @@
-import { Plugin } from '../../../application/interfaces/graph-plugin'
+import { EdgeHandler } from '../shared-implementation/edge-handler'
 
-export class RelayPlugin implements Plugin {
-	id = 'relay'
+export class RelayPlugin extends EdgeHandler {
+	constructor() {
+		super('relay')
+	}
 }

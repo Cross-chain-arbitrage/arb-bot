@@ -1,51 +1,49 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { isAddressEqual } from 'viem'
 import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
+import { ChannelIdUtils } from '../../../domain/services/channel-id-utils'
+import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
 import { Pool } from '../../dex/base/pool'
-import { PoolUtils } from '../../dex/pool-utils'
+import { PoolType, PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { DEX_CONFIG_KEY } from './configuration/dex-config'
 import { DexPlugin } from './dex-plugin'
-import { EdgeToPoolRegistry } from './edge-to-pool-registry'
 import { DexConfig } from './types'
 
 @Injectable()
 export class DexGraphPlugin extends DexPlugin implements GraphPlugin {
 	pools: Pool[] = []
 
-	constructor(
-		readonly configService: ConfigService,
-		readonly poolUtils: PoolUtils,
-		readonly edgeToPoolRegistry: EdgeToPoolRegistry,
-	) {
-		super()
-		console.log('DexGraphPlugin', edgeToPoolRegistry)
+	constructor(configService: ConfigService, poolUtils: PoolUtils) {
+		super(poolUtils, configService)
 	}
 
 	async findPossibleNodes(): Promise<Node[]> {
 		const config = this.configService.get<DexConfig>(DEX_CONFIG_KEY)
 
-		const poolsForSpecificDex = config!.pools.filter(
-			(pool) => pool.type === this.id,
-		)
-
-		this.pools = await this.poolUtils.createPools(poolsForSpecificDex)
+		if (!config) {
+			throw new Error('DEX config not found')
+		}
+		this.pools = await this.poolUtils.createPools(config.pools)
 
 		const nodes: Node[] = []
 
 		this.pools.forEach((pool) => {
-			const from = pool.token0
-			const to = pool.token1
-
-			nodes.push(from)
-			nodes.push(to)
+			nodes.push(pool.token0)
+			nodes.push(pool.token1)
 		})
 
 		return nodes
 	}
 
+	/**
+	 * This method doesn't consider the argument (nodes), because it's difficult to build all possible edges from all nodes.
+	 * Call findPossibleNodes to make it work properly.
+	 * @param nodes - unused argument required by the interface
+	 */
 	findPossibleEdges(nodes: Node[]): Promise<Edge[]> {
 		const edges: Edge[] = []
 
@@ -54,31 +52,65 @@ export class DexGraphPlugin extends DexPlugin implements GraphPlugin {
 				this.isTokenInNodes(pool.token0, nodes) &&
 				this.isTokenInNodes(pool.token1, nodes)
 			) {
-				edges.push({
-					from: pool.token0,
-					to: pool.token1,
-					id: `${pool.token0.id}-${pool.token1.id}-${pool.address}-${this.id}`,
-				})
+				const poolType = this.getPoolType(pool)
 
-				this.edgeToPoolRegistry.registerEdge(
-					edges[edges.length - 1],
-					pool,
+				edges.push(
+					this.createEdge(
+						pool.token0,
+						pool.token1,
+						poolType,
+						pool.address,
+					),
 				)
 
-				edges.push({
-					from: pool.token1,
-					to: pool.token0,
-					id: `${pool.token1.id}-${pool.token0.id}-${pool.address}-${this.id}`,
-				})
-
-				this.edgeToPoolRegistry.registerEdge(
-					edges[edges.length - 1],
-					pool,
+				edges.push(
+					this.createEdge(
+						pool.token1,
+						pool.token0,
+						poolType,
+						pool.address,
+					),
 				)
 			}
 		})
 
 		return Promise.resolve(edges)
+	}
+
+	getPoolType(pool: Pool): PoolType {
+		const config = this.configService.get<DexConfig>(DEX_CONFIG_KEY)
+
+		if (!config) {
+			throw new Error('DEX config not found')
+		}
+		const poolCreationParams = config.pools.find(
+			(poolCreationParams) =>
+				poolCreationParams.chainId === pool.chainId &&
+				isAddressEqual(poolCreationParams.address, pool.address),
+		)
+
+		if (!poolCreationParams) {
+			throw new Error(`Pool ${pool.address} not found in config`)
+		}
+
+		return poolCreationParams.type
+	}
+
+	createEdge(
+		from: Token,
+		to: Token,
+		poolType: PoolType,
+		poolAddress: Address,
+	): Edge {
+		return {
+			from,
+			to,
+			id: EdgeIdUtils.generateId(
+				ChannelIdUtils.generateId(poolType, poolAddress),
+				from.id,
+				to.id,
+			),
+		}
 	}
 
 	isTokenInNodes(token: Token, nodes: Node[]): boolean {

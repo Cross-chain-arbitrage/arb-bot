@@ -11,6 +11,7 @@ import {
 	superposition,
 	swellchain,
 } from 'viem/chains'
+import { TokenMetadata } from '../../../../domain/entities/token'
 import { WETH_ABI } from '../../abi/weth'
 import { ChainClientService } from '../../chain-client/chain-client.service'
 import { NativeCurrency } from './NativeCurrency'

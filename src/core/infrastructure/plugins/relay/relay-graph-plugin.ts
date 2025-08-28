@@ -5,7 +5,7 @@ import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
 import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { getNode } from '../helpers/graph-builer-helpers'
+import { getNode } from '../shared-utils/graph-building.utils'
 import { RelayPlugin } from './relay-plugin'
 import { RelayConfig } from './types'
 
@@ -34,11 +34,7 @@ export class RelayGraphPlugin extends RelayPlugin implements GraphPlugin {
 
 			nodes.push(from, to)
 
-			const edge = {
-				from,
-				to,
-				id: `${from.id}-${to.id}-${this.id}`,
-			}
+			const edge = this.createEdge(from, to)
 
 			edges.push(edge)
 		}

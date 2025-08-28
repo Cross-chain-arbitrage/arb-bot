@@ -14,6 +14,8 @@ export interface PoolCreationParams {
 
 @Injectable()
 export class PoolUtils {
+	poolCache: Map<`${number}:${Address}`, Pool> = new Map()
+
 	constructor(
 		@Inject(DEX_REGISTRY_TOKEN)
 		private readonly dexRegistry: Record<PoolType, PoolCreator>,
@@ -24,10 +26,16 @@ export class PoolUtils {
 		chainId: number,
 		poolType: PoolType,
 	): Promise<T> {
+		const cachedPool = this.getPoolFromCache(poolAddress, chainId)
+
+		if (cachedPool) return cachedPool as T
+
 		const pool = await this.dexRegistry[poolType].create(
 			poolAddress,
 			chainId,
 		)
+
+		this.setPoolInCache(pool, chainId, poolAddress)
 
 		return pool as T
 	}
@@ -37,5 +45,21 @@ export class PoolUtils {
 			this.createPool(pool.address, pool.chainId, pool.type),
 		)
 		return Promise.all(poolPromises)
+	}
+
+	private getPoolFromCache(
+		poolAddress: Address,
+		chainId: number,
+	): Pool | undefined {
+		return this.poolCache.get(
+			`${chainId}:${poolAddress.toLowerCase() as Address}`,
+		)
+	}
+
+	private setPoolInCache(pool: Pool, chainId: number, poolAddress: Address) {
+		this.poolCache.set(
+			`${chainId}:${poolAddress.toLowerCase() as Address}`,
+			pool,
+		)
 	}
 }

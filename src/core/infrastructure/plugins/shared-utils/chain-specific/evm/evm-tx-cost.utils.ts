@@ -1,34 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { Hash } from 'viem'
 import { TransactionReceipt } from 'viem/_types/types/transaction'
 import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
-} from '../../../application/interfaces/price-oracle'
-import { ChainClientService } from '../../evm/chain-client/chain-client.service'
-import { GasPriceOracleService } from '../../evm/gas-price-oracle/gas-price-oracle.service'
-import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
-import { PluginHelper } from './plugin-helper'
+} from '../../../../../application/interfaces/price-oracle'
+import { ChainClientService } from '../../../../evm/chain-client/chain-client.service'
+import { GasPriceOracleService } from '../../../../evm/gas-price-oracle/gas-price-oracle.service'
+import { TokenUtils } from '../../../../evm/primitives/tokens/TokenUtils'
 
 @Injectable()
-export class EvmPluginHelper extends PluginHelper {
+export class EvmTxCostUtils {
 	constructor(
 		readonly gasPriceOracleService: GasPriceOracleService,
 		readonly tokenUtils: TokenUtils,
 		readonly chainClientService: ChainClientService,
 		@Inject(PRICE_ORACLE_TOKEN) readonly priceOracle: PriceOracle,
-	) {
-		super()
-	}
-
-	async waitForTransactionReceipt(
-		chainId: number,
-		txHash: Hash,
-	): Promise<TransactionReceipt> {
-		const client = this.chainClientService.getClient(chainId)
-
-		return client.waitForTransactionReceipt({ hash: txHash })
-	}
+	) {}
 
 	async getExpectedTxCostInUsd(
 		chainId: number,

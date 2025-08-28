@@ -11,8 +11,8 @@ import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { RelayService } from '../../relay/relay-service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { PriceOracleHelper } from '../helpers/price-oracle-helper'
-import { SolanaEvmPluginHelper } from '../helpers/solana-evm-plugin-helper'
+import { SolanaEvmPluginHelper } from '../shared-utils/chain-specific/solana-evm/solana-evm-tx-cost.utils'
+import { PriceOracleHelper } from '../shared-utils/price-oracle-helper'
 import { RelayPlugin } from './relay-plugin'
 
 @Injectable()

@@ -6,6 +6,8 @@ import {
 	isAddress,
 	isAddressEqual,
 } from 'viem'
+import { TokenMetadata } from '../../../../domain/entities/token'
+import { TokenId } from '../../../../domain/value-objects/token-id'
 import { ERC20_ABI } from '../../abi/erc20'
 import { ChainClientService } from '../../chain-client/chain-client.service'
 import { ETH_METADATA, NATIVE_CURRENCIES } from './nativeCurrencies'
