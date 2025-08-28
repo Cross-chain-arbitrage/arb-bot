@@ -1,21 +1,23 @@
 import { Inject, Injectable } from '@nestjs/common'
+import { wait } from '../../../../../utils/common'
 import { Step } from '../../../../domain/services/bellman-ford'
 import {
 	Confirmation,
 	EdgeExecutorRegistry,
 	Execution,
 } from '../../../interfaces/edge-executor'
+import { ExecutionTelemetry } from '../execution-telemetry/execution-telemetry'
 import { PathExecutorParams } from './types'
 
 export const EDGE_EXECUTOR_REGISTRY_TOKEN = Symbol(
 	'EDGE_EXECUTOR_REGISTRY_TOKEN',
 )
-
 @Injectable()
 export class PathExecutor {
 	constructor(
 		@Inject(EDGE_EXECUTOR_REGISTRY_TOKEN)
 		private readonly edgeExecutorRegistry: EdgeExecutorRegistry,
+		private readonly telemetry: ExecutionTelemetry,
 	) {}
 
 	async executePath(params: PathExecutorParams) {
@@ -23,27 +25,16 @@ export class PathExecutor {
 		let totalExecutionCostInUsd = 0
 
 		for (const step of params.path) {
-			const executionResult = await this.executeEdge(
-				params,
+			const { amountOut, executionCostInUsd } = await this.processStep(
 				step,
 				nextAmountIn,
+				{
+					maxAttempts: 2,
+				},
 			)
 
-			const confirmationResult = await this.confirmEdge(
-				params,
-				step,
-				executionResult,
-			)
-
-			const executionCostResult = await this.getExecutionCostEdge(
-				params,
-				step,
-				confirmationResult,
-			)
-
-			totalExecutionCostInUsd += executionCostResult.costInUsd
-
-			nextAmountIn = confirmationResult.amountOut
+			totalExecutionCostInUsd += executionCostInUsd
+			nextAmountIn = amountOut
 		}
 
 		return {
@@ -52,71 +43,125 @@ export class PathExecutor {
 		}
 	}
 
-	private async executeEdge(
-		params: PathExecutorParams,
+	async processStep(
 		step: Step,
-		nextAmountIn: bigint,
+		amountIn: bigint,
+		policy: { maxAttempts: number; backoffMs?: (n: number) => number },
 	) {
-		const actionProvider = this.edgeExecutorRegistry[step.edge.id]
+		let amountOut: bigint | undefined
+		let executionCostInUsd = 0
+		let error: unknown
 
-		params.beforeExecuteEdgeHook?.(params.path, step, nextAmountIn)
+		for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
+			this.telemetry.onProcessStepStart(step.edge, amountIn)
 
-		const executionResult = params.executeWrapper
-			? await params.executeWrapper(
-					actionProvider.execute.bind(actionProvider),
+			const { confirmation, executionCost } = await this.executeStep(
+				step,
+				amountIn,
+			)
+
+			if (confirmation.status === 'success') {
+				this.telemetry.onProcessStepSuccess(
+					step.edge,
+					confirmation.amountOut,
+					executionCost.costInUsd,
 				)
-			: await actionProvider.execute(nextAmountIn)
+				amountOut = confirmation.amountOut
+				executionCostInUsd += executionCost.costInUsd
 
-		params.afterExecuteEdgeHook?.(params.path, step, nextAmountIn)
+				break
+			} else {
+				this.telemetry.onProcessStepFailure(
+					step.edge,
+					confirmation.reason,
+				)
+				executionCostInUsd += executionCost.costInUsd
+				error = confirmation.reason
 
-		return executionResult
+				if (attempt < policy.maxAttempts) {
+					await wait(
+						policy.backoffMs?.(attempt) ?? this.backoffMs(attempt),
+					)
+				}
+			}
+		}
+
+		if (!amountOut) {
+			if (error instanceof Error) {
+				throw error
+			} else {
+				throw new Error(
+					`Execution failed, reason: ${JSON.stringify(error)}`,
+				)
+			}
+		}
+
+		return {
+			amountOut,
+			executionCostInUsd,
+		}
 	}
 
-	private async confirmEdge(
-		params: PathExecutorParams,
-		step: Step,
-		executingResult: Execution,
-	) {
-		const actionProvider = this.edgeExecutorRegistry[step.edge.id]
+	private async executeStep(step: Step, amountIn: bigint) {
+		const edgeExecutor = this.edgeExecutorRegistry[step.edge.id]
 
-		params.beforeConfirmEdgeHook?.(params.path, step)
+		this.telemetry.onEdgeExecutionStart(step.edge, amountIn)
 
-		const confirmationResult = params.confirmWrapper
-			? await params.confirmWrapper(
-					executingResult.confirm.bind(actionProvider),
-				)
-			: await executingResult.confirm()
-
-		params.afterConfirmEdgeHook?.(
-			params.path,
-			step,
-			confirmationResult.amountOut,
+		const execution = await this.retryPhase<Execution>(
+			() => edgeExecutor.execute(amountIn),
+			{
+				maxAttempts: 2,
+			},
+			'edge_execution',
 		)
 
-		return confirmationResult
+		const confirmation = await this.retryPhase<Confirmation>(
+			() => execution.confirm(),
+			{
+				maxAttempts: 3,
+			},
+			'confirmation',
+		)
+
+		const executionCost = await this.retryPhase(
+			() => confirmation.getExecutionCost(),
+			{
+				maxAttempts: 2,
+			},
+			'cost_calculation',
+		)
+
+		return {
+			execution,
+			confirmation,
+			executionCost,
+		}
 	}
 
-	private async getExecutionCostEdge(
-		params: PathExecutorParams,
-		step: Step,
-		confirmingResult: Confirmation,
-	) {
-		const actionProvider = this.edgeExecutorRegistry[step.edge.id]
+	private async retryPhase<T>(
+		fn: () => Promise<T>,
+		policy: { maxAttempts: number; backoffMs?: (n: number) => number },
+		label: string,
+	): Promise<T> {
+		for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
+			try {
+				this.telemetry.onPhaseStart(label, attempt)
+				const res = await fn()
+				this.telemetry.onPhaseSuccess(label, attempt, res)
+				return res
+			} catch (err) {
+				this.telemetry.onPhaseFailure(label, attempt, err)
+				if (attempt === policy.maxAttempts) throw err
 
-		params.beforeGetExecutionCostHook?.(params.path, step)
-
-		const executionCostResult = params.getExecutionCostWrapper
-			? await params.getExecutionCostWrapper(
-					confirmingResult.getExecutionCost.bind(actionProvider),
+				await wait(
+					policy.backoffMs?.(attempt) ?? this.backoffMs(attempt),
 				)
-			: await confirmingResult.getExecutionCost()
+			}
+		}
+		throw new Error('unreachable')
+	}
 
-		params.afterGetExecutionCostHook?.(
-			params.path,
-			step,
-			executionCostResult.costInUsd,
-		)
-
-		return executionCostResult
+	private backoffMs(attempt: number) {
+		return 1000 * Math.pow(2, attempt)
 	}
 }

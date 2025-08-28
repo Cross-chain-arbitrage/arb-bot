@@ -3,16 +3,24 @@ import { Edge } from '../../domain/entities/edge'
 /* ======== INCHAIN ======== */
 
 export type InchainConfirmation = {
-	amountOut: bigint
 	getExecutionCost: () => Promise<{ costInUsd: number }>
-}
+} & (
+	| {
+			status: 'success'
+			amountOut: bigint
+	  }
+	| {
+			status: 'failure'
+			reason: unknown
+	  }
+)
 
 export type InchainExecution = {
 	txId: string
 	confirm: () => Promise<InchainConfirmation>
 }
 
-export interface InchainExecutor {
+export type InchainExecutor = {
 	kind: 'inchain'
 	edge: Edge
 	execute(amountIn: bigint): Promise<InchainExecution>
@@ -21,17 +29,25 @@ export interface InchainExecutor {
 /* ======== CROSSCHAIN ======== */
 
 export type CrosschainConfirmation = {
-	amountOut: bigint
-	dstTxId: string
 	getExecutionCost: () => Promise<{ costInUsd: number }>
-}
+} & (
+	| {
+			status: 'success'
+			dstTxId: string
+			amountOut: bigint
+	  }
+	| {
+			status: 'failure'
+			reason: unknown
+	  }
+)
 
 export type CrosschainExecution = {
 	srcTxId: string
 	confirm: () => Promise<CrosschainConfirmation>
 }
 
-export interface CrosschainExecutor {
+export type CrosschainExecutor = {
 	kind: 'crosschain'
 	edge: Edge
 	execute(amountIn: bigint): Promise<CrosschainExecution>
