@@ -10,4 +10,5 @@ interface AnvilConfig {
 	blockTime?: number
 	/** port for anvil, default is random */
 	port?: number
+	printTraces?: boolean
 }

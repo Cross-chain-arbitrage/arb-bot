@@ -21,14 +21,13 @@ export class GraphSnapshotBuilder {
 	async buildSnapshot(graph: Graph): Promise<GraphSnapshot> {
 		const fns = new Map<EdgeId, (amountIn: bigint) => Quote>()
 
-		// TODO: make it parallel
+		const promises = []
+
 		for (const [edgeId] of graph.edges) {
-			const provider = this.edgeSnapshotBuilderRegistry[edgeId]
-
-			const fn = await provider.buildEdgeSnapshotFn()
-
-			fns.set(edgeId, fn)
+			promises.push(this.buildAndSetSnapshotBuilder(fns, edgeId))
 		}
+
+		await Promise.all(promises)
 
 		return {
 			graph,
@@ -38,5 +37,16 @@ export class GraphSnapshotBuilder {
 				return fn(amountIn)
 			},
 		}
+	}
+
+	async buildAndSetSnapshotBuilder(
+		fns: Map<EdgeId, (amountIn: bigint) => Quote>,
+		edgeId: EdgeId,
+	) {
+		const provider = this.edgeSnapshotBuilderRegistry[edgeId]
+
+		const fn = await provider.buildEdgeSnapshotFn()
+
+		fns.set(edgeId, fn)
 	}
 }

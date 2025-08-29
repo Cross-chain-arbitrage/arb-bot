@@ -11,7 +11,7 @@ import {
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
-import { ChainClientService } from '../../src/chain-client/chain-client.service'
+import { ChainClientService } from '../../src/core/infrastructure/evm/chain-client/chain-client.service'
 
 /* ======== useAnvil ======== */
 
@@ -170,7 +170,7 @@ class Anvil {
 	private buildCommand(fallbackRpcUrl: string) {
 		const rpcUrlToUse = this.config.rpcUrl ?? fallbackRpcUrl
 
-		let command = `anvil --print-traces --fork-url "${rpcUrlToUse}" --port ${this.port} --mnemonic "${testMnemonic}"`
+		let command = `anvil --fork-url "${rpcUrlToUse}" --port ${this.port} --mnemonic "${testMnemonic}"`
 
 		if (typeof this.config.blockNumber === 'number') {
 			command += ` --fork-block-number ${this.config.blockNumber}`
@@ -178,6 +178,10 @@ class Anvil {
 
 		if (typeof this.config.blockTime === 'number') {
 			command += ` --block-time ${this.config.blockTime}`
+		}
+
+		if (this.config.printTraces) {
+			command += ` --print-traces`
 		}
 
 		// console.log(command)

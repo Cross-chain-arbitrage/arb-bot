@@ -184,14 +184,13 @@ export class ExecutionTelemetry {
 		this.logger.error(log, `Process step failed`)
 	}
 
-	// Edge execution telemetry
-	onEdgeExecutionStart(edge: Edge, amountIn: bigint) {
-		const log: ExecutionLog = {
+	// Arbitrage execution telemetry
+	onArbitrageEnd(result: unknown) {
+		const log = {
 			...this.createBaseLog(),
-			edgeId: edge.id,
-			amountIn: amountIn.toString(),
-			phase: 'execute',
+			phase: 'arbitrage_end',
+			result,
 		}
-		this.logger.log(log, `Edge execution started`)
+		this.logger.log(log, `Arbitrage execution ended`)
 	}
 }

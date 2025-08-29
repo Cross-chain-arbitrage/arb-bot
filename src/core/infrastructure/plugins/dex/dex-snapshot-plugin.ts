@@ -50,6 +50,7 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 		if (!config) {
 			throw new Error('DEX config not found')
 		}
+
 		const { interpolation, results } =
 			await this.interpolationHelper.buildInterpolation(
 				edge,

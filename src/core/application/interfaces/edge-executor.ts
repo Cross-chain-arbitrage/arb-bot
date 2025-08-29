@@ -24,6 +24,7 @@ export type InchainExecutor = {
 	kind: 'inchain'
 	edge: Edge
 	execute(amountIn: bigint): Promise<InchainExecution>
+	prepareExecution?(edge: Edge): Promise<{ result: string }>
 }
 
 /* ======== CROSSCHAIN ======== */
@@ -51,6 +52,7 @@ export type CrosschainExecutor = {
 	kind: 'crosschain'
 	edge: Edge
 	execute(amountIn: bigint): Promise<CrosschainExecution>
+	prepareExecution?(edge: Edge): Promise<{ result: string }>
 }
 
 /* ======== REGISTRY ======== */

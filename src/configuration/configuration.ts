@@ -6,12 +6,15 @@ import {
 	DEX_CONFIG_KEY,
 	dexConfigScheme,
 } from '../core/infrastructure/plugins/dex/configuration/dex-config'
+import { ARBITRAGE_SCHEDULER_CONFIG_KEY } from '../core/presentation/arbitrage-scheduler/arbitrage-scheduler'
 import { parsePretty } from '../utils/zod'
 import { arbitrageFinderConfigScheme } from './arbitrage-finder-config'
+import { arbitrageSchedulerConfigScheme } from './arbitrage-scheduler-config'
 
 export const configScheme = z.object({
 	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigScheme,
 	[DEX_CONFIG_KEY]: dexConfigScheme,
+	[ARBITRAGE_SCHEDULER_CONFIG_KEY]: arbitrageSchedulerConfigScheme,
 })
 
 export function loadConfig() {

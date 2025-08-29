@@ -152,7 +152,7 @@ export class BellmanFord {
 
 		return {
 			path,
-			startAmount: amount,
+			startAmount: startAmount,
 			endAmount: amount,
 		}
 	}

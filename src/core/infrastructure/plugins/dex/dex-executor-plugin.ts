@@ -31,6 +31,23 @@ export class DexExecutorPlugin extends DexPlugin implements ExecutorPlugin {
 			kind: 'inchain',
 			edge,
 			execute: this.execute.bind(this, edge, pool),
+			prepareExecution: this.prepareExecution.bind(this, edge),
+		}
+	}
+
+	async prepareExecution(edge: Edge<Token>): Promise<{ result: string }> {
+		const pool = await this.getPool(edge)
+
+		const approveResult = await pool.approveInfinite()
+
+		const txHashes = approveResult
+			.filter((tx) => tx !== undefined)
+			.map((tx) => tx.transactionHash)
+
+		if (txHashes.length === 0) return { result: 'No approvals needed' }
+
+		return {
+			result: `Prepared approvals: ${txHashes.join(', ')}`,
 		}
 	}
 

@@ -1,4 +1,4 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
@@ -22,7 +22,7 @@ export const ARBITRAGE_FINDER_CONFIG_KEY = 'arbitrageFinder'
 export class ArbitrageFinder implements OnModuleInit {
 	private snapshotFindOpportunityParams!: SnapshotFindOpportunityParams
 	private opportunityValidatorParams!: OpportunityValidatorParams
-
+	logger = new Logger(ArbitrageFinder.name)
 	constructor(
 		private readonly opportunityFinder: OpportunityFinder,
 		private readonly opportunityValidator: OpportunityValidator,

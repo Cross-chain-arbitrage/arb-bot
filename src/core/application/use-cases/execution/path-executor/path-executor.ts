@@ -99,8 +99,6 @@ export class PathExecutor {
 	private async executeStep(step: Step, amountIn: bigint) {
 		const edgeExecutor = this.edgeExecutorRegistry[step.edge.id]
 
-		this.telemetry.onEdgeExecutionStart(step.edge, amountIn)
-
 		const execution = await this.retryPhase<Execution>(
 			() => edgeExecutor.execute(amountIn),
 			{
