@@ -9,4 +9,4 @@ export interface EdgeSnapshotBuilder {
 	buildEdgeSnapshotFn: () => Promise<EdgeSnapshotFn>
 }
 
-export type EdgeSnapshotBuilderRegistry = Record<EdgeId, EdgeSnapshotBuilder>
+export type EdgeSnapshotBuilderRegistry = Map<EdgeId, EdgeSnapshotBuilder>

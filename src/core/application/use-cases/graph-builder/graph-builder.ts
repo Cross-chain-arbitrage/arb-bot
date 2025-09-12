@@ -34,7 +34,7 @@ export class GraphBuilder {
 		graph: Graph,
 		plugins: ExecutorPlugin[],
 	): Promise<EdgeExecutorRegistry> {
-		const edgeExecutorRegistry: EdgeExecutorRegistry = {}
+		const edgeExecutorRegistry: EdgeExecutorRegistry = new Map()
 
 		for (const edge of graph.edges.values()) {
 			const pluginCanHandle = await this.getPluginCanHandle(edge, plugins)
@@ -42,7 +42,7 @@ export class GraphBuilder {
 			const edgeExecutorProvider =
 				await pluginCanHandle.buildEdgeExecutor(edge)
 
-			edgeExecutorRegistry[edge.id] = edgeExecutorProvider
+			edgeExecutorRegistry.set(edge.id, edgeExecutorProvider)
 		}
 
 		return edgeExecutorRegistry
@@ -77,7 +77,8 @@ export class GraphBuilder {
 		graph: Graph,
 		plugins: SnapshotPlugin[],
 	): Promise<EdgeSnapshotBuilderRegistry> {
-		const edgeSnapshotBuilderRegistry: EdgeSnapshotBuilderRegistry = {}
+		const edgeSnapshotBuilderRegistry: EdgeSnapshotBuilderRegistry =
+			new Map()
 
 		for (const edge of graph.edges.values()) {
 			const pluginCanHandle = await this.getPluginCanHandle(edge, plugins)
@@ -85,7 +86,7 @@ export class GraphBuilder {
 			const edgeQuoteProvider =
 				await pluginCanHandle.buildEdgeSnapshotBuilder(edge)
 
-			edgeSnapshotBuilderRegistry[edge.id] = edgeQuoteProvider
+			edgeSnapshotBuilderRegistry.set(edge.id, edgeQuoteProvider)
 		}
 
 		return edgeSnapshotBuilderRegistry

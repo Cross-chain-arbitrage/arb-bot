@@ -43,7 +43,13 @@ export class GraphSnapshotBuilder {
 		fns: Map<EdgeId, (amountIn: bigint) => Quote>,
 		edgeId: EdgeId,
 	) {
-		const provider = this.edgeSnapshotBuilderRegistry[edgeId]
+		const provider = this.edgeSnapshotBuilderRegistry.get(edgeId)
+
+		if (!provider) {
+			throw new Error(
+				`Edge snapshot builder not found for edge ${edgeId}`,
+			)
+		}
 
 		const fn = await provider.buildEdgeSnapshotFn()
 

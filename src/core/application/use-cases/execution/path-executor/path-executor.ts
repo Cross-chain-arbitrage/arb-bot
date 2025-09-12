@@ -1,159 +1,102 @@
-import { Inject, Injectable } from '@nestjs/common'
-import { wait } from '../../../../../utils/common'
+import { Injectable } from '@nestjs/common'
 import { Step } from '../../../../domain/services/bellman-ford'
+import { StepExecutor } from '../step-executor/step-executor'
+import { PathExecutionTelemetry } from './path-execution-telemetry'
 import {
-	Confirmation,
-	EdgeExecutorRegistry,
-	Execution,
-} from '../../../interfaces/edge-executor'
-import { ExecutionTelemetry } from '../execution-telemetry/execution-telemetry'
-import { PathExecutorParams } from './types'
+	FailedPathExecutionResult,
+	PathExecutorParams,
+	SuccessPathExecutionResult,
+} from './types'
 
-export const EDGE_EXECUTOR_REGISTRY_TOKEN = Symbol(
-	'EDGE_EXECUTOR_REGISTRY_TOKEN',
-)
 @Injectable()
 export class PathExecutor {
 	constructor(
-		@Inject(EDGE_EXECUTOR_REGISTRY_TOKEN)
-		private readonly edgeExecutorRegistry: EdgeExecutorRegistry,
-		private readonly telemetry: ExecutionTelemetry,
+		private readonly telemetry: PathExecutionTelemetry,
+		private readonly stepExecutor: StepExecutor,
 	) {}
 
-	async executePath(params: PathExecutorParams) {
+	async executePath(
+		params: PathExecutorParams,
+	): Promise<SuccessPathExecutionResult | FailedPathExecutionResult> {
 		let nextAmountIn = params.startAmount
 		let totalExecutionCostInUsd = 0
 
 		for (const step of params.path) {
-			const { amountOut, executionCostInUsd } = await this.processStep(
-				step,
-				nextAmountIn,
-				{
-					maxAttempts: 2,
-				},
-			)
+			try {
+				const result = await this.processStep(step, nextAmountIn)
 
-			totalExecutionCostInUsd += executionCostInUsd
-			nextAmountIn = amountOut
+				totalExecutionCostInUsd += result.executionCostInUsd
+
+				if (result.status === 'success') {
+					nextAmountIn = result.amountOut
+				} else {
+					return this.buildFailedResult(
+						step,
+						nextAmountIn,
+						result.failureReason,
+						totalExecutionCostInUsd,
+					)
+				}
+			} catch (error) {
+				return this.buildFailedResult(
+					step,
+					nextAmountIn,
+					error instanceof Error
+						? error.message
+						: `Unknown error, ${String(error)}`,
+					totalExecutionCostInUsd,
+				)
+			}
 		}
 
 		return {
 			actualEndAmount: nextAmountIn,
 			totalExecutionCostInUsd,
+			status: 'success',
 		}
 	}
 
-	async processStep(
+	private buildFailedResult(
 		step: Step,
 		amountIn: bigint,
-		policy: { maxAttempts: number; backoffMs?: (n: number) => number },
-	) {
-		let amountOut: bigint | undefined
-		let executionCostInUsd = 0
-		let failureReason: string
+		failureReason: string,
+		totalExecutionCostInUsd: number,
+	): FailedPathExecutionResult {
+		return {
+			totalExecutionCostInUsd,
+			status: 'failed',
+			reason: failureReason,
+			step,
+			stepAmountIn: amountIn,
+		}
+	}
 
-		for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
-			this.telemetry.onProcessStepStart(step.edge, amountIn)
+	async processStep(step: Step, amountIn: bigint) {
+		this.telemetry.onProcessStepStart(step.edge, amountIn)
 
-			const { confirmation, executionCost } = await this.executeStep(
-				step,
-				amountIn,
+		const { confirmation, executionCost } =
+			await this.stepExecutor.executeStep(step, amountIn)
+
+		if (confirmation.status === 'success') {
+			this.telemetry.onProcessStepSuccess(
+				step.edge,
+				confirmation.amountOut,
+				executionCost.costInUsd,
 			)
 
-			if (confirmation.status === 'success') {
-				this.telemetry.onProcessStepSuccess(
-					step.edge,
-					confirmation.amountOut,
-					executionCost.costInUsd,
-				)
-				amountOut = confirmation.amountOut
-				executionCostInUsd += executionCost.costInUsd
+			return {
+				status: 'success',
+				amountOut: confirmation.amountOut,
+				executionCostInUsd: executionCost.costInUsd,
+			} as const
+		} else {
+			this.telemetry.onProcessStepFailure(step.edge, confirmation.reason)
 
-				break
-			} else {
-				this.telemetry.onProcessStepFailure(
-					step.edge,
-					confirmation.reason,
-				)
-				executionCostInUsd += executionCost.costInUsd
-				failureReason = confirmation.reason
-
-				if (attempt < policy.maxAttempts) {
-					await wait(
-						policy.backoffMs?.(attempt) ?? this.backoffMs(attempt),
-					)
-				}
-			}
+			return {
+				status: 'failed',
+				failureReason: confirmation.reason,
+				executionCostInUsd: executionCost.costInUsd,
+			} as const
 		}
-
-		if (!amountOut) {
-			throw new Error(`Execution failed, reason: ${failureReason!}`)
-		}
-
-		return {
-			amountOut,
-			executionCostInUsd,
-		}
-	}
-
-	private async executeStep(step: Step, amountIn: bigint) {
-		const edgeExecutor = this.edgeExecutorRegistry[step.edge.id]
-
-		const execution = await this.retryPhase<Execution>(
-			() => edgeExecutor.execute(amountIn),
-			{
-				maxAttempts: 2,
-			},
-			'edge_execution',
-		)
-
-		const confirmation = await this.retryPhase<Confirmation>(
-			() => execution.confirm(),
-			{
-				maxAttempts: 3,
-			},
-			'confirmation',
-		)
-
-		const executionCost = await this.retryPhase(
-			() => confirmation.getExecutionCost(),
-			{
-				maxAttempts: 2,
-			},
-			'cost_calculation',
-		)
-
-		return {
-			execution,
-			confirmation,
-			executionCost,
-		}
-	}
-
-	private async retryPhase<T>(
-		fn: () => Promise<T>,
-		policy: { maxAttempts: number; backoffMs?: (n: number) => number },
-		label: string,
-	): Promise<T> {
-		for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
-			try {
-				this.telemetry.onPhaseStart(label, attempt)
-				const res = await fn()
-				this.telemetry.onPhaseSuccess(label, attempt, res)
-				return res
-			} catch (err) {
-				this.telemetry.onPhaseFailure(label, attempt, err)
-				if (attempt === policy.maxAttempts) throw err
-
-				await wait(
-					policy.backoffMs?.(attempt) ?? this.backoffMs(attempt),
-				)
-			}
-		}
-		throw new Error('unreachable')
-	}
-
-	private backoffMs(attempt: number) {
-		return 1000 * Math.pow(2, attempt)
 	}
 }

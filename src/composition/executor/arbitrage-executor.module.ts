@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common'
 import { ExecutorPlugin } from '../../core/application/interfaces/graph-plugin'
+import { ArbitrageExecutionTelemetry } from '../../core/application/use-cases/execution/arbitrage-executor/arbitrage-execution-telemetry'
 import { ArbitrageExecutor } from '../../core/application/use-cases/execution/arbitrage-executor/arbitrage-executor'
-import { ExecutionTelemetry } from '../../core/application/use-cases/execution/execution-telemetry/execution-telemetry'
-import {
-	EDGE_EXECUTOR_REGISTRY_TOKEN,
-	PathExecutor,
-} from '../../core/application/use-cases/execution/path-executor/path-executor'
+import { EDGE_EXECUTOR_REGISTRY_TOKEN } from '../../core/application/use-cases/execution/edge-executor-registry-token'
+import { PathExecutionTelemetry } from '../../core/application/use-cases/execution/path-executor/path-execution-telemetry'
+import { PathExecutor } from '../../core/application/use-cases/execution/path-executor/path-executor'
+import { StepExecutionTelemetry } from '../../core/application/use-cases/execution/step-executor/step-execution-telemetry'
+import { StepExecutor } from '../../core/application/use-cases/execution/step-executor/step-executor'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
 import { GRAPH_TOKEN } from '../../core/application/use-cases/graph-builder/graph-token'
 import { Graph } from '../../core/domain/entities/graph'
@@ -17,7 +18,10 @@ import { executorPluginModules, executorPlugins } from './executor-plugins'
 	providers: [
 		ArbitrageExecutor,
 		PathExecutor,
-		ExecutionTelemetry,
+		PathExecutionTelemetry,
+		StepExecutionTelemetry,
+		ArbitrageExecutionTelemetry,
+		StepExecutor,
 		{
 			provide: EDGE_EXECUTOR_REGISTRY_TOKEN,
 			inject: [GraphBuilder, GRAPH_TOKEN, ...executorPlugins],

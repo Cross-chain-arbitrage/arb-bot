@@ -1,5 +1,4 @@
 import { Test } from '@nestjs/testing'
-import fs from 'fs'
 import { Logger } from 'nestjs-pino'
 import { AppModule } from '../../src/app.module'
 import { PoolUtils } from '../../src/core/infrastructure/dex/pool-utils'
@@ -12,7 +11,7 @@ process.env.BOT_CONFIG_PATH = 'test/e2e/bot-config.yaml'
 const wethUsdcPoolAddress = '0xC6962004f452bE9203591991D15f6b388e09E8D0'
 
 describe('E2E', () => {
-	const { mockChainClientService, anvil } = useAnvil({ chainId: 42161 })
+	const { mockChainClientService } = useAnvil({ chainId: 42161 })
 
 	it('should find and execute opportunity', async () => {
 		const walletClient = mockChainClientService.getWalletClient(42161)
@@ -53,10 +52,6 @@ describe('E2E', () => {
 		await waitForResult()
 
 		await testAppModule.init()
-
-		setInterval(() => {
-			fs.writeFile('anvil.log', anvil.logs, () => {})
-		}, 5000)
 
 		await wait(10 * 60 * 1000)
 	})

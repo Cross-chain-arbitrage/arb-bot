@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
-import { ExecutionTelemetry } from '../execution-telemetry/execution-telemetry'
 import { PathExecutor } from '../path-executor/path-executor'
 import { PathExecutorParams } from '../path-executor/types'
+import { ArbitrageExecutionTelemetry } from './arbitrage-execution-telemetry'
 
 @Injectable()
 export class ArbitrageExecutor {
 	constructor(
 		private readonly pathExecutor: PathExecutor,
-		private readonly telemetry: ExecutionTelemetry,
+		private readonly telemetry: ArbitrageExecutionTelemetry,
 	) {}
 
 	async execute(opportunity: GraphArbitrageOpportunity) {

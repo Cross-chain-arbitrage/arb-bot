@@ -1,8 +1,9 @@
-import { Inject, Logger } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Edge } from '../../../../domain/entities/edge'
 import { EdgeExecutorRegistry } from '../../../interfaces/edge-executor'
-import { EDGE_EXECUTOR_REGISTRY_TOKEN } from '../path-executor/path-executor'
+import { EDGE_EXECUTOR_REGISTRY_TOKEN } from '../edge-executor-registry-token'
 
+@Injectable()
 export class ExecutionPreparer {
 	logger = new Logger(ExecutionPreparer.name)
 
@@ -12,7 +13,11 @@ export class ExecutionPreparer {
 	) {}
 
 	async prepareExecution(edge: Edge) {
-		const edgeExecutor = this.edgeExecutorRegistry[edge.id]
+		const edgeExecutor = this.edgeExecutorRegistry.get(edge.id)
+
+		if (!edgeExecutor) {
+			throw new Error(`Edge executor not found for edge ${edge.id}`)
+		}
 
 		if (!edgeExecutor.prepareExecution) return
 

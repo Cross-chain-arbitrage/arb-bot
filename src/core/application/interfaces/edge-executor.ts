@@ -1,9 +1,12 @@
 import { Edge } from '../../domain/entities/edge'
+import { EdgeId } from '../../domain/value-objects/edge-id'
+
+export type ExecutionCost = { costInUsd: number }
 
 /* ======== INCHAIN ======== */
 
 export type InchainConfirmation = {
-	getExecutionCost: () => Promise<{ costInUsd: number }>
+	getExecutionCost: () => Promise<ExecutionCost>
 } & (
 	| {
 			status: 'success'
@@ -30,7 +33,7 @@ export type InchainExecutor = {
 /* ======== CROSSCHAIN ======== */
 
 export type CrosschainConfirmation = {
-	getExecutionCost: () => Promise<{ costInUsd: number }>
+	getExecutionCost: () => Promise<ExecutionCost>
 } & (
 	| {
 			status: 'success'
@@ -62,6 +65,4 @@ export type Execution = InchainExecution | CrosschainExecution
 
 export type EdgeExecutor = InchainExecutor | CrosschainExecutor
 
-export interface EdgeExecutorRegistry {
-	[edgeId: string]: EdgeExecutor
-}
+export type EdgeExecutorRegistry = Map<EdgeId, EdgeExecutor>
