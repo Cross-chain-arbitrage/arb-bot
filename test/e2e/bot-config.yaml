@@ -1,3 +1,6 @@
+tgArbitrageNotifier:
+  botName: 'Test bot'
+
 arbitrageScheduler:
   runInterval: 1000000
   prepareExecution: true

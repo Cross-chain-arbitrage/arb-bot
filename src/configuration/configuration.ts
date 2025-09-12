@@ -6,15 +6,18 @@ import {
 	DEX_CONFIG_KEY,
 	dexConfigScheme,
 } from '../core/infrastructure/plugins/dex/configuration/dex-config'
+import { TG_ARBITRAGE_NOTIFIER_CONFIG_KEY } from '../core/infrastructure/tg-notifier/tg-arbitrage-notifier'
 import { ARBITRAGE_SCHEDULER_CONFIG_KEY } from '../core/presentation/arbitrage-scheduler/arbitrage-scheduler'
 import { parsePretty } from '../utils/zod'
 import { arbitrageFinderConfigScheme } from './arbitrage-finder-config'
 import { arbitrageSchedulerConfigScheme } from './arbitrage-scheduler-config'
+import { tgArbitrageNotifierConfigScheme } from './tg-arbitrage-notifier-config'
 
 export const configScheme = z.object({
 	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigScheme,
 	[DEX_CONFIG_KEY]: dexConfigScheme,
 	[ARBITRAGE_SCHEDULER_CONFIG_KEY]: arbitrageSchedulerConfigScheme,
+	[TG_ARBITRAGE_NOTIFIER_CONFIG_KEY]: tgArbitrageNotifierConfigScheme,
 })
 
 export function loadConfig() {
