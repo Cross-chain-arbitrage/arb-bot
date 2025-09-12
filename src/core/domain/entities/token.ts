@@ -13,4 +13,5 @@ export type Token = {
 
 	formatUnits(amount: bigint): string
 	parseUnits(amount: string | bigint): bigint
+	toString(): string
 } & TokenMetadata

@@ -1,11 +1,11 @@
 import { Logger } from '@nestjs/common'
 import { ContractFunctionExecutionError } from 'viem'
+import { TgArbitrageNotifier } from '../core/infrastructure/tg-notifier/tg-arbitrage-notifier'
 import {
 	OpportunityLog,
 	OpportunityLogType,
 	SuccessExecutionOpportunityLog,
 } from '../logging/OpportunityLog'
-import { TgArbitrageNotifier } from '../modules/notification/TgArbitrageNotifier'
 import { PriceOracleService } from '../modules/price-oracle/price-oracle.service'
 import { GraphOptimizer } from '../optimizers/GraphOptimizer'
 import { runFuncWithDelay } from '../utils/polling'

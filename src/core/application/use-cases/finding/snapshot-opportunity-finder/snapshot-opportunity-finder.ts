@@ -8,10 +8,7 @@ import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
 } from '../../../interfaces/price-oracle'
-import {
-	GraphArbitrageOpportunity,
-	SnapshotFindOpportunityParams,
-} from './types'
+import { SnapshotFindOpportunityParams } from './types'
 
 @Injectable()
 export class SnapshotOpportunityFinder {
@@ -22,7 +19,7 @@ export class SnapshotOpportunityFinder {
 	async findOpportunity(
 		graphSnapshot: GraphSnapshot,
 		params: SnapshotFindOpportunityParams,
-	): Promise<GraphArbitrageOpportunity | null> {
+	): Promise<GraphArbitrageCycle | null> {
 		const { minStartValueUsd, maxStartValueUsd, runCount, startToken } =
 			params
 
@@ -77,7 +74,6 @@ export class SnapshotOpportunityFinder {
 
 		return {
 			...maxProfitPath,
-			startToken,
 		}
 	}
 }

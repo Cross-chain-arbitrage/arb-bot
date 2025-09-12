@@ -1,18 +1,10 @@
 import TelegramBot from 'node-telegram-bot-api'
-import { getEnvSafe } from '../../utils/common'
+import { withRetry } from 'viem'
+import { createCustomError, getEnvSafe } from '../../../utils/common'
 
-export class TgBaseNotifierError extends Error {
-	constructor(
-		message: string,
-		public readonly response: Response,
-	) {
-		super(message)
-		Object.setPrototypeOf(this, TgBaseNotifierError.prototype)
-		this.name = 'TelegramAPIError'
-	}
-}
+const TgBaseNotifierError = createCustomError('TgBaseNotifierError')
 
-export class TgBaseNotifier {
+export class TgNotifier {
 	protected BOT_TOKEN: string
 	protected TG_CHAT_ID: string
 	protected TG_MESSAGE_THREAD_ID: string
@@ -44,6 +36,7 @@ export class TgBaseNotifier {
 		)
 
 		if (!response.ok) {
+			console.log(response)
 			throw new TgBaseNotifierError(
 				`HTTP error! status: ${response.status}`,
 				response,
@@ -58,11 +51,15 @@ export class TgBaseNotifier {
 		message: MessageResponse,
 		text: string,
 	): Promise<TelegramBot.Message | undefined> {
-		const response = await this.bot.editMessageText(text, {
-			chat_id: message.result.chat.id,
-			message_id: message.result.message_id,
-			parse_mode: 'HTML',
-		})
+		const response = await withRetry(
+			() =>
+				this.bot.editMessageText(text, {
+					chat_id: message.result.chat.id,
+					message_id: message.result.message_id,
+					parse_mode: 'HTML',
+				}),
+			{ delay: 500 },
+		)
 
 		return response as TelegramBot.Message
 	}

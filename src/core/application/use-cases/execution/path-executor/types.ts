@@ -18,3 +18,7 @@ export interface FailedPathExecutionResult {
 	stepAmountIn: bigint
 	reason: string
 }
+
+export type PathExecutionResult =
+	| SuccessPathExecutionResult
+	| FailedPathExecutionResult

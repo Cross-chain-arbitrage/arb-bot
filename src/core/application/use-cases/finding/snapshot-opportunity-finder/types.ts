@@ -9,5 +9,8 @@ export type SnapshotFindOpportunityParams = {
 }
 
 export type GraphArbitrageOpportunity = GraphArbitrageCycle & {
+	id: string
+	revenueInUsd: number
+	costInUsd: number
 	startToken: Token
 }

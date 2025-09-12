@@ -91,6 +91,9 @@ export function useAnvil(anvilConfig: AnvilConfig) {
 
 			return walletClient as WalletClient
 		},
+		getChainNameById: (chainId: number) => {
+			return `Anvil ${chainId}`
+		},
 	} as ChainClientService
 
 	return { anvil, mockChainClientService }

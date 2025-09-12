@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { TgBaseNotifier } from '../../core/infrastructure/tg-notifier/tg-notifier'
 import { getEnvSafe } from '../../utils/common'
-import { TgBaseNotifier } from './TgBaseNotifier'
 
 @Injectable()
 export class TgBalancesNotifier extends TgBaseNotifier {

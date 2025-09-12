@@ -15,53 +15,6 @@ export class GraphVisualizer {
 		}
 	}
 
-	getPrettyOpportunity(
-		opportunity: GraphArbitrageOpportunity,
-		startTokenPriceUsd: number,
-	) {
-		const { path, startAmount, endAmount, profitAmount, profitPercentage } =
-			opportunity
-
-		// Get the start token from the first edge
-		const startToken = path[0]?.from
-		if (!startToken) throw new Error('Invalid opportunity: no path found')
-
-		// Format amounts
-		const startAmountFormatted = startToken.formatUnits(startAmount)
-		const endAmountFormatted = startToken.formatUnits(endAmount)
-		const profitAmountFormatted = startToken.formatUnits(profitAmount)
-
-		const startUsd = Number(startAmountFormatted) * startTokenPriceUsd
-		const endUsd = Number(endAmountFormatted) * startTokenPriceUsd
-
-		let result = `👀 <b>Opportunity</b>\n\n`
-
-		// Path summary
-		result += `📊 <b>Path Summary</b>\n`
-		result += `Start: $${startUsd.toFixed(2)} ${startAmountFormatted} ${startToken.toString()}\n`
-		result += `End: $${endUsd.toFixed(2)} ${endAmountFormatted} ${startToken.toString()}\n`
-		result += `Steps: ${path.length}\n\n`
-
-		// Profit details
-		result += `💰 <b>Profit Analysis</b>\n`
-		result += `Profit USD: $${(Number(profitAmountFormatted) * startTokenPriceUsd).toFixed(2)}\n`
-		result += `Profit: ${profitAmountFormatted} ${startToken.symbol}\n`
-		result += `Profit %: ${profitPercentage.toFixed(2)}%\n\n`
-
-		// Detailed path
-		result += `🛣️ <b>Arbitrage Path</b>\n`
-
-		// Vertical path format with italic actions
-		for (let i = 0; i < path.length; i++) {
-			const edge = path[i]
-			result += `${edge.from.toString()}\n    │ ${edge.constructor.name.toLowerCase()}\n`
-		}
-		// Add the last node
-		result += `${path[path.length - 1].to.toString()}\n\n`
-
-		return result
-	}
-
 	private generateViewLink(mermaidCode: string): string {
 		return this.generateLink(mermaidCode, false)
 	}

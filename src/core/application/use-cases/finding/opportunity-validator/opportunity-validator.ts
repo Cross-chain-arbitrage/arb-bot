@@ -1,22 +1,15 @@
-import { Inject, Injectable } from '@nestjs/common'
-import { Token } from '../../../../domain/entities/token'
-import {
-	PRICE_ORACLE_TOKEN,
-	PriceOracle,
-} from '../../../interfaces/price-oracle'
+import { Injectable } from '@nestjs/common'
 import { GraphArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
 import { OpportunityValidatorParams, ValidationResult } from './types'
 
 @Injectable()
 export class OpportunityValidator {
-	constructor(
-		@Inject(PRICE_ORACLE_TOKEN) private readonly priceOracle: PriceOracle,
-	) {}
+	constructor() {}
 
-	async validateOpportunity(
+	validateOpportunity(
 		opportunity: GraphArbitrageOpportunity | null,
 		params: OpportunityValidatorParams,
-	): Promise<ValidationResult> {
+	): ValidationResult {
 		if (!opportunity || !opportunity.path) {
 			return {
 				ok: false,
@@ -24,51 +17,21 @@ export class OpportunityValidator {
 			}
 		}
 
-		const expectedRevenue = await this.calculateRevenue(
-			opportunity.startAmount,
-			opportunity.endAmount,
-			opportunity.startToken,
-		)
-
-		let totalExecutionCostInUsd = 0
-
-		for (const step of opportunity.path) {
-			totalExecutionCostInUsd += step.quote.executionCostInUsd
-		}
-
-		const expectedProfit = expectedRevenue - totalExecutionCostInUsd
+		const expectedProfit = opportunity.revenueInUsd - opportunity.costInUsd
 
 		if (expectedProfit < params.minProfitUsd) {
 			return {
 				ok: false,
 				reason: {
 					type: 'LOW_PROFIT',
-					expectedRevenue,
 					expectedProfit,
-					executionCostUsd: totalExecutionCostInUsd,
 				},
 			}
 		}
 
 		return {
 			ok: true,
-			expectedRevenue,
 			expectedProfit,
-			executionCostUsd: totalExecutionCostInUsd,
 		}
-	}
-
-	private async calculateRevenue(
-		amountStart: bigint,
-		amountEnd: bigint,
-		startToken: Token,
-	) {
-		const amountEndFormatted = Number(startToken.formatUnits(amountEnd))
-
-		const amountStartFormatted = Number(startToken.formatUnits(amountStart))
-
-		const startTokenPrice = await this.priceOracle.getPrice(startToken)
-
-		return (amountEndFormatted - amountStartFormatted) * startTokenPrice
 	}
 }

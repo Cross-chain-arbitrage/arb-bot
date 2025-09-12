@@ -4,8 +4,8 @@ import { StepExecutor } from '../step-executor/step-executor'
 import { PathExecutionTelemetry } from './path-execution-telemetry'
 import {
 	FailedPathExecutionResult,
+	PathExecutionResult,
 	PathExecutorParams,
-	SuccessPathExecutionResult,
 } from './types'
 
 @Injectable()
@@ -17,7 +17,7 @@ export class PathExecutor {
 
 	async executePath(
 		params: PathExecutorParams,
-	): Promise<SuccessPathExecutionResult | FailedPathExecutionResult> {
+	): Promise<PathExecutionResult> {
 		let nextAmountIn = params.startAmount
 		let totalExecutionCostInUsd = 0
 
@@ -27,9 +27,7 @@ export class PathExecutor {
 
 				totalExecutionCostInUsd += result.executionCostInUsd
 
-				if (result.status === 'success') {
-					nextAmountIn = result.amountOut
-				} else {
+				if (result.status === 'failed') {
 					return this.buildFailedResult(
 						step,
 						nextAmountIn,
@@ -37,6 +35,8 @@ export class PathExecutor {
 						totalExecutionCostInUsd,
 					)
 				}
+
+				nextAmountIn = result.amountOut
 			} catch (error) {
 				return this.buildFailedResult(
 					step,
@@ -89,14 +89,14 @@ export class PathExecutor {
 				amountOut: confirmation.amountOut,
 				executionCostInUsd: executionCost.costInUsd,
 			} as const
-		} else {
-			this.telemetry.onProcessStepFailure(step.edge, confirmation.reason)
-
-			return {
-				status: 'failed',
-				failureReason: confirmation.reason,
-				executionCostInUsd: executionCost.costInUsd,
-			} as const
 		}
+
+		this.telemetry.onProcessStepFailure(step.edge, confirmation.reason)
+
+		return {
+			status: 'failed',
+			failureReason: confirmation.reason,
+			executionCostInUsd: executionCost.costInUsd,
+		} as const
 	}
 }

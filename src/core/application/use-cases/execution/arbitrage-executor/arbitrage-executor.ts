@@ -12,6 +12,8 @@ export class ArbitrageExecutor {
 	) {}
 
 	async execute(opportunity: GraphArbitrageOpportunity) {
+		this.telemetry.onArbitrageStart(opportunity)
+
 		const pathExecutorParams: PathExecutorParams = {
 			path: opportunity.path,
 			startAmount: opportunity.startAmount,
@@ -19,7 +21,7 @@ export class ArbitrageExecutor {
 
 		const result = await this.pathExecutor.executePath(pathExecutorParams)
 
-		this.telemetry.onArbitrageEnd(result)
+		this.telemetry.onArbitrageEnd(opportunity, result)
 
 		return result
 	}

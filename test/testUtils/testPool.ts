@@ -15,7 +15,7 @@ import { GeckoTerminalService } from '../../src/modules/price-oracle/gecko-termi
 import { PriceOracleService } from '../../src/modules/price-oracle/price-oracle.service'
 import { Token } from '../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
-import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'
+import { setNativeBalance, setTokenBalance, useAnvil } from './anvil'
 
 export type PoolTestConfig = {
 	chainId: number
