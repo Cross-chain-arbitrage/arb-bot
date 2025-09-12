@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { LoggerModule } from 'nestjs-pino'
+import { BalanceReporterModule } from './composition/balance-reporter/balance-reporter.module'
 import { GraphBuilderModule } from './composition/builder/graph-builder.module'
 import { ArbitrageExecutorModule } from './composition/executor/arbitrage-executor.module'
 import { ArbitrageFinderModule } from './composition/finder/arbitrage-finder.module'
@@ -29,6 +30,7 @@ import { transport } from './utils/logging-config'
 		ArbitrageFinderModule,
 		ArbitrageExecutorModule,
 		PriceOracleModule,
+		BalanceReporterModule,
 		ConfigModule.forRoot({ isGlobal: true, load: [loadConfig] }),
 	],
 	providers: [

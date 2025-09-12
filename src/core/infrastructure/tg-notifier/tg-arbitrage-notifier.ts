@@ -16,9 +16,7 @@ import { Token } from '../../domain/entities/token'
 import { ChannelIdUtils } from '../../domain/services/channel-id-utils'
 import { EdgeIdUtils } from '../../domain/services/edge-id-utils'
 import { TgNotifier } from './tg-notifier'
-import { ArbitrageMessage, TgNotifierConfig } from './types'
-
-export const TG_ARBITRAGE_NOTIFIER_CONFIG_KEY = 'tgArbitrageNotifier'
+import { ArbitrageMessage } from './types'
 
 @Injectable()
 export class TgArbitrageNotifier
@@ -43,13 +41,13 @@ export class TgArbitrageNotifier
 		super(messageThreadId)
 	}
 
-	reportArbitrageStart(opportunity: GraphArbitrageOpportunity) {
+	notifyArbitrageStart(opportunity: GraphArbitrageOpportunity) {
 		this.buildAndSendArbitrageStart(opportunity).catch((error) => {
 			this.logger.error(error, 'Error sending arbitrage start message')
 		})
 	}
 
-	reportArbitrageEnd(
+	notifyArbitrageEnd(
 		opportunity: GraphArbitrageOpportunity,
 		result: PathExecutionResult,
 	): void {
@@ -172,14 +170,8 @@ export class TgArbitrageNotifier
 			timeZoneName: 'short',
 		})
 
-		const tgArbitrageNotifierConfig =
-			this.configService.get<TgNotifierConfig>(
-				TG_ARBITRAGE_NOTIFIER_CONFIG_KEY,
-			)
-
-		const botName = tgArbitrageNotifierConfig
-			? tgArbitrageNotifierConfig.botName
-			: 'Unknown bot'
+		const botName =
+			this.configService.get<string>('botName') ?? 'Unknown bot'
 
 		const message = `🤖 <b>${botName}</b>\n` + `🕐 ${currentDate}`
 

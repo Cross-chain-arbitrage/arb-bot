@@ -10,7 +10,7 @@ process.env.BOT_CONFIG_PATH = 'test/e2e/bot-config.yaml'
 process.env.TG_BOT_TOKEN = 'REDACTED_TG_BOT_TOKEN'
 process.env.TG_CHAT_ID = '-1000000000000'
 process.env.TG_BOT_MESSAGE_THREAD_ID = '2'
-process.env.TG_BALANCE_REPORTER_THREAD_ID = ''
+process.env.TG_BALANCE_REPORTER_THREAD_ID = '27'
 
 const wethUsdcPoolAddress = '0xC6962004f452bE9203591991D15f6b388e09E8D0'
 

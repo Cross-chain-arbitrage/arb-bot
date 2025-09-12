@@ -4,9 +4,9 @@ import { GraphArbitrageOpportunity } from '../use-cases/finding/snapshot-opportu
 export const ARBITRAGE_NOTIFIER_TOKEN = Symbol('ARBITRAGE_NOTIFIER_TOKEN')
 
 export interface ArbitrageNotifier {
-	reportArbitrageStart(opportunity: GraphArbitrageOpportunity): void
+	notifyArbitrageStart(opportunity: GraphArbitrageOpportunity): void
 
-	reportArbitrageEnd(
+	notifyArbitrageEnd(
 		opportunity: GraphArbitrageOpportunity,
 		result: PathExecutionResult,
 	): void

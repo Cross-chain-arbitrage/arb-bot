@@ -17,7 +17,7 @@ export class ArbitrageExecutionTelemetry {
 
 	onArbitrageStart(opportunity: GraphArbitrageOpportunity) {
 		this.logArbitrageStart(opportunity)
-		this.arbitrageNotifier.reportArbitrageStart(opportunity)
+		this.arbitrageNotifier.notifyArbitrageStart(opportunity)
 	}
 
 	onArbitrageEnd(
@@ -25,7 +25,7 @@ export class ArbitrageExecutionTelemetry {
 		result: PathExecutionResult,
 	) {
 		this.logArbitrageEnd(result)
-		this.arbitrageNotifier.reportArbitrageEnd(opportunity, result)
+		this.arbitrageNotifier.notifyArbitrageEnd(opportunity, result)
 	}
 
 	private logArbitrageStart(opportunity: GraphArbitrageOpportunity) {
