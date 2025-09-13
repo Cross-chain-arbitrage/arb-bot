@@ -1,8 +1,11 @@
-botName: 'Test bot'
+botName: 'test'
+
+balanceReporterScheduler:
+  runInterval: 1000000
 
 arbitrageScheduler:
   runInterval: 1000000
-  prepareExecution: true
+  prepareExecution: false
 
 arbitrageFinder:
   opportunityFinding:
@@ -11,7 +14,7 @@ arbitrageFinder:
     runCount: 5
     startTokenId: 'eip155:42161:0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
   opportunityValidation:
-    minProfitUsd: 5
+    minProfitUsd: 10
 
 dexConfig:
   pools:

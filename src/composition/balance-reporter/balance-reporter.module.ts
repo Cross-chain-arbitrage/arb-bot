@@ -6,7 +6,7 @@ import { BalanceOracleService } from '../../core/infrastructure/balance-oracle/b
 import { EvmModule } from '../../core/infrastructure/evm/evm.module'
 import { SolanaModule } from '../../core/infrastructure/solana/solana.module'
 import { TgBalancesNotifier } from '../../core/infrastructure/tg-notifier/tg-balance-notifier'
-import { BalanceReporterScheduler } from '../../core/presentation/arbitrage-scheduler/balance-reporter-scheduler'
+import { BalanceReporterScheduler } from '../../core/presentation/balance-reporter-scheduler.ts/balance-reporter-scheduler'
 import { GraphBuilderModule } from '../builder/graph-builder.module'
 
 @Module({
