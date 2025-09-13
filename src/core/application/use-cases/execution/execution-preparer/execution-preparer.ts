@@ -1,7 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Edge } from '../../../../domain/entities/edge'
-import { EdgeExecutorRegistry } from '../../../interfaces/edge-executor'
-import { EDGE_EXECUTOR_REGISTRY_TOKEN } from '../edge-executor-registry-token'
+import {
+	EDGE_EXECUTOR_REGISTRY_TOKEN,
+	EdgeExecutorRegistry,
+} from '../../../interfaces/edge-executor'
 
 @Injectable()
 export class ExecutionPreparer {

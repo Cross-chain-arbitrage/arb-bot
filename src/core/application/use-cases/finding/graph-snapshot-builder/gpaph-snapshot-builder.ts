@@ -5,11 +5,10 @@ import {
 	GraphSnapshot,
 	Quote,
 } from '../../../../domain/value-objects/weighted-graph-snapshot'
-import { EdgeSnapshotBuilderRegistry } from '../../../interfaces/edge-snapshot-builder'
-
-export const EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN = Symbol(
-	'EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN',
-)
+import {
+	EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN,
+	EdgeSnapshotBuilderRegistry,
+} from '../../../interfaces/edge-snapshot-builder'
 
 @Injectable()
 export class GraphSnapshotBuilder {

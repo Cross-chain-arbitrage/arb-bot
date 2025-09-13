@@ -10,3 +10,7 @@ export interface EdgeSnapshotBuilder {
 }
 
 export type EdgeSnapshotBuilderRegistry = Map<EdgeId, EdgeSnapshotBuilder>
+
+export const EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN = Symbol(
+	'EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN',
+)

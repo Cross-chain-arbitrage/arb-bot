@@ -57,12 +57,17 @@ export type CrosschainExecutor = {
 	execute(amountIn: bigint): Promise<CrosschainExecution>
 	prepareExecution?(edge: Edge): Promise<{ result: string }>
 }
-
-/* ======== REGISTRY ======== */
+/* ======== HOLISTIC ======== */
 
 export type Confirmation = InchainConfirmation | CrosschainConfirmation
 export type Execution = InchainExecution | CrosschainExecution
 
 export type EdgeExecutor = InchainExecutor | CrosschainExecutor
 
+/* ======== REGISTRY ======== */
+
 export type EdgeExecutorRegistry = Map<EdgeId, EdgeExecutor>
+
+export const EDGE_EXECUTOR_REGISTRY_TOKEN = Symbol(
+	'EDGE_EXECUTOR_REGISTRY_TOKEN',
+)

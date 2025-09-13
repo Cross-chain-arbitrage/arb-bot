@@ -1,6 +1,7 @@
 import { Edge } from '../../domain/entities/edge'
 import { Node } from '../../domain/entities/node'
 import { EdgeExecutor } from './edge-executor'
+import { EdgeQuoter } from './edge-quoter'
 import { EdgeSnapshotBuilder } from './edge-snapshot-builder'
 
 export interface GraphPlugin {
@@ -23,4 +24,8 @@ export interface SnapshotPlugin extends EdgeHandlerPlugin {
 
 export interface ExecutorPlugin extends EdgeHandlerPlugin {
 	buildEdgeExecutor(edge: Edge): EdgeExecutor | Promise<EdgeExecutor>
+}
+
+export interface QuoterPlugin extends EdgeHandlerPlugin {
+	buildEdgeQuoter(edge: Edge): EdgeQuoter | Promise<EdgeQuoter>
 }

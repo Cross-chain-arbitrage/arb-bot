@@ -22,3 +22,9 @@ export interface FailedPathExecutionResult {
 export type PathExecutionResult =
 	| SuccessPathExecutionResult
 	| FailedPathExecutionResult
+
+export type ValidateStep = (
+	params: PathExecutorParams,
+	step: Step,
+	amountIn: bigint,
+) => Promise<{ isValid: true } | { isValid: false; reason: string }>

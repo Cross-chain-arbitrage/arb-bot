@@ -3,12 +3,12 @@ import { wait } from '../../../../../utils/common'
 import { Step } from '../../../../domain/services/bellman-ford'
 import {
 	Confirmation,
+	EDGE_EXECUTOR_REGISTRY_TOKEN,
 	EdgeExecutor,
 	EdgeExecutorRegistry,
 	Execution,
 	ExecutionCost,
 } from '../../../interfaces/edge-executor'
-import { EDGE_EXECUTOR_REGISTRY_TOKEN } from '../edge-executor-registry-token'
 import { backoffMs } from '../utils/backoff'
 import { StepExecutionTelemetry } from './step-execution-telemetry'
 

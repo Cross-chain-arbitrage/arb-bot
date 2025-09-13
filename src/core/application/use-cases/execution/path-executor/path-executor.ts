@@ -6,6 +6,7 @@ import {
 	FailedPathExecutionResult,
 	PathExecutionResult,
 	PathExecutorParams,
+	ValidateStep,
 } from './types'
 
 @Injectable()
@@ -17,11 +18,27 @@ export class PathExecutor {
 
 	async executePath(
 		params: PathExecutorParams,
+		validateStep?: ValidateStep,
 	): Promise<PathExecutionResult> {
 		let nextAmountIn = params.startAmount
 		let totalExecutionCostInUsd = 0
 
 		for (const step of params.path) {
+			const validationResult = await validateStep?.(
+				params,
+				step,
+				nextAmountIn,
+			)
+
+			if (validationResult?.isValid === false) {
+				return this.buildFailedResult(
+					step,
+					nextAmountIn,
+					validationResult.reason,
+					totalExecutionCostInUsd,
+				)
+			}
+
 			try {
 				const result = await this.processStep(step, nextAmountIn)
 
