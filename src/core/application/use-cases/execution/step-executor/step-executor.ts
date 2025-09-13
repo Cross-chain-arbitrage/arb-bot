@@ -11,6 +11,7 @@ import {
 } from '../../../interfaces/edge-executor'
 import { backoffMs } from '../utils/backoff'
 import { StepExecutionTelemetry } from './step-execution-telemetry'
+import { StepPhase } from './types'
 
 @Injectable()
 export class StepExecutor {
@@ -46,7 +47,7 @@ export class StepExecutor {
 			{
 				maxAttempts: 2,
 			},
-			'edge_execution',
+			StepPhase.EXECUTE,
 		)
 	}
 
@@ -56,7 +57,7 @@ export class StepExecutor {
 			{
 				maxAttempts: 3,
 			},
-			'confirmation',
+			StepPhase.CONFIRM,
 		)
 	}
 
@@ -66,26 +67,26 @@ export class StepExecutor {
 			{
 				maxAttempts: 2,
 			},
-			'cost_calculation',
+			StepPhase.GET_COST,
 		)
 	}
 
 	private async retryPhase<T>(
 		fn: () => Promise<T>,
 		policy: { maxAttempts: number; backoffMs?: (n: number) => number },
-		label: string,
+		phase: StepPhase,
 	): Promise<T> {
 		for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
 			try {
-				this.telemetry.onPhaseStart(label, attempt)
+				this.telemetry.onPhaseStart(phase, attempt)
 
 				const res = await fn()
 
-				this.telemetry.onPhaseSuccess(label, attempt, res)
+				this.telemetry.onPhaseSuccess(phase, attempt, res)
 
 				return res
 			} catch (err) {
-				this.telemetry.onPhaseFailure(label, attempt, err)
+				this.telemetry.onPhaseError(phase, attempt, err)
 
 				if (attempt === policy.maxAttempts) throw err
 
