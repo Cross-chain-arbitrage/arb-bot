@@ -102,7 +102,7 @@ export class TgArbitrageNotifier
 			header: this.buildHeader(),
 			status,
 			opportunity: this.buildOpportunity(opportunity, startTokenPrice),
-			path: this.buildPath(opportunity),
+			path: this.buildPath(opportunity, result),
 		}
 		await this.editOrSendMessage(opportunity, arbitrageMessage)
 	}
@@ -223,7 +223,10 @@ export class TgArbitrageNotifier
 		return result
 	}
 
-	private buildPath(opportunity: GraphArbitrageOpportunity) {
+	private buildPath(
+		opportunity: GraphArbitrageOpportunity,
+		pathResult?: PathExecutionResult,
+	) {
 		const { path } = opportunity
 
 		let result = `🛣️ <b>Path</b>\n\n`
@@ -234,7 +237,16 @@ export class TgArbitrageNotifier
 			const { channelId } = EdgeIdUtils.parseId(step.edge.id)
 			const { protocol } = ChannelIdUtils.parseId(channelId)
 
-			result += `${from.toString()}\n    │ ${protocol}\n`
+			let stepResult = ''
+
+			if (
+				pathResult &&
+				pathResult.status === 'failed' &&
+				pathResult.step.edge.id === step.edge.id
+			) {
+				stepResult = `❌`
+			}
+			result += `${from.toString()}\n    │${stepResult} ${protocol}\n`
 		}
 
 		const to = path[path.length - 1].edge.to as Token
