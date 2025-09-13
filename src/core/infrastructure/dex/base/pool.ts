@@ -32,6 +32,8 @@ export interface PoolConstructorParams {
 	poolAbi: Abi
 }
 
+const GAS_MULTIPLIER_BPS = 15000n
+
 export abstract class Pool extends BaseContract {
 	readonly customError: ReturnType<typeof createCustomError>
 	readonly DEFAULT_SLIPPAGE: bigint = 50n
@@ -281,8 +283,7 @@ export abstract class Pool extends BaseContract {
 	}
 
 	multiplyGas(gas: bigint) {
-		//TODO: remove magic number
-		return (gas * 15n) / 10n
+		return (gas * GAS_MULTIPLIER_BPS) / this.BASIS_POINTS
 	}
 
 	calcDeadline(secondsToAdd: number): bigint {
