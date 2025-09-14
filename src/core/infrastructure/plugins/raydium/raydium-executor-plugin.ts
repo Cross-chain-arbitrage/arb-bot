@@ -10,9 +10,9 @@ import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
+import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
+import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
 import { EdgeHandler } from '../shared-implementation/edge-handler'
-import { SolanaTxCostUtils } from '../shared-utils/chain-specific/solana/solana-tx-cost.utils'
-import { PriceOracleHelper } from '../shared-utils/price-oracle-helper'
 import { RAYDIUM_PROTOCOL } from './raydium-plugin-constants'
 
 @Injectable()
@@ -22,7 +22,7 @@ export class RaydiumExecutorPlugin
 {
 	constructor(
 		private readonly raydiumService: RaydiumService,
-		readonly solanaTxCostUtils: SolanaTxCostUtils,
+		readonly SolanaTxCostHelper: SolanaTxCostHelper,
 		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super(RAYDIUM_PROTOCOL)
@@ -75,7 +75,7 @@ export class RaydiumExecutorPlugin
 	}
 
 	async getExecutionCost(parsedTx: ParsedTransactionWithMeta) {
-		const costInUsd = await this.solanaTxCostUtils.getTxCostInUsd(parsedTx)
+		const costInUsd = await this.SolanaTxCostHelper.getTxCostInUsd(parsedTx)
 
 		return { costInUsd }
 	}

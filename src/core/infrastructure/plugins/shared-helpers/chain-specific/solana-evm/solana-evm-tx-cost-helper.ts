@@ -1,30 +1,27 @@
 import { Injectable } from '@nestjs/common'
 import { ParsedTransactionWithMeta } from '@solana/web3.js'
 import { TransactionReceipt } from 'viem'
-import { PluginHelper } from '../../plugin-helper'
-import { EvmPluginHelper } from '../evm/evm-tx-cost.utils'
-import { SolanaPluginHelper } from '../solana/solana-tx-cost.utils'
+import { EvmTxCostHelper } from '../evm/evm-tx-cost-helper'
+import { SolanaTxCostHelper } from '../solana/solana-tx-cost-helper'
 
 @Injectable()
-export class SolanaEvmPluginHelper extends PluginHelper {
+export class SolanaEvmTxCostHelper {
 	constructor(
-		readonly solanaPluginHelper: SolanaPluginHelper,
-		readonly evmPluginHelper: EvmPluginHelper,
-	) {
-		super()
-	}
+		readonly solanaTxCostHelper: SolanaTxCostHelper,
+		readonly evmTxCostHelper: EvmTxCostHelper,
+	) {}
 
 	async getExpectedTxCostInUsd(
 		chainId: number | 'solana',
 		gasOrUnitConsumption: bigint,
 	): Promise<number> {
 		if (chainId === 'solana') {
-			return this.solanaPluginHelper.getExpectedTxCostInUsd(
+			return this.solanaTxCostHelper.getExpectedTxCostInUsd(
 				gasOrUnitConsumption,
 			)
 		}
 
-		return this.evmPluginHelper.getExpectedTxCostInUsd(
+		return this.evmTxCostHelper.getExpectedTxCostInUsd(
 			chainId,
 			gasOrUnitConsumption,
 		)
@@ -35,12 +32,12 @@ export class SolanaEvmPluginHelper extends PluginHelper {
 		nativeAmount: bigint,
 	): Promise<number> {
 		if (chainId === 'solana') {
-			return this.solanaPluginHelper.getUsdCostOfNativeAmount(
+			return this.solanaTxCostHelper.getUsdCostOfNativeAmount(
 				nativeAmount,
 			)
 		}
 
-		return this.evmPluginHelper.getUsdCostOfNativeAmount(
+		return this.evmTxCostHelper.getUsdCostOfNativeAmount(
 			chainId,
 			nativeAmount,
 		)
@@ -51,12 +48,12 @@ export class SolanaEvmPluginHelper extends PluginHelper {
 		txResult: ParsedTransactionWithMeta | TransactionReceipt,
 	) {
 		if (chainId === 'solana') {
-			return this.solanaPluginHelper.getTxCostInUsd(
+			return this.solanaTxCostHelper.getTxCostInUsd(
 				txResult as ParsedTransactionWithMeta,
 			)
 		}
 
-		return this.evmPluginHelper.getTxCostInUsd(
+		return this.evmTxCostHelper.getTxCostInUsd(
 			chainId,
 			txResult as TransactionReceipt,
 		)

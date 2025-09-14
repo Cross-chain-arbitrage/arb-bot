@@ -5,7 +5,7 @@ import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
 import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { getNode } from '../shared-utils/graph-building.utils'
+import { getNode } from '../shared-helpers/graph-building-helper'
 import { RelayPlugin } from './relay-plugin'
 import { RelayConfig } from './types'
 

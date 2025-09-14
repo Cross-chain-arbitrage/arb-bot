@@ -11,15 +11,15 @@ import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { RelayService } from '../../relay/relay-service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaEvmPluginHelper } from '../shared-utils/chain-specific/solana-evm/solana-evm-tx-cost.utils'
-import { PriceOracleHelper } from '../shared-utils/price-oracle-helper'
+import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
+import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
 import { RelayPlugin } from './relay-plugin'
 
 @Injectable()
 export class RelayExecutorPlugin extends RelayPlugin implements ExecutorPlugin {
 	constructor(
 		private readonly relayService: RelayService,
-		readonly solanaEvmPluginHelper: SolanaEvmPluginHelper,
+		readonly SolanaEvmTxCostHelper: SolanaEvmTxCostHelper,
 		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super()
@@ -60,13 +60,13 @@ export class RelayExecutorPlugin extends RelayPlugin implements ExecutorPlugin {
 			amountOut: bridgeResult.amountOut,
 			getExecutionCost: async () => {
 				const parsedTx =
-					await this.solanaEvmPluginHelper.waitForTxResult(
+					await this.SolanaEvmTxCostHelper.waitForTxResult(
 						edge.from.chainId,
 						bridgeResult.srcTxHash,
 					)
 
 				const costInUsd =
-					await this.solanaEvmPluginHelper.getTxCostInUsd(
+					await this.SolanaEvmTxCostHelper.getTxCostInUsd(
 						edge.from.chainId,
 						parsedTx,
 					)

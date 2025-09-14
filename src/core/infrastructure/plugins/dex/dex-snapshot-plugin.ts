@@ -11,8 +11,8 @@ import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { Pool } from '../../dex/base/pool'
 import { PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { EvmTxCostUtils } from '../shared-utils/chain-specific/evm/evm-tx-cost.utils'
-import { InterpolationHelper } from '../shared-utils/interpolation-helper'
+import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
+import { InterpolationHelper } from '../shared-helpers/interpolation-helper'
 import { DEX_CONFIG_KEY } from './configuration/dex-config'
 import { DexPlugin } from './dex-plugin'
 import { DexConfig } from './types'
@@ -23,7 +23,7 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 		configService: ConfigService,
 		private readonly interpolationHelper: InterpolationHelper,
 		poolUtils: PoolUtils,
-		private readonly evmTxCostUtils: EvmTxCostUtils,
+		private readonly EvmTxCostHelper: EvmTxCostHelper,
 	) {
 		super(poolUtils, configService)
 	}
@@ -65,7 +65,7 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 			)
 
 		const executionCostInUsd =
-			await this.evmTxCostUtils.getExpectedTxCostInUsd(
+			await this.EvmTxCostHelper.getExpectedTxCostInUsd(
 				edge.from.chainId,
 				results[0].gas,
 			)

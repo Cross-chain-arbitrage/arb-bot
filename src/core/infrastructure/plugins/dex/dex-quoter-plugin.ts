@@ -7,13 +7,13 @@ import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { EvmTxCostUtils } from '../shared-utils/chain-specific/evm/evm-tx-cost.utils'
+import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
 import { DexPlugin } from './dex-plugin'
 
 @Injectable()
 export class DexQuoterPlugin extends DexPlugin implements QuoterPlugin {
 	constructor(
-		private readonly evmTxCostUtils: EvmTxCostUtils,
+		private readonly EvmTxCostHelper: EvmTxCostHelper,
 		poolUtils: PoolUtils,
 		configService: ConfigService,
 	) {
@@ -37,7 +37,7 @@ export class DexQuoterPlugin extends DexPlugin implements QuoterPlugin {
 		})
 
 		const executionCostInUsd =
-			await this.evmTxCostUtils.getExpectedTxCostInUsd(
+			await this.EvmTxCostHelper.getExpectedTxCostInUsd(
 				edge.from.chainId,
 				quote.gas,
 			)

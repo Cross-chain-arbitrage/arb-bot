@@ -8,7 +8,7 @@ type EdgeConstructor = {
 	to: unknown
 }
 
-export abstract class GraphBuildingUtils {
+export abstract class GraphBuildingHelper {
 	createEdge(from: Node, to: Node, protocol: string): Edge {
 		return {
 			from,

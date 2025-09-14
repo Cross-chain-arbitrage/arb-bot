@@ -12,8 +12,8 @@ import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { RelayService } from '../../relay/relay-service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaEvmPluginHelper } from '../shared-utils/chain-specific/solana-evm/solana-evm-tx-cost.utils'
-import { PriceOracleHelper } from '../shared-utils/price-oracle-helper'
+import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
+import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
 import { RelayPlugin } from './relay-plugin'
 
 const QUOTE_USD_AMOUNT_IN = 500
@@ -39,7 +39,7 @@ const relayQuoteSchema = z.object({
 export class RelaySnapshotPlugin extends RelayPlugin implements SnapshotPlugin {
 	constructor(
 		private readonly relayService: RelayService,
-		readonly solanaEvmPluginHelper: SolanaEvmPluginHelper,
+		readonly SolanaEvmTxCostHelper: SolanaEvmTxCostHelper,
 		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super()
@@ -71,7 +71,7 @@ export class RelaySnapshotPlugin extends RelayPlugin implements SnapshotPlugin {
 		const relayQuote = relayQuoteSchema.parse(quote.rawResult)
 
 		const costInUsd =
-			await this.solanaEvmPluginHelper.getExpectedTxCostInUsd(
+			await this.SolanaEvmTxCostHelper.getExpectedTxCostInUsd(
 				edge.from.chainId,
 				quote.gasInNative,
 			)
@@ -110,7 +110,7 @@ export class RelaySnapshotPlugin extends RelayPlugin implements SnapshotPlugin {
 			const amountOut = k * amountInTokenOutDecimals + b
 
 			return {
-				rate: this.solanaEvmPluginHelper.calcRate(
+				rate: this.SolanaEvmTxCostHelper.calcRate(
 					amountIn,
 					BigInt(Math.floor(amountOut)),
 				),

@@ -9,8 +9,8 @@ import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { StargateService } from '../../layerzero-bridges/stargate/stargate-service'
-import { EvmPluginHelper } from '../shared-utils/chain-specific/evm/evm-tx-cost.utils'
-import { PriceOracleHelper } from '../shared-utils/price-oracle-helper'
+import { EvmPluginHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
+import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
 import { StargatePlugin } from './stargate-plugin'
 
 const QUOTE_USD_AMOUNT_IN = 500

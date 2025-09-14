@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { SolanaTokenUtils } from '../../../../solana/solana-tokens/solana-token-utils'
-import { GraphBuildingUtils } from '../../graph-building.utils'
+import { GraphBuildingHelper } from '../../graph-building-helper'
 
 @Injectable()
-export class SolanaGraphBuildingUtils extends GraphBuildingUtils {
+export class SolanaGraphBuildingHelper extends GraphBuildingHelper {
 	constructor(readonly solanaTokenUtils: SolanaTokenUtils) {
 		super()
 	}

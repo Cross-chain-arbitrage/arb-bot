@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common'
 import { DexModule } from '../../../dex/dex.module'
 import { EvmModule } from '../../../evm/evm.module'
-import { EvmUtilsModule } from '../../shared-utils/chain-specific/evm/evm-utils.module'
-import { InterpolationHelper } from '../../shared-utils/interpolation-helper'
-import { PriceOracleHelper } from '../../shared-utils/price-oracle-helper'
+import { EvmHelperModule } from '../../shared-helpers/chain-specific/evm/evm-helper.module'
+import { InterpolationHelper } from '../../shared-helpers/interpolation-helper'
+import { PriceOracleHelper } from '../../shared-helpers/price-oracle-helper'
 import { DexSnapshotPlugin } from '../dex-snapshot-plugin'
 
 @Module({
-	imports: [EvmModule, DexModule, EvmUtilsModule],
+	imports: [EvmModule, DexModule, EvmHelperModule],
 	providers: [PriceOracleHelper, InterpolationHelper, DexSnapshotPlugin],
 	exports: [DexSnapshotPlugin],
 })

@@ -10,8 +10,8 @@ import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { SimpleStargateService } from '../../layerzero-bridges/stargate/simple-stargate.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaEvmPluginHelper } from '../shared-utils/chain-specific/solana-evm/solana-evm-tx-cost.utils'
-import { PriceOracleHelper } from '../shared-utils/price-oracle-helper'
+import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
+import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
 import { SimpleStargatePlugin } from './simple-stargate-plugin'
 
 const QUOTE_USD_AMOUNT_IN = 500
@@ -24,7 +24,7 @@ export class SimpleStargateSnapshotPlugin
 	constructor(
 		readonly simpleStargateService: SimpleStargateService,
 		readonly priceOracleHelper: PriceOracleHelper,
-		readonly solanaEvmPluginHelper: SolanaEvmPluginHelper,
+		readonly SolanaEvmTxCostHelper: SolanaEvmTxCostHelper,
 	) {
 		super()
 	}
@@ -53,13 +53,13 @@ export class SimpleStargateSnapshotPlugin
 			await this.simpleStargateService.quote(edge.from, edge.to, amountIn)
 
 		const txCostInUsd =
-			await this.solanaEvmPluginHelper.getExpectedTxCostInUsd(
+			await this.SolanaEvmTxCostHelper.getExpectedTxCostInUsd(
 				edge.from.chainId,
 				gas,
 			)
 
 		const bridgeFeeInUsd =
-			await this.solanaEvmPluginHelper.getUsdCostOfNativeAmount(
+			await this.SolanaEvmTxCostHelper.getUsdCostOfNativeAmount(
 				edge.from.chainId,
 				feeInNative,
 			)
@@ -86,7 +86,7 @@ export class SimpleStargateSnapshotPlugin
 			const amountOut = BigInt(Math.floor(amountOutNumber))
 
 			return {
-				rate: this.solanaEvmPluginHelper.calcRate(amountIn, amountOut),
+				rate: this.SolanaEvmTxCostHelper.calcRate(amountIn, amountOut),
 				amountOut,
 				executionCostInUsd: costInUsd,
 			}

@@ -5,7 +5,7 @@ import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
 import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { getNodesAndEdgesFromConfig } from '../shared-utils/graph-building.utils'
+import { getNodesAndEdgesFromConfig } from '../shared-helpers/graph-building-helper'
 import { SimpleStargatePlugin } from './simple-stargate-plugin'
 import { SimpleStargateConfig } from './types'
 

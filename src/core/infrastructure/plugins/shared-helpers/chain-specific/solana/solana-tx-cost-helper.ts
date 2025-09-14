@@ -11,7 +11,7 @@ const MICRO_LAMPORTS_PER_LAMPORT = 10n ** 6n
 const LAMPORTS_FOR_SIGNING = 5000n
 
 @Injectable()
-export class SolanaTxCostUtils {
+export class SolanaTxCostHelper {
 	constructor(
 		readonly solanaTokenUtils: SolanaTokenUtils,
 		@Inject(PRICE_ORACLE_TOKEN) readonly priceOracle: PriceOracle,

@@ -9,7 +9,7 @@ import { GasPriceOracleService } from '../../../../evm/gas-price-oracle/gas-pric
 import { TokenUtils } from '../../../../evm/primitives/tokens/TokenUtils'
 
 @Injectable()
-export class EvmTxCostUtils {
+export class EvmTxCostHelper {
 	constructor(
 		readonly gasPriceOracleService: GasPriceOracleService,
 		readonly tokenUtils: TokenUtils,

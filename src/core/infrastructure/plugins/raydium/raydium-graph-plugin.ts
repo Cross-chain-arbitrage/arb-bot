@@ -3,14 +3,14 @@ import { ConfigService } from '@nestjs/config'
 import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
-import { SolanaGraphBuildingUtils } from '../shared-utils/chain-specific/solana/solana-graph-building.utils'
+import { SolanaGraphBuildingHelper } from '../shared-helpers/chain-specific/solana/solana-graph-building-helper'
 import { RAYDIUM_PROTOCOL } from './raydium-plugin-constants'
 import { RaydiumConfig } from './types'
 
 @Injectable()
 export class RaydiumGraphPlugin implements GraphPlugin {
 	constructor(
-		private readonly solanaGraphBuildingUtils: SolanaGraphBuildingUtils,
+		private readonly solanaGraphBuildingHelper: SolanaGraphBuildingHelper,
 		private readonly configService: ConfigService,
 	) {}
 
@@ -21,7 +21,7 @@ export class RaydiumGraphPlugin implements GraphPlugin {
 		const raydiumConfig = this.configService.get<RaydiumConfig>('raydium')
 
 		const { nodes, edges } =
-			await this.solanaGraphBuildingUtils.getNodesAndEdgesFromConfig(
+			await this.solanaGraphBuildingHelper.getNodesAndEdgesFromConfig(
 				raydiumConfig?.edges,
 				RAYDIUM_PROTOCOL,
 			)

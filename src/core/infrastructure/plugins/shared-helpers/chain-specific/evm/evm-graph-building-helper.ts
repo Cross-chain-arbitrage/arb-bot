@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { TokenUtils } from '../../../../evm/primitives/tokens/TokenUtils'
-import { GraphBuildingUtils } from '../../graph-building.utils'
+import { GraphBuildingHelper } from '../../graph-building-helper'
 
 @Injectable()
-export class EvmGraphBuildingUtils extends GraphBuildingUtils {
+export class EvmGraphBuildingHelper extends GraphBuildingHelper {
 	constructor(readonly tokenUtils: TokenUtils) {
 		super()
 	}

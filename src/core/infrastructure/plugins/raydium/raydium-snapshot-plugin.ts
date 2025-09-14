@@ -11,13 +11,13 @@ import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
-import { SolanaTxCostUtils } from '../shared-utils/chain-specific/solana/solana-tx-cost.utils'
+import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
 import {
 	InterpolationHelper,
 	InterpolationParams,
-} from '../shared-utils/interpolation-helper'
-import { PriceOracleHelper } from '../shared-utils/price-oracle-helper'
+} from '../shared-helpers/interpolation-helper'
+import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
+import { EdgeHandler } from '../shared-implementation/edge-handler'
 import { RAYDIUM_PROTOCOL } from './raydium-plugin-constants'
 
 @Injectable()
@@ -28,7 +28,7 @@ export class RaydiumSnapshotPlugin
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly raydiumService: RaydiumService,
-		readonly solanaTxCostUtils: SolanaTxCostUtils,
+		readonly SolanaTxCostHelper: SolanaTxCostHelper,
 		readonly priceOracleHelper: PriceOracleHelper,
 		readonly interpolationHelper: InterpolationHelper,
 	) {
@@ -65,7 +65,7 @@ export class RaydiumSnapshotPlugin
 			)
 
 		const executionCostInUsd =
-			await this.solanaTxCostUtils.getExpectedTxCostInUsd(
+			await this.SolanaTxCostHelper.getExpectedTxCostInUsd(
 				results[0].amountOut,
 			)
 

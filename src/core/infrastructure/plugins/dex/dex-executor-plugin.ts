@@ -11,7 +11,7 @@ import { Edge } from '../../../domain/entities/edge'
 import { Pool } from '../../dex/base/pool'
 import { PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { EvmTxCostUtils } from '../shared-utils/chain-specific/evm/evm-tx-cost.utils'
+import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
 import { DexPlugin } from './dex-plugin'
 
 @Injectable()
@@ -19,7 +19,7 @@ export class DexExecutorPlugin extends DexPlugin implements ExecutorPlugin {
 	constructor(
 		poolUtils: PoolUtils,
 		configService: ConfigService,
-		private readonly evmTxCostUtils: EvmTxCostUtils,
+		private readonly EvmTxCostHelper: EvmTxCostHelper,
 	) {
 		super(poolUtils, configService)
 	}
@@ -97,7 +97,7 @@ export class DexExecutorPlugin extends DexPlugin implements ExecutorPlugin {
 	}
 
 	async getExecutionCost(edge: Edge<Token>, receipt: TransactionReceipt) {
-		const txCostInUsd = await this.evmTxCostUtils.getTxCostInUsd(
+		const txCostInUsd = await this.EvmTxCostHelper.getTxCostInUsd(
 			edge.from.chainId,
 			receipt,
 		)
