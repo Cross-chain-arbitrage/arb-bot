@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common'
 import { EvmModule } from '../../../evm/evm.module'
 import { StargateModule } from '../../../layerzero-bridges/stargate/stargate.module'
+import { EvmHelperModule } from '../../shared-helpers/chain-specific/evm/evm-helper.module'
 import { StargateExecutorPlugin } from '../stargate-executor-plugin'
 
 @Module({
-	imports: [StargateModule, EvmModule],
+	imports: [StargateModule, EvmModule, EvmHelperModule],
 	providers: [StargateExecutorPlugin],
 	exports: [StargateExecutorPlugin],
 })

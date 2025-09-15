@@ -5,7 +5,7 @@ export const CHAIN_CLIENT_CONFIG_KEY = 'chainClientConfig'
 
 export const rpcProvidersScheme: z.ZodType<RpcProviders> = z
 	.record(
-		z.number(),
+		z.string(),
 		z.array(
 			(
 				z.union([

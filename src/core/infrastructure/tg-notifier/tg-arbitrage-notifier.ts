@@ -136,7 +136,9 @@ export class TgArbitrageNotifier
 
 	private buildFailedStatus(result: FailedPathExecutionResult) {
 		const { reason } = result
-		const status = `❌ <b>Execution error:</b> ${reason}`
+		let status = '❌ <b>Execution error</b>\n\n'
+		status += `Reason: ${reason}\n\n`
+		status += `Cost: $${result.totalExecutionCostInUsd.toFixed(2)}`
 
 		return status
 	}

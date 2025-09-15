@@ -31,3 +31,8 @@ dexConfig:
     minStartValueUsd: 100
     maxStartValueUsd: 1000
     runCount: 5
+
+chainClientConfig:
+  rpcProviders:
+    '42161':
+      - alchemy

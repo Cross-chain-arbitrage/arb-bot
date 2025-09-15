@@ -12,19 +12,21 @@ export class OpportunityReporter {
 		opportunity: GraphArbitrageOpportunity | null,
 		validationResult: ValidationResult,
 	) {
-		this.logger.log(validationResult)
+		const opportunityLog = opportunity
+			? {
+					startAmount: opportunity.startAmount,
+					endAmount: opportunity.endAmount,
+					revenueInUsd: opportunity.revenueInUsd,
+					costInUsd: opportunity.costInUsd,
+					path: opportunity.path.map((p) => {
+						return {
+							edge: p.edge.id,
+							quote: p.quote,
+						}
+					}),
+				}
+			: null
 
-		if (opportunity) {
-			this.logger.log({
-				startAmount: opportunity.startAmount,
-				endAmount: opportunity.endAmount,
-				path: opportunity.path.map((p) => {
-					return {
-						edge: p.edge.id,
-						quote: p.quote,
-					}
-				}),
-			})
-		}
+		this.logger.log({ validationResult, opportunityLog })
 	}
 }

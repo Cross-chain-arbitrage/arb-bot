@@ -25,7 +25,7 @@ export class StargateGraphPlugin implements GraphPlugin {
 	async findPossibleEdges(nodes: Node[]): Promise<Edge[]> {
 		const { connectSecondaryChains, baseChainId } =
 			this.configService.get<StargateConfig>(STARGATE_CONFIG_KEY) ?? {
-				connectSecondaryChains: false,
+				connectSecondaryChains: true,
 				baseChainId: 0,
 			}
 

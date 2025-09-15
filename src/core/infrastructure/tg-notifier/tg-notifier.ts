@@ -36,7 +36,6 @@ export class TgNotifier {
 		)
 
 		if (!response.ok) {
-			console.log(response)
 			throw new TgBaseNotifierError(
 				`HTTP error! status: ${response.status}`,
 				response,

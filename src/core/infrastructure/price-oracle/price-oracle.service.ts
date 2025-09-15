@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common'
-
 import { createCustomError, isStringsEqual } from '../../../utils/common'
 import {
 	CurrencyState,
@@ -25,12 +24,12 @@ const DEFAULT_SETTINGS: PriceOracleSettings = {
 export class PriceOracleService implements PriceOracle {
 	private currencyStates: Map<CurrencyId, CurrencyState> = new Map()
 	private priceUpdater: NodeJS.Timeout | undefined
+	private logger = new Logger(PriceOracleService.name)
 
 	constructor(
 		readonly solanaTokenUtils: SolanaTokenUtils,
 		readonly tokenUtils: TokenUtils,
 		readonly geckoTerminalService: GeckoTerminalService,
-		readonly logger: Logger,
 	) {}
 
 	/* ======== PUBLIC METHODS ======== */

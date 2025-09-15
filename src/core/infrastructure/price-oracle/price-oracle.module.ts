@@ -23,6 +23,6 @@ import { PriceOracleService } from './price-oracle.service'
 		PriceOracleHelper,
 		{ provide: PRICE_ORACLE_TOKEN, useExisting: PriceOracleService },
 	],
-	exports: [PRICE_ORACLE_TOKEN],
+	exports: [PRICE_ORACLE_TOKEN, PriceOracleHelper],
 })
 export class PriceOracleModule {}

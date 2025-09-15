@@ -6,6 +6,7 @@ import { ChannelIdUtils } from '../../../domain/services/channel-id-utils'
 import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
 import { TokenIdUtils } from '../../../domain/services/token-id-utils'
 import { Pool } from '../../dex/base/pool'
+import { DexRegistry } from '../../dex/dex-registry'
 import { PoolType, PoolUtils } from '../../dex/pool-utils'
 
 @Injectable()
@@ -16,12 +17,16 @@ export class DexPlugin implements EdgeHandlerPlugin {
 	) {}
 
 	async canHandle(edge: Edge): Promise<boolean> {
+		const { channelId } = EdgeIdUtils.parseId(edge.id)
+		const { protocol } = ChannelIdUtils.parseId(channelId)
+
+		if (!Object.keys(DexRegistry).includes(protocol)) return false
+
 		try {
 			await this.getPool(edge)
 
 			return true
-		} catch (error) {
-			console.log(error)
+		} catch {
 			return false
 		}
 	}
