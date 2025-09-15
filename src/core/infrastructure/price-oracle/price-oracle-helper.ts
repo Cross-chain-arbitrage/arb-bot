@@ -2,8 +2,8 @@ import { Inject, Injectable } from '@nestjs/common'
 import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
-} from '../../../application/interfaces/price-oracle'
-import { Token } from '../../../domain/entities/token'
+} from '../../application/interfaces/price-oracle'
+import { Token } from '../../domain/entities/token'
 
 @Injectable()
 export class PriceOracleHelper {

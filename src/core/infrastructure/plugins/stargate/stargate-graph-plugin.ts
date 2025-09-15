@@ -3,24 +3,22 @@ import { ConfigService } from '@nestjs/config'
 import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
+import { ChannelIdUtils } from '../../../domain/services/channel-id-utils'
+import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import {
 	StargateAPIError,
 	StargateAPIService,
 } from '../../layerzero-bridges/stargate/stargate-api.service'
-import { PluginHelper } from '../shared-helpers/plugin-helper'
-import { StargatePlugin } from './stargate-plugin'
+import { STARGATE_PROTOCOL } from './constants'
 
 @Injectable()
-export class StargateGraphPlugin extends StargatePlugin implements GraphPlugin {
+export class StargateGraphPlugin implements GraphPlugin {
 	constructor(
 		readonly configService: ConfigService,
 		readonly stargateAPIService: StargateAPIService,
-		readonly pluginHelper: PluginHelper,
-	) {
-		super()
-	}
+	) {}
 
 	async findPossibleEdges(nodes: Node[]): Promise<Edge[]> {
 		const { connectSecondaryChains, baseChainId } =
@@ -28,7 +26,7 @@ export class StargateGraphPlugin extends StargatePlugin implements GraphPlugin {
 
 		type AssetId = number
 
-		const assetGroups: Map<AssetId, Set<GraphNode>> = new Map()
+		const assetGroups: Map<AssetId, Set<Token | NativeCurrency>> = new Map()
 
 		const filteredTokensArray = nodes.filter(
 			(token) =>
@@ -60,7 +58,7 @@ export class StargateGraphPlugin extends StargatePlugin implements GraphPlugin {
 			assetGroups.get(assetId)?.add(token)
 		}
 
-		const pairs: [GraphNode, GraphNode][] = []
+		const pairs: [Token | NativeCurrency, Token | NativeCurrency][] = []
 
 		for (const assets of assetGroups.values()) {
 			const tokens = Array.from(assets)
@@ -88,7 +86,11 @@ export class StargateGraphPlugin extends StargatePlugin implements GraphPlugin {
 			const edge: Edge = {
 				from: pair[0],
 				to: pair[1],
-				id: this.pluginHelper.generateEdgeId(this.id, pair[0], pair[1]),
+				id: EdgeIdUtils.generateId(
+					ChannelIdUtils.generateId(STARGATE_PROTOCOL, 'default'),
+					pair[0].id,
+					pair[1].id,
+				),
 			}
 
 			edges.push(edge)

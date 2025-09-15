@@ -5,27 +5,29 @@ import {
 } from '../../../application/interfaces/edge-snapshot-builder'
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
+import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { StargateService } from '../../layerzero-bridges/stargate/stargate-service'
-import { EvmPluginHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
-import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
-import { StargatePlugin } from './stargate-plugin'
+import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
+import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
+import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { STARGATE_PROTOCOL } from './constants'
 
 const QUOTE_USD_AMOUNT_IN = 500
 
 @Injectable()
 export class StargateSnapshotPlugin
-	extends StargatePlugin
+	extends EdgeHandler
 	implements SnapshotPlugin
 {
 	constructor(
 		private readonly stargateService: StargateService,
-		readonly evmPluginHelper: EvmPluginHelper,
+		readonly evmTxCostHelper: EvmTxCostHelper,
 		readonly priceOracleHelper: PriceOracleHelper,
 	) {
-		super()
+		super(STARGATE_PROTOCOL)
 	}
 
 	buildEdgeSnapshotBuilder(
@@ -55,7 +57,7 @@ export class StargateSnapshotPlugin
 				edge.to.chainId,
 			)
 
-		const txCostInUsd = await this.evmPluginHelper.getExpectedTxCostInUsd(
+		const txCostInUsd = await this.evmTxCostHelper.getExpectedTxCostInUsd(
 			edge.from.chainId,
 			gas,
 		)
@@ -88,7 +90,7 @@ export class StargateSnapshotPlugin
 			const amountOut = BigInt(Math.floor(amountOutNumber))
 
 			return {
-				rate: this.evmPluginHelper.calcRate(amountIn, amountOut),
+				rate: calcRate(amountIn, amountOut),
 				amountOut,
 				executionCostInUsd: costInUsd,
 			}

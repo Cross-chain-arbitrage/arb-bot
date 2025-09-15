@@ -9,6 +9,7 @@ import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
@@ -16,9 +17,8 @@ import {
 	InterpolationHelper,
 	InterpolationParams,
 } from '../shared-helpers/interpolation-helper'
-import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
 import { EdgeHandler } from '../shared-implementation/edge-handler'
-import { RAYDIUM_PROTOCOL } from './raydium-plugin-constants'
+import { RAYDIUM_PROTOCOL } from './constants'
 
 @Injectable()
 export class RaydiumSnapshotPlugin

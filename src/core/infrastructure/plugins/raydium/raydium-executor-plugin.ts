@@ -8,12 +8,12 @@ import {
 } from '../../../application/interfaces/edge-executor'
 import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
+import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
-import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
 import { EdgeHandler } from '../shared-implementation/edge-handler'
-import { RAYDIUM_PROTOCOL } from './raydium-plugin-constants'
+import { RAYDIUM_PROTOCOL } from './constants'
 
 @Injectable()
 export class RaydiumExecutorPlugin

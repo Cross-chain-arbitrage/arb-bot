@@ -13,7 +13,6 @@ import { Token } from '../../evm/primitives/tokens/Token'
 import { RelayService } from '../../relay/relay-service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
-import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
 import { RelayPlugin } from './relay-plugin'
 
 const QUOTE_USD_AMOUNT_IN = 500

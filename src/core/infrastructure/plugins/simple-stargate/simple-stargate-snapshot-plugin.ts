@@ -11,7 +11,6 @@ import { Token } from '../../evm/primitives/tokens/Token'
 import { SimpleStargateService } from '../../layerzero-bridges/stargate/simple-stargate.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
-import { PriceOracleHelper } from '../shared-helpers/price-oracle-helper'
 import { SimpleStargatePlugin } from './simple-stargate-plugin'
 
 const QUOTE_USD_AMOUNT_IN = 500
