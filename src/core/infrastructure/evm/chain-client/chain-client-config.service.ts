@@ -4,81 +4,29 @@ import { Chain, defineChain } from 'viem'
 import { privateKeyToAddress } from 'viem/accounts'
 import { z } from 'zod'
 import { getAlchemyRpcUrl } from '../../../../utils/alchemy'
-
-function transformAndValidate(rawChains: Record<string, string[]>) {
-	const chains: Record<string, string[]> = {}
-
-	for (const [chainId, urls] of Object.entries(rawChains)) {
-		chains[chainId] = []
-
-		urls.forEach((initialUrl) => {
-			let rpcUrl = initialUrl
-
-			if (initialUrl === 'alchemy') {
-				rpcUrl = getAlchemyRpcUrl(Number(chainId))
-			}
-
-			const validatedUrl = z.url().parse(rpcUrl)
-
-			chains[chainId].push(validatedUrl.toString())
-		})
-	}
-
-	return chains
-}
-
-const rpcProvidersScheme = z
-	.record(z.string(), z.array(z.string()))
-	.transform(transformAndValidate)
-
-const customChainsScheme = z.array(
-	z
-		.object({
-			chainId: z.number(),
-			defaultRpcUrl: z.url(),
-			chainName: z.string(),
-			nativeCurrency: z.object({
-				name: z.string(),
-				symbol: z.string(),
-				decimals: z.number(),
-			}),
-		})
-		.transform(({ chainId, defaultRpcUrl, chainName, nativeCurrency }) =>
-			defineChain({
-				id: chainId,
-				rpcUrls: { default: { http: [defaultRpcUrl] } },
-				name: chainName,
-				nativeCurrency,
-			}),
-		),
-)
-
-export interface ChainClientConfig {
-	rpcProviders?: Record<number, string[]>
-	customChains?: Chain[]
-}
-
-export const chainClientConfigScheme: z.ZodType<ChainClientConfig> = z.object({
-	rpcProviders: rpcProvidersScheme.optional(),
-	customChains: customChainsScheme.optional(),
-})
+import { CHAIN_CLIENT_CONFIG_KEY } from './configuration/chain-client-config'
+import { ChainClientConfig, CustomChain, RpcProviders, RpcUrl } from './types'
 
 @Injectable()
 export class ChainClientConfigService implements OnModuleInit {
 	privateKey!: Hex
-	rpcUrls: Record<number, string[]> | undefined
+	rpcUrls: Record<number, RpcUrl[]> | undefined
 	customChains: Chain[] | undefined
 
 	constructor(private readonly configService: ConfigService) {}
 
 	onModuleInit() {
-		const config = this.configService.get<ChainClientConfig>('chainClient')
+		const config = this.configService.get<ChainClientConfig>(
+			CHAIN_CLIENT_CONFIG_KEY,
+		)
 
 		this.privateKey = this.getPrivateKey()
 
-		this.rpcUrls = config?.rpcProviders
+		if (config?.rpcProviders)
+			this.rpcUrls = this.transformRpcProviders(config?.rpcProviders)
 
-		this.customChains = config?.customChains
+		if (config?.customChains)
+			this.customChains = this.transformCustomChains(config?.customChains)
 	}
 
 	private getPrivateKey(): Hex {
@@ -92,5 +40,38 @@ export class ChainClientConfigService implements OnModuleInit {
 		privateKeyToAddress(privateKey)
 
 		return privateKey
+	}
+
+	private transformRpcProviders(rpcProviders: RpcProviders) {
+		const rpcUrls: Record<number, RpcUrl[]> = {}
+
+		for (const [chainId, urls] of Object.entries(rpcProviders)) {
+			rpcUrls[Number(chainId)] = []
+
+			urls.forEach((initialUrl) => {
+				let rpcUrl = initialUrl
+
+				if (initialUrl === 'alchemy') {
+					rpcUrl = getAlchemyRpcUrl(Number(chainId))
+				}
+
+				const validatedUrl = z.url().parse(rpcUrl)
+
+				rpcUrls[Number(chainId)].push(validatedUrl as RpcUrl)
+			})
+		}
+
+		return rpcUrls
+	}
+
+	private transformCustomChains(customChains: CustomChain[]): Chain[] {
+		return customChains.map((customChain) =>
+			defineChain({
+				id: customChain.chainId,
+				rpcUrls: { default: { http: [customChain.defaultRpcUrl] } },
+				name: customChain.chainName,
+				nativeCurrency: customChain.nativeCurrency,
+			}),
+		)
 	}
 }

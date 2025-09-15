@@ -11,7 +11,9 @@ import {
 	StargateAPIError,
 	StargateAPIService,
 } from '../../layerzero-bridges/stargate/stargate-api.service'
+import { STARGATE_CONFIG_KEY } from './configuration/stargate-config'
 import { STARGATE_PROTOCOL } from './constants'
+import { StargateConfig } from './types'
 
 @Injectable()
 export class StargateGraphPlugin implements GraphPlugin {
@@ -22,7 +24,10 @@ export class StargateGraphPlugin implements GraphPlugin {
 
 	async findPossibleEdges(nodes: Node[]): Promise<Edge[]> {
 		const { connectSecondaryChains, baseChainId } =
-			this.configService.get('stargate')
+			this.configService.get<StargateConfig>(STARGATE_CONFIG_KEY) ?? {
+				connectSecondaryChains: false,
+				baseChainId: 0,
+			}
 
 		type AssetId = number
 

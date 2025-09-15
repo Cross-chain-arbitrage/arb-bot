@@ -110,5 +110,5 @@ export function getAlchemyRpcUrl(chainId: number) {
 		throw new Error(`Chain ID ${chainId} not found in alchemy networks`)
 	}
 
-	return `https://${chainKey}.g.alchemy.com/v2/${apiKey}`
+	return `https://${chainKey}.g.alchemy.com/v2/${apiKey}` as const
 }

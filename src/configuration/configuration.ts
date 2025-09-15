@@ -3,9 +3,21 @@ import * as yaml from 'js-yaml'
 import { z } from 'zod'
 import { ARBITRAGE_FINDER_CONFIG_KEY } from '../core/application/use-cases/finding/arbitrage-finder/arbitrage-finder'
 import {
+	CHAIN_CLIENT_CONFIG_KEY,
+	chainClientConfigScheme,
+} from '../core/infrastructure/evm/chain-client/configuration/chain-client-config'
+import {
 	DEX_CONFIG_KEY,
 	dexConfigScheme,
 } from '../core/infrastructure/plugins/dex/configuration/dex-config'
+import {
+	NATIVE_WRAPPER_CONFIG_KEY,
+	nativeWrapperConfigScheme,
+} from '../core/infrastructure/plugins/native-wrapper/configuration/native-wrapper-config'
+import {
+	STARGATE_CONFIG_KEY,
+	stargateConfigScheme,
+} from '../core/infrastructure/plugins/stargate/configuration/stargate-config'
 import { ARBITRAGE_SCHEDULER_CONFIG_KEY } from '../core/presentation/arbitrage-scheduler/arbitrage-scheduler'
 import { BALANCE_REPORTER_SCHEDULER_CONFIG_KEY } from '../core/presentation/balance-reporter-scheduler.ts/balance-reporter-scheduler'
 import { parsePretty } from '../utils/zod'
@@ -15,11 +27,21 @@ import { balanceReporterSchedulerConfigScheme } from './balance-reporter-schedul
 
 export const configScheme = z.object({
 	botName: z.string(),
+
 	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigScheme,
-	[DEX_CONFIG_KEY]: dexConfigScheme,
 	[ARBITRAGE_SCHEDULER_CONFIG_KEY]: arbitrageSchedulerConfigScheme,
 	[BALANCE_REPORTER_SCHEDULER_CONFIG_KEY]:
 		balanceReporterSchedulerConfigScheme,
+
+	/* ======== PLUGINS ======== */
+
+	[NATIVE_WRAPPER_CONFIG_KEY]: nativeWrapperConfigScheme,
+	[STARGATE_CONFIG_KEY]: stargateConfigScheme,
+	[DEX_CONFIG_KEY]: dexConfigScheme,
+
+	/* ======== INFRASTRUCTURE ======== */
+
+	[CHAIN_CLIENT_CONFIG_KEY]: chainClientConfigScheme,
 })
 
 export function loadConfig() {
