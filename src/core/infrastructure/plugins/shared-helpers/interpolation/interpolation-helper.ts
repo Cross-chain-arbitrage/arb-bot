@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { ScaleLinear, scaleLinear } from 'd3-scale'
-import { Edge } from '../../../domain/entities/edge'
-import { Token } from '../../../domain/entities/token'
-import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
+import { Edge } from '../../../../domain/entities/edge'
+import { Token } from '../../../../domain/entities/token'
+import { PriceOracleHelper } from '../../../price-oracle/price-oracle-helper'
 
 export type InterpolationParams = {
 	minStartValueUsd: number

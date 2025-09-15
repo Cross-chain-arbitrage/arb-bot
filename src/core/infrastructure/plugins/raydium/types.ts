@@ -1,4 +1,4 @@
-import { InterpolationParams } from '../shared-helpers/interpolation-helper'
+import { InterpolationParams } from '../shared-helpers/interpolation/interpolation-helper'
 
 export type RaydiumConfig = {
 	edges: {

@@ -16,7 +16,7 @@ import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/sola
 import {
 	InterpolationHelper,
 	InterpolationParams,
-} from '../shared-helpers/interpolation-helper'
+} from '../shared-helpers/interpolation/interpolation-helper'
 import { EdgeHandler } from '../shared-implementation/edge-handler'
 import { RAYDIUM_PROTOCOL } from './constants'
 
