@@ -5,7 +5,7 @@ export const ExecutionStatusSchema = z.object({
 		'refund',
 		'delayed',
 		'waiting',
-		'failure',
+		'failed',
 		'pending',
 		'success',
 	]),
@@ -14,7 +14,7 @@ export const ExecutionStatusSchema = z.object({
 export type ExecutionStatus = z.infer<typeof ExecutionStatusSchema>
 
 export const ExecutionFullStatusSchema = z.object({
-	status: z.enum(['success', 'failure', 'refund', 'delayed', 'pending']),
+	status: z.enum(['success', 'failed', 'refund', 'delayed', 'pending']),
 	inTxHashes: z.array(z.string()),
 	txHashes: z.array(z.string()),
 	time: z.number(),

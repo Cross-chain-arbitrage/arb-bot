@@ -13,7 +13,7 @@ export type InchainConfirmation = {
 			amountOut: bigint
 	  }
 	| {
-			status: 'failure'
+			status: 'failed'
 			reason: string
 	  }
 )
@@ -41,7 +41,7 @@ export type CrosschainConfirmation = {
 			amountOut: bigint
 	  }
 	| {
-			status: 'failure'
+			status: 'failed'
 			reason: string
 	  }
 )

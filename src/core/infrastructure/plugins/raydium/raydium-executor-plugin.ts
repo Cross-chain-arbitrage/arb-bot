@@ -59,7 +59,7 @@ export class RaydiumExecutorPlugin
 
 		if (result.status === 'failed') {
 			return {
-				status: 'failure',
+				status: 'failed',
 				reason: 'Swap failed',
 				getExecutionCost: this.getExecutionCost.bind(
 					this,

@@ -68,7 +68,7 @@ export class StargateExecutorPlugin
 		})
 		if (srcTxReceipt.status === 'reverted') {
 			return {
-				status: 'failure',
+				status: 'failed',
 				reason: 'Source transaction reverted',
 				getExecutionCost: () =>
 					this.getFailedExecutionCost(edge, srcTxReceipt),

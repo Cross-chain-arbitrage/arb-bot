@@ -76,8 +76,8 @@ export class DexExecutorPlugin extends DexPlugin implements ExecutorPlugin {
 
 		if (result.status === 'reverted') {
 			return {
-				status: 'failure',
-				reason: 'Swap reverted',
+				status: 'failed',
+				reason: 'Transaction reverted',
 				getExecutionCost: this.getExecutionCost.bind(
 					this,
 					edge,

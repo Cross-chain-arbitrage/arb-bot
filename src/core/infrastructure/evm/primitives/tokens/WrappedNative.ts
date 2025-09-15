@@ -65,12 +65,7 @@ export class WrappedNative extends Token {
 			value: amount,
 		})
 
-		const receipt = await this.client.waitForTransactionReceipt({ hash })
-
-		if (receipt.status !== 'success')
-			throw new WrappedNativeError(`Deposit failed, tx: ${hash}`)
-
-		return receipt
+		return hash
 	}
 
 	async withdraw(amount: bigint) {
@@ -89,11 +84,6 @@ export class WrappedNative extends Token {
 			args: [amount],
 		})
 
-		const receipt = await this.client.waitForTransactionReceipt({ hash })
-
-		if (receipt.status !== 'success')
-			throw new WrappedNativeError(`Withdraw failed, tx: ${hash}`)
-
-		return receipt
+		return hash
 	}
 }

@@ -24,9 +24,8 @@ export class DexGraphPlugin extends DexPlugin implements GraphPlugin {
 	async findPossibleNodes(): Promise<Node[]> {
 		const config = this.configService.get<DexConfig>(DEX_CONFIG_KEY)
 
-		if (!config) {
-			throw new Error('DEX config not found')
-		}
+		if (!config) return []
+
 		this.pools = await this.poolUtils.createPools(config.pools)
 
 		const nodes: Node[] = []
