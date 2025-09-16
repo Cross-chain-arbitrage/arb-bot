@@ -42,6 +42,8 @@ export class ArbitrageExecutor {
 	): Promise<ArbitrageResult> {
 		this.telemetry.onArbitrageStart(opportunity)
 
+		const startTimestamp = Date.now()
+
 		const pathExecutorParams: PathExecutorParams = {
 			path: opportunity.path,
 			startAmount: opportunity.startAmount,
@@ -55,6 +57,7 @@ export class ArbitrageExecutor {
 		const arbitrageResult = await this.buildSuccessResult(
 			opportunity,
 			pathResult,
+			startTimestamp,
 		)
 
 		this.telemetry.onArbitrageEnd(opportunity, arbitrageResult)
@@ -65,8 +68,15 @@ export class ArbitrageExecutor {
 	private async buildSuccessResult(
 		opportunity: GraphArbitrageOpportunity,
 		pathResult: PathExecutionResult,
+		startTimestamp: number,
 	): Promise<ArbitrageResult> {
-		if (pathResult.status === 'failed') return pathResult
+		const executionTime = Date.now() - startTimestamp
+
+		if (pathResult.status === 'failed')
+			return {
+				...pathResult,
+				executionTime,
+			}
 
 		const { actualEndAmount, totalExecutionCostInUsd } = pathResult
 
@@ -83,6 +93,7 @@ export class ArbitrageExecutor {
 
 		return {
 			...pathResult,
+			executionTime,
 			profitInUsd: actualProfit,
 			revenueInUsd: actualRevenue,
 		}

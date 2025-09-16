@@ -8,12 +8,10 @@ import {
 } from '../../application/interfaces/price-oracle'
 import {
 	ArbitrageResult,
+	FailedArbitrageResult,
 	SuccessArbitrageResult,
 } from '../../application/use-cases/execution/arbitrage-executor/types'
-import {
-	FailedPathExecutionResult,
-	PathExecutionResult,
-} from '../../application/use-cases/execution/path-executor/types'
+import { PathExecutionResult } from '../../application/use-cases/execution/path-executor/types'
 import { GraphArbitrageOpportunity } from '../../application/use-cases/finding/snapshot-opportunity-finder/types'
 import { Token } from '../../domain/entities/token'
 import { ChannelIdUtils } from '../../domain/services/channel-id-utils'
@@ -123,16 +121,18 @@ export class TgArbitrageNotifier
 		let statusPart = `✅ <b>Successfully executed!</b>\n\n`
 		statusPart += `Profit: $${profitInUsd.toFixed(2)}\n`
 		statusPart += `Cost: $${totalExecutionCostInUsd.toFixed(2)}\n`
-		statusPart += `Amount Out: ${actualAmountOutFormatted.toFixed(6)} ${opportunity.startToken.symbol}`
+		statusPart += `Amount Out: ${actualAmountOutFormatted.toFixed(6)} ${opportunity.startToken.symbol}\n`
+		statusPart += `Execution Time: ${this.formatTime(result.executionTime)}`
 
 		return statusPart
 	}
 
-	private buildFailedStatus(result: FailedPathExecutionResult) {
+	private buildFailedStatus(result: FailedArbitrageResult) {
 		const { reason } = result
 		let status = '❌ <b>Execution error</b>\n\n'
 		status += `Reason: ${reason}\n\n`
-		status += `Cost: $${result.totalExecutionCostInUsd.toFixed(2)}`
+		status += `Cost: $${result.totalExecutionCostInUsd.toFixed(2)}\n`
+		status += `Execution Time: ${this.formatTime(result.executionTime)}`
 
 		return status
 	}
@@ -159,6 +159,14 @@ export class TgArbitrageNotifier
 		} finally {
 			this.lastMessages.delete(arbitrageOpportunity.id)
 		}
+	}
+
+	private formatTime(ms: number): string {
+		const mins = Math.floor(ms / 60000)
+		const secs = Math.floor(ms / 1000)
+		const milliseconds = ms % 1000
+
+		return `${mins}:${secs.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`
 	}
 
 	private buildHeader() {
