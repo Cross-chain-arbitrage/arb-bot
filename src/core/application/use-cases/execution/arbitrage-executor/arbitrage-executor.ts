@@ -7,10 +7,19 @@ import {
 	EDGE_QUOTER_REGISTRY_TOKEN,
 	EdgeQuoterRegistry,
 } from '../../../interfaces/edge-quoter'
+import {
+	PRICE_ORACLE_TOKEN,
+	PriceOracle,
+} from '../../../interfaces/price-oracle'
 import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
 import { PathExecutor } from '../path-executor/path-executor'
-import { PathExecutorParams, ValidateStep } from '../path-executor/types'
+import {
+	PathExecutionResult,
+	PathExecutorParams,
+	ValidateStep,
+} from '../path-executor/types'
 import { ArbitrageExecutionTelemetry } from './arbitrage-execution-telemetry'
+import { ArbitrageResult } from './types'
 
 @Injectable()
 export class ArbitrageExecutor {
@@ -23,9 +32,14 @@ export class ArbitrageExecutor {
 
 		@Inject(EDGE_EXECUTOR_REGISTRY_TOKEN)
 		private readonly edgeExecutorRegistry: EdgeExecutorRegistry,
+
+		@Inject(PRICE_ORACLE_TOKEN)
+		private readonly priceOracle: PriceOracle,
 	) {}
 
-	async execute(opportunity: GraphArbitrageOpportunity) {
+	async execute(
+		opportunity: GraphArbitrageOpportunity,
+	): Promise<ArbitrageResult> {
 		this.telemetry.onArbitrageStart(opportunity)
 
 		const pathExecutorParams: PathExecutorParams = {
@@ -33,14 +47,45 @@ export class ArbitrageExecutor {
 			startAmount: opportunity.startAmount,
 		}
 
-		const result = await this.pathExecutor.executePath(
+		const pathResult = await this.pathExecutor.executePath(
 			pathExecutorParams,
 			this.validateStep,
 		)
 
-		this.telemetry.onArbitrageEnd(opportunity, result)
+		const arbitrageResult = await this.buildSuccessResult(
+			opportunity,
+			pathResult,
+		)
 
-		return result
+		this.telemetry.onArbitrageEnd(opportunity, arbitrageResult)
+
+		return arbitrageResult
+	}
+
+	private async buildSuccessResult(
+		opportunity: GraphArbitrageOpportunity,
+		pathResult: PathExecutionResult,
+	): Promise<ArbitrageResult> {
+		if (pathResult.status === 'failed') return pathResult
+
+		const { actualEndAmount, totalExecutionCostInUsd } = pathResult
+
+		const startTokenPrice = await this.priceOracle.getPrice(
+			opportunity.startToken,
+		)
+		const actualRevenue =
+			Number(
+				opportunity.startToken.formatUnits(
+					actualEndAmount - opportunity.startAmount,
+				),
+			) * startTokenPrice
+		const actualProfit = actualRevenue - totalExecutionCostInUsd
+
+		return {
+			...pathResult,
+			profitInUsd: actualProfit,
+			revenueInUsd: actualRevenue,
+		}
 	}
 
 	validateStep: ValidateStep = async (params, step, amountIn) => {

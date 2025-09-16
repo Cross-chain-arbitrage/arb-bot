@@ -7,9 +7,12 @@ import {
 	PriceOracle,
 } from '../../application/interfaces/price-oracle'
 import {
+	ArbitrageResult,
+	SuccessArbitrageResult,
+} from '../../application/use-cases/execution/arbitrage-executor/types'
+import {
 	FailedPathExecutionResult,
 	PathExecutionResult,
-	SuccessPathExecutionResult,
 } from '../../application/use-cases/execution/path-executor/types'
 import { GraphArbitrageOpportunity } from '../../application/use-cases/finding/snapshot-opportunity-finder/types'
 import { Token } from '../../domain/entities/token'
@@ -49,7 +52,7 @@ export class TgArbitrageNotifier
 
 	notifyArbitrageEnd(
 		opportunity: GraphArbitrageOpportunity,
-		result: PathExecutionResult,
+		result: ArbitrageResult,
 	): void {
 		this.buildAndSendArbitrageEnd(opportunity, result).catch((error) => {
 			this.logger.error(error, 'Error sending arbitrage end message')
@@ -86,12 +89,12 @@ export class TgArbitrageNotifier
 
 	private async buildAndSendArbitrageEnd(
 		opportunity: GraphArbitrageOpportunity,
-		result: PathExecutionResult,
+		result: ArbitrageResult,
 	) {
 		const resultStatus = result.status
 		const status =
 			resultStatus === 'success'
-				? await this.buildSuccessStatus(opportunity, result)
+				? this.buildSuccessStatus(opportunity, result)
 				: this.buildFailedStatus(result)
 
 		const startTokenPrice = await this.priceOracle.getPrice(
@@ -107,27 +110,18 @@ export class TgArbitrageNotifier
 		await this.editOrSendMessage(opportunity, arbitrageMessage)
 	}
 
-	private async buildSuccessStatus(
+	private buildSuccessStatus(
 		opportunity: GraphArbitrageOpportunity,
-		result: SuccessPathExecutionResult,
+		result: SuccessArbitrageResult,
 	) {
-		const { actualEndAmount, totalExecutionCostInUsd } = result
+		const { actualEndAmount, totalExecutionCostInUsd, profitInUsd } = result
 
 		const actualAmountOutFormatted = Number(
 			opportunity.startToken.formatUnits(actualEndAmount),
 		)
-		const startAmountFormatted = Number(
-			opportunity.startToken.formatUnits(opportunity.startAmount),
-		)
-		const startTokenPrice = await this.priceOracle.getPrice(
-			opportunity.startToken,
-		)
-		const actualRevenue =
-			(actualAmountOutFormatted - startAmountFormatted) * startTokenPrice
-		const actualProfit = actualRevenue - totalExecutionCostInUsd
 
 		let statusPart = `✅ <b>Successfully executed!</b>\n\n`
-		statusPart += `Profit: $${actualProfit.toFixed(2)}\n`
+		statusPart += `Profit: $${profitInUsd.toFixed(2)}\n`
 		statusPart += `Cost: $${totalExecutionCostInUsd.toFixed(2)}\n`
 		statusPart += `Amount Out: ${actualAmountOutFormatted.toFixed(6)} ${opportunity.startToken.symbol}`
 
