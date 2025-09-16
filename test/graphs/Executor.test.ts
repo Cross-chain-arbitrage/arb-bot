@@ -1,6 +1,7 @@
 import { arbitrum } from 'viem/chains'
 
 import { ClientManager } from '../../src/chain-client/chain-client.service'
+import { getAlchemyRpcUrl } from '../../src/core/infrastructure/evm/chain-client/alchemy-utils'
 import { GraphExecutor } from '../../src/graphs/GraphExecutor'
 import { WrapEdge } from '../../src/graphs/primitives/edges/edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
@@ -8,7 +9,6 @@ import { PriceOracle } from '../../src/modules/price-oracle/price-oracle.service
 import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../src/primitives/tokens/WrappedNative'
-import { getAlchemyRpcUrl } from '../../src/utils/alchemy'
 import { useAnvil } from '../testUtils/anvil'
 import { makeSuite } from '../testUtils/makeSuite'
 

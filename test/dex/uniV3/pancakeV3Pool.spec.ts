@@ -1,5 +1,5 @@
 import { bsc } from 'viem/chains'
-import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
+import { getAlchemyRpcUrl } from '../../../src/core/infrastructure/evm/chain-client/alchemy-utils'
 import { testPool } from '../../testUtils/testPool'
 
 describe('Pancake V3 pool test', () => {

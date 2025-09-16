@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { Chain, defineChain } from 'viem'
 import { privateKeyToAddress } from 'viem/accounts'
 import { z } from 'zod'
-import { getAlchemyRpcUrl } from '../../../../utils/alchemy'
+import { getAlchemyRpcUrl } from './alchemy-utils'
 import { CHAIN_CLIENT_CONFIG_KEY } from './configuration/chain-client-config'
 import { ChainClientConfig, CustomChain, RpcProviders, RpcUrl } from './types'
 

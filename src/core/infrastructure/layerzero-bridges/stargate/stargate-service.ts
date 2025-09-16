@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { getContract, zeroAddress, zeroHash } from 'viem'
-import {
-	createCustomError,
-	padAddressToBytes32,
-} from '../../../../utils/common'
+import { createCustomError } from '../../../../utils/common'
 import { OFT_ABI } from '../../evm/abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../evm/abi/stargate/stargateBase'
 import { ChainClientService } from '../../evm/chain-client/chain-client.service'
+import { padAddressToBytes32 } from '../../evm/helpers'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { TokenAmount } from '../../evm/primitives/tokens/TokenAmount'
@@ -17,8 +15,8 @@ import { getChainEIdByNativeChainId } from '../layerzero.utils'
 import { StargateAPIService } from './stargate-api.service'
 import { StargateBridgeTx } from './stargate-tx'
 import { getStargateChainKey } from './stargate.utils'
-export const StargateError = createCustomError('StargateError')
 
+export const StargateError = createCustomError('StargateError')
 const BRIDGE_GAS_COST = 400_000n
 
 @Injectable()
