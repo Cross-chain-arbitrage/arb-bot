@@ -3,21 +3,16 @@ import { ConfigService } from '@nestjs/config'
 import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
-import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
-import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { getNode } from '../shared-helpers/graph-building-helper'
-import { RelayPlugin } from './relay-plugin'
+import { SolanaEvmGraphBuildingHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-graph-building-helper'
+import { RELAY_PROTOCOL } from './constants'
 import { RelayConfig } from './types'
 
 @Injectable()
-export class RelayGraphPlugin extends RelayPlugin implements GraphPlugin {
+export class RelayGraphPlugin implements GraphPlugin {
 	constructor(
 		readonly configService: ConfigService,
-		readonly solanaTokenUtils: SolanaTokenUtils,
-		readonly tokenUtils: TokenUtils,
-	) {
-		super()
-	}
+		readonly solanaEvmGraphBuildingHelper: SolanaEvmGraphBuildingHelper,
+	) {}
 
 	async getDeterminedNodesAndEdges(): Promise<{
 		nodes: Node[]
@@ -25,19 +20,11 @@ export class RelayGraphPlugin extends RelayPlugin implements GraphPlugin {
 	}> {
 		const relayConfig = this.configService.get<RelayConfig>('relay')
 
-		const nodes: Node[] = []
-		const edges: Edge[] = []
-
-		for (const edgeConstructor of relayConfig!.edges) {
-			const from = await getNode.bind(this)(edgeConstructor.from)
-			const to = await getNode.bind(this)(edgeConstructor.to)
-
-			nodes.push(from, to)
-
-			const edge = this.createEdge(from, to)
-
-			edges.push(edge)
-		}
+		const { nodes, edges } =
+			await this.solanaEvmGraphBuildingHelper.getNodesAndEdgesFromConfig(
+				relayConfig?.edges,
+				RELAY_PROTOCOL,
+			)
 
 		return {
 			nodes,

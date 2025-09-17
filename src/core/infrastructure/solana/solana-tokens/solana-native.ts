@@ -1,37 +1,21 @@
 import { Connection, PublicKey } from '@solana/web3.js'
 import { Token } from '../../../domain/entities/token'
-import { formatUnits, parseUnits } from './solana-tokens-helpers'
+import { SolanaCurrency } from './solana-currency'
 
-export const solanaNativeAddress = 'address-plug'
+export const solanaNativeAddress = 'So11111111111111111111111111111111111111111'
 
-export class SolanaNative implements Token {
-	chainId = 'solana' as const
-	address = solanaNativeAddress
-	decimals = 9
-	symbol = 'SOL'
-	name = 'Solana'
-
-	constructor() {}
-
-	get id(): string {
-		return 'solana-native'
+export class SolanaNative extends SolanaCurrency implements Token {
+	constructor() {
+		super(solanaNativeAddress, {
+			symbol: 'SOL',
+			decimals: 9,
+			name: 'Solana',
+		})
 	}
 
 	isNative() {
 		return true
 	}
-
-	toString(): string {
-		return `${this.symbol} (Solana)`
-	}
-
-	toStringFull(): string {
-		return `${this.symbol} (Solana)}`
-	}
-
-	formatUnits = formatUnits
-
-	parseUnits = parseUnits
 
 	async balanceOf(address: string): Promise<bigint> {
 		const connection = new Connection('https://api.mainnet-beta.solana.com')

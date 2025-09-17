@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { NodeId } from '../entities/node'
+import { ChannelId } from './channel-id'
 
 const anyStringPattern = '[^\\s]+'
 
@@ -14,4 +16,4 @@ export const edgeIdScheme = z
 		),
 	)
 
-export type EdgeId = z.infer<typeof edgeIdScheme>
+export type EdgeId = `${ChannelId}::${NodeId}::${NodeId}`

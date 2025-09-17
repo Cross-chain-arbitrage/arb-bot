@@ -14,4 +14,7 @@ export const channelScheme = z
 	.string()
 	.regex(new RegExp(`^${protocolPattern}:${instancePattern}$`))
 
-export type ChannelId = z.infer<typeof channelScheme>
+type Protocol = string
+type Instance = string
+
+export type ChannelId = `${Protocol}:${Instance}`

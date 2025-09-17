@@ -1,14 +1,20 @@
 import { Address, formatUnits, isAddressEqual, parseUnits } from 'viem'
 import { Token, TokenMetadata } from '../../../../domain/entities/token'
+import { ChainIdUtils } from '../../../../domain/services/chain-id-utils'
+import { TokenIdUtils } from '../../../../domain/services/token-id-utils'
 import { TokenId } from '../../../../domain/value-objects/token-id'
 import { ChainClientService } from '../../chain-client/chain-client.service'
 import { shortenAddress } from '../../helpers'
 import { BaseContract } from '../contracts/BaseContract'
 
+const NAMESPACE = 'eip155'
+
 export abstract class TokenBase extends BaseContract implements Token {
 	public readonly symbol: string
 	public readonly decimals: number
 	public readonly name?: string
+
+	private currencyId: TokenId
 
 	constructor(
 		chainClientService: ChainClientService,
@@ -21,6 +27,12 @@ export abstract class TokenBase extends BaseContract implements Token {
 		this.symbol = tokenMetadata.symbol
 		this.decimals = tokenMetadata.decimals
 		this.name = tokenMetadata.name
+
+		const caip2ChainId = ChainIdUtils.generateId(
+			NAMESPACE,
+			chainId.toString(),
+		)
+		this.currencyId = TokenIdUtils.generateId(caip2ChainId, address)
 	}
 
 	abstract isNative(): boolean
@@ -49,7 +61,7 @@ export abstract class TokenBase extends BaseContract implements Token {
 	}
 
 	get id(): TokenId {
-		return `eip155:${this.chainId}:${this.address.toLowerCase() as Address}`
+		return this.currencyId
 	}
 
 	override toString(): string {

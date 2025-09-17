@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
-import { SOLANA_CHAIN_ID } from '../../solana/solana-constants'
 import {
 	ExecutionFullStatusSchema,
 	ExecutionStatusSchema,
@@ -44,7 +43,7 @@ export class RelayApiService {
 			tradeType: tradeType,
 		})
 
-		if (params.originChainId === SOLANA_CHAIN_ID) {
+		if (params.originChainId === SOLANA_RELAY_CHAIN_ID) {
 			return QuoteSolanaSrcSchema.parse(response.data)
 		}
 

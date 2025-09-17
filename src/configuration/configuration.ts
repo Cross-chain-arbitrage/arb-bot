@@ -15,6 +15,10 @@ import {
 	nativeWrapperConfigScheme,
 } from '../core/infrastructure/plugins/native-wrapper/configuration/native-wrapper-config'
 import {
+	RELAY_CONFIG_KEY,
+	relayConfigScheme,
+} from '../core/infrastructure/plugins/relay/configuration/relay-config'
+import {
 	STARGATE_CONFIG_KEY,
 	stargateConfigScheme,
 } from '../core/infrastructure/plugins/stargate/configuration/stargate-config'
@@ -38,6 +42,7 @@ export const configScheme = z.object({
 	[NATIVE_WRAPPER_CONFIG_KEY]: nativeWrapperConfigScheme,
 	[STARGATE_CONFIG_KEY]: stargateConfigScheme,
 	[DEX_CONFIG_KEY]: dexConfigScheme,
+	[RELAY_CONFIG_KEY]: relayConfigScheme,
 
 	/* ======== INFRASTRUCTURE ======== */
 

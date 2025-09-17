@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { deflate } from 'pako'
 import { isAddress } from 'viem'
 import { GraphVisualizer } from '../../application/interfaces/graph-visualizer'
+import { Edge } from '../../domain/entities/edge'
 import { Graph } from '../../domain/entities/graph'
 import { ChannelIdUtils } from '../../domain/services/channel-id-utils'
 import { EdgeIdUtils } from '../../domain/services/edge-id-utils'
@@ -9,7 +10,7 @@ import { TokenId } from '../../domain/value-objects/token-id'
 import { shortenAddress } from '../evm/helpers'
 
 interface VisualizableNode {
-	id: string
+	id: TokenId
 	symbol: string
 	chainId?: number | string
 }
@@ -80,7 +81,7 @@ export class MermaidVisualizer implements GraphVisualizer {
 		}
 
 		for (const [, edge] of graph.edges) {
-			const { from, to } = edge
+			const { from, to } = edge as Edge<VisualizableNode>
 
 			const channelId = EdgeIdUtils.parseId(edge.id).channelId
 			const { protocol, instance } = ChannelIdUtils.parseId(channelId)

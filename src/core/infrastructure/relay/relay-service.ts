@@ -26,8 +26,6 @@ import {
 
 const MAX_EXECUTION_TIME = 60_000
 
-const SOLANA_RELAY_CHAIN_ID = 792703809
-
 @Injectable()
 export class RelayService {
 	constructor(
@@ -55,11 +53,11 @@ export class RelayService {
 			user: srcAddress,
 			recipient: dstAddress,
 			originChainId:
-				tokenIn.chainId === 'solana'
+				tokenIn instanceof SolanaToken
 					? SOLANA_RELAY_CHAIN_ID
 					: Number(tokenIn.chainId),
 			destinationChainId:
-				tokenOut.chainId === 'solana'
+				tokenOut instanceof SolanaToken
 					? SOLANA_RELAY_CHAIN_ID
 					: Number(tokenOut.chainId),
 			amount: Number(amountIn),

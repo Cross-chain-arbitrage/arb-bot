@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { ParsedTransactionWithMeta } from '@solana/web3.js'
 import { TransactionReceipt } from 'viem'
+import { ChainIdUtils } from '../../../../../domain/services/chain-id-utils'
+import { ChainId } from '../../../../../domain/value-objects/chain-id'
 import { EvmTxCostHelper } from '../evm/evm-tx-cost-helper'
 import { SolanaTxCostHelper } from '../solana/solana-tx-cost-helper'
 
@@ -12,49 +14,55 @@ export class SolanaEvmTxCostHelper {
 	) {}
 
 	async getExpectedTxCostInUsd(
-		chainId: number | 'solana',
+		chainId: ChainId,
 		gasOrUnitConsumption: bigint,
 	): Promise<number> {
-		if (chainId === 'solana') {
+		const { namespace, reference } = ChainIdUtils.parseId(chainId)
+
+		if (namespace === 'solana') {
 			return this.solanaTxCostHelper.getExpectedTxCostInUsd(
 				gasOrUnitConsumption,
 			)
 		}
 
 		return this.evmTxCostHelper.getExpectedTxCostInUsd(
-			chainId,
+			Number(reference),
 			gasOrUnitConsumption,
 		)
 	}
 
 	async getUsdCostOfNativeAmount(
-		chainId: number | 'solana',
+		chainId: ChainId,
 		nativeAmount: bigint,
 	): Promise<number> {
-		if (chainId === 'solana') {
+		const { namespace, reference } = ChainIdUtils.parseId(chainId)
+
+		if (namespace === 'solana') {
 			return this.solanaTxCostHelper.getUsdCostOfNativeAmount(
 				nativeAmount,
 			)
 		}
 
 		return this.evmTxCostHelper.getUsdCostOfNativeAmount(
-			chainId,
+			Number(reference),
 			nativeAmount,
 		)
 	}
 
 	async getTxCostInUsd(
-		chainId: number | 'solana',
+		chainId: ChainId,
 		txResult: ParsedTransactionWithMeta | TransactionReceipt,
 	) {
-		if (chainId === 'solana') {
+		const { namespace, reference } = ChainIdUtils.parseId(chainId)
+
+		if (namespace === 'solana') {
 			return this.solanaTxCostHelper.getTxCostInUsd(
 				txResult as ParsedTransactionWithMeta,
 			)
 		}
 
 		return this.evmTxCostHelper.getTxCostInUsd(
-			chainId,
+			Number(reference),
 			txResult as TransactionReceipt,
 		)
 	}

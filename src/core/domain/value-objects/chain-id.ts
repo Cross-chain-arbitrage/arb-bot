@@ -7,7 +7,10 @@ const chainIdRegex = new RegExp(`^${namespacePattern}:${referencePattern}$`)
 
 export const chainIdScheme = z.string().regex(chainIdRegex)
 
+type Namespace = string
+type Reference = string
+
 /**
  * implements https://chainagnostic.org/CAIPs/caip-2
  */
-export type ChainId = z.infer<typeof chainIdScheme>
+export type ChainId = `${Namespace}:${Reference}`

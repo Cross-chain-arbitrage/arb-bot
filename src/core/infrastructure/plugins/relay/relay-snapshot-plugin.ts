@@ -7,13 +7,17 @@ import {
 } from '../../../application/interfaces/edge-snapshot-builder'
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
+import { calcRate } from '../../../domain/services/calc-rate'
+import { TokenIdUtils } from '../../../domain/services/token-id-utils'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
+import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { RelayService } from '../../relay/relay-service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
-import { RelayPlugin } from './relay-plugin'
+import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { RELAY_PROTOCOL } from './constants'
 
 const QUOTE_USD_AMOUNT_IN = 500
 
@@ -35,13 +39,13 @@ const relayQuoteSchema = z.object({
 })
 
 @Injectable()
-export class RelaySnapshotPlugin extends RelayPlugin implements SnapshotPlugin {
+export class RelaySnapshotPlugin extends EdgeHandler implements SnapshotPlugin {
 	constructor(
 		private readonly relayService: RelayService,
-		readonly SolanaEvmTxCostHelper: SolanaEvmTxCostHelper,
+		readonly solanaEvmTxCostHelper: SolanaEvmTxCostHelper,
 		readonly priceOracleHelper: PriceOracleHelper,
 	) {
-		super()
+		super(RELAY_PROTOCOL)
 	}
 
 	buildEdgeSnapshotBuilder(
@@ -67,13 +71,14 @@ export class RelaySnapshotPlugin extends RelayPlugin implements SnapshotPlugin {
 			edge.to,
 			amountIn,
 		)
-		const relayQuote = relayQuoteSchema.parse(quote.rawResult)
 
 		const costInUsd =
-			await this.SolanaEvmTxCostHelper.getExpectedTxCostInUsd(
-				edge.from.chainId,
+			await this.solanaEvmTxCostHelper.getExpectedTxCostInUsd(
+				TokenIdUtils.parseId(edge.from.id).chainId,
 				quote.gasInNative,
 			)
+
+		const relayQuote = relayQuoteSchema.parse(quote.rawResult)
 
 		return this.buildApproximatedQuoteFunction(
 			edge,
@@ -109,10 +114,7 @@ export class RelaySnapshotPlugin extends RelayPlugin implements SnapshotPlugin {
 			const amountOut = k * amountInTokenOutDecimals + b
 
 			return {
-				rate: this.SolanaEvmTxCostHelper.calcRate(
-					amountIn,
-					BigInt(Math.floor(amountOut)),
-				),
+				rate: calcRate(amountIn, BigInt(Math.floor(amountOut))),
 				amountOut: BigInt(Math.floor(amountOut)),
 				executionCostInUsd: costInUsd,
 			}

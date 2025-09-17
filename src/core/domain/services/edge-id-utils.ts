@@ -1,8 +1,9 @@
+import { ChannelId } from '../value-objects/channel-id'
 import { EdgeId, edgeIdScheme } from '../value-objects/edge-id'
 
 export class EdgeIdUtils {
 	static parseId(edgeId: string): {
-		channelId: string
+		channelId: ChannelId
 		fromId: string
 		toId: string
 	} {
@@ -11,13 +12,17 @@ export class EdgeIdUtils {
 		const [channel, from, to] = edgeIdChecked.split('::')
 
 		return {
-			channelId: channel,
+			channelId: channel as ChannelId,
 			fromId: from,
 			toId: to,
 		}
 	}
 
-	static generateId(channelId: string, fromId: string, toId: string): EdgeId {
+	static generateId(
+		channelId: ChannelId,
+		fromId: string,
+		toId: string,
+	): EdgeId {
 		return `${channelId}::${fromId}::${toId}`
 	}
 }

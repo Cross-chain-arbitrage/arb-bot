@@ -4,6 +4,8 @@ import { NativeWrapperSnapshotPluginModule } from '../../core/infrastructure/plu
 import { NativeWrapperSnapshotPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-snapshot-plugin'
 import { RaydiumSnapshotPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-snaphot-plugin.module'
 import { RaydiumSnapshotPlugin } from '../../core/infrastructure/plugins/raydium/raydium-snapshot-plugin'
+import { RelaySnapshotPluginModule } from '../../core/infrastructure/plugins/relay/composition/relay-snaphot-plugin.module'
+import { RelaySnapshotPlugin } from '../../core/infrastructure/plugins/relay/relay-snapshot-plugin'
 import { StargateSnapshotPluginModule } from '../../core/infrastructure/plugins/stargate/composition/stargate-snaphot-plugin.module'
 import { StargateSnapshotPlugin } from '../../core/infrastructure/plugins/stargate/stargate-snapshot-plugin'
 
@@ -12,6 +14,7 @@ export const snapshotPluginModules = [
 	DexSnapshotPluginModule,
 	NativeWrapperSnapshotPluginModule,
 	StargateSnapshotPluginModule,
+	RelaySnapshotPluginModule,
 ]
 
 export const snapshotPlugins = [
@@ -19,4 +22,5 @@ export const snapshotPlugins = [
 	DexSnapshotPlugin,
 	NativeWrapperSnapshotPlugin,
 	StargateSnapshotPlugin,
+	RelaySnapshotPlugin,
 ]

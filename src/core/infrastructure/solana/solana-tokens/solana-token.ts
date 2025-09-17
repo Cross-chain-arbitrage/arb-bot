@@ -1,28 +1,13 @@
 import { getAccount, getAssociatedTokenAddress } from '@solana/spl-token'
 import { Connection, PublicKey } from '@solana/web3.js'
 import { Token, TokenMetadata } from '../../../domain/entities/token'
-import { shortenAddress } from '../helpers'
-import { formatUnits, parseUnits } from './solana-tokens-helpers'
+import { SolanaCurrency } from './solana-currency'
 
-export class SolanaToken implements Token {
+export class SolanaToken extends SolanaCurrency implements Token {
 	tokenAccCache = new Map<string, string>()
-	chainId = 'solana' as const
 
-	symbol: string
-	decimals: number
-	name?: string
-
-	constructor(
-		readonly address: string,
-		tokenMetadata: TokenMetadata,
-	) {
-		this.symbol = tokenMetadata.symbol
-		this.decimals = tokenMetadata.decimals
-		this.name = tokenMetadata.name
-	}
-
-	get id(): string {
-		return `solana:${this.address}`
+	constructor(address: string, tokenMetadata: TokenMetadata) {
+		super(address, tokenMetadata)
 	}
 
 	isNative() {
@@ -63,16 +48,5 @@ export class SolanaToken implements Token {
 		)
 
 		return associatedTokenAccount.toBase58()
-	}
-
-	formatUnits = formatUnits
-	parseUnits = parseUnits
-
-	toString(): string {
-		return `${this.symbol} (Solana)`
-	}
-
-	toStringFull(): string {
-		return `${this.symbol} ${shortenAddress(this.address)}`
 	}
 }

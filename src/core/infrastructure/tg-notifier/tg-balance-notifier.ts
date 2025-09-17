@@ -6,6 +6,7 @@ import { NodeWithBalance } from '../../application/interfaces/balance-oracle'
 import { Token } from '../../domain/entities/token'
 import { ChainIdUtils } from '../../domain/services/chain-id-utils'
 import { TokenIdUtils } from '../../domain/services/token-id-utils'
+import { ChainId } from '../../domain/value-objects/chain-id'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
 import { TgNotifier } from './tg-notifier'
 import { MessageResponse } from './types'
@@ -41,7 +42,7 @@ export class TgBalancesNotifier extends TgNotifier implements BalanceNotifier {
 	}
 
 	private buildBalanceReport(
-		balancesByChain: Map<string, Array<NodeWithBalance<Token>>>,
+		balancesByChain: Map<ChainId, Array<NodeWithBalance<Token>>>,
 	) {
 		let totalUsd = 0
 
@@ -105,12 +106,13 @@ export class TgBalancesNotifier extends TgNotifier implements BalanceNotifier {
 	}
 
 	private groupBalancesByChain(balances: Array<NodeWithBalance<Token>>) {
-		const balancesByChain = new Map<string, Array<NodeWithBalance<Token>>>()
+		const balancesByChain = new Map<
+			ChainId,
+			Array<NodeWithBalance<Token>>
+		>()
 
 		for (const item of balances) {
-			const { namespace, reference } = TokenIdUtils.parseId(item.node.id)
-
-			const chainId = `${namespace}:${reference}`
+			const { chainId } = TokenIdUtils.parseId(item.node.id)
 
 			if (!balancesByChain.has(chainId)) {
 				balancesByChain.set(chainId, [])
@@ -136,7 +138,7 @@ export class TgBalancesNotifier extends TgNotifier implements BalanceNotifier {
 		}
 	}
 
-	private getChainNameById(chainId: string) {
+	private getChainNameById(chainId: ChainId) {
 		const { namespace, reference } = ChainIdUtils.parseId(chainId)
 
 		switch (namespace) {
