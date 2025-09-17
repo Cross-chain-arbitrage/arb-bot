@@ -1,10 +1,10 @@
 import { Hash } from 'viem'
-import { ChainClientService } from '../../chain-client/chain-client.service'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { Token } from '../../primitives/tokens/Token'
-import { Tx } from '../../primitives/transactions/transaction'
-import { createCustomError } from '../../utils/common'
-import { poll } from '../../utils/polling'
+import { createCustomError } from '../../../utils/common'
+import { poll } from '../../../utils/polling'
+import { ChainClientService } from '../evm/chain-client/chain-client.service'
+import { NativeCurrency } from '../evm/primitives/tokens/NativeCurrency'
+import { Token } from '../evm/primitives/tokens/Token'
+import { Tx } from '../evm/primitives/transactions/transaction'
 import { BridgeTx } from '../layerzero-bridges/layerzero-bridge-tx'
 
 export const GasZipBridgeTxError = createCustomError('GasZipBridgeTxError')
