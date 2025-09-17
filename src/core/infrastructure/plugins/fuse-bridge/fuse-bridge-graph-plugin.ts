@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { isAddressEqual } from 'viem'
 import { fuse } from 'viem/chains'
 import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
@@ -24,11 +25,13 @@ export class FuseBridgeGraphPlugin implements GraphPlugin {
 		)
 
 		for (const node of filteredTokensArray) {
-			const supportedTokens = FUSE_BRIDGE_SUPPORTED_TOKENS.map(
-				(token) => `${token.chainId}:${token.address.toLowerCase()}`,
+			const isSupportedToken = FUSE_BRIDGE_SUPPORTED_TOKENS.some(
+				(token) =>
+					token.chainId === node.chainId &&
+					isAddressEqual(token.address, node.address),
 			)
 
-			if (supportedTokens.includes(node.id)) {
+			if (isSupportedToken) {
 				const assetId = node.symbol
 
 				if (!assetGroups.has(assetId)) {
