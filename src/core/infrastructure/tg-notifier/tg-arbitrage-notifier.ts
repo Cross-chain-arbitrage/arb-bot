@@ -17,7 +17,7 @@ import { Token } from '../../domain/entities/token'
 import { ChannelIdUtils } from '../../domain/services/channel-id-utils'
 import { EdgeIdUtils } from '../../domain/services/edge-id-utils'
 import { TgNotifier } from './tg-notifier'
-import { ArbitrageMessage } from './types'
+import { ArbitrageMessage, MessageResponse } from './types'
 
 @Injectable()
 export class TgArbitrageNotifier
@@ -163,7 +163,7 @@ export class TgArbitrageNotifier
 
 	private formatTime(ms: number): string {
 		const mins = Math.floor(ms / 60000)
-		const secs = Math.floor(ms / 1000)
+		const secs = Math.floor((ms % 60000) / 1000)
 		const milliseconds = ms % 1000
 
 		return `${mins}:${secs.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`

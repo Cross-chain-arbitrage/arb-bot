@@ -8,6 +8,7 @@ import { ChainIdUtils } from '../../domain/services/chain-id-utils'
 import { TokenIdUtils } from '../../domain/services/token-id-utils'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
 import { TgNotifier } from './tg-notifier'
+import { MessageResponse } from './types'
 
 @Injectable()
 export class TgBalancesNotifier extends TgNotifier implements BalanceNotifier {

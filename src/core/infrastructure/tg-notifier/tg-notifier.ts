@@ -1,6 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api'
 import { withRetry } from 'viem'
 import { createCustomError, getEnvSafe } from '../../../utils/common'
+import { MessageResponse } from './types'
 
 const TgBaseNotifierError = createCustomError('TgBaseNotifierError')
 
