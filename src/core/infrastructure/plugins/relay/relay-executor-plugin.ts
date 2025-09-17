@@ -59,18 +59,18 @@ export class RelayExecutorPlugin extends EdgeHandler implements ExecutorPlugin {
 	): Promise<CrosschainConfirmation> {
 		const awaitedBridge = await bridgeResult.waitForBridge()
 
+		const chainId = TokenIdUtils.parseId(edge.from.id).chainId
+
+		const parsedTx = await this.solanaEvmHelper.waitForTxResult(
+			chainId,
+			bridgeResult.srcTxHash,
+		)
+
 		return {
 			status: 'success',
 			dstTxId: awaitedBridge.dstTxHash,
 			amountOut: bridgeResult.amountOut,
 			getExecutionCost: async () => {
-				const chainId = TokenIdUtils.parseId(edge.from.id).chainId
-
-				const parsedTx = await this.solanaEvmHelper.waitForTxResult(
-					chainId,
-					bridgeResult.srcTxHash,
-				)
-
 				const costInUsd =
 					await this.solanaEvmTxCostHelper.getTxCostInUsd(
 						chainId,

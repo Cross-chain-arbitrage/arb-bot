@@ -3,7 +3,10 @@ import { TokenUtils } from '../../../../evm/primitives/tokens/TokenUtils'
 import { GraphBuildingHelper } from '../../graph-building-helper'
 
 @Injectable()
-export class EvmGraphBuildingHelper extends GraphBuildingHelper {
+export class EvmGraphBuildingHelper extends GraphBuildingHelper<{
+	chainId: number
+	address: string
+}> {
 	constructor(readonly tokenUtils: TokenUtils) {
 		super()
 	}

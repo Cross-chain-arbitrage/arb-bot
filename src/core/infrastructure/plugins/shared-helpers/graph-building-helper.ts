@@ -3,12 +3,12 @@ import { Node } from '../../../domain/entities/node'
 import { ChannelIdUtils } from '../../../domain/services/channel-id-utils'
 import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
 
-type EdgeConstructor = {
-	from: unknown
-	to: unknown
+type EdgeConstructor<EdgeConstructorNode> = {
+	from: EdgeConstructorNode
+	to: EdgeConstructorNode
 }
 
-export abstract class GraphBuildingHelper {
+export abstract class GraphBuildingHelper<EdgeConstructorNode> {
 	createEdge(from: Node, to: Node, protocol: string): Edge {
 		return {
 			from,
@@ -22,7 +22,7 @@ export abstract class GraphBuildingHelper {
 	}
 
 	async getNodesAndEdgesFromConfig(
-		edgeConstructors: EdgeConstructor[] | undefined,
+		edgeConstructors: EdgeConstructor<EdgeConstructorNode>[] | undefined,
 		protocol: string,
 	) {
 		const nodes: Node[] = []
@@ -52,5 +52,5 @@ export abstract class GraphBuildingHelper {
 		}
 	}
 
-	abstract getNode(nodeConfig: unknown): Promise<Node>
+	abstract getNode(edgeConstructorNode: EdgeConstructorNode): Promise<Node>
 }

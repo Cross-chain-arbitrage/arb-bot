@@ -4,6 +4,8 @@ import { NativeWrapperExecutorPluginModule } from '../../core/infrastructure/plu
 import { NativeWrapperExecutorPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-executor-plugin'
 import { RaydiumExecutorPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-executor-plugin.module'
 import { RaydiumExecutorPlugin } from '../../core/infrastructure/plugins/raydium/raydium-executor-plugin'
+import { SimpleStargateExecutorPluginModule } from '../../core/infrastructure/plugins/simple-stargate/composition/simple-stargate-executor-plugin.module'
+import { SimpleStargateExecutorPlugin } from '../../core/infrastructure/plugins/simple-stargate/simple-stargate-executor-plugin'
 import { StargateExecutorPluginModule } from '../../core/infrastructure/plugins/stargate/composition/stargate-executor-plugin.module'
 import { StargateExecutorPlugin } from '../../core/infrastructure/plugins/stargate/stargate-executor-plugin'
 
@@ -12,6 +14,7 @@ export const executorPluginModules = [
 	DexExecutorPluginModule,
 	StargateExecutorPluginModule,
 	NativeWrapperExecutorPluginModule,
+	SimpleStargateExecutorPluginModule,
 ]
 
 export const executorPlugins = [
@@ -19,4 +22,5 @@ export const executorPlugins = [
 	DexExecutorPlugin,
 	StargateExecutorPlugin,
 	NativeWrapperExecutorPlugin,
+	SimpleStargateExecutorPlugin,
 ]

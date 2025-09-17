@@ -3,35 +3,32 @@ import { ConfigService } from '@nestjs/config'
 import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
-import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
-import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
-import { getNodesAndEdgesFromConfig } from '../shared-helpers/graph-building-helper'
-import { SimpleStargatePlugin } from './simple-stargate-plugin'
+import { SolanaEvmGraphBuildingHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-graph-building-helper'
+import { SIMPLE_STARGATE_CONFIG_KEY } from './configuration/simple-stargate-config'
+import { SIMPLE_STARGATE_PROTOCOL } from './constants'
 import { SimpleStargateConfig } from './types'
 
 @Injectable()
-export class SimpleStargateGraphPlugin
-	extends SimpleStargatePlugin
-	implements GraphPlugin
-{
+export class SimpleStargateGraphPlugin implements GraphPlugin {
 	constructor(
 		readonly configService: ConfigService,
-		readonly solanaTokenUtils: SolanaTokenUtils,
-		readonly tokenUtils: TokenUtils,
-	) {
-		super()
-	}
+		readonly solanaEvmGraphBuildingHelper: SolanaEvmGraphBuildingHelper,
+	) {}
 
 	async getDeterminedNodesAndEdges(): Promise<{
 		nodes: Node[]
 		edges: Edge[]
 	}> {
 		const simpleStargateConfig =
-			this.configService.get<SimpleStargateConfig>('simpleStargate')
+			this.configService.get<SimpleStargateConfig>(
+				SIMPLE_STARGATE_CONFIG_KEY,
+			)
 
-		const { nodes, edges } = await getNodesAndEdgesFromConfig.bind(this)(
-			simpleStargateConfig!,
-		)
+		const { nodes, edges } =
+			await this.solanaEvmGraphBuildingHelper.getNodesAndEdgesFromConfig(
+				simpleStargateConfig?.edges,
+				SIMPLE_STARGATE_PROTOCOL,
+			)
 
 		return {
 			nodes,

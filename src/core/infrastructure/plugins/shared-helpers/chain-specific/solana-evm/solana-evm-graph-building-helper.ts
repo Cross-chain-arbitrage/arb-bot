@@ -7,7 +7,7 @@ import { SolanaTokenUtils } from '../../../../solana/solana-tokens/solana-token-
 import { GraphBuildingHelper } from '../../graph-building-helper'
 
 @Injectable()
-export class SolanaEvmGraphBuildingHelper extends GraphBuildingHelper {
+export class SolanaEvmGraphBuildingHelper extends GraphBuildingHelper<TokenId> {
 	constructor(
 		readonly solanaTokenUtils: SolanaTokenUtils,
 		readonly tokenUtils: TokenUtils,
@@ -15,8 +15,8 @@ export class SolanaEvmGraphBuildingHelper extends GraphBuildingHelper {
 		super()
 	}
 
-	async getNode(nodeConfig: { tokenId: TokenId }) {
-		const { address, chainId } = TokenIdUtils.parseId(nodeConfig.tokenId)
+	async getNode(edgeConstructorNode: TokenId) {
+		const { address, chainId } = TokenIdUtils.parseId(edgeConstructorNode)
 
 		const { namespace, reference } = ChainIdUtils.parseId(chainId)
 

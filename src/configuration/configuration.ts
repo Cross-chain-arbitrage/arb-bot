@@ -19,6 +19,10 @@ import {
 	relayConfigScheme,
 } from '../core/infrastructure/plugins/relay/configuration/relay-config'
 import {
+	SIMPLE_STARGATE_CONFIG_KEY,
+	simpleStargateConfigScheme,
+} from '../core/infrastructure/plugins/simple-stargate/configuration/simple-stargate-config'
+import {
 	STARGATE_CONFIG_KEY,
 	stargateConfigScheme,
 } from '../core/infrastructure/plugins/stargate/configuration/stargate-config'
@@ -43,6 +47,7 @@ export const configScheme = z.object({
 	[STARGATE_CONFIG_KEY]: stargateConfigScheme,
 	[DEX_CONFIG_KEY]: dexConfigScheme,
 	[RELAY_CONFIG_KEY]: relayConfigScheme,
+	[SIMPLE_STARGATE_CONFIG_KEY]: simpleStargateConfigScheme,
 
 	/* ======== INFRASTRUCTURE ======== */
 

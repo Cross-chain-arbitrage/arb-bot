@@ -6,6 +6,8 @@ import { RaydiumGraphPluginModule } from '../../core/infrastructure/plugins/rayd
 import { RaydiumGraphPlugin } from '../../core/infrastructure/plugins/raydium/raydium-graph-plugin'
 import { RelayGraphPluginModule } from '../../core/infrastructure/plugins/relay/composition/relay-graph-plugin.module'
 import { RelayGraphPlugin } from '../../core/infrastructure/plugins/relay/relay-graph-plugin'
+import { SimpleStargateGraphPluginModule } from '../../core/infrastructure/plugins/simple-stargate/composition/simple-stargate-graph-plugin.module'
+import { SimpleStargateGraphPlugin } from '../../core/infrastructure/plugins/simple-stargate/simple-stargate-graph-plugin'
 import { StargateGraphPluginModule } from '../../core/infrastructure/plugins/stargate/composition/stargate-graph-plugin.module'
 import { StargateGraphPlugin } from '../../core/infrastructure/plugins/stargate/stargate-graph-plugin'
 
@@ -15,6 +17,7 @@ export const graphPluginModules = [
 	NativeWrapperGraphPluginModule,
 	StargateGraphPluginModule,
 	RelayGraphPluginModule,
+	SimpleStargateGraphPluginModule,
 ]
 
 export const graphPlugins = [
@@ -23,4 +26,5 @@ export const graphPlugins = [
 	NativeWrapperGraphPlugin,
 	StargateGraphPlugin,
 	RelayGraphPlugin,
+	SimpleStargateGraphPlugin,
 ]
