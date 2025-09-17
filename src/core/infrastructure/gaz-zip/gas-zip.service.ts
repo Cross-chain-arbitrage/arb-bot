@@ -1,10 +1,10 @@
 import TTLCache from '@isaacs/ttlcache'
 import { Injectable } from '@nestjs/common'
 import { parseEther, zeroHash } from 'viem'
-import { ChainClientService } from '../../chain-client/chain-client.service'
-import { NativeCurrency } from '../../primitives/tokens/NativeCurrency'
-import { createCustomError } from '../../utils/common'
-import { GasZipBridgeTx } from './GasZipBridgeTx'
+import { createCustomError } from '../../../utils/common'
+import { ChainClientService } from '../evm/chain-client/chain-client.service'
+import { NativeCurrency } from '../evm/primitives/tokens/NativeCurrency'
+import { GasZipBridgeTx } from './gaz-zip-bridge-tx'
 
 // TODO: Replace with actual GasZip Calldata API endpoint
 export const GASZIP_API_URL = 'https://backend.gas.zip/v2'
