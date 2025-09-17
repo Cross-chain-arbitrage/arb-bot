@@ -95,7 +95,7 @@ export class ChainClientService {
 
 		const defaultTransportConfig: HttpTransportConfig = {
 			timeout: 6_000,
-			batch: false,
+			batch: true,
 			// onFetchRequest(request, init) {
 			// },
 		}
