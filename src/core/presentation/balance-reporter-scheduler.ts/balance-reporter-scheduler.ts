@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common'
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { runFuncWithDelay } from '../../../utils/polling'
 import { BalanceReporter } from '../../application/use-cases/balance-reporter/balance-reporter'
@@ -8,6 +8,8 @@ export const BALANCE_REPORTER_SCHEDULER_CONFIG_KEY = 'balanceReporterScheduler'
 
 @Injectable()
 export class BalanceReporterScheduler implements OnApplicationBootstrap {
+	logger = new Logger(BalanceReporterScheduler.name)
+
 	constructor(
 		private readonly balanceReporter: BalanceReporter,
 		private readonly configService: ConfigService,
@@ -23,7 +25,11 @@ export class BalanceReporterScheduler implements OnApplicationBootstrap {
 		}
 
 		void runFuncWithDelay(async () => {
-			await this.balanceReporter.reportBalances()
+			try {
+				await this.balanceReporter.reportBalances()
+			} catch (error) {
+				this.logger.error(error)
+			}
 		}, config.runInterval)
 	}
 }

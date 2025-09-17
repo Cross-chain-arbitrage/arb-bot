@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common'
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { runFuncWithDelay } from '../../../utils/polling'
 import { ArbitrageOrchestrator } from '../../application/use-cases/arbitrage-orchestrator/arbitrage-orchestrator'
@@ -8,6 +8,8 @@ export const ARBITRAGE_SCHEDULER_CONFIG_KEY = 'arbitrageScheduler'
 
 @Injectable()
 export class ArbitrageScheduler implements OnApplicationBootstrap {
+	logger = new Logger(ArbitrageScheduler.name)
+
 	constructor(
 		private readonly arbitrageOrchestrator: ArbitrageOrchestrator,
 		private readonly configService: ConfigService,
@@ -30,7 +32,11 @@ export class ArbitrageScheduler implements OnApplicationBootstrap {
 		await this.arbitrageOrchestrator.preparePriceOracle()
 
 		void runFuncWithDelay(async () => {
-			await this.arbitrageOrchestrator.findAndExecuteOpportunity()
+			try {
+				await this.arbitrageOrchestrator.findAndExecuteOpportunity()
+			} catch (error) {
+				this.logger.error(error)
+			}
 		}, config.runInterval)
 	}
 }
