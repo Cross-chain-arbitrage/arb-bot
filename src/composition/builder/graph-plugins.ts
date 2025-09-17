@@ -1,5 +1,7 @@
 import { DexGraphPluginModule } from '../../core/infrastructure/plugins/dex/composition/dex-graph-plugin.module'
 import { DexGraphPlugin } from '../../core/infrastructure/plugins/dex/dex-graph-plugin'
+import { FuseBridgeGraphPluginModule } from '../../core/infrastructure/plugins/fuse-bridge/composition/fuse-bridge-graph-plugin.module'
+import { FuseBridgeGraphPlugin } from '../../core/infrastructure/plugins/fuse-bridge/fuse-bridge-graph-plugin'
 import { NativeWrapperGraphPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-graph-plugin.module'
 import { NativeWrapperGraphPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-graph-plugin'
 import { RaydiumGraphPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-builder-plugin.module'
@@ -18,6 +20,7 @@ export const graphPluginModules = [
 	StargateGraphPluginModule,
 	RelayGraphPluginModule,
 	SimpleStargateGraphPluginModule,
+	FuseBridgeGraphPluginModule,
 ]
 
 export const graphPlugins = [
@@ -27,4 +30,5 @@ export const graphPlugins = [
 	StargateGraphPlugin,
 	RelayGraphPlugin,
 	SimpleStargateGraphPlugin,
+	FuseBridgeGraphPlugin,
 ]

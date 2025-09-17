@@ -97,8 +97,7 @@ export class FuseBridgeService {
 
 	async bridge(
 		tokenIn: Token | NativeCurrency,
-		toChainId: number,
-		recipient: Address,
+		tokenOut: Token | NativeCurrency,
 		amount: bigint,
 		simulateOnly: boolean = false,
 	): Promise<{
@@ -108,12 +107,13 @@ export class FuseBridgeService {
 		const unwrapWeth = false
 
 		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
+		const recipient = wallet.account.address
 
 		await this.validateBalance(tokenIn, wallet.account.address, amount)
 
-		const { quote } = await this.quoteBridge(tokenIn, toChainId, amount)
+		const { quote } = await this.quoteBridge(tokenIn, tokenOut, amount)
 
-		const { address, abi } = this.getBridge(tokenIn, toChainId)
+		const { address, abi } = this.getBridge(tokenIn, tokenOut.chainId)
 
 		if (
 			!(tokenIn instanceof NativeCurrency) &&
@@ -129,7 +129,7 @@ export class FuseBridgeService {
 
 		const args = this.getBridgeArgs(
 			tokenIn,
-			toChainId,
+			tokenOut.chainId,
 			recipient,
 			amount,
 			unwrapWeth,
@@ -321,7 +321,7 @@ export class FuseBridgeService {
 
 	async quoteBridge(
 		tokenIn: Token | NativeCurrency,
-		toChainId: number,
+		tokenOut: Token | NativeCurrency,
 		amountIn: bigint,
 		useZro: boolean = false,
 	): Promise<{
@@ -334,12 +334,12 @@ export class FuseBridgeService {
 
 		this.validateToken(tokenIn)
 		this.validateChain(tokenIn.chainId)
-		this.validateChain(toChainId)
-		await this.validateBridgingLimit(tokenIn, toChainId, amountIn)
+		this.validateChain(tokenOut.chainId)
+		await this.validateBridgingLimit(tokenIn, tokenOut.chainId, amountIn)
 
-		const { address, abi } = this.getBridge(tokenIn, toChainId)
+		const { address, abi } = this.getBridge(tokenIn, tokenOut.chainId)
 
-		const args = this.getEstimateArgs(tokenIn, toChainId, useZro)
+		const args = this.getEstimateArgs(tokenIn, tokenOut.chainId, useZro)
 
 		let feeQuote: [bigint, bigint]
 		if (this.isFuse(tokenIn) && tokenIn.chainId === fuse.id) {
