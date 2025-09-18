@@ -7,14 +7,15 @@ import {
 	getContract,
 	WalletClient,
 } from 'viem'
-import { ChainClientService } from '../../src/chain-client/chain-client.service'
-import { Pool } from '../../src/dex/base/Pool'
-import { DexRegistry } from '../../src/dex/DexRegistry'
-import { PoolType } from '../../src/dex/PoolUtils'
-import { GeckoTerminalService } from '../../src/modules/price-oracle/gecko-terminal.service'
-import { PriceOracleService } from '../../src/modules/price-oracle/price-oracle.service'
-import { Token } from '../../src/primitives/tokens/Token'
-import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
+import { Pool } from '../../src/core/infrastructure/dex/base/pool'
+import { DexRegistry } from '../../src/core/infrastructure/dex/dex-registry'
+import { PoolType } from '../../src/core/infrastructure/dex/pool-utils'
+import { ChainClientService } from '../../src/core/infrastructure/evm/chain-client/chain-client.service'
+import { Token } from '../../src/core/infrastructure/evm/primitives/tokens/Token'
+import { TokenUtils } from '../../src/core/infrastructure/evm/primitives/tokens/TokenUtils'
+import { GeckoTerminalService } from '../../src/core/infrastructure/price-oracle/gecko-terminal.service'
+import { PriceOracleService } from '../../src/core/infrastructure/price-oracle/price-oracle.service'
+import { SolanaTokenUtils } from '../../src/core/infrastructure/solana/solana-tokens/solana-token-utils'
 import { setNativeBalance, setTokenBalance, useAnvil } from './anvil'
 
 export type PoolTestConfig = {
@@ -60,6 +61,7 @@ export function testPool(context: PoolTestConfig) {
 					useValue: mockChainClientService,
 				},
 				TokenUtils,
+				SolanaTokenUtils,
 				poolCreatorClass,
 				PriceOracleService,
 				GeckoTerminalService,
@@ -163,11 +165,19 @@ export function testPool(context: PoolTestConfig) {
 				amountIn,
 			})
 
-			const { amountOut } = await pool.swap({
+			const { waitForResult } = await pool.swap({
 				tokenIn,
 				tokenOut,
 				amountIn,
 			})
+
+			const result = await waitForResult()
+
+			if (result.status === 'reverted') {
+				throw new Error('Swap reverted')
+			}
+
+			const { amountOut } = result
 
 			const tokenInBalanceAfter = await tokenInContract.read.balanceOf([
 				botAddress,

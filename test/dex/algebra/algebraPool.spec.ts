@@ -1,5 +1,5 @@
 import { fuse } from 'viem/chains'
-import { testPool } from '../../testUtils/testPool'
+import { testPool } from '../../testUtils/test-pool'
 
 describe('algebra pool test', () => {
 	const wethUsdtPoolAddress = '0x06b6949Fca3706c25A312c1104B7e4fa11ce0BB6'

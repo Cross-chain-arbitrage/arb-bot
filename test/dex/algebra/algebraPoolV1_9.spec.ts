@@ -1,5 +1,5 @@
 import { gravity } from 'viem/chains'
-import { testPool } from '../../testUtils/testPool'
+import { testPool } from '../../testUtils/test-pool'
 
 //TODO: migrate test from gravity due to rpc issues (cloudflare block) or replace rpc
 describe.skip('algebra v1.9 pool test', () => {

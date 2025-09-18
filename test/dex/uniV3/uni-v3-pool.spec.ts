@@ -1,5 +1,5 @@
 import { hemi } from 'viem/chains'
-import { testPool } from '../../testUtils/testPool'
+import { testPool } from '../../testUtils/test-pool'
 
 describe('Uniswap V3 pool test', () => {
 	describe('router v1', () => {

@@ -1,17 +1,13 @@
 import { getAddress } from 'viem'
-import { getAlchemyRpcUrl } from '../../../src/core/infrastructure/evm/chain-client/alchemy-utils'
-import { DexRegistry } from '../../../src/dex/DexRegistry'
-import { PoolType } from '../../../src/dex/PoolUtils'
-import { testPool } from '../../testUtils/testPool'
+import { DexRegistry } from '../../src/core/infrastructure/dex/dex-registry'
+import { PoolType } from '../../src/core/infrastructure/dex/pool-utils'
+import { getAlchemyRpcUrl } from '../../src/core/infrastructure/evm/chain-client/alchemy-utils'
+import { testPool } from '../../test/testUtils/test-pool'
 
-if (process.env.CHECK_POOL === 'true') {
-	const { chainId, poolAddress, rpcUrl, poolType } = getContext()
+const { chainId, poolAddress, rpcUrl, poolType } = getContext()
 
-	describe('Check pool', () =>
-		testPool({ chainId, poolAddress, rpcUrl, poolType }))
-} else {
-	it.skip('Skip this file in common tests', () => {})
-}
+describe('Check pool', () =>
+	testPool({ chainId, poolAddress, rpcUrl, poolType }))
 
 /**
  * Get and validate pool address, chain and rpc url from environment variables

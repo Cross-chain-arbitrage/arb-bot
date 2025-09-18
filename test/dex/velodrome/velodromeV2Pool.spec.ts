@@ -1,5 +1,5 @@
 import { swellchain } from 'viem/chains'
-import { testPool } from '../../testUtils/testPool'
+import { testPool } from '../../testUtils/test-pool'
 
 describe('Velodrome V2 pool test', () => {
 	const poolAddress = '0x6f96c6f73147db99716a0328eda2b6bff136cdb8'

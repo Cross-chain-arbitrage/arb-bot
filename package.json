@@ -15,7 +15,7 @@
 		"lint": "npx eslint src",
 		"lint:fix": "npx eslint src --fix",
 		"check-types": "npx tsc --noEmit",
-		"check-pool": "sh test/dex/checkPool/checkPool.sh",
+		"check-pool": "sh utils/check-pool/check-pool.sh",
 		"build": "nest build"
 	},
 	"devDependencies": {

@@ -1,6 +1,6 @@
 import { bsc } from 'viem/chains'
 import { getAlchemyRpcUrl } from '../../../src/core/infrastructure/evm/chain-client/alchemy-utils'
-import { testPool } from '../../testUtils/testPool'
+import { testPool } from '../../testUtils/test-pool'
 
 describe('Pancake V3 pool test', () => {
 	const poolAddress = '0x172fcd41e0913e95784454622d1c3724f546f849'

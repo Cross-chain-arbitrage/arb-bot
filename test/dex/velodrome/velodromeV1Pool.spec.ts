@@ -1,5 +1,5 @@
 import { swellchain } from 'viem/chains'
-import { testPool } from '../../testUtils/testPool'
+import { testPool } from '../../testUtils/test-pool'
 
 //TODO: resolve request timeout
 describe('Velodrome V1 pool test', () => {
