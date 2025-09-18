@@ -6,9 +6,9 @@ import {
 } from 'viem'
 import { mainnet } from 'viem/chains'
 import { ClientManager } from '../../../src/chain-client/chain-client.service'
+import { getAlchemyRpcUrl } from '../../../src/core/infrastructure/evm/chain-client/alchemy-utils'
 import { PoolUtils } from '../../../src/dex/PoolUtils'
 import { UniV2Pool } from '../../../src/dex/protocols/Uni/UniV2/Pool'
-import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import {
 	setNativeBalance,
 	setTokenBalance,

@@ -1,6 +1,7 @@
 import { TransactionReceipt } from 'viem'
 import { arbitrum, fuse } from 'viem/chains'
 import { ClientManager } from '../../src/chain-client/chain-client.service'
+import { TgArbitrageNotifier } from '../../src/core/infrastructure/tg-notifier/tg-arbitrage-notifier'
 import { Pool } from '../../src/dex/base/Pool'
 import { PoolUtils } from '../../src/dex/PoolUtils'
 import { GraphArbitrageBot } from '../../src/graphs/GraphArbitrageBot'
@@ -14,7 +15,6 @@ import {
 	WrapEdge,
 } from '../../src/graphs/primitives/edges/edge'
 import { Graph } from '../../src/graphs/primitives/Graph'
-import { TgArbitrageNotifier } from '../../src/modules/notification/TgArbitrageNotifier'
 import { PriceOracle } from '../../src/modules/price-oracle/price-oracle.service'
 import { TokenAmount } from '../../src/primitives/tokens/TokenAmount'
 import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'

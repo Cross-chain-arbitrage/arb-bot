@@ -1,64 +1,36 @@
-import { CacheModule } from '@nestjs/cache-manager'
-import { Logger, Module } from '@nestjs/common'
+import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { LoggerModule } from 'nestjs-pino'
-import { BridgeModule } from './bridges/bridge.module'
-import { ChainClientModule } from './chain-client/chain-client.module'
-import { DexModule } from './dex/dex.module'
-import { GasPriceOracleService } from './gas-price-oracle/gas-price-oracle.service'
-import { GraphBuilder } from './graphs/GraphBuilder'
-import { GraphExecutor } from './graphs/GraphExecutor'
-import { GraphVisualizer } from './graphs/GraphVisualizer'
-import { EdgeHelperService } from './graphs/primitives/edges/edge-helper.service'
-import { TgArbitrageNotifier } from './modules/notification/TgArbitrageNotifier'
-import { TgBalancesNotifier } from './modules/notification/TgBalancesNotifier'
-import { PriceOracleModule } from './modules/price-oracle/price-oracle.module'
-import { TokenUtils } from './primitives/tokens/TokenUtils'
-import { RaydiumService } from './solana/raydium/raydium.service'
-import { SolanaClientService } from './solana/solana-client.service'
-import { SolanaTokenUtils } from './solana/solana-tokens/solana-token-utils'
-import { loadConfig } from './strategies/configuration'
-import { Strategy } from './strategies/Strategy'
-import { transport } from './utils/logging-config'
-
-const appConfig = loadConfig()
+import { BalanceReporterModule } from './composition/balance-reporter/balance-reporter.module'
+import { GraphBuilderModule } from './composition/builder/graph-builder.module'
+import { ArbitrageExecutorModule } from './composition/executor/arbitrage-executor.module'
+import { ArbitrageFinderModule } from './composition/finder/arbitrage-finder.module'
+import { pinoLogger } from './composition/logging/pino-logger'
+import { loadConfig } from './configuration/configuration'
+import { GRAPH_VISUALIZER_TOKEN } from './core/application/interfaces/graph-visualizer'
+import { ArbitrageOrchestrator } from './core/application/use-cases/arbitrage-orchestrator/arbitrage-orchestrator'
+import { ExecutionPreparer } from './core/application/use-cases/execution/execution-preparer/execution-preparer'
+import { PriceOracleModule } from './core/infrastructure/price-oracle/price-oracle.module'
+import { MermaidVisualizer } from './core/infrastructure/visualization/mermaid-visualizer'
+import { ArbitrageScheduler } from './core/presentation/arbitrage-scheduler/arbitrage-scheduler'
 
 @Module({
 	imports: [
-		LoggerModule.forRoot({
-			pinoHttp: {
-				transport,
-				formatters: {
-					level(label, number) {
-						return { level: label }
-					},
-				},
-			},
-		}),
-		ConfigModule.forRoot({
-			load: [loadConfig],
-			isGlobal: true,
-		}),
-		ChainClientModule.forRoot(appConfig.chainClientConfig),
-		DexModule.forRoot(),
-		BridgeModule,
+		pinoLogger,
+		GraphBuilderModule,
+		ArbitrageFinderModule,
+		ArbitrageExecutorModule,
 		PriceOracleModule,
-		CacheModule.register(),
+		BalanceReporterModule,
+		ConfigModule.forRoot({ isGlobal: true, load: [loadConfig] }),
 	],
 	providers: [
-		GraphBuilder,
-		TokenUtils,
-		TgArbitrageNotifier,
-		TgBalancesNotifier,
-		GraphVisualizer,
-		GraphExecutor,
-		Strategy,
-		Logger,
-		EdgeHelperService,
-		GasPriceOracleService,
-		SolanaTokenUtils,
-		SolanaClientService,
-		RaydiumService,
+		ArbitrageOrchestrator,
+		ExecutionPreparer,
+		ArbitrageScheduler,
+		{
+			provide: GRAPH_VISUALIZER_TOKEN,
+			useClass: MermaidVisualizer,
+		},
 	],
 })
 export class AppModule {}

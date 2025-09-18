@@ -1,0 +1,33 @@
+botName: 'test'
+
+balanceReporterScheduler:
+  runInterval: 1000000
+
+arbitrageScheduler:
+  runInterval: 1000000
+  prepareExecution: true
+
+arbitrageFinder:
+  opportunityFinding:
+    minStartValueUsd: 100
+    maxStartValueUsd: 1000
+    runCount: 5
+    startTokenId: 'eip155:42161:0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
+  opportunityValidation:
+    minProfitUsd: 1
+
+dexConfig:
+  pools:
+    - address: '0x641C00A822e8b671738d32a431a4Fb6074E5c79d' # WETH/USDT
+      chainId: 42161
+      type: UNI_V3
+    - address: '0xC6962004f452bE9203591991D15f6b388e09E8D0' # WETH/USDC
+      chainId: 42161
+      type: UNI_V3
+    - address: '0xbe3ad6a5669dc0b8b12febc03608860c31e2eef6' # USDC/USDT
+      chainId: 42161
+      type: UNI_V3
+  interpolationParams:
+    minStartValueUsd: 100
+    maxStartValueUsd: 1000
+    runCount: 5

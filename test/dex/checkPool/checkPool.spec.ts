@@ -1,7 +1,7 @@
 import { getAddress } from 'viem'
+import { getAlchemyRpcUrl } from '../../../src/core/infrastructure/evm/chain-client/alchemy-utils'
 import { DexRegistry } from '../../../src/dex/DexRegistry'
 import { PoolType } from '../../../src/dex/PoolUtils'
-import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { testPool } from '../../testUtils/testPool'
 
 if (process.env.CHECK_POOL === 'true') {
