@@ -8,6 +8,7 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js'
 import { createCustomError, getEnvSafe } from '../../../utils/common'
+import { poll } from '../../../utils/polling'
 
 const SolanaClientServiceError = createCustomError('SolanaClientServiceError')
 
@@ -76,12 +77,34 @@ export class SolanaClientService implements OnModuleInit {
 	async waitForParsedTransaction(
 		txId: string,
 	): Promise<ParsedTransactionWithMeta> {
-		// TODO: expand this method with different commitments and test it
+		await this.waitConfirmation(txId)
+
 		const parsedTx = await this.connection.getParsedTransaction(txId, {
-			commitment: 'finalized',
+			commitment: 'confirmed',
 			maxSupportedTransactionVersion: 0,
 		})
 
 		return parsedTx!
+	}
+
+	private async waitConfirmation(txId: string) {
+		await poll(
+			() =>
+				this.connection.getSignatureStatus(txId, {
+					searchTransactionHistory: true,
+				}),
+			(status) => {
+				if (!status.value)
+					throw new SolanaClientServiceError(
+						`Transaction status for ${txId} not found`,
+					)
+				return status.value?.confirmationStatus === 'confirmed'
+			},
+			1000,
+			20000,
+			new SolanaClientServiceError(
+				`Polling Timeout on waiting for transaction ${txId} to be confirmed`,
+			),
+		)
 	}
 }
