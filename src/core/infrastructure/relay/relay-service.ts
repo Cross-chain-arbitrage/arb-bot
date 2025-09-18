@@ -13,6 +13,7 @@ import { NativeCurrency } from '../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../evm/primitives/tokens/Token'
 import { SolanaClientService } from '../solana/solana-client.service'
 import { SolanaToken } from '../solana/solana-tokens/solana-token'
+import { SOLANA_RELAY_CHAIN_ID } from './constants'
 import { RelayApiService } from './relay-api.service'
 import { ExecutionFullStatus } from './schemas/relay-execution-status.scheme'
 import {

@@ -4,6 +4,7 @@ import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
 import { SolanaEvmGraphBuildingHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-graph-building-helper'
+import { RELAY_CONFIG_KEY } from './configuration/relay-config'
 import { RELAY_PROTOCOL } from './constants'
 import { RelayConfig } from './types'
 
@@ -18,7 +19,8 @@ export class RelayGraphPlugin implements GraphPlugin {
 		nodes: Node[]
 		edges: Edge[]
 	}> {
-		const relayConfig = this.configService.get<RelayConfig>('relay')
+		const relayConfig =
+			this.configService.get<RelayConfig>(RELAY_CONFIG_KEY)
 
 		const { nodes, edges } =
 			await this.solanaEvmGraphBuildingHelper.getNodesAndEdgesFromConfig(
