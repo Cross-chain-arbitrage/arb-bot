@@ -35,6 +35,7 @@ import { balanceReporterSchedulerConfigScheme } from './balance-reporter-schedul
 
 export const configScheme = z.object({
 	botName: z.string(),
+	isDryRun: z.boolean(),
 
 	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigScheme,
 	[ARBITRAGE_SCHEDULER_CONFIG_KEY]: arbitrageSchedulerConfigScheme,

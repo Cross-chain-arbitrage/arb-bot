@@ -1,13 +1,14 @@
 botName: 'test'
+isDryRun: false
 
 balanceReporterScheduler:
   runInterval: 1000000
 
 arbitrageScheduler:
-  runInterval: 1000000
   prepareExecution: true
 
 arbitrageFinder:
+  runInterval: 1000000
   opportunityFinding:
     minStartValueUsd: 100
     maxStartValueUsd: 1000

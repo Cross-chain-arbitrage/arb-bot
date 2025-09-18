@@ -1,11 +1,16 @@
 import { NestFactory } from '@nestjs/core'
 import { Logger } from 'nestjs-pino'
-import { AppModule } from './app.module'
+import { ArbitrageAppModule } from './arbitrage-app.module'
+import { loadConfig } from './configuration/configuration'
+import { FinderAppModule } from './finder-app.module'
 
 /* ============ Strategy Config ============ */
 
 async function main() {
-	const context = await NestFactory.createApplicationContext(AppModule)
+	const config = loadConfig()
+	const context = await NestFactory.createApplicationContext(
+		config.isDryRun ? FinderAppModule : ArbitrageAppModule,
+	)
 
 	context.useLogger(context.get(Logger))
 

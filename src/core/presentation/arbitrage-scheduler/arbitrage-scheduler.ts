@@ -1,7 +1,10 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { runFuncWithDelay } from '../../../utils/polling'
-import { ArbitrageOrchestrator } from '../../application/use-cases/arbitrage-orchestrator/arbitrage-orchestrator'
+import { ARBITRAGE_FINDER_CONFIG_KEY } from '../../application/use-cases/finding/arbitrage-finder/arbitrage-finder'
+import { ArbitrageFinderConfig } from '../../application/use-cases/finding/arbitrage-finder/types'
+import { ArbitrageOrchestrator } from '../../application/use-cases/orchestration/arbitrage-orchestrator/arbitrage-orchestrator'
+import { BotOrchestrator } from '../../application/use-cases/orchestration/bot-orchestrator/bot-orchestrator'
 import { ArbitrageSchedulerConfig } from './types'
 
 export const ARBITRAGE_SCHEDULER_CONFIG_KEY = 'arbitrageScheduler'
@@ -11,25 +14,32 @@ export class ArbitrageScheduler implements OnApplicationBootstrap {
 	logger = new Logger(ArbitrageScheduler.name)
 
 	constructor(
+		private readonly botOrchestrator: BotOrchestrator,
 		private readonly arbitrageOrchestrator: ArbitrageOrchestrator,
 		private readonly configService: ConfigService,
 	) {}
 
 	async onApplicationBootstrap() {
-		const config = this.configService.get<ArbitrageSchedulerConfig>(
-			ARBITRAGE_SCHEDULER_CONFIG_KEY,
-		)
+		const arbitrageSchedulerConfig =
+			this.configService.get<ArbitrageSchedulerConfig>(
+				ARBITRAGE_SCHEDULER_CONFIG_KEY,
+			)
 
-		if (!config) {
-			throw new Error('Arbitrage scheduler config not found')
+		this.botOrchestrator.reportGraph()
+
+		const arbitrageFinderConfig =
+			this.configService.get<ArbitrageFinderConfig>(
+				ARBITRAGE_FINDER_CONFIG_KEY,
+			)
+
+		if (!arbitrageFinderConfig) {
+			throw new Error('Arbitrage finder config not found')
 		}
 
-		this.arbitrageOrchestrator.reportGraph()
-
-		if (config.prepareExecution)
+		if (arbitrageSchedulerConfig?.prepareExecution)
 			await this.arbitrageOrchestrator.prepareExecution()
 
-		await this.arbitrageOrchestrator.preparePriceOracle()
+		await this.botOrchestrator.preparePriceOracle()
 
 		void runFuncWithDelay(async () => {
 			try {
@@ -37,6 +47,6 @@ export class ArbitrageScheduler implements OnApplicationBootstrap {
 			} catch (error) {
 				this.logger.error(error)
 			}
-		}, config.runInterval)
+		}, arbitrageFinderConfig.runInterval)
 	}
 }

@@ -3,6 +3,7 @@ import { ArbitrageFinderConfig } from '../core/application/use-cases/finding/arb
 
 export const arbitrageFinderConfigScheme: z.ZodType<ArbitrageFinderConfig> =
 	z.object({
+		runInterval: z.number(),
 		opportunityFinding: z.object({
 			minStartValueUsd: z.number(),
 			maxStartValueUsd: z.number(),

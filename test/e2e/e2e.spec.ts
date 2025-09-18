@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing'
 import { Logger } from 'nestjs-pino'
-import { AppModule } from '../../src/app.module'
+import { ArbitrageAppModule } from '../../src/arbitrage-app.module'
 import { PoolUtils } from '../../src/core/infrastructure/dex/pool-utils'
 import { ChainClientService } from '../../src/core/infrastructure/evm/chain-client/chain-client.service'
 import { wait } from '../../src/utils/common'
@@ -21,7 +21,7 @@ describe('E2E', () => {
 		const walletClient = mockChainClientService.getWalletClient(42161)
 
 		const testAppModule = await Test.createTestingModule({
-			imports: [AppModule],
+			imports: [ArbitrageAppModule],
 		})
 			.overrideProvider(ChainClientService)
 			.useValue(mockChainClientService)
