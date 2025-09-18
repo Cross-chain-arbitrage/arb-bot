@@ -2,7 +2,7 @@ import { arbitrum, fuse, hemi } from 'viem/chains'
 import { Pool } from '../../src/dex/base/Pool'
 import { PoolType, PoolUtils } from '../../src/dex/PoolUtils'
 import { GraphBuilder, GraphBuilderError } from '../../src/graphs/GraphBuilder'
-import { ActionType } from '../../src/graphs/primitives/Edge'
+import { ActionType } from '../../src/graphs/primitives/edges/edge'
 import { WrappedNative } from '../../src/primitives/tokens/WrappedNative'
 import { makeSuite } from '../testUtils/makeSuite'
 

@@ -4,7 +4,7 @@ import {
 	FuseBridgeEdge,
 	StargateBridgeEdge,
 	SwapEdge,
-} from '../../../src/graphs/primitives/Edge'
+} from '../../../src/graphs/primitives/edges/edge'
 import { Graph } from '../../../src/graphs/primitives/Graph'
 import { Token } from '../../../src/primitives/tokens/Token'
 import { TokenUtils } from '../../../src/primitives/tokens/TokenUtils'

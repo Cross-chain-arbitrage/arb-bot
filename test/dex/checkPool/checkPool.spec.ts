@@ -1,15 +1,14 @@
-import { Chain, getAddress } from 'viem'
-import * as viemChains from 'viem/chains'
+import { getAddress } from 'viem'
+import { getAlchemyRpcUrl } from '../../../src/core/infrastructure/evm/chain-client/alchemy-utils'
 import { DexRegistry } from '../../../src/dex/DexRegistry'
 import { PoolType } from '../../../src/dex/PoolUtils'
-import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
 import { testPool } from '../../testUtils/testPool'
 
 if (process.env.CHECK_POOL === 'true') {
-	const { chain, poolAddress, rpcUrl, poolType } = getContext()
+	const { chainId, poolAddress, rpcUrl, poolType } = getContext()
 
 	describe('Check pool', () =>
-		testPool({ chain, poolAddress, rpcUrl, poolType }))
+		testPool({ chainId, poolAddress, rpcUrl, poolType }))
 } else {
 	it.skip('Skip this file in common tests', () => {})
 }
@@ -19,22 +18,22 @@ if (process.env.CHECK_POOL === 'true') {
  */
 function getContext(): {
 	poolAddress: Address
-	chain: Chain
+	chainId: number
 	poolType: PoolType
 	rpcUrl: string | undefined
 } {
-	const chain = getAndValidateChain()
+	const chainId = getAndValidateChainId()
 
 	const poolAddress = getAndValidatePoolAddress()
 
-	const rpcUrl = getAndValidateRpcUrl(chain.id)
+	const rpcUrl = getAndValidateRpcUrl(chainId)
 
 	const poolType = getAndValidatePoolType()
 
-	return { poolAddress, chain, rpcUrl, poolType }
+	return { poolAddress, chainId, rpcUrl, poolType }
 }
 
-function getAndValidateChain() {
+function getAndValidateChainId() {
 	const processChainId = process.env.CHECK_POOL_CHAIN_ID
 
 	if (!processChainId) {
@@ -47,15 +46,7 @@ function getAndValidateChain() {
 		throw new Error('chain id is not a number')
 	}
 
-	const chain = Object.values(viemChains).find(
-		(chain) => chain.id === chainId,
-	)
-
-	if (!chain) {
-		throw new Error(`Chain with id ${chainId} not found in viem chains`)
-	}
-
-	return chain
+	return chainId
 }
 
 function getAndValidatePoolAddress() {

@@ -1,1 +1,0 @@
-type TokenId = `${ChainId}:${Address}`

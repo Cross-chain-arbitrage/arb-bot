@@ -7,7 +7,7 @@ describe('Velodrome V2 pool test', () => {
 	const usdeAddress = '0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34'
 
 	testPool({
-		chain: swellchain,
+		chainId: swellchain.id,
 		poolType: 'VELODROME_V2',
 		poolAddress,
 		assertPoolCreation: {

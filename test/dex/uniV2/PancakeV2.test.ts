@@ -5,10 +5,10 @@ import {
 	WalletClient,
 } from 'viem'
 import { bsc } from 'viem/chains'
+import { ClientManager } from '../../../src/chain-client/chain-client.service'
+import { getAlchemyRpcUrl } from '../../../src/core/infrastructure/evm/chain-client/alchemy-utils'
 import { PoolUtils } from '../../../src/dex/PoolUtils'
 import { PancakeV2Pool } from '../../../src/dex/protocols/Pancake/PancakeV2/Pool'
-import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
-import { ClientManager } from '../../../src/utils/ChainClientService'
 import {
 	setNativeBalance,
 	setTokenBalance,

@@ -1,5 +1,5 @@
 import { bsc } from 'viem/chains'
-import { getAlchemyRpcUrl } from '../../../src/utils/alchemy'
+import { getAlchemyRpcUrl } from '../../../src/core/infrastructure/evm/chain-client/alchemy-utils'
 import { testPool } from '../../testUtils/testPool'
 
 describe('Pancake V3 pool test', () => {
@@ -8,7 +8,7 @@ describe('Pancake V3 pool test', () => {
 	const usdtAddress = '0x55d398326f99059ff775485246999027b3197955'
 
 	testPool({
-		chain: bsc,
+		chainId: bsc.id,
 		poolType: 'PANCAKE_V3',
 		poolAddress,
 		rpcUrl: getAlchemyRpcUrl(bsc.id),
