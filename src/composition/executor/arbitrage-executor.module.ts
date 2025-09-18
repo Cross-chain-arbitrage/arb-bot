@@ -8,6 +8,7 @@ import {
 } from '../../core/application/interfaces/graph-plugin'
 import { ArbitrageExecutionTelemetry } from '../../core/application/use-cases/execution/arbitrage-executor/arbitrage-execution-telemetry'
 import { ArbitrageExecutor } from '../../core/application/use-cases/execution/arbitrage-executor/arbitrage-executor'
+import { ExecutionPreparer } from '../../core/application/use-cases/execution/execution-preparer/execution-preparer'
 import { PathExecutionTelemetry } from '../../core/application/use-cases/execution/path-executor/path-execution-telemetry'
 import { PathExecutor } from '../../core/application/use-cases/execution/path-executor/path-executor'
 import { StepExecutionTelemetry } from '../../core/application/use-cases/execution/step-executor/step-execution-telemetry'
@@ -33,6 +34,7 @@ import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 		StepExecutionTelemetry,
 		ArbitrageExecutionTelemetry,
 		StepExecutor,
+		ExecutionPreparer,
 		{
 			provide: ARBITRAGE_NOTIFIER_TOKEN,
 			useClass: TgArbitrageNotifier,
@@ -63,6 +65,10 @@ import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 			},
 		},
 	],
-	exports: [ArbitrageExecutor, EDGE_EXECUTOR_REGISTRY_TOKEN],
+	exports: [
+		ArbitrageExecutor,
+		EDGE_EXECUTOR_REGISTRY_TOKEN,
+		ExecutionPreparer,
+	],
 })
 export class ArbitrageExecutorModule {}
