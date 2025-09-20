@@ -1,12 +1,12 @@
 import { z } from 'zod'
-import { ChainClientConfig, CustomChain, RpcProviders, RpcUrl } from '../types'
+import { ChainClientConfig, CustomChain, RpcSettings, RpcUrl } from '../types'
 
 export const CHAIN_CLIENT_CONFIG_KEY = 'chainClientConfig'
 
-export const rpcProvidersScheme: z.ZodType<RpcProviders> = z
-	.record(
-		z.string(),
-		z.array(
+export const rpcSettingsScheme: z.ZodType<RpcSettings> = z.record(
+	z.string(),
+	z.object({
+		rpcUrls: z.array(
 			(
 				z.union([
 					z.string().regex(/^alchemy$/),
@@ -16,8 +16,9 @@ export const rpcProvidersScheme: z.ZodType<RpcProviders> = z
 				'rpc url or "alchemy" to automatically build alchemy rpc url',
 			),
 		),
-	)
-	.describe('key is chain id, value is array of rpc urls or "alchemy"')
+		disableDefaultRpcUrl: z.boolean().default(false),
+	}),
+)
 
 export const customChainsScheme: z.ZodType<CustomChain[]> = z.array(
 	z.object({
@@ -35,7 +36,7 @@ export const customChainsScheme: z.ZodType<CustomChain[]> = z.array(
 export const chainClientConfigScheme: z.ZodType<ChainClientConfig | undefined> =
 	z
 		.object({
-			rpcProviders: rpcProvidersScheme.optional(),
+			rpcSettings: rpcSettingsScheme.optional(),
 			customChains: customChainsScheme.optional(),
 		})
 		.optional()

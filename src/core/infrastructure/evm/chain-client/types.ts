@@ -1,6 +1,9 @@
 export type RpcUrl = `http${string}`
-
-export type RpcProviders = Record<number, (RpcUrl | 'alchemy')[]>
+export type ChainRpcSettings = {
+	rpcUrls: (RpcUrl | 'alchemy')[]
+	disableDefaultRpcUrl: boolean
+}
+export type RpcSettings = Record<string, ChainRpcSettings>
 
 export type CustomChain = {
 	chainId: number
@@ -14,6 +17,6 @@ export type CustomChain = {
 }
 
 export interface ChainClientConfig {
-	rpcProviders?: RpcProviders
+	rpcSettings?: RpcSettings
 	customChains?: CustomChain[]
 }

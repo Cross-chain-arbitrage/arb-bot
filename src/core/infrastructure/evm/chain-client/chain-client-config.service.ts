@@ -5,13 +5,16 @@ import { privateKeyToAddress } from 'viem/accounts'
 import { z } from 'zod'
 import { getAlchemyRpcUrl } from './alchemy-utils'
 import { CHAIN_CLIENT_CONFIG_KEY } from './configuration/chain-client-config'
-import { ChainClientConfig, CustomChain, RpcProviders, RpcUrl } from './types'
+import { ChainClientConfig, CustomChain, RpcSettings, RpcUrl } from './types'
 
 @Injectable()
 export class ChainClientConfigService implements OnModuleInit {
 	privateKey!: Hex
-	rpcUrls: Record<number, RpcUrl[]> | undefined
-	customChains: Chain[] | undefined
+	rpcSettings?: Record<
+		number,
+		{ rpcUrls: RpcUrl[]; disableDefaultRpcUrl: boolean } | undefined
+	>
+	customChains?: Chain[]
 
 	constructor(private readonly configService: ConfigService) {}
 
@@ -22,8 +25,8 @@ export class ChainClientConfigService implements OnModuleInit {
 
 		this.privateKey = this.getPrivateKey()
 
-		if (config?.rpcProviders)
-			this.rpcUrls = this.transformRpcProviders(config?.rpcProviders)
+		if (config?.rpcSettings)
+			this.rpcSettings = this.transformRpcProviders(config?.rpcSettings)
 
 		if (config?.customChains)
 			this.customChains = this.transformCustomChains(config?.customChains)
@@ -42,13 +45,19 @@ export class ChainClientConfigService implements OnModuleInit {
 		return privateKey
 	}
 
-	private transformRpcProviders(rpcProviders: RpcProviders) {
-		const rpcUrls: Record<number, RpcUrl[]> = {}
+	private transformRpcProviders(rpcProviders: RpcSettings) {
+		const rpcUrls: Record<
+			number,
+			{ rpcUrls: RpcUrl[]; disableDefaultRpcUrl: boolean }
+		> = {}
 
 		for (const [chainId, urls] of Object.entries(rpcProviders)) {
-			rpcUrls[Number(chainId)] = []
+			rpcUrls[Number(chainId)] = {
+				rpcUrls: [],
+				disableDefaultRpcUrl: false,
+			}
 
-			urls.forEach((initialUrl) => {
+			urls.rpcUrls.forEach((initialUrl) => {
 				let rpcUrl = initialUrl
 
 				if (initialUrl === 'alchemy') {
@@ -57,8 +66,11 @@ export class ChainClientConfigService implements OnModuleInit {
 
 				const validatedUrl = z.url().parse(rpcUrl)
 
-				rpcUrls[Number(chainId)].push(validatedUrl as RpcUrl)
+				rpcUrls[Number(chainId)].rpcUrls.push(validatedUrl as RpcUrl)
 			})
+
+			rpcUrls[Number(chainId)].disableDefaultRpcUrl =
+				urls.disableDefaultRpcUrl
 		}
 
 		return rpcUrls

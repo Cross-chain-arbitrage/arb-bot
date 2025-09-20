@@ -102,15 +102,18 @@ export class ChainClientService {
 
 		/* ======== Insert Default Transport ======== */
 
+		const disableDefaultRpcUrl =
+			this.config.rpcSettings?.[chainId]?.disableDefaultRpcUrl
+
 		const defaultRpcUrl = chain.rpcUrls.default.http[0]
 
-		if (defaultRpcUrl) {
+		if (defaultRpcUrl && disableDefaultRpcUrl === false) {
 			transports.push(http(defaultRpcUrl, defaultTransportConfig))
 		}
 
 		/* ======== Insert Additional Transports ======== */
 
-		const additionalRpcUrls = this.config.rpcUrls?.[chainId]
+		const additionalRpcUrls = this.config.rpcSettings?.[chainId]?.rpcUrls
 
 		if (additionalRpcUrls) {
 			additionalRpcUrls.forEach((rpcUrl) => {
