@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Chain, defineChain } from 'viem'
 import { privateKeyToAddress } from 'viem/accounts'
@@ -8,7 +8,7 @@ import { CHAIN_CLIENT_CONFIG_KEY } from './configuration/chain-client-config'
 import { ChainClientConfig, CustomChain, RpcSettings, RpcUrl } from './types'
 
 @Injectable()
-export class ChainClientConfigService implements OnModuleInit {
+export class ChainClientConfigService {
 	privateKey!: Hex
 	rpcSettings?: Record<
 		number,
@@ -16,9 +16,8 @@ export class ChainClientConfigService implements OnModuleInit {
 	>
 	customChains?: Chain[]
 
-	constructor(private readonly configService: ConfigService) {}
-
-	onModuleInit() {
+	constructor(private readonly configService: ConfigService) {
+		console.log('ChainClientConfigService constructor')
 		const config = this.configService.get<ChainClientConfig>(
 			CHAIN_CLIENT_CONFIG_KEY,
 		)
