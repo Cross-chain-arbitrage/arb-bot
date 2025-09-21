@@ -20,5 +20,6 @@ export const pinoLogger = LoggerModule.forRoot({
 				return { level: label }
 			},
 		},
+		timestamp: () => `,"time":"${new Date().toISOString()}"`,
 	},
 })

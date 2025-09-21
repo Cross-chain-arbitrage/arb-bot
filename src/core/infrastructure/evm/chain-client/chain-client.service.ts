@@ -107,7 +107,7 @@ export class ChainClientService {
 
 		const defaultRpcUrl = chain.rpcUrls.default.http[0]
 
-		if (defaultRpcUrl && disableDefaultRpcUrl === false) {
+		if (defaultRpcUrl && !disableDefaultRpcUrl) {
 			transports.push(http(defaultRpcUrl, defaultTransportConfig))
 		}
 
