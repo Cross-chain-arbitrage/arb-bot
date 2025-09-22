@@ -17,7 +17,6 @@ export class ChainClientConfigService {
 	customChains?: Chain[]
 
 	constructor(private readonly configService: ConfigService) {
-		console.log('ChainClientConfigService constructor')
 		const config = this.configService.get<ChainClientConfig>(
 			CHAIN_CLIENT_CONFIG_KEY,
 		)
