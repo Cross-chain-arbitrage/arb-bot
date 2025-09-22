@@ -22,7 +22,7 @@ export class RaydiumExecutorPlugin
 {
 	constructor(
 		private readonly raydiumService: RaydiumService,
-		readonly SolanaTxCostHelper: SolanaTxCostHelper,
+		readonly solanaTxCostHelper: SolanaTxCostHelper,
 		readonly priceOracleHelper: PriceOracleHelper,
 	) {
 		super(RAYDIUM_PROTOCOL)
@@ -75,7 +75,7 @@ export class RaydiumExecutorPlugin
 	}
 
 	async getExecutionCost(parsedTx: ParsedTransactionWithMeta) {
-		const costInUsd = await this.SolanaTxCostHelper.getTxCostInUsd(parsedTx)
+		const costInUsd = await this.solanaTxCostHelper.getTxCostInUsd(parsedTx)
 
 		return { costInUsd }
 	}

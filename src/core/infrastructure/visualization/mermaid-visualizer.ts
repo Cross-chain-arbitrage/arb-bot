@@ -8,6 +8,7 @@ import { ChannelIdUtils } from '../../domain/services/channel-id-utils'
 import { EdgeIdUtils } from '../../domain/services/edge-id-utils'
 import { TokenId } from '../../domain/value-objects/token-id'
 import { shortenAddress } from '../evm/helpers'
+import { SolanaToken } from '../solana/solana-tokens/solana-token'
 
 interface VisualizableNode {
 	id: TokenId
@@ -101,6 +102,10 @@ export class MermaidVisualizer implements GraphVisualizer {
 	}
 
 	private getSubgraphId(node: VisualizableNode) {
+		if (node instanceof SolanaToken) {
+			return 'Solana'
+		}
+
 		if (!node.chainId) {
 			return 'Unknown Subgraph'
 		}

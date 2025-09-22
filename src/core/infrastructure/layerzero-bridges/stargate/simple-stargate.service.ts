@@ -1,7 +1,7 @@
 import { Message } from '@layerzerolabs/scan-client'
 import { Injectable } from '@nestjs/common'
 import axios from 'axios'
-import { createCustomError } from '../../../../utils/common'
+import { convertDecimals, createCustomError } from '../../../../utils/common'
 import { ChainClientService } from '../../evm/chain-client/chain-client.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
@@ -87,9 +87,7 @@ export class SimpleStargateService {
 				srcChainKey,
 				dstChainKey,
 				srcAmount,
-				dstAmountMin: tokenOut.parseUnits(
-					tokenIn.formatUnits(amountIn),
-				),
+				dstAmountMin: convertDecimals(amountIn, tokenIn, tokenOut),
 			},
 		})
 

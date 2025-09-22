@@ -4,6 +4,8 @@ import { FuseBridgeQuoterPluginModule } from '../../core/infrastructure/plugins/
 import { FuseBridgeQuoterPlugin } from '../../core/infrastructure/plugins/fuse-bridge/fuse-bridge-quoter-plugin'
 import { NativeWrapperQuoterPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-quoter-plugin.module'
 import { NativeWrapperQuoterPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-quoter-plugin'
+import { RaydiumQuoterPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-quoter-plugin.module'
+import { RaydiumQuoterPlugin } from '../../core/infrastructure/plugins/raydium/raydium-quoter-plugin'
 import { RelayQuoterPluginModule } from '../../core/infrastructure/plugins/relay/composition/relay-quoter-plugin.module'
 import { RelayQuoterPlugin } from '../../core/infrastructure/plugins/relay/relay-quoter-plugin'
 import { SimpleStargateQuoterPluginModule } from '../../core/infrastructure/plugins/simple-stargate/composition/simple-stargate-quoter-plugin.module'
@@ -18,6 +20,7 @@ export const quoterPluginModules = [
 	RelayQuoterPluginModule,
 	SimpleStargateQuoterPluginModule,
 	FuseBridgeQuoterPluginModule,
+	RaydiumQuoterPluginModule,
 ]
 
 export const quoterPlugins = [
@@ -27,4 +30,5 @@ export const quoterPlugins = [
 	RelayQuoterPlugin,
 	SimpleStargateQuoterPlugin,
 	FuseBridgeQuoterPlugin,
+	RaydiumQuoterPlugin,
 ]

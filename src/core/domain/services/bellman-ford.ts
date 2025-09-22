@@ -131,6 +131,7 @@ export class BellmanFord {
 				)
 			}
 
+			// console.log(edge.id)
 			edges.push(edge)
 			currentToken = edge.from.id
 		} while (currentToken !== startToken.id)
