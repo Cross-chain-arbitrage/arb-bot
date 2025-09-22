@@ -70,6 +70,13 @@ export class SimpleStargateService {
 		const { chainKey: dstChainKey, walletAddress: dstAddress } =
 			this.resolveNetworkParams(tokenOut)
 
+		const srcAmount =
+			tokenIn.decimals > tokenOut.decimals
+				? (amountIn /
+						10n ** BigInt(tokenIn.decimals - tokenOut.decimals)) *
+					10n ** BigInt(tokenIn.decimals - tokenOut.decimals)
+				: amountIn
+
 		const response = await axios.get('/quotes', {
 			baseURL: this.baseUrl,
 			params: {
@@ -79,7 +86,7 @@ export class SimpleStargateService {
 				dstAddress,
 				srcChainKey,
 				dstChainKey,
-				srcAmount: amountIn,
+				srcAmount,
 				dstAmountMin: tokenOut.parseUnits(
 					tokenIn.formatUnits(amountIn),
 				),
