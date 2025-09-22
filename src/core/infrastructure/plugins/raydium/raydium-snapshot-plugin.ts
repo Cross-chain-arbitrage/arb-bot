@@ -13,12 +13,11 @@ import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
-import {
-	InterpolationHelper,
-	InterpolationParams,
-} from '../shared-helpers/interpolation/interpolation-helper'
+import { InterpolationHelper } from '../shared-helpers/interpolation/interpolation-helper'
 import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { RAYDIUM_CONFIG_KEY } from './configuration/raydium-config'
 import { RAYDIUM_PROTOCOL } from './constants'
+import { RaydiumConfig } from './types'
 
 @Injectable()
 export class RaydiumSnapshotPlugin
@@ -47,14 +46,13 @@ export class RaydiumSnapshotPlugin
 	async buildSnapshotFn(edge: Edge<SolanaToken>): Promise<EdgeSnapshotFn> {
 		const { from, to } = edge
 
-		const interpolationParams = this.configService.get<InterpolationParams>(
-			'RAYDIUM_INTERPOLATION_PARAMS',
-		)
+		const interpolationParams =
+			this.configService.get<RaydiumConfig>(RAYDIUM_CONFIG_KEY)
 
 		const { interpolation, results } =
 			await this.interpolationHelper.buildInterpolation(
 				edge,
-				interpolationParams!,
+				interpolationParams!.interpolationParams,
 				(amountIn) => {
 					return this.raydiumService.quote({
 						tokenIn: from,
@@ -70,7 +68,9 @@ export class RaydiumSnapshotPlugin
 			)
 
 		return (amountIn: bigint): Quote => {
-			const amountOutFormatted = interpolation(Number(amountIn))
+			const amountInFormatted = edge.from.formatUnits(amountIn)
+
+			const amountOutFormatted = interpolation(Number(amountInFormatted))
 			const amountOut = to.parseUnits(amountOutFormatted.toString())
 
 			return {

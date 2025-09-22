@@ -15,6 +15,10 @@ import {
 	nativeWrapperConfigScheme,
 } from '../core/infrastructure/plugins/native-wrapper/configuration/native-wrapper-config'
 import {
+	RAYDIUM_CONFIG_KEY,
+	raydiumConfigScheme,
+} from '../core/infrastructure/plugins/raydium/configuration/raydium-config'
+import {
 	RELAY_CONFIG_KEY,
 	relayConfigScheme,
 } from '../core/infrastructure/plugins/relay/configuration/relay-config'
@@ -49,6 +53,7 @@ export const configScheme = z.object({
 	[DEX_CONFIG_KEY]: dexConfigScheme,
 	[RELAY_CONFIG_KEY]: relayConfigScheme,
 	[SIMPLE_STARGATE_CONFIG_KEY]: simpleStargateConfigScheme,
+	[RAYDIUM_CONFIG_KEY]: raydiumConfigScheme,
 
 	/* ======== INFRASTRUCTURE ======== */
 

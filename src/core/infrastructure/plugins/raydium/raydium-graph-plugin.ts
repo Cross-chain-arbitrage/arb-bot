@@ -4,6 +4,7 @@ import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
 import { SolanaGraphBuildingHelper } from '../shared-helpers/chain-specific/solana/solana-graph-building-helper'
+import { RAYDIUM_CONFIG_KEY } from './configuration/raydium-config'
 import { RAYDIUM_PROTOCOL } from './constants'
 import { RaydiumConfig } from './types'
 
@@ -18,7 +19,8 @@ export class RaydiumGraphPlugin implements GraphPlugin {
 		nodes: Node[]
 		edges: Edge[]
 	}> {
-		const raydiumConfig = this.configService.get<RaydiumConfig>('raydium')
+		const raydiumConfig =
+			this.configService.get<RaydiumConfig>(RAYDIUM_CONFIG_KEY)
 
 		const { nodes, edges } =
 			await this.solanaGraphBuildingHelper.getNodesAndEdgesFromConfig(

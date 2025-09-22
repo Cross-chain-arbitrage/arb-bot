@@ -36,7 +36,7 @@ export const DataSchema = z.object({
 	data: z.string(),
 	value: z.string(),
 	chainId: z.number(),
-	gas: z.string(),
+	gas: z.string().optional(),
 	maxFeePerGas: z.string(),
 	maxPriorityFeePerGas: z.string(),
 })
