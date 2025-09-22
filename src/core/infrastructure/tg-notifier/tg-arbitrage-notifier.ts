@@ -19,14 +19,19 @@ import { EdgeIdUtils } from '../../domain/services/edge-id-utils'
 import { TgNotifier } from './tg-notifier'
 import { ArbitrageMessage, MessageResponse } from './types'
 
+const MAX_ERROR_IN_ROW = 3
+type OpportunityId = string
+
 @Injectable()
 export class TgArbitrageNotifier
 	extends TgNotifier
 	implements ArbitrageNotifier
 {
 	logger = new Logger(TgArbitrageNotifier.name)
+
+	private errorInRow = 0
 	private lastMessages: Map<
-		string,
+		OpportunityId,
 		{
 			messageResponse: MessageResponse
 			message: ArbitrageMessage
@@ -60,6 +65,8 @@ export class TgArbitrageNotifier
 	private async buildAndSendArbitrageStart(
 		opportunity: GraphArbitrageOpportunity,
 	) {
+		if (this.errorInRow > MAX_ERROR_IN_ROW) return
+
 		const status = '🔍 <b>Opportunity found, executing...</b>'
 
 		const startTokenPrice = await this.priceOracle.getPrice(
@@ -89,6 +96,11 @@ export class TgArbitrageNotifier
 		opportunity: GraphArbitrageOpportunity,
 		result: ArbitrageResult,
 	) {
+		if (result.status === 'failed') this.errorInRow++
+		else this.errorInRow = 0
+
+		if (this.errorInRow > MAX_ERROR_IN_ROW) return
+
 		const resultStatus = result.status
 		const status =
 			resultStatus === 'success'
@@ -130,6 +142,8 @@ export class TgArbitrageNotifier
 	private buildFailedStatus(result: FailedArbitrageResult) {
 		const { reason } = result
 		let status = '❌ <b>Execution error</b>\n\n'
+		if (this.errorInRow === MAX_ERROR_IN_ROW)
+			status += `⚠️ Max errors in a row reached (${MAX_ERROR_IN_ROW}), next messages will not be sent until successful execution \n\n`
 		status += `Reason: ${reason}\n\n`
 		status += `Cost: $${result.totalExecutionCostInUsd.toFixed(2)}\n`
 		status += `Execution Time: ${this.formatTime(result.executionTime)}`
