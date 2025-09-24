@@ -4,4 +4,13 @@ import { configScheme } from '../src/configuration/configuration'
 
 const schema = z.toJSONSchema(configScheme)
 
-fs.writeFileSync('bot-config-schema.json', JSON.stringify(schema, null, 4))
+const configFolderPath = './configs'
+
+const isFolderExist = fs.existsSync(configFolderPath)
+
+if (!isFolderExist) fs.mkdirSync(configFolderPath)
+
+fs.writeFileSync(
+	`${configFolderPath}/bot-config-schema.json`,
+	JSON.stringify(schema, null, 4),
+)

@@ -29,9 +29,11 @@ export class SolanaClientService implements OnModuleInit {
 	}
 
 	async sendTx(tx: VersionedTransaction, options?: SendOptions) {
-		const txId = await this.connection.sendTransaction(tx, {
-			...options,
-		})
+		const sendOptions: SendOptions = options
+			? options
+			: { preflightCommitment: 'confirmed' }
+
+		const txId = await this.connection.sendTransaction(tx, sendOptions)
 
 		return txId
 	}
