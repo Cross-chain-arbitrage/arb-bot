@@ -46,11 +46,10 @@ export class OpportunityFinder {
 		const costInUsd = this.calculateCost(graphArbitrageCycle)
 
 		return {
-			...graphArbitrageCycle,
+			...(graphArbitrageCycle as GraphArbitrageCycle<Token>),
 			revenueInUsd,
 			costInUsd,
 			id: crypto.randomUUID(),
-			startToken: snapshotFindOpportunityParams.startToken,
 		}
 	}
 

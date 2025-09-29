@@ -70,7 +70,7 @@ export class TgArbitrageNotifier
 		const status = '🔍 <b>Opportunity found, executing...</b>'
 
 		const startTokenPrice = await this.priceOracle.getPrice(
-			opportunity.startToken,
+			opportunity.path[0].edge.from,
 		)
 
 		const arbitrageMessage: ArbitrageMessage = {
@@ -108,7 +108,7 @@ export class TgArbitrageNotifier
 				: this.buildFailedStatus(result)
 
 		const startTokenPrice = await this.priceOracle.getPrice(
-			opportunity.startToken,
+			opportunity.path[0].edge.from,
 		)
 
 		const arbitrageMessage: ArbitrageMessage = {
@@ -126,14 +126,14 @@ export class TgArbitrageNotifier
 	) {
 		const { actualEndAmount, totalExecutionCostInUsd, profitInUsd } = result
 
-		const actualAmountOutFormatted = Number(
-			opportunity.startToken.formatUnits(actualEndAmount),
-		)
+		const actualAmountOutFormatted = Number(opportunity.path[0].edge.from)
+
+		const startToken = opportunity.path[0].edge.from
 
 		let statusPart = `✅ <b>Successfully executed!</b>\n\n`
 		statusPart += `Profit: $${profitInUsd.toFixed(2)}\n`
 		statusPart += `Cost: $${totalExecutionCostInUsd.toFixed(2)}\n`
-		statusPart += `Amount Out: ${actualAmountOutFormatted.toFixed(6)} ${opportunity.startToken.symbol}\n`
+		statusPart += `Amount Out: ${actualAmountOutFormatted.toFixed(6)} ${startToken.symbol}\n`
 		statusPart += `Execution Time: ${this.formatTime(result.executionTime)}`
 
 		return statusPart
@@ -215,11 +215,10 @@ export class TgArbitrageNotifier
 		opportunity: GraphArbitrageOpportunity,
 		startTokenPriceUsd: number,
 	) {
-		const { costInUsd, revenueInUsd, startAmount, endAmount, startToken } =
-			opportunity
+		const { costInUsd, revenueInUsd, startAmount, endAmount } = opportunity
 
-		// Get the start token from the first edge
-		// Format amounts
+		const startToken = opportunity.path[0].edge.from
+
 		const startAmountFormatted = startToken.formatUnits(startAmount)
 		const endAmountFormatted = startToken.formatUnits(endAmount)
 		const revenueAmountFormatted = startToken.formatUnits(

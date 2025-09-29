@@ -7,8 +7,8 @@ import {
 	InchainExecutor,
 } from '../../../application/interfaces/edge-executor'
 import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
+import { TokenValuator } from '../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../domain/entities/edge'
-import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
@@ -23,7 +23,7 @@ export class RaydiumExecutorPlugin
 	constructor(
 		private readonly raydiumService: RaydiumService,
 		readonly solanaTxCostHelper: SolanaTxCostHelper,
-		readonly priceOracleHelper: PriceOracleHelper,
+		readonly tokenValuator: TokenValuator,
 	) {
 		super(RAYDIUM_PROTOCOL)
 	}

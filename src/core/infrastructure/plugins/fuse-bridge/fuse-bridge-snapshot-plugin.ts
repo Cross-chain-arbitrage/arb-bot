@@ -4,13 +4,13 @@ import {
 	EdgeSnapshotFn,
 } from '../../../application/interfaces/edge-snapshot-builder'
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
+import { TokenValuator } from '../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { FuseBridgeService } from '../../layerzero-bridges/fuse-bridge/fuse-bridge.service'
-import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
 import { EdgeHandler } from '../shared-implementation/edge-handler'
 import { FUSE_BRIDGE_PROTOCOL } from './constants'
@@ -25,7 +25,7 @@ export class FuseBridgeSnapshotPlugin
 	constructor(
 		private readonly fuseBridgeService: FuseBridgeService,
 		private readonly evmTxCostHelper: EvmTxCostHelper,
-		private readonly priceOracleHelper: PriceOracleHelper,
+		private readonly tokenValuator: TokenValuator,
 	) {
 		super(FUSE_BRIDGE_PROTOCOL)
 	}
@@ -44,11 +44,10 @@ export class FuseBridgeSnapshotPlugin
 	async buildSnapshotFn(
 		edge: Edge<Token | NativeCurrency>,
 	): Promise<EdgeSnapshotFn> {
-		const amountIn =
-			await this.priceOracleHelper.estimateTokenAmountFromUsd(
-				edge.from,
-				QUOTE_USD_AMOUNT_IN,
-			)
+		const amountIn = await this.tokenValuator.estimateTokenAmountFromUsd(
+			edge.from,
+			QUOTE_USD_AMOUNT_IN,
+		)
 
 		const { amountOut, lzFee, gas } =
 			await this.fuseBridgeService.quoteBridge(
@@ -63,7 +62,7 @@ export class FuseBridgeSnapshotPlugin
 		)
 
 		const bridgeFeeInUsd =
-			await this.priceOracleHelper.estimateUsdFromTokenAmount(
+			await this.tokenValuator.estimateUsdFromTokenAmount(
 				lzFee.underlyingToken,
 				lzFee.amount,
 			)

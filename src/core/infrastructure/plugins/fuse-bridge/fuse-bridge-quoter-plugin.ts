@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common'
 import { EdgeQuoter } from '../../../application/interfaces/edge-quoter'
 import { QuoterPlugin } from '../../../application/interfaces/graph-plugin'
+import { TokenValuator } from '../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { FuseBridgeService } from '../../layerzero-bridges/fuse-bridge/fuse-bridge.service'
-import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
 import { EdgeHandler } from '../shared-implementation/edge-handler'
 import { FUSE_BRIDGE_PROTOCOL } from './constants'
@@ -20,7 +20,7 @@ export class FuseBridgeQuoterPlugin
 	constructor(
 		private readonly fuseBridgeService: FuseBridgeService,
 		private readonly evmTxCostHelper: EvmTxCostHelper,
-		private readonly priceOracleHelper: PriceOracleHelper,
+		private readonly tokenValuator: TokenValuator,
 	) {
 		super(FUSE_BRIDGE_PROTOCOL)
 	}
@@ -51,7 +51,7 @@ export class FuseBridgeQuoterPlugin
 		)
 
 		const bridgeFeeInUsd =
-			await this.priceOracleHelper.estimateUsdFromTokenAmount(
+			await this.tokenValuator.estimateUsdFromTokenAmount(
 				lzFee.underlyingToken,
 				lzFee.amount,
 			)

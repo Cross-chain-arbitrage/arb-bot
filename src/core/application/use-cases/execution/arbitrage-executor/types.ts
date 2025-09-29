@@ -1,3 +1,4 @@
+import { TokenId } from '../../../../domain/value-objects/token-id'
 import {
 	FailedPathExecutionResult,
 	SuccessPathExecutionResult,
@@ -14,3 +15,11 @@ export type FailedArbitrageResult = FailedPathExecutionResult & {
 }
 
 export type ArbitrageResult = SuccessArbitrageResult | FailedArbitrageResult
+
+export interface StartRule {
+	startTokenId: TokenId
+	directionTokenId: TokenId
+}
+export interface ArbitrageExecutorConfig {
+	startRules: StartRule[]
+}

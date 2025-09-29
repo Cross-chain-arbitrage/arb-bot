@@ -4,6 +4,7 @@ import {
 	EdgeSnapshotFn,
 } from '../../../application/interfaces/edge-snapshot-builder'
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
+import { TokenValuator } from '../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
 import { TokenIdUtils } from '../../../domain/services/token-id-utils'
@@ -11,7 +12,6 @@ import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { SimpleStargateService } from '../../layerzero-bridges/stargate/simple-stargate.service'
-import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
 import { EdgeHandler } from '../shared-implementation/edge-handler'
@@ -26,7 +26,7 @@ export class SimpleStargateSnapshotPlugin
 {
 	constructor(
 		readonly simpleStargateService: SimpleStargateService,
-		readonly priceOracleHelper: PriceOracleHelper,
+		readonly tokenValuator: TokenValuator,
 		readonly solanaEvmTxCostHelper: SolanaEvmTxCostHelper,
 	) {
 		super(SIMPLE_STARGATE_PROTOCOL)
@@ -46,11 +46,10 @@ export class SimpleStargateSnapshotPlugin
 	async buildSnapshotFn(
 		edge: Edge<Token | NativeCurrency | SolanaToken>,
 	): Promise<EdgeSnapshotFn> {
-		const amountIn =
-			await this.priceOracleHelper.estimateTokenAmountFromUsd(
-				edge.from,
-				QUOTE_USD_AMOUNT_IN,
-			)
+		const amountIn = await this.tokenValuator.estimateTokenAmountFromUsd(
+			edge.from,
+			QUOTE_USD_AMOUNT_IN,
+		)
 
 		const { amountOut, gas, feeInNative } =
 			await this.simpleStargateService.quote(edge.from, edge.to, amountIn)

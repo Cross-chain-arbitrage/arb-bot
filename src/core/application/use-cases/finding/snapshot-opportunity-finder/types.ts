@@ -8,9 +8,8 @@ export type SnapshotFindOpportunityParams = {
 	startToken: Token
 }
 
-export type GraphArbitrageOpportunity = GraphArbitrageCycle & {
+export type GraphArbitrageOpportunity = GraphArbitrageCycle<Token> & {
 	id: string
 	revenueInUsd: number
 	costInUsd: number
-	startToken: Token
 }

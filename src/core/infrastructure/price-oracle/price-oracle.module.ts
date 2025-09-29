@@ -4,7 +4,6 @@ import { ChainClientModule } from '../evm/chain-client/chain-client.module'
 import { EvmModule } from '../evm/evm.module'
 import { SolanaModule } from '../solana/solana.module'
 import { GeckoTerminalService } from './gecko-terminal.service'
-import { PriceOracleHelper } from './price-oracle-helper'
 import { PriceOracleService } from './price-oracle.service'
 
 @Global()
@@ -13,9 +12,8 @@ import { PriceOracleService } from './price-oracle.service'
 	providers: [
 		GeckoTerminalService,
 		PriceOracleService,
-		PriceOracleHelper,
 		{ provide: PRICE_ORACLE_TOKEN, useExisting: PriceOracleService },
 	],
-	exports: [PRICE_ORACLE_TOKEN, PriceOracleHelper],
+	exports: [PRICE_ORACLE_TOKEN],
 })
 export class PriceOracleModule {}

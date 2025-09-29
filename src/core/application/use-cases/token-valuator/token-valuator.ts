@@ -1,15 +1,28 @@
-import { Inject, Injectable } from '@nestjs/common'
-import {
-	PRICE_ORACLE_TOKEN,
-	PriceOracle,
-} from '../../application/interfaces/price-oracle'
-import { Token } from '../../domain/entities/token'
+import { Global, Inject, Injectable } from '@nestjs/common'
+import { Token } from '../../../domain/entities/token'
+import { PRICE_ORACLE_TOKEN, PriceOracle } from '../../interfaces/price-oracle'
 
+@Global()
 @Injectable()
-export class PriceOracleHelper {
+export class TokenValuator {
 	constructor(
 		@Inject(PRICE_ORACLE_TOKEN) readonly priceOracle: PriceOracle,
 	) {}
+
+	async convertTokenAmount(
+		from: Token,
+		to: Token,
+		amount: bigint,
+	): Promise<bigint> {
+		const amountUsd = await this.estimateUsdFromTokenAmount(from, amount)
+
+		const amountOfToToken = await this.estimateTokenAmountFromUsd(
+			to,
+			amountUsd,
+		)
+
+		return amountOfToToken
+	}
 
 	async estimateTokenAmountFromUsd(
 		token: Token,

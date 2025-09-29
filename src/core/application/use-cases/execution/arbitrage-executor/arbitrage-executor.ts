@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import {
 	EDGE_EXECUTOR_REGISTRY_TOKEN,
 	EdgeExecutorRegistry,
@@ -12,6 +13,7 @@ import {
 	PriceOracle,
 } from '../../../interfaces/price-oracle'
 import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
+import { TokenValuator } from '../../token-valuator/token-valuator'
 import { PathExecutor } from '../path-executor/path-executor'
 import {
 	PathExecutionResult,
@@ -19,13 +21,18 @@ import {
 	ValidateStep,
 } from '../path-executor/types'
 import { ArbitrageExecutionTelemetry } from './arbitrage-execution-telemetry'
-import { ArbitrageResult } from './types'
+import { getStartStepIndex } from './helpers'
+import { ArbitrageExecutorConfig, ArbitrageResult } from './types'
+
+export const ARBITRAGE_EXECUTOR_CONFIG_KEY = 'arbitrageExecutor'
 
 @Injectable()
 export class ArbitrageExecutor {
 	constructor(
 		private readonly pathExecutor: PathExecutor,
 		private readonly telemetry: ArbitrageExecutionTelemetry,
+		private readonly configService: ConfigService,
+		private readonly tokenValuator: TokenValuator,
 
 		@Inject(EDGE_QUOTER_REGISTRY_TOKEN)
 		private readonly quoterRegistry: EdgeQuoterRegistry,
@@ -40,13 +47,16 @@ export class ArbitrageExecutor {
 	async execute(
 		opportunity: GraphArbitrageOpportunity,
 	): Promise<ArbitrageResult> {
-		this.telemetry.onArbitrageStart(opportunity)
+		const opportunityToExecute =
+			await this.getOpportunityToExecute(opportunity)
+
+		this.telemetry.onArbitrageStart(opportunityToExecute)
 
 		const startTimestamp = Date.now()
 
 		const pathExecutorParams: PathExecutorParams = {
-			path: opportunity.path,
-			startAmount: opportunity.startAmount,
+			path: opportunityToExecute.path,
+			startAmount: opportunityToExecute.startAmount,
 		}
 
 		const pathResult = await this.pathExecutor.executePath(
@@ -55,14 +65,63 @@ export class ArbitrageExecutor {
 		)
 
 		const arbitrageResult = await this.buildSuccessResult(
-			opportunity,
+			opportunityToExecute,
 			pathResult,
 			startTimestamp,
 		)
 
-		this.telemetry.onArbitrageEnd(opportunity, arbitrageResult)
+		this.telemetry.onArbitrageEnd(opportunityToExecute, arbitrageResult)
 
 		return arbitrageResult
+	}
+
+	private async getOpportunityToExecute(
+		opportunity: GraphArbitrageOpportunity,
+	): Promise<GraphArbitrageOpportunity> {
+		const config = this.configService.get<ArbitrageExecutorConfig>(
+			ARBITRAGE_EXECUTOR_CONFIG_KEY,
+		)
+
+		const startRules = config?.startRules
+
+		if (!startRules) return opportunity
+
+		const startStepIndex = getStartStepIndex(opportunity, startRules)
+
+		if (!startStepIndex)
+			throw new Error("Couldn't obtain startStepIndex from startRules")
+
+		const newPath = [
+			...opportunity.path.slice(startStepIndex, opportunity.path.length),
+			...opportunity.path.slice(0, startStepIndex),
+		]
+
+		const startToken = opportunity.path[0].edge.from
+
+		const newStartToken = newPath[0].edge.from
+
+		const newStartAmount = await this.tokenValuator.convertTokenAmount(
+			startToken,
+			newStartToken,
+			opportunity.startAmount,
+		)
+
+		const newEndAmount = await this.tokenValuator.convertTokenAmount(
+			startToken,
+			newStartToken,
+			opportunity.endAmount,
+		)
+
+		const newOpportunity: GraphArbitrageOpportunity = {
+			costInUsd: opportunity.costInUsd,
+			endAmount: newEndAmount,
+			startAmount: newStartAmount,
+			id: opportunity.id,
+			path: newPath,
+			revenueInUsd: opportunity.revenueInUsd,
+		}
+
+		return newOpportunity
 	}
 
 	private async buildSuccessResult(
@@ -80,12 +139,12 @@ export class ArbitrageExecutor {
 
 		const { actualEndAmount, totalExecutionCostInUsd } = pathResult
 
-		const startTokenPrice = await this.priceOracle.getPrice(
-			opportunity.startToken,
-		)
+		const startToken = opportunity.path[0].edge.from
+
+		const startTokenPrice = await this.priceOracle.getPrice(startToken)
 		const actualRevenue =
 			Number(
-				opportunity.startToken.formatUnits(
+				startToken.formatUnits(
 					actualEndAmount - opportunity.startAmount,
 				),
 			) * startTokenPrice

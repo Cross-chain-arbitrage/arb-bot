@@ -6,12 +6,12 @@ import {
 	CrosschainExecutor,
 } from '../../../application/interfaces/edge-executor'
 import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
+import { TokenValuator } from '../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../domain/entities/edge'
 import { ChainClientService } from '../../evm/chain-client/chain-client.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { FuseBridgeService } from '../../layerzero-bridges/fuse-bridge/fuse-bridge.service'
-import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
 import { EdgeHandler } from '../shared-implementation/edge-handler'
 import { FUSE_BRIDGE_PROTOCOL } from './constants'
@@ -25,7 +25,7 @@ export class FuseBridgeExecutorPlugin
 		private readonly fuseBridgeService: FuseBridgeService,
 		private readonly evmTxCostHelper: EvmTxCostHelper,
 		private readonly chainClientService: ChainClientService,
-		private readonly priceOracleHelper: PriceOracleHelper,
+		private readonly tokenValuator: TokenValuator,
 	) {
 		super(FUSE_BRIDGE_PROTOCOL)
 	}
@@ -119,7 +119,7 @@ export class FuseBridgeExecutorPlugin
 		)
 
 		const bridgeFeeInUsd =
-			await this.priceOracleHelper.estimateUsdFromTokenAmount(
+			await this.tokenValuator.estimateUsdFromTokenAmount(
 				bridgeResult.lzFee.underlyingToken,
 				bridgeResult.lzFee.amount,
 			)

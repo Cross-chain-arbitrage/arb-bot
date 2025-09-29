@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { ScaleLinear, scaleLinear } from 'd3-scale'
+import { TokenValuator } from '../../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../../domain/entities/edge'
 import { Token } from '../../../../domain/entities/token'
-import { PriceOracleHelper } from '../../../price-oracle/price-oracle-helper'
 
 export type InterpolationParams = {
 	minStartValueUsd: number
@@ -12,7 +12,7 @@ export type InterpolationParams = {
 
 @Injectable()
 export class InterpolationHelper {
-	constructor(private readonly priceOracleHelper: PriceOracleHelper) {}
+	constructor(private readonly tokenValuator: TokenValuator) {}
 
 	async buildInterpolation<T extends { amountOut: bigint }>(
 		edge: Edge<Token>,
@@ -37,7 +37,7 @@ export class InterpolationHelper {
 				((maxStartValueUsd - minStartValueUsd) * i) / runCount
 
 			const amountIn =
-				await this.priceOracleHelper.estimateTokenAmountFromUsd(
+				await this.tokenValuator.estimateTokenAmountFromUsd(
 					from,
 					usdAmountIn,
 				)

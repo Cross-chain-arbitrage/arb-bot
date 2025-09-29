@@ -6,10 +6,10 @@ import {
 	EdgeSnapshotFn,
 } from '../../../application/interfaces/edge-snapshot-builder'
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
+import { TokenValuator } from '../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
-import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
@@ -28,7 +28,7 @@ export class RaydiumSnapshotPlugin
 		private readonly configService: ConfigService,
 		private readonly raydiumService: RaydiumService,
 		readonly SolanaTxCostHelper: SolanaTxCostHelper,
-		readonly priceOracleHelper: PriceOracleHelper,
+		readonly tokenValuator: TokenValuator,
 		readonly interpolationHelper: InterpolationHelper,
 	) {
 		super(RAYDIUM_PROTOCOL)

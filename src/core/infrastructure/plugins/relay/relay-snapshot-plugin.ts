@@ -6,13 +6,13 @@ import {
 	EdgeSnapshotFn,
 } from '../../../application/interfaces/edge-snapshot-builder'
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
+import { TokenValuator } from '../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
 import { TokenIdUtils } from '../../../domain/services/token-id-utils'
 import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { PriceOracleHelper } from '../../price-oracle/price-oracle-helper'
 import { RelayService } from '../../relay/relay-service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
@@ -43,7 +43,7 @@ export class RelaySnapshotPlugin extends EdgeHandler implements SnapshotPlugin {
 	constructor(
 		private readonly relayService: RelayService,
 		readonly solanaEvmTxCostHelper: SolanaEvmTxCostHelper,
-		readonly priceOracleHelper: PriceOracleHelper,
+		readonly tokenValuator: TokenValuator,
 	) {
 		super(RELAY_PROTOCOL)
 	}
@@ -60,11 +60,10 @@ export class RelaySnapshotPlugin extends EdgeHandler implements SnapshotPlugin {
 	}
 
 	async buildSnapshotFn(edge: Edge<SolanaToken | Token | NativeCurrency>) {
-		const amountIn =
-			await this.priceOracleHelper.estimateTokenAmountFromUsd(
-				edge.from,
-				QUOTE_USD_AMOUNT_IN,
-			)
+		const amountIn = await this.tokenValuator.estimateTokenAmountFromUsd(
+			edge.from,
+			QUOTE_USD_AMOUNT_IN,
+		)
 
 		const quote = await this.relayService.quote(
 			edge.from,
