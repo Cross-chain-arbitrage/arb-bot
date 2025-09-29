@@ -6,14 +6,20 @@ export function getStartStepIndex(
 	startRules: StartRule[],
 ) {
 	const tokenIdToIndexInPath = new Map<string, number>(
-		opportunity.path.map((step, index) => [step.edge.from.id, index]),
+		opportunity.path.map((step, index) => [
+			step.edge.from.id.toLowerCase(),
+			index,
+		]),
 	)
 
 	const startRuleToApply = startRules.find(
 		({ startTokenId, directionTokenId }) => {
-			const startTokenIndex = tokenIdToIndexInPath.get(startTokenId)
-			const directionTokenIndex =
-				tokenIdToIndexInPath.get(directionTokenId)
+			const startTokenIndex = tokenIdToIndexInPath.get(
+				startTokenId.toLowerCase(),
+			)
+			const directionTokenIndex = tokenIdToIndexInPath.get(
+				directionTokenId.toLowerCase(),
+			)
 
 			if (!startTokenIndex || !directionTokenIndex) return false
 

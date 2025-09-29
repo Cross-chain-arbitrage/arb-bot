@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs'
 import * as yaml from 'js-yaml'
 import { z } from 'zod'
+import { ARBITRAGE_EXECUTOR_CONFIG_KEY } from '../core/application/use-cases/execution/arbitrage-executor/arbitrage-executor'
 import { ARBITRAGE_FINDER_CONFIG_KEY } from '../core/application/use-cases/finding/arbitrage-finder/arbitrage-finder'
 import {
 	CHAIN_CLIENT_CONFIG_KEY,
@@ -33,6 +34,7 @@ import {
 import { ARBITRAGE_SCHEDULER_CONFIG_KEY } from '../core/presentation/arbitrage-scheduler/arbitrage-scheduler'
 import { BALANCE_REPORTER_SCHEDULER_CONFIG_KEY } from '../core/presentation/balance-reporter-scheduler.ts/balance-reporter-scheduler'
 import { parsePretty } from '../utils/zod'
+import { arbitrageExecutorConfigScheme } from './arbitrage-executor-config'
 import { arbitrageFinderConfigScheme } from './arbitrage-finder-config'
 import { arbitrageSchedulerConfigScheme } from './arbitrage-scheduler-config'
 import { balanceReporterSchedulerConfigScheme } from './balance-reporter-scheduler-config'
@@ -42,6 +44,7 @@ export const configScheme = z.object({
 	isDryRun: z.boolean(),
 
 	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigScheme,
+	[ARBITRAGE_EXECUTOR_CONFIG_KEY]: arbitrageExecutorConfigScheme,
 	[ARBITRAGE_SCHEDULER_CONFIG_KEY]: arbitrageSchedulerConfigScheme,
 	[BALANCE_REPORTER_SCHEDULER_CONFIG_KEY]:
 		balanceReporterSchedulerConfigScheme,
