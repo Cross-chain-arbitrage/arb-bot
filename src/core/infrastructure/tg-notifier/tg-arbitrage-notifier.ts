@@ -126,7 +126,9 @@ export class TgArbitrageNotifier
 	) {
 		const { actualEndAmount, totalExecutionCostInUsd, profitInUsd } = result
 
-		const actualAmountOutFormatted = Number(opportunity.path[0].edge.from)
+		const actualAmountOutFormatted = Number(
+			opportunity.path[0].edge.from.formatUnits(actualEndAmount),
+		)
 
 		const startToken = opportunity.path[0].edge.from
 
