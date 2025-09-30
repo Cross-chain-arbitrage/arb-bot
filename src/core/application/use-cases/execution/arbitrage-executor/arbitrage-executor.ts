@@ -88,7 +88,7 @@ export class ArbitrageExecutor {
 
 		const startStepIndex = getStartStepIndex(opportunity.path, startRules)
 
-		if (!startStepIndex)
+		if (startStepIndex === undefined)
 			throw new Error("Couldn't obtain startStepIndex from startRules")
 
 		const newPath = [

@@ -15,7 +15,11 @@ export function getStartStepIndex(path: Path, startRules: StartRule[]) {
 				directionTokenId.toLowerCase(),
 			)
 
-			if (!startTokenIndex || !directionTokenIndex) return false
+			if (
+				startTokenIndex === undefined ||
+				directionTokenIndex === undefined
+			)
+				return false
 
 			const startToDirectionDistance = findDistance(
 				startTokenIndex,
