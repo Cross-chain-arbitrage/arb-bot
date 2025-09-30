@@ -5,14 +5,8 @@ export interface OpportunityValidatorParams {
 export type ValidationResult =
 	| {
 			ok: true
-			expectedProfit: number
 	  }
 	| {
 			ok: false
-			reason:
-				| { type: 'NO_OPPORTUNITY'; msg: string }
-				| {
-						type: 'LOW_PROFIT'
-						expectedProfit: number
-				  }
+			reason: 'NO_OPPORTUNITY' | 'LOW_PROFIT'
 	  }

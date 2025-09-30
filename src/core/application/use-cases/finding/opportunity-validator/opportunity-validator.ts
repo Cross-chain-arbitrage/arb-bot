@@ -13,25 +13,19 @@ export class OpportunityValidator {
 		if (!opportunity || !opportunity.path) {
 			return {
 				ok: false,
-				reason: { type: 'NO_OPPORTUNITY', msg: 'No arbitrage found' },
+				reason: 'NO_OPPORTUNITY',
 			}
 		}
 
-		const expectedProfit = opportunity.revenueInUsd - opportunity.costInUsd
-
-		if (expectedProfit < params.minProfitUsd) {
+		if (opportunity.profitInUsd < params.minProfitUsd) {
 			return {
 				ok: false,
-				reason: {
-					type: 'LOW_PROFIT',
-					expectedProfit,
-				},
+				reason: 'LOW_PROFIT',
 			}
 		}
 
 		return {
 			ok: true,
-			expectedProfit,
 		}
 	}
 }

@@ -119,6 +119,7 @@ export class ArbitrageExecutor {
 			id: opportunity.id,
 			path: newPath,
 			revenueInUsd: opportunity.revenueInUsd,
+			profitInUsd: opportunity.profitInUsd,
 		}
 
 		return newOpportunity

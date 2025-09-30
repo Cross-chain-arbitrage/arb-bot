@@ -49,6 +49,7 @@ export class OpportunityFinder {
 			...(graphArbitrageCycle as GraphArbitrageCycle<Token>),
 			revenueInUsd,
 			costInUsd,
+			profitInUsd: revenueInUsd - costInUsd,
 			id: crypto.randomUUID(),
 		}
 	}

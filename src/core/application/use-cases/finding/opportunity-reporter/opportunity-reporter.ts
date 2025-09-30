@@ -27,6 +27,6 @@ export class OpportunityReporter {
 				}
 			: null
 
-		this.logger.log({ validationResult, opportunityLog })
+		this.logger.log({ validationResult, opportunity: opportunityLog })
 	}
 }
