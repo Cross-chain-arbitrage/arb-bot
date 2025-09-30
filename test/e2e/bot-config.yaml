@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=./../../configs/bot-config-schema.json
+
 botName: 'test'
 isDryRun: false
 
@@ -13,7 +15,7 @@ arbitrageFinder:
     minStartValueUsd: 100
     maxStartValueUsd: 1000
     runCount: 5
-    startTokenId: 'eip155:42161:0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
+    startTokenId: 'eip155:42161:0xaf88d065e77c8cC2239327C5EDb3A432268e5831' # USDC
   opportunityValidation:
     minProfitUsd: 1
 
