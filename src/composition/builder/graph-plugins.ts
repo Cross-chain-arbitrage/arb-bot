@@ -4,7 +4,7 @@ import { FuseBridgeGraphPluginModule } from '../../core/infrastructure/plugins/f
 import { FuseBridgeGraphPlugin } from '../../core/infrastructure/plugins/fuse-bridge/fuse-bridge-graph-plugin'
 import { NativeWrapperGraphPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-graph-plugin.module'
 import { NativeWrapperGraphPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-graph-plugin'
-import { RaydiumGraphPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-builder-plugin.module'
+import { RaydiumGraphPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-graph-plugin.module'
 import { RaydiumGraphPlugin } from '../../core/infrastructure/plugins/raydium/raydium-graph-plugin'
 import { RelayGraphPluginModule } from '../../core/infrastructure/plugins/relay/composition/relay-graph-plugin.module'
 import { RelayGraphPlugin } from '../../core/infrastructure/plugins/relay/relay-graph-plugin'
