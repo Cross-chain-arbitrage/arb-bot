@@ -1,15 +1,9 @@
-import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
+import { Path } from '../../../../domain/services/bellman-ford'
 import { StartRule } from './types'
 
-export function getStartStepIndex(
-	opportunity: GraphArbitrageOpportunity,
-	startRules: StartRule[],
-) {
+export function getStartStepIndex(path: Path, startRules: StartRule[]) {
 	const tokenIdToIndexInPath = new Map<string, number>(
-		opportunity.path.map((step, index) => [
-			step.edge.from.id.toLowerCase(),
-			index,
-		]),
+		path.map((step, index) => [step.edge.from.id.toLowerCase(), index]),
 	)
 
 	const startRuleToApply = startRules.find(
@@ -26,13 +20,13 @@ export function getStartStepIndex(
 			const startToDirectionDistance = findDistance(
 				startTokenIndex,
 				directionTokenIndex,
-				opportunity.path.length,
+				path.length,
 			)
 
 			const directionToStartDistance = findDistance(
 				directionTokenIndex,
 				startTokenIndex,
-				opportunity.path.length,
+				path.length,
 			)
 
 			if (startToDirectionDistance < directionToStartDistance) return true
@@ -43,7 +37,7 @@ export function getStartStepIndex(
 	if (!startRuleToApply) return undefined
 
 	const startStepIndex = tokenIdToIndexInPath.get(
-		startRuleToApply.startTokenId,
+		startRuleToApply.startTokenId.toLowerCase(),
 	)
 
 	return startStepIndex

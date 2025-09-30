@@ -86,7 +86,7 @@ export class ArbitrageExecutor {
 
 		if (!startRules) return opportunity
 
-		const startStepIndex = getStartStepIndex(opportunity, startRules)
+		const startStepIndex = getStartStepIndex(opportunity.path, startRules)
 
 		if (!startStepIndex)
 			throw new Error("Couldn't obtain startStepIndex from startRules")
