@@ -15,6 +15,7 @@ import { StepExecutionTelemetry } from '../../core/application/use-cases/executi
 import { StepExecutor } from '../../core/application/use-cases/execution/step-executor/step-executor'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
 import { GRAPH_TOKEN } from '../../core/application/use-cases/graph-builder/graph-token'
+import { TokenValuatorModule } from '../../core/application/use-cases/token-valuator/token-valuator.module'
 import { Graph } from '../../core/domain/entities/graph'
 import { TgArbitrageNotifier } from '../../core/infrastructure/tg-notifier/tg-arbitrage-notifier'
 import { GraphBuilderModule } from '../builder/graph-builder.module'
@@ -23,6 +24,7 @@ import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 
 @Module({
 	imports: [
+		TokenValuatorModule,
 		GraphBuilderModule,
 		...executorPluginModules,
 		...quoterPluginModules,

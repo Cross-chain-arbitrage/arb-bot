@@ -1,8 +1,7 @@
-import { Global, Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { Token } from '../../../domain/entities/token'
 import { PRICE_ORACLE_TOKEN, PriceOracle } from '../../interfaces/price-oracle'
 
-@Global()
 @Injectable()
 export class TokenValuator {
 	constructor(
