@@ -4,6 +4,7 @@ import {
 	base,
 	bob,
 	hemi,
+	iota,
 	lightlinkPhoenix,
 	rootstock,
 	story,
@@ -87,6 +88,14 @@ export const UNIV3_PERIPHERY_CONFIG: Record<
 			quoter: '0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a',
 			router: '0x2626664c2603336E57B271c5C0b26F421741e481',
 			routerType: RouterType.V2,
+		},
+	},
+	[iota.id]: {
+		[getAddress('0x01Bd510B2eA106917e711f9a05a42fC162bee2Ac')]: {
+			quoter: '0x5C08A6762CAF9ec8a42F249eBC23aAE66097218D',
+			router: '0xcc977eD38Fad0E999f33e57BBed47f4944a67baE',
+			routerType: RouterType.UNIVERSAL,
+			permit2: '0x8d8B490fCe6Ca1A31752E7cFAFa954Bf30eB7EE2',
 		},
 	},
 	[1300]: {

@@ -68,6 +68,7 @@ export const chainIdToGeckoChainId = {
 	'7700': 'canto',
 	'8217': 'kaia',
 	'8453': 'base',
+	'8822': 'iota-evm',
 	'9001': 'evmos',
 	'17777': 'eos-evm',
 	'42161': 'arbitrum',
