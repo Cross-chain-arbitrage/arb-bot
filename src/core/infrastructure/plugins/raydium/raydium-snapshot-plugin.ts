@@ -64,7 +64,7 @@ export class RaydiumSnapshotPlugin
 
 		const executionCostInUsd =
 			await this.SolanaTxCostHelper.getExpectedTxCostInUsd(
-				results[0].amountOut,
+				BigInt(results[0].unitConsumption),
 			)
 
 		return (amountIn: bigint): Quote => {
