@@ -2,6 +2,8 @@ import { DexExecutorPluginModule } from '../../core/infrastructure/plugins/dex/c
 import { DexExecutorPlugin } from '../../core/infrastructure/plugins/dex/dex-executor-plugin'
 import { FuseBridgeExecutorPluginModule } from '../../core/infrastructure/plugins/fuse-bridge/composition/fuse-bridge-executor-plugin.module'
 import { FuseBridgeExecutorPlugin } from '../../core/infrastructure/plugins/fuse-bridge/fuse-bridge-executor-plugin'
+import { JupiterExecutorPluginModule } from '../../core/infrastructure/plugins/jupiter/composition/jupiter-executor-plugin.module'
+import { JupiterExecutorPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-executor-plugin'
 import { NativeWrapperExecutorPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-executor-plugin.module'
 import { NativeWrapperExecutorPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-executor-plugin'
 import { RaydiumExecutorPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-executor-plugin.module'
@@ -21,6 +23,7 @@ export const executorPluginModules = [
 	NativeWrapperExecutorPluginModule,
 	SimpleStargateExecutorPluginModule,
 	FuseBridgeExecutorPluginModule,
+	JupiterExecutorPluginModule,
 ]
 
 export const executorPlugins = [
@@ -31,4 +34,5 @@ export const executorPlugins = [
 	NativeWrapperExecutorPlugin,
 	SimpleStargateExecutorPlugin,
 	FuseBridgeExecutorPlugin,
+	JupiterExecutorPlugin,
 ]

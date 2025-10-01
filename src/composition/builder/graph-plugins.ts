@@ -2,6 +2,8 @@ import { DexGraphPluginModule } from '../../core/infrastructure/plugins/dex/comp
 import { DexGraphPlugin } from '../../core/infrastructure/plugins/dex/dex-graph-plugin'
 import { FuseBridgeGraphPluginModule } from '../../core/infrastructure/plugins/fuse-bridge/composition/fuse-bridge-graph-plugin.module'
 import { FuseBridgeGraphPlugin } from '../../core/infrastructure/plugins/fuse-bridge/fuse-bridge-graph-plugin'
+import { JupiterGraphPluginModule } from '../../core/infrastructure/plugins/jupiter/composition/jupiter-graph-plugin.module'
+import { JupiterGraphPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-graph-plugin'
 import { NativeWrapperGraphPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-graph-plugin.module'
 import { NativeWrapperGraphPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-graph-plugin'
 import { RaydiumGraphPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-graph-plugin.module'
@@ -21,6 +23,7 @@ export const graphPluginModules = [
 	RelayGraphPluginModule,
 	SimpleStargateGraphPluginModule,
 	FuseBridgeGraphPluginModule,
+	JupiterGraphPluginModule,
 ]
 
 export const graphPlugins = [
@@ -31,4 +34,5 @@ export const graphPlugins = [
 	RelayGraphPlugin,
 	SimpleStargateGraphPlugin,
 	FuseBridgeGraphPlugin,
+	JupiterGraphPlugin,
 ]

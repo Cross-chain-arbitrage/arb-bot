@@ -12,6 +12,10 @@ import {
 	dexConfigScheme,
 } from '../core/infrastructure/plugins/dex/configuration/dex-config'
 import {
+	JUPITER_CONFIG_KEY,
+	jupiterConfigScheme,
+} from '../core/infrastructure/plugins/jupiter/configuration/jupiter-config'
+import {
 	NATIVE_WRAPPER_CONFIG_KEY,
 	nativeWrapperConfigScheme,
 } from '../core/infrastructure/plugins/native-wrapper/configuration/native-wrapper-config'
@@ -57,6 +61,7 @@ export const configScheme = z.object({
 	[RELAY_CONFIG_KEY]: relayConfigScheme,
 	[SIMPLE_STARGATE_CONFIG_KEY]: simpleStargateConfigScheme,
 	[RAYDIUM_CONFIG_KEY]: raydiumConfigScheme,
+	[JUPITER_CONFIG_KEY]: jupiterConfigScheme,
 
 	/* ======== INFRASTRUCTURE ======== */
 

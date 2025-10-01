@@ -2,6 +2,8 @@ import { DexSnapshotPluginModule } from '../../core/infrastructure/plugins/dex/c
 import { DexSnapshotPlugin } from '../../core/infrastructure/plugins/dex/dex-snapshot-plugin'
 import { FuseBridgeSnapshotPluginModule } from '../../core/infrastructure/plugins/fuse-bridge/composition/fuse-bridge-snaphot-plugin.module'
 import { FuseBridgeSnapshotPlugin } from '../../core/infrastructure/plugins/fuse-bridge/fuse-bridge-snapshot-plugin'
+import { JupiterSnapshotPluginModule } from '../../core/infrastructure/plugins/jupiter/composition/jupiter-snaphot-plugin.module'
+import { JupiterSnapshotPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-snapshot-plugin'
 import { NativeWrapperSnapshotPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-snaphot-plugin.module'
 import { NativeWrapperSnapshotPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-snapshot-plugin'
 import { RaydiumSnapshotPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-snaphot-plugin.module'
@@ -21,6 +23,7 @@ export const snapshotPluginModules = [
 	RelaySnapshotPluginModule,
 	SimpleStargateSnapshotPluginModule,
 	FuseBridgeSnapshotPluginModule,
+	JupiterSnapshotPluginModule,
 ]
 
 export const snapshotPlugins = [
@@ -31,4 +34,5 @@ export const snapshotPlugins = [
 	RelaySnapshotPlugin,
 	SimpleStargateSnapshotPlugin,
 	FuseBridgeSnapshotPlugin,
+	JupiterSnapshotPlugin,
 ]
