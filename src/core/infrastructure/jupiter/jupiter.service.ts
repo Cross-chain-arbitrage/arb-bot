@@ -39,7 +39,7 @@ export class JupiterService {
 		const quote = await this.fetchQuote(tokenIn, tokenOut, amount, false)
 
 		return {
-			amountOut: quote.outAmount,
+			amountOut: BigInt(quote.outAmount),
 			unitConsumption: AVERAGE_UNITS_CONSUMPTION,
 			rawQuote: quote,
 		}
