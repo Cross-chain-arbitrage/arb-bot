@@ -4,11 +4,9 @@ import {
 	Connection,
 	ParsedTransactionWithMeta,
 	SendTransactionError,
-	TokenBalance,
-	VersionedTransaction,
 } from '@solana/web3.js'
 import axios from 'axios'
-import { createCustomError, wait } from '../../../utils/common'
+import { createCustomError } from '../../../utils/common'
 import { SolanaClientService } from '../solana/solana-client.service'
 import { SolanaNative } from '../solana/solana-tokens/solana-native'
 import { SolanaToken } from '../solana/solana-tokens/solana-token'
@@ -87,12 +85,7 @@ export class RaydiumService {
 
 			const rawTx = await this.getTransaction(quote.rawQuote, params)
 
-			const txBuf = Buffer.from(rawTx, 'base64')
-			const tx = VersionedTransaction.deserialize(txBuf)
-
-			tx.sign([this.solanaClientService.keypair])
-
-			const txId = await this.solanaClientService.sendTx(tx)
+			const txId = await this.solanaClientService.sendTx(rawTx)
 
 			return {
 				txId,
@@ -125,23 +118,8 @@ export class RaydiumService {
 				parsedTx: ParsedTransactionWithMeta
 		  }
 	> {
-		let parsedTx: ParsedTransactionWithMeta | null = null
-
-		let attempts = 0
-		while (!parsedTx && attempts < 3) {
-			parsedTx =
-				await this.solanaClientService.connection.getParsedTransaction(
-					txId,
-					{
-						commitment: 'finalized',
-						maxSupportedTransactionVersion: 0,
-					},
-				)
-			await wait(1000)
-			attempts++
-		}
-
-		if (!parsedTx) throw new RaydiumServiceError('Transaction not found')
+		const parsedTx =
+			await this.solanaClientService.waitForParsedTransaction(txId)
 
 		if (parsedTx.meta?.err) {
 			return {
@@ -149,7 +127,10 @@ export class RaydiumService {
 				parsedTx,
 			}
 		}
-		const amountOut = await this.parseAmountOut(tokenOut, parsedTx)
+		const amountOut = await this.solanaClientService.parseBalanceChange(
+			parsedTx,
+			tokenOut,
+		)
 
 		return {
 			status: 'success',
@@ -182,70 +163,6 @@ export class RaydiumService {
 		}
 
 		return isRewardTimestampError
-	}
-
-	async parseAmountOut(
-		tokenOut: SolanaToken | SolanaNative,
-		parsedTx: ParsedTransactionWithMeta,
-	): Promise<bigint> {
-		const outputTokenAccount =
-			tokenOut instanceof SolanaToken
-				? await tokenOut.getTokenAccount(
-						this.solanaClientService.walletAddress,
-					)
-				: this.solanaClientService.walletAddress
-
-		const preBalances = parsedTx.meta?.preTokenBalances
-
-		if (!preBalances) {
-			throw new RaydiumServiceError('Pre token balances not found in tx')
-		}
-
-		const preBalance = this.retrieveBalance(
-			outputTokenAccount,
-			parsedTx,
-			preBalances,
-		)
-
-		const postBalances = parsedTx.meta?.postTokenBalances
-
-		if (!postBalances) {
-			throw new RaydiumServiceError('Post token balances not found in tx')
-		}
-
-		const postBalance = this.retrieveBalance(
-			outputTokenAccount,
-			parsedTx,
-			postBalances,
-		)
-
-		return postBalance - preBalance
-	}
-
-	private retrieveBalance(
-		tokenAccount: string,
-		parsedTx: ParsedTransactionWithMeta,
-		txBalances: TokenBalance[],
-	): bigint {
-		const accountIndex = parsedTx.transaction.message.accountKeys.findIndex(
-			(account) => account.pubkey.toBase58() === tokenAccount,
-		)
-
-		if (accountIndex === -1) {
-			throw new RaydiumServiceError('Token account not found in tx')
-		}
-
-		const balance = txBalances.find(
-			(txBalance) => txBalance.accountIndex === accountIndex,
-		)
-
-		if (!balance) {
-			throw new RaydiumServiceError(
-				`Balance with account index ${accountIndex} not found in tx`,
-			)
-		}
-
-		return BigInt(balance.uiTokenAmount.amount)
 	}
 
 	private async getTransaction(quote: RaydiumQuote, params: SwapParams) {

@@ -5,10 +5,13 @@ import {
 	Keypair,
 	ParsedTransactionWithMeta,
 	SendOptions,
+	TokenBalance,
 	VersionedTransaction,
 } from '@solana/web3.js'
 import { createCustomError, getEnvSafe } from '../../../utils/common'
 import { poll } from '../../../utils/polling'
+import { SolanaCurrency } from './solana-tokens/solana-currency'
+import { SolanaToken } from './solana-tokens/solana-token'
 
 const SolanaClientServiceError = createCustomError('SolanaClientServiceError')
 
@@ -28,17 +31,23 @@ export class SolanaClientService implements OnModuleInit {
 		this.walletAddress = this.keypair.publicKey.toBase58()
 	}
 
-	async sendTx(tx: VersionedTransaction, options?: SendOptions) {
+	async sendTx(tx: VersionedTransaction | string, options?: SendOptions) {
+		const txToSend =
+			typeof tx === 'string' ? this.getSignedTxFromBase64(tx) : tx
+
 		const sendOptions: SendOptions = options
 			? options
 			: { preflightCommitment: 'confirmed' }
 
-		const txId = await this.connection.sendTransaction(tx, sendOptions)
+		const txId = await this.connection.sendTransaction(
+			txToSend,
+			sendOptions,
+		)
 
 		return txId
 	}
 
-	getSignedTx(rawTx: string) {
+	getSignedTxFromBase64(rawTx: string) {
 		const txBuf = Buffer.from(rawTx, 'base64')
 		const tx = VersionedTransaction.deserialize(txBuf)
 
@@ -96,11 +105,14 @@ export class SolanaClientService implements OnModuleInit {
 					searchTransactionHistory: true,
 				}),
 			(status) => {
-				if (!status.value)
-					throw new SolanaClientServiceError(
-						`Transaction status for ${txId} not found`,
-					)
-				return status.value?.confirmationStatus === 'confirmed'
+				if (status.value === null) return false
+
+				const isConfirmed =
+					status.value.confirmationStatus === 'confirmed'
+				const isFinalized =
+					status.value.confirmationStatus === 'finalized'
+
+				return isConfirmed || isFinalized
 			},
 			1000,
 			20000,
@@ -108,5 +120,67 @@ export class SolanaClientService implements OnModuleInit {
 				`Polling Timeout on waiting for transaction ${txId} to be confirmed`,
 			),
 		)
+	}
+
+	async parseBalanceChange(
+		parsedTx: ParsedTransactionWithMeta,
+		token: SolanaCurrency,
+	): Promise<bigint> {
+		const outputTokenAccount =
+			token instanceof SolanaToken
+				? await token.getTokenAccount(this.walletAddress)
+				: this.walletAddress
+
+		const preBalances = parsedTx.meta?.preTokenBalances
+
+		if (!preBalances) {
+			throw new Error('Pre token balances not found in tx')
+		}
+
+		const preBalance = this.retrieveBalance(
+			outputTokenAccount,
+			parsedTx,
+			preBalances,
+		)
+
+		const postBalances = parsedTx.meta?.postTokenBalances
+
+		if (!postBalances) {
+			throw new Error('Post token balances not found in tx')
+		}
+
+		const postBalance = this.retrieveBalance(
+			outputTokenAccount,
+			parsedTx,
+			postBalances,
+		)
+
+		return postBalance - preBalance
+	}
+
+	private retrieveBalance(
+		tokenAccount: string,
+		parsedTx: ParsedTransactionWithMeta,
+		txBalances: TokenBalance[],
+	): bigint {
+		const accountIndex = parsedTx.transaction.message.accountKeys.findIndex(
+			(account) => account.pubkey.toBase58() === tokenAccount,
+		)
+
+		if (accountIndex === -1) {
+			throw new Error('Token account not found in tx')
+		}
+
+		const balance = txBalances.find(
+			(txBalance) => txBalance.accountIndex === accountIndex,
+		)
+
+		if (!balance) {
+			throw new Error(
+				`Balance with account index ${accountIndex} not found in tx`,
+			)
+		}
+
+		return BigInt(balance.uiTokenAmount.amount)
 	}
 }
