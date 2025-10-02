@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { poll } from '../../../../utils/polling'
 import {
 	CrosschainConfirmation,
 	CrosschainExecution,
@@ -10,7 +11,9 @@ import { Edge } from '../../../domain/entities/edge'
 import { TokenIdUtils } from '../../../domain/services/token-id-utils'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
+import { TokenBase } from '../../evm/primitives/tokens/TokenBase'
 import { SimpleStargateService } from '../../layerzero-bridges/stargate/simple-stargate.service'
+import { SolanaClientService } from '../../solana/solana-client.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaEvmHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-helper'
 import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
@@ -27,6 +30,7 @@ export class SimpleStargateExecutorPlugin
 		readonly solanaEvmTxCostHelper: SolanaEvmTxCostHelper,
 		readonly tokenValuator: TokenValuator,
 		readonly solanaEvmHelper: SolanaEvmHelper,
+		private readonly solanaClientService: SolanaClientService,
 	) {
 		super(SIMPLE_STARGATE_PROTOCOL)
 	}
@@ -42,6 +46,53 @@ export class SimpleStargateExecutorPlugin
 	}
 
 	async execute(
+		edge: Edge<Token | NativeCurrency | SolanaToken>,
+		amountIn: bigint,
+	): Promise<CrosschainExecution> {
+		const from = edge.from
+
+		if (from instanceof TokenBase) return this.executeBridge(edge, amountIn)
+
+		const finalizedBalance = await from.balanceOf(
+			this.solanaClientService.walletAddress,
+			'finalized',
+		)
+
+		if (finalizedBalance >= amountIn)
+			return this.executeBridge(edge, amountIn)
+
+		const confirmedBalance = await from.balanceOf(
+			this.solanaClientService.walletAddress,
+			'confirmed',
+		)
+
+		if (confirmedBalance < amountIn)
+			throw new Error(
+				`No enough balance, need ${amountIn}, has ${confirmedBalance}`,
+			)
+
+		await this.waitBalanceFinalization(from, amountIn)
+
+		return this.executeBridge(edge, amountIn)
+	}
+
+	async waitBalanceFinalization(token: SolanaToken, amount: bigint) {
+		await poll(
+			() =>
+				token.balanceOf(
+					this.solanaClientService.walletAddress,
+					'finalized',
+				),
+			(balance) => balance >= amount,
+			1000,
+			20000,
+			new Error(
+				`Finalized amount is still low then required (required: ${amount})`,
+			),
+		)
+	}
+
+	private async executeBridge(
 		edge: Edge<Token | NativeCurrency | SolanaToken>,
 		amountIn: bigint,
 	): Promise<CrosschainExecution> {
