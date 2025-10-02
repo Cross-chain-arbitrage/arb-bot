@@ -4,6 +4,8 @@ import { FuseBridgeGraphPluginModule } from '../../core/infrastructure/plugins/f
 import { FuseBridgeGraphPlugin } from '../../core/infrastructure/plugins/fuse-bridge/fuse-bridge-graph-plugin'
 import { JupiterGraphPluginModule } from '../../core/infrastructure/plugins/jupiter/composition/jupiter-graph-plugin.module'
 import { JupiterGraphPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-graph-plugin'
+import { LifiGraphPluginModule } from '../../core/infrastructure/plugins/lifi/composition/lifi-graph-plugin.module'
+import { LifiGraphPlugin } from '../../core/infrastructure/plugins/lifi/lifi-graph-plugin'
 import { NativeWrapperGraphPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-graph-plugin.module'
 import { NativeWrapperGraphPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-graph-plugin'
 import { RaydiumGraphPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-graph-plugin.module'
@@ -24,6 +26,7 @@ export const graphPluginModules = [
 	SimpleStargateGraphPluginModule,
 	FuseBridgeGraphPluginModule,
 	JupiterGraphPluginModule,
+	LifiGraphPluginModule,
 ]
 
 export const graphPlugins = [
@@ -35,4 +38,5 @@ export const graphPlugins = [
 	SimpleStargateGraphPlugin,
 	FuseBridgeGraphPlugin,
 	JupiterGraphPlugin,
+	LifiGraphPlugin,
 ]

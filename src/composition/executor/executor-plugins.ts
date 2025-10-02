@@ -4,6 +4,8 @@ import { FuseBridgeExecutorPluginModule } from '../../core/infrastructure/plugin
 import { FuseBridgeExecutorPlugin } from '../../core/infrastructure/plugins/fuse-bridge/fuse-bridge-executor-plugin'
 import { JupiterExecutorPluginModule } from '../../core/infrastructure/plugins/jupiter/composition/jupiter-executor-plugin.module'
 import { JupiterExecutorPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-executor-plugin'
+import { LifiExecutorPluginModule } from '../../core/infrastructure/plugins/lifi/composition/lifi-executor-plugin.module'
+import { LifiExecutorPlugin } from '../../core/infrastructure/plugins/lifi/lifi-executor-plugin'
 import { NativeWrapperExecutorPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-executor-plugin.module'
 import { NativeWrapperExecutorPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-executor-plugin'
 import { RaydiumExecutorPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-executor-plugin.module'
@@ -24,6 +26,7 @@ export const executorPluginModules = [
 	SimpleStargateExecutorPluginModule,
 	FuseBridgeExecutorPluginModule,
 	JupiterExecutorPluginModule,
+	LifiExecutorPluginModule,
 ]
 
 export const executorPlugins = [
@@ -35,4 +38,5 @@ export const executorPlugins = [
 	SimpleStargateExecutorPlugin,
 	FuseBridgeExecutorPlugin,
 	JupiterExecutorPlugin,
+	LifiExecutorPlugin,
 ]

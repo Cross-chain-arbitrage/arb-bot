@@ -16,6 +16,10 @@ import {
 	jupiterConfigScheme,
 } from '../core/infrastructure/plugins/jupiter/configuration/jupiter-config'
 import {
+	LIFI_CONFIG_KEY,
+	lifiConfigScheme,
+} from '../core/infrastructure/plugins/lifi/configuration/lifi-config'
+import {
 	NATIVE_WRAPPER_CONFIG_KEY,
 	nativeWrapperConfigScheme,
 } from '../core/infrastructure/plugins/native-wrapper/configuration/native-wrapper-config'
@@ -62,6 +66,7 @@ export const configScheme = z.object({
 	[SIMPLE_STARGATE_CONFIG_KEY]: simpleStargateConfigScheme,
 	[RAYDIUM_CONFIG_KEY]: raydiumConfigScheme,
 	[JUPITER_CONFIG_KEY]: jupiterConfigScheme,
+	[LIFI_CONFIG_KEY]: lifiConfigScheme,
 
 	/* ======== INFRASTRUCTURE ======== */
 

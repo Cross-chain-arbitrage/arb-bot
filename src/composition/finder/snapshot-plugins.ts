@@ -4,6 +4,8 @@ import { FuseBridgeSnapshotPluginModule } from '../../core/infrastructure/plugin
 import { FuseBridgeSnapshotPlugin } from '../../core/infrastructure/plugins/fuse-bridge/fuse-bridge-snapshot-plugin'
 import { JupiterSnapshotPluginModule } from '../../core/infrastructure/plugins/jupiter/composition/jupiter-snaphot-plugin.module'
 import { JupiterSnapshotPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-snapshot-plugin'
+import { LifiSnapshotPluginModule } from '../../core/infrastructure/plugins/lifi/composition/lifi-snaphot-plugin.module'
+import { LifiSnapshotPlugin } from '../../core/infrastructure/plugins/lifi/lifi-snapshot-plugin'
 import { NativeWrapperSnapshotPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-snaphot-plugin.module'
 import { NativeWrapperSnapshotPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-snapshot-plugin'
 import { RaydiumSnapshotPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-snaphot-plugin.module'
@@ -24,6 +26,7 @@ export const snapshotPluginModules = [
 	SimpleStargateSnapshotPluginModule,
 	FuseBridgeSnapshotPluginModule,
 	JupiterSnapshotPluginModule,
+	LifiSnapshotPluginModule,
 ]
 
 export const snapshotPlugins = [
@@ -35,4 +38,5 @@ export const snapshotPlugins = [
 	SimpleStargateSnapshotPlugin,
 	FuseBridgeSnapshotPlugin,
 	JupiterSnapshotPlugin,
+	LifiSnapshotPlugin,
 ]
