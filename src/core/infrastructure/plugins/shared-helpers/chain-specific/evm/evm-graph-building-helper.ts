@@ -1,20 +1,24 @@
 import { Injectable } from '@nestjs/common'
+import { ChainIdUtils } from '../../../../../domain/services/chain-id-utils'
+import { TokenIdUtils } from '../../../../../domain/services/token-id-utils'
+import { TokenId } from '../../../../../domain/value-objects/token-id'
 import { TokenUtils } from '../../../../evm/primitives/tokens/TokenUtils'
 import { GraphBuildingHelper } from '../../graph-building-helper'
 
 @Injectable()
-export class EvmGraphBuildingHelper extends GraphBuildingHelper<{
-	chainId: number
-	address: string
-}> {
+export class EvmGraphBuildingHelper extends GraphBuildingHelper<TokenId> {
 	constructor(readonly tokenUtils: TokenUtils) {
 		super()
 	}
 
-	async getNode(nodeConfig: { chainId: number; address: string }) {
+	async getNode(edgeConstructorNode: TokenId) {
+		const { address, chainId } = TokenIdUtils.parseId(edgeConstructorNode)
+
+		const { reference } = ChainIdUtils.parseId(chainId)
+
 		return this.tokenUtils.fromAddress(
-			nodeConfig.address as `0x${string}`,
-			nodeConfig.chainId,
+			address as `0x${string}`,
+			Number(reference),
 		)
 	}
 }
