@@ -43,8 +43,8 @@ export class LifiService {
 
 		return {
 			rawQuote: quote,
-			amountOut: quote.estimate.toAmount,
-			txCostInUsd: quote.estimate.gasCosts[0].amountUSD,
+			amountOut: BigInt(quote.estimate.toAmount),
+			txCostInUsd: Number(quote.estimate.gasCosts[0].amountUSD),
 		}
 	}
 
