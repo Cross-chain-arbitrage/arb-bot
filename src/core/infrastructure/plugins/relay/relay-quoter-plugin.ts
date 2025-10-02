@@ -42,7 +42,7 @@ export class RelayQuoterPlugin extends EdgeHandler implements QuoterPlugin {
 		)
 
 		const costInUsd =
-			await this.solanaEvmTxCostHelper.getExpectedTxCostInUsd(
+			await this.solanaEvmTxCostHelper.getUsdCostOfNativeAmount(
 				TokenIdUtils.parseId(edge.from.id).chainId,
 				quote.gasInNative,
 			)

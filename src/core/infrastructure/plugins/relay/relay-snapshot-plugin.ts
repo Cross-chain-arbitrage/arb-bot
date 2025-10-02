@@ -72,7 +72,7 @@ export class RelaySnapshotPlugin extends EdgeHandler implements SnapshotPlugin {
 		)
 
 		const costInUsd =
-			await this.solanaEvmTxCostHelper.getExpectedTxCostInUsd(
+			await this.solanaEvmTxCostHelper.getUsdCostOfNativeAmount(
 				TokenIdUtils.parseId(edge.from.id).chainId,
 				quote.gasInNative,
 			)
