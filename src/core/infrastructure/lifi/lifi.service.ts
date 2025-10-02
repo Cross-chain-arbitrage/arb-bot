@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 import { fromHex, Hash } from 'viem'
+import { getEnvSafe } from '../../../utils/common'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
 import { TokenBase } from '../evm/primitives/tokens/TokenBase'
 import { QuoteSchema } from './schemas/quote.schema'
@@ -15,7 +16,12 @@ export class LifiService {
 	axiosClient: AxiosInstance
 
 	constructor(private readonly chainClientService: ChainClientService) {
-		this.axiosClient = axios.create({ baseURL: API_URL })
+		const apiKey = getEnvSafe('LIFI_API_KEY')
+
+		this.axiosClient = axios.create({
+			baseURL: API_URL,
+			headers: { 'x-lifi-api-key': apiKey },
+		})
 	}
 
 	async quote(
