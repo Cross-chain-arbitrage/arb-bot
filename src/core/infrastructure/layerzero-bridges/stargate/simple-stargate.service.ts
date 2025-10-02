@@ -70,11 +70,13 @@ export class SimpleStargateService {
 		const { chainKey: dstChainKey, walletAddress: dstAddress } =
 			this.resolveNetworkParams(tokenOut)
 
+		const SHARED_DECIMALS = 6
+
 		const srcAmount =
-			tokenIn.decimals > tokenOut.decimals
+			tokenIn.decimals > SHARED_DECIMALS
 				? (amountIn /
-						10n ** BigInt(tokenIn.decimals - tokenOut.decimals)) *
-					10n ** BigInt(tokenIn.decimals - tokenOut.decimals)
+						10n ** BigInt(tokenIn.decimals - SHARED_DECIMALS)) *
+					10n ** BigInt(tokenIn.decimals - SHARED_DECIMALS)
 				: amountIn
 
 		const response = await axios.get('/quotes', {
@@ -87,7 +89,8 @@ export class SimpleStargateService {
 				srcChainKey,
 				dstChainKey,
 				srcAmount,
-				dstAmountMin: convertDecimals(amountIn, tokenIn, tokenOut),
+				dstAmountMin: convertDecimals(srcAmount, tokenIn, tokenOut),
+				// dstAmountMin: 0,
 			},
 		})
 
@@ -131,11 +134,9 @@ export class SimpleStargateService {
 		if (tokenIn instanceof SolanaToken) {
 			const quote = (quoteResult as QuoteSolanaSrc).quotes[0]
 
-			const signedTx = this.solanaClientService.getSignedTx(
+			txHash = await this.solanaClientService.sendTx(
 				quote.steps[0].transaction.data,
 			)
-
-			txHash = await this.solanaClientService.sendTx(signedTx)
 		} else {
 			const walletClient = this.chainClientService.getWalletClient(
 				tokenIn.chainId,
