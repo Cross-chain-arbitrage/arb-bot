@@ -1,5 +1,5 @@
 import { getAccount, getAssociatedTokenAddress } from '@solana/spl-token'
-import { Connection, PublicKey } from '@solana/web3.js'
+import { Commitment, Connection, PublicKey } from '@solana/web3.js'
 import { Token, TokenMetadata } from '../../../domain/entities/token'
 import { SolanaCurrency } from './solana-currency'
 
@@ -14,8 +14,14 @@ export class SolanaToken extends SolanaCurrency implements Token {
 		return false
 	}
 
-	async balanceOf(address: string): Promise<bigint> {
-		const connection = new Connection('https://api.mainnet-beta.solana.com')
+	async balanceOf(
+		address: string,
+		commitment: Commitment = 'confirmed',
+	): Promise<bigint> {
+		const connection = new Connection(
+			'https://api.mainnet-beta.solana.com',
+			commitment,
+		)
 
 		const associatedTokenAccount = await this.getTokenAccount(address)
 
