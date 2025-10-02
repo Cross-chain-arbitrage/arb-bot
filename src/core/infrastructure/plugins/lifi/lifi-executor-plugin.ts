@@ -8,6 +8,7 @@ import {
 } from '../../../application/interfaces/edge-executor'
 import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
+import { Token } from '../../evm/primitives/tokens/Token'
 import { TokenBase } from '../../evm/primitives/tokens/TokenBase'
 import { LifiService } from '../../lifi/lifi.service'
 import { SwapResult } from '../../lifi/types'
@@ -29,7 +30,33 @@ export class LifiExecutorPlugin extends EdgeHandler implements ExecutorPlugin {
 			edge: edge,
 			kind: 'inchain',
 			execute: (amountIn: bigint) => this.execute(edge, amountIn),
+			prepareExecution: (edge: Edge<TokenBase>) =>
+				this.prepareExecution(edge),
 		}
+	}
+
+	async prepareExecution(edge: Edge<TokenBase>): Promise<{ result: string }> {
+		const from = edge.from
+		const { rawQuote } = await this.lifiService.quote(
+			from,
+			edge.to,
+			from.parseUnits('1'),
+		)
+
+		if (from instanceof Token) {
+			const res = await from.approveInfinite(
+				rawQuote.estimate.approvalAddress as Address,
+			)
+
+			if (res === undefined) return { result: 'No approval needed' }
+
+			if (res.status === 'reverted')
+				throw Error(`Approval tx ${res.transactionHash} reverted`)
+
+			return { result: `Approval tx: ${res.transactionHash}` }
+		}
+
+		return { result: 'No approval needed' }
 	}
 
 	async execute(
