@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
-import { fromHex, Hash, TransactionReceipt } from 'viem'
+import { fromHex, Hash } from 'viem'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
 import { TokenBase } from '../evm/primitives/tokens/TokenBase'
 import { QuoteSchema } from './schemas/quote.schema'
+import { SwapResult } from './types'
 
 const API_URL = 'https://li.quest'
 const BASIS_POINTS: bigint = 10000n
@@ -100,17 +101,7 @@ export class LifiService {
 		tokenIn: TokenBase,
 		tokenOut: TokenBase,
 		balanceTokenOutBefore: bigint,
-	): Promise<
-		| {
-				status: 'success'
-				receipt: TransactionReceipt
-				amountOut: bigint
-		  }
-		| {
-				status: 'reverted'
-				receipt: TransactionReceipt
-		  }
-	> {
+	): Promise<SwapResult> {
 		const receipt = await this.chainClientService
 			.getClient(tokenIn.chainId)
 			.waitForTransactionReceipt({
