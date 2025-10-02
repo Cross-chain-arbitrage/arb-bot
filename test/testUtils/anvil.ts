@@ -170,6 +170,16 @@ class Anvil {
 		}
 	}
 
+	logFromLastEthCall() {
+		const lastEthCallIdx = this.logs.lastIndexOf('eth_call')
+
+		if (lastEthCallIdx !== -1) {
+			console.log(`last eth_call: ${this.logs.slice(lastEthCallIdx)}`)
+		} else {
+			console.log('No eth_call found in logs')
+		}
+	}
+
 	private buildCommand(fallbackRpcUrl: string) {
 		const rpcUrlToUse = this.config.rpcUrl ?? fallbackRpcUrl
 
