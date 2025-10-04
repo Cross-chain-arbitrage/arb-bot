@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common'
-import { ARBITRAGE_NOTIFIER_TOKEN } from '../../core/application/interfaces/arbitrage-notifier'
 import { EDGE_EXECUTOR_REGISTRY_TOKEN } from '../../core/application/interfaces/edge-executor'
 import { EDGE_QUOTER_REGISTRY_TOKEN } from '../../core/application/interfaces/edge-quoter'
 import {
@@ -17,13 +16,14 @@ import { GraphBuilder } from '../../core/application/use-cases/graph-builder/gra
 import { GRAPH_TOKEN } from '../../core/application/use-cases/graph-builder/graph-token'
 import { TokenValuatorModule } from '../../core/application/use-cases/token-valuator/token-valuator.module'
 import { Graph } from '../../core/domain/entities/graph'
-import { TgArbitrageNotifier } from '../../core/infrastructure/tg-notifier/tg-arbitrage-notifier'
+import { TgArbitrageNotifierModule } from '../../core/infrastructure/tg-notifier/tg-arbitrage-notifier/tg-arbitrgage-notifier.module'
 import { GraphBuilderModule } from '../builder/graph-builder.module'
 import { executorPluginModules, executorPlugins } from './executor-plugins'
 import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 
 @Module({
 	imports: [
+		TgArbitrageNotifierModule,
 		TokenValuatorModule,
 		GraphBuilderModule,
 		...executorPluginModules,
@@ -37,10 +37,6 @@ import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 		ArbitrageExecutionTelemetry,
 		StepExecutor,
 		ExecutionPreparer,
-		{
-			provide: ARBITRAGE_NOTIFIER_TOKEN,
-			useClass: TgArbitrageNotifier,
-		},
 		{
 			provide: EDGE_EXECUTOR_REGISTRY_TOKEN,
 			inject: [GraphBuilder, GRAPH_TOKEN, ...executorPlugins],
