@@ -139,10 +139,18 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 
 	private buildFailedStatus(result: FailedArbitrageResult) {
 		const { reason } = result
+
+		//tg allows to send up to ~4000 symbols
+		const MAX_REASON_LENGTH = 2000
+		const reasonToSend =
+			reason.length > MAX_REASON_LENGTH
+				? reason.slice(0, MAX_REASON_LENGTH) + '...'
+				: reason
+
 		let status = '❌ <b>Execution error</b>\n\n'
 		if (this.errorInRow === MAX_ERROR_IN_ROW)
 			status += `⚠️ Max errors in a row reached (${MAX_ERROR_IN_ROW}), next messages will not be sent until successful execution \n\n`
-		status += `Reason: ${reason}\n\n`
+		status += `Reason: ${reasonToSend}\n\n`
 		status += `Cost: $${result.totalExecutionCostInUsd.toFixed(2)}\n`
 		status += `Execution Time: ${this.formatTime(result.executionTime)}`
 
