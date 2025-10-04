@@ -1,29 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { getEnvSafe } from '../../../utils/common'
-import { BalanceNotifier } from '../../application/interfaces/balance-notifier'
-import { NodeWithBalance } from '../../application/interfaces/balance-oracle'
-import { Token } from '../../domain/entities/token'
-import { ChainIdUtils } from '../../domain/services/chain-id-utils'
-import { TokenIdUtils } from '../../domain/services/token-id-utils'
-import { ChainId } from '../../domain/value-objects/chain-id'
-import { ChainClientService } from '../evm/chain-client/chain-client.service'
-import { TgNotifier } from './tg-notifier'
-import { MessageResponse } from './types'
+import { BalanceNotifier } from '../../../application/interfaces/balance-notifier'
+import { NodeWithBalance } from '../../../application/interfaces/balance-oracle'
+import { Token } from '../../../domain/entities/token'
+import { ChainIdUtils } from '../../../domain/services/chain-id-utils'
+import { TokenIdUtils } from '../../../domain/services/token-id-utils'
+import { ChainId } from '../../../domain/value-objects/chain-id'
+import { ChainClientService } from '../../evm/chain-client/chain-client.service'
+import { TgNotifier } from '../tg-notifier'
+import { MessageResponse } from '../types'
 
 @Injectable()
-export class TgBalancesNotifier extends TgNotifier implements BalanceNotifier {
+export class TgBalancesNotifier implements BalanceNotifier {
 	logger = new Logger(TgBalancesNotifier.name)
 	private messageResponse: MessageResponse | undefined
 
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly chainClientService: ChainClientService,
-	) {
-		const messageThreadId = getEnvSafe('TG_BALANCE_REPORTER_THREAD_ID')
-
-		super(messageThreadId)
-	}
+		private readonly tgNotifier: TgNotifier,
+	) {}
 
 	notifyBalances(balances: NodeWithBalance<Token>[]): void {
 		this.unsafeNotifyBalances(balances).catch((error) => {
@@ -127,10 +123,10 @@ export class TgBalancesNotifier extends TgNotifier implements BalanceNotifier {
 		const existingMessage = this.messageResponse
 
 		if (existingMessage) {
-			await this.editMessage(existingMessage, message)
+			await this.tgNotifier.editMessage(existingMessage, message)
 		} else {
 			// Send new message
-			const newMessage = await this.sendMessage(message)
+			const newMessage = await this.tgNotifier.sendMessage(message)
 
 			if (newMessage) {
 				this.messageResponse = newMessage

@@ -1,32 +1,30 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { getEnvSafe, wait } from '../../../utils/common'
-import { ArbitrageNotifier } from '../../application/interfaces/arbitrage-notifier'
+import { wait } from '../../../../utils/common'
+import { ArbitrageNotifier } from '../../../application/interfaces/arbitrage-notifier'
 import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
-} from '../../application/interfaces/price-oracle'
+} from '../../../application/interfaces/price-oracle'
 import {
 	ArbitrageResult,
 	FailedArbitrageResult,
 	SuccessArbitrageResult,
-} from '../../application/use-cases/execution/arbitrage-executor/types'
-import { PathExecutionResult } from '../../application/use-cases/execution/path-executor/types'
-import { GraphArbitrageOpportunity } from '../../application/use-cases/finding/snapshot-opportunity-finder/types'
-import { Token } from '../../domain/entities/token'
-import { ChannelIdUtils } from '../../domain/services/channel-id-utils'
-import { EdgeIdUtils } from '../../domain/services/edge-id-utils'
-import { TgNotifier } from './tg-notifier'
-import { ArbitrageMessage, MessageResponse } from './types'
+} from '../../../application/use-cases/execution/arbitrage-executor/types'
+import { PathExecutionResult } from '../../../application/use-cases/execution/path-executor/types'
+import { GraphArbitrageOpportunity } from '../../../application/use-cases/finding/snapshot-opportunity-finder/types'
+import { Token } from '../../../domain/entities/token'
+import { ChannelIdUtils } from '../../../domain/services/channel-id-utils'
+import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
+import { TgNotifier } from '../tg-notifier'
+import { MessageResponse } from '../types'
+import { ArbitrageMessage } from './types'
 
 const MAX_ERROR_IN_ROW = 3
 type OpportunityId = string
 
 @Injectable()
-export class TgArbitrageNotifier
-	extends TgNotifier
-	implements ArbitrageNotifier
-{
+export class TgArbitrageNotifier implements ArbitrageNotifier {
 	logger = new Logger(TgArbitrageNotifier.name)
 
 	private errorInRow = 0
@@ -42,10 +40,8 @@ export class TgArbitrageNotifier
 		@Inject(PRICE_ORACLE_TOKEN)
 		private readonly priceOracle: PriceOracle,
 		private readonly configService: ConfigService,
-	) {
-		const messageThreadId = getEnvSafe('TG_BOT_MESSAGE_THREAD_ID')
-		super(messageThreadId)
-	}
+		private readonly tgNotifier: TgNotifier,
+	) {}
 
 	notifyArbitrageStart(opportunity: GraphArbitrageOpportunity) {
 		this.buildAndSendArbitrageStart(opportunity).catch((error) => {
@@ -65,7 +61,7 @@ export class TgArbitrageNotifier
 	private async buildAndSendArbitrageStart(
 		opportunity: GraphArbitrageOpportunity,
 	) {
-		if (this.errorInRow > MAX_ERROR_IN_ROW) return
+		if (this.errorInRow > MAX_ERROR_IN_ROW - 1) return
 
 		const status = '🔍 <b>Opportunity found, executing...</b>'
 
@@ -82,7 +78,7 @@ export class TgArbitrageNotifier
 
 		const messageToSend = this.buildMessage(arbitrageMessage)
 
-		const messageResponse = await this.sendMessage(messageToSend)
+		const messageResponse = await this.tgNotifier.sendMessage(messageToSend)
 
 		if (messageResponse) {
 			this.lastMessages.set(opportunity.id, {
@@ -168,9 +164,12 @@ export class TgArbitrageNotifier
 
 		try {
 			if (lastMessage) {
-				await this.editMessage(lastMessage.messageResponse, fullMessage)
+				await this.tgNotifier.editMessage(
+					lastMessage.messageResponse,
+					fullMessage,
+				)
 			} else {
-				await this.sendMessage(fullMessage)
+				await this.tgNotifier.sendMessage(fullMessage)
 			}
 		} finally {
 			this.lastMessages.delete(arbitrageOpportunity.id)

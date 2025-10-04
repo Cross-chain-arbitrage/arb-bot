@@ -1,12 +1,6 @@
 export interface TgNotifierConfig {
 	botName: string
 }
-export interface ArbitrageMessage {
-	header: string
-	status: string
-	opportunity: string
-	path: string
-}
 
 export interface MessageResponse {
 	ok: boolean

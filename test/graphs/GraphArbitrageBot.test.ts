@@ -1,7 +1,7 @@
 import { TransactionReceipt } from 'viem'
 import { arbitrum, fuse } from 'viem/chains'
 import { ClientManager } from '../../src/chain-client/chain-client.service'
-import { TgArbitrageNotifier } from '../../src/core/infrastructure/tg-notifier/tg-arbitrage-notifier'
+import { TgArbitrageNotifier } from '../../src/core/infrastructure/tg-notifier/tg-arbitrage-notifier/tg-arbitrage-notifier'
 import { Pool } from '../../src/dex/base/Pool'
 import { PoolUtils } from '../../src/dex/PoolUtils'
 import { GraphArbitrageBot } from '../../src/graphs/GraphArbitrageBot'
