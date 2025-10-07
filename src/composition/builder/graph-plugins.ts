@@ -8,6 +8,8 @@ import { LifiGraphPluginModule } from '../../core/infrastructure/plugins/lifi/co
 import { LifiGraphPlugin } from '../../core/infrastructure/plugins/lifi/lifi-graph-plugin'
 import { NativeWrapperGraphPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-graph-plugin.module'
 import { NativeWrapperGraphPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-graph-plugin'
+import { OftGraphPluginModule } from '../../core/infrastructure/plugins/oft/composition/oft-graph-plugin.module'
+import { OftGraphPlugin } from '../../core/infrastructure/plugins/oft/oft-graph-plugin'
 import { RaydiumGraphPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-graph-plugin.module'
 import { RaydiumGraphPlugin } from '../../core/infrastructure/plugins/raydium/raydium-graph-plugin'
 import { RelayGraphPluginModule } from '../../core/infrastructure/plugins/relay/composition/relay-graph-plugin.module'
@@ -27,6 +29,7 @@ export const graphPluginModules = [
 	FuseBridgeGraphPluginModule,
 	JupiterGraphPluginModule,
 	LifiGraphPluginModule,
+	OftGraphPluginModule,
 ]
 
 export const graphPlugins = [
@@ -39,4 +42,5 @@ export const graphPlugins = [
 	FuseBridgeGraphPlugin,
 	JupiterGraphPlugin,
 	LifiGraphPlugin,
+	OftGraphPlugin,
 ]

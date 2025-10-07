@@ -8,6 +8,8 @@ import { LifiQuoterPluginModule } from '../../core/infrastructure/plugins/lifi/c
 import { LifiQuoterPlugin } from '../../core/infrastructure/plugins/lifi/lifi-quoter-plugin'
 import { NativeWrapperQuoterPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-quoter-plugin.module'
 import { NativeWrapperQuoterPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-quoter-plugin'
+import { OftQuoterPluginModule } from '../../core/infrastructure/plugins/oft/composition/oft-quoter-plugin.module'
+import { OftQuoterPlugin } from '../../core/infrastructure/plugins/oft/oft-quoter-plugin'
 import { RaydiumQuoterPluginModule } from '../../core/infrastructure/plugins/raydium/composition/raydium-quoter-plugin.module'
 import { RaydiumQuoterPlugin } from '../../core/infrastructure/plugins/raydium/raydium-quoter-plugin'
 import { RelayQuoterPluginModule } from '../../core/infrastructure/plugins/relay/composition/relay-quoter-plugin.module'
@@ -27,6 +29,7 @@ export const quoterPluginModules = [
 	RaydiumQuoterPluginModule,
 	JupiterQuoterPluginModule,
 	LifiQuoterPluginModule,
+	OftQuoterPluginModule,
 ]
 
 export const quoterPlugins = [
@@ -39,4 +42,5 @@ export const quoterPlugins = [
 	RaydiumQuoterPlugin,
 	JupiterQuoterPlugin,
 	LifiQuoterPlugin,
+	OftQuoterPlugin,
 ]

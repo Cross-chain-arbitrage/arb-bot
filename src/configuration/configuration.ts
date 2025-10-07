@@ -24,6 +24,10 @@ import {
 	nativeWrapperConfigScheme,
 } from '../core/infrastructure/plugins/native-wrapper/configuration/native-wrapper-config'
 import {
+	OFT_CONFIG_KEY,
+	oftConfigScheme,
+} from '../core/infrastructure/plugins/oft/configuration/oft-config'
+import {
 	RAYDIUM_CONFIG_KEY,
 	raydiumConfigScheme,
 } from '../core/infrastructure/plugins/raydium/configuration/raydium-config'
@@ -67,6 +71,7 @@ export const configScheme = z.object({
 	[RAYDIUM_CONFIG_KEY]: raydiumConfigScheme,
 	[JUPITER_CONFIG_KEY]: jupiterConfigScheme,
 	[LIFI_CONFIG_KEY]: lifiConfigScheme,
+	[OFT_CONFIG_KEY]: oftConfigScheme,
 
 	/* ======== INFRASTRUCTURE ======== */
 
