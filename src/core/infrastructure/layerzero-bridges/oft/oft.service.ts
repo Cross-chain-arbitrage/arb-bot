@@ -97,7 +97,9 @@ export class OftService {
 		const client = this.chainClientService.getClient(tokenIn.chainId)
 
 		const isNative = tokenIn instanceof NativeCurrency
-		const value = quote.messagingFee.nativeFee + (isNative ? amount : 0n)
+		//TODO: It takes amount out, because this value has to be with removed dust. Need to consider case with different decimals
+		const value =
+			quote.messagingFee.nativeFee + (isNative ? minAmountLD : 0n)
 
 		const { request } = await client.simulateContract({
 			account: wallet.account,
@@ -148,26 +150,12 @@ export class OftService {
 
 	private async quote(
 		tokenIn: Token | NativeCurrency,
-		toChainId: number,
+		tokenOut: Token | NativeCurrency,
 		amount: bigint,
 	): Promise<{ messagingFee: MessagingFee }> {
 		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 
-		return this.quoteWithRecipient(
-			tokenIn,
-			toChainId,
-			wallet.account.address,
-			amount,
-		)
-	}
-
-	private async quoteWithRecipient(
-		tokenIn: Token | NativeCurrency,
-		toChainId: number,
-		recipient: Address,
-		amount: bigint,
-	): Promise<{ messagingFee: MessagingFee }> {
-		return await this._quote(amount, recipient, tokenIn, toChainId)
+		return this._quote(tokenIn, tokenOut, amount, wallet.account.address)
 	}
 
 	// async approveToBridge(tokenIn: Token | NativeCurrency, amount: bigint) {
@@ -188,27 +176,24 @@ export class OftService {
 	// }
 
 	private async _quote(
+		tokenIn: Token | NativeCurrency,
+		tokenOut: Token | NativeCurrency,
 		amount: bigint,
 		recipient: Address,
-		tokenIn: Token | NativeCurrency,
-		toChainId: number,
 	): Promise<{ messagingFee: MessagingFee }> {
-		const oftAddress = this.getOftAddress(tokenIn)
 		const messagingFee = await this.quoteSend(
-			oftAddress,
+			tokenIn,
+			tokenOut,
 			amount,
 			recipient,
-			tokenIn.chainId,
-			toChainId,
 		)
 		if (tokenIn instanceof NativeCurrency) return { messagingFee }
 
 		const [oftLimit, oftFeeDetails, oftReceipt] = await this.quoteOFT(
-			oftAddress,
+			tokenIn,
+			tokenOut,
 			amount,
 			recipient,
-			tokenIn.chainId,
-			toChainId,
 		)
 
 		if (oftLimit.minAmountLD > amount) {
@@ -234,31 +219,36 @@ export class OftService {
 	}
 
 	private async quoteSend(
-		token: Address,
+		tokenIn: Token | NativeCurrency,
+		tokenOut: Token | NativeCurrency,
 		amount: bigint,
 		recipient: Address,
-		fromChainId: number,
-		toChainId: number,
 	): Promise<MessagingFee> {
-		const toChainEId = getChainEIdByNativeChainId(toChainId)
+		const toChainEId = getChainEIdByNativeChainId(tokenOut.chainId)
 		const recipientBytes32 = padAddressToBytes32(recipient)
 
 		const payInLZ = false
 
+		const minAmountLD = this.calcDstAmountOut(
+			tokenIn.decimals,
+			tokenOut.decimals,
+			amount,
+		)
 		const sendParams = {
 			dstEid: toChainEId,
 			to: recipientBytes32,
 			amountLD: amount,
-			minAmountLD: amount,
+			minAmountLD,
 			extraOptions: EXTRA_OPTIONS,
 			composeMsg: '0x' as Hex,
 			oftCmd: '0x' as Hex,
 		}
 
-		const client = this.chainClientService.getClient(fromChainId)
+		const client = this.chainClientService.getClient(tokenIn.chainId)
 
+		const oftAddress = this.getOftAddress(tokenIn)
 		const messagingFee = await client.readContract({
-			address: token,
+			address: oftAddress,
 			abi: STARGATE_BASE_ABI,
 			functionName: 'quoteSend',
 			args: [sendParams, payInLZ],
@@ -268,17 +258,17 @@ export class OftService {
 	}
 
 	private async quoteOFT(
-		oftAddress: Address,
+		tokenIn: Token | NativeCurrency,
+		tokenOut: Token | NativeCurrency,
 		amount: bigint,
 		recipient: Address,
-		fromChainId: number,
-		toChainId: number,
 	): Promise<[OFTLimit, OFTFeeDetail[], OFTReceipt]> {
-		const toChainEId = getChainEIdByNativeChainId(toChainId)
+		const toChainEId = getChainEIdByNativeChainId(tokenOut.chainId)
 		const recipientBytes32 = padAddressToBytes32(recipient)
 
-		const wallet = this.chainClientService.getWalletClient(fromChainId)
+		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 
+		const oftAddress = this.getOftAddress(tokenIn)
 		const contract = getContract({
 			address: oftAddress,
 			abi: OFT_ABI,
@@ -290,7 +280,11 @@ export class OftService {
 				dstEid: toChainEId,
 				to: recipientBytes32,
 				amountLD: amount,
-				minAmountLD: amount,
+				minAmountLD: this.calcDstAmountOut(
+					tokenIn.decimals,
+					tokenOut.decimals,
+					amount,
+				),
 				extraOptions: EXTRA_OPTIONS,
 				composeMsg: '0x',
 				oftCmd: '0x',
@@ -317,7 +311,7 @@ export class OftService {
 		lzFee: TokenAmount
 		gas: bigint
 	}> {
-		const quote = await this.quote(tokenIn, tokenOut.chainId, amountIn)
+		const quote = await this.quote(tokenIn, tokenOut, amountIn)
 
 		const lzFee = new TokenAmount(
 			this.chainClientService,

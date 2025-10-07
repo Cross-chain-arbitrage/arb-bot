@@ -33,7 +33,7 @@ export class LZBridgeTx implements BridgeTx {
 			this.srcTx.hash,
 		)
 
-		this.dstTx = new Tx(message.dstTxHash as Hash, message.dstChainId)
+		this.dstTx = new Tx(message.dstTxHash as Hash, this.dstToken.chainId)
 
 		return message
 	}
