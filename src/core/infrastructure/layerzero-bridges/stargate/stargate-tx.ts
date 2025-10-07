@@ -16,13 +16,6 @@ export class StargateBridgeTx extends LZBridgeTx {
 		override readonly dstToken: Token | NativeCurrency,
 		amount: bigint,
 	) {
-		super(
-			layerZeroScanService,
-			srcTxHash,
-			srcToken.chainId,
-			srcToken,
-			dstToken,
-			amount,
-		)
+		super(layerZeroScanService, srcTxHash, srcToken, dstToken, amount)
 	}
 }

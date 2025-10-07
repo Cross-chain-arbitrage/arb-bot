@@ -21,12 +21,11 @@ export class LZBridgeTx implements BridgeTx {
 	constructor(
 		private readonly layerZeroScanService: LayerZeroScanService,
 		hash: Hash,
-		chainId: number,
 		public readonly srcToken: Token | NativeCurrency,
 		public readonly dstToken: Token | NativeCurrency,
 		public readonly amount: bigint,
 	) {
-		this.srcTx = new Tx(hash, chainId)
+		this.srcTx = new Tx(hash, srcToken.chainId)
 	}
 
 	async waitForBridgeToFinish(): Promise<Message> {
