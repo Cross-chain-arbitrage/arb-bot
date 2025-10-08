@@ -35,7 +35,19 @@ export class StargateExecutorPlugin
 			kind: 'crosschain',
 			edge,
 			execute: this.execute.bind(this, edge),
+			prepareExecution: (edge: Edge<Token | NativeCurrency>) =>
+				this.prepareExecution(edge),
 		}
+	}
+
+	async prepareExecution(edge: Edge<Token | NativeCurrency>) {
+		const approveResult = await this.stargateService.approveInfinite(
+			edge.from,
+		)
+
+		if (approveResult === undefined) return { result: 'No approval needed' }
+
+		return { result: `Prepared approval: ${approveResult.transactionHash}` }
 	}
 
 	async execute(

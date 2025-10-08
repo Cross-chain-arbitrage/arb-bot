@@ -226,6 +226,16 @@ export class StargateService {
 		return tx
 	}
 
+	async approveInfinite(tokenIn: Token | NativeCurrency) {
+		if (tokenIn instanceof NativeCurrency) return
+
+		const poolOrOFT = await this.getBridgeAddress(tokenIn)
+
+		const res = await tokenIn.approveInfinite(poolOrOFT)
+
+		return res
+	}
+
 	private async _quote(
 		metadata: StargateTokenMetadata,
 		amount: bigint,
