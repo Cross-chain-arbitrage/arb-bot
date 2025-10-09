@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 import { fromHex, Hash } from 'viem'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
@@ -12,6 +12,7 @@ const DEFAULT_SLIPPAGE: bigint = 50n
 
 @Injectable()
 export class LifiService {
+	logger = new Logger(LifiService.name)
 	axiosClient: AxiosInstance
 
 	constructor(private readonly chainClientService: ChainClientService) {
@@ -135,6 +136,13 @@ export class LifiService {
 		)
 
 		const amountOut = balanceTokenOutAfter - balanceTokenOutBefore
+		if (amountOut === 0n) {
+			this.logger.debug('amountOut is zero', {
+				balanceTokenOutBefore,
+				balanceTokenOutAfter,
+				txHash,
+			})
+		}
 
 		return { status, receipt, amountOut }
 	}
