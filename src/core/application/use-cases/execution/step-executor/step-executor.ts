@@ -45,7 +45,7 @@ export class StepExecutor {
 		return this.retryPhase<Execution>(
 			() => edgeExecutor.execute(amountIn),
 			{
-				maxAttempts: 2,
+				maxAttempts: 3,
 			},
 			StepPhase.EXECUTE,
 		)
@@ -65,7 +65,7 @@ export class StepExecutor {
 		return this.retryPhase<ExecutionCost>(
 			() => confirmation.getExecutionCost(),
 			{
-				maxAttempts: 2,
+				maxAttempts: 3,
 			},
 			StepPhase.GET_COST,
 		)
