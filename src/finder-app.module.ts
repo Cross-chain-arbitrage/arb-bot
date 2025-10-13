@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { GraphBuilderModule } from './composition/builder/graph-builder.module'
 import { ArbitrageFinderModule } from './composition/finder/arbitrage-finder.module'
-import { pinoLogger } from './composition/logging/pino-logger'
 import { loadConfig } from './configuration/configuration'
 import { GRAPH_VISUALIZER_TOKEN } from './core/application/interfaces/graph-visualizer'
 import { BotOrchestrator } from './core/application/use-cases/orchestration/bot-orchestrator/bot-orchestrator'
@@ -12,7 +11,6 @@ import { FinderScheduler } from './core/presentation/finder-scheduler/finder-sch
 
 @Module({
 	imports: [
-		pinoLogger,
 		GraphBuilderModule,
 		ArbitrageFinderModule,
 		PriceOracleModule,

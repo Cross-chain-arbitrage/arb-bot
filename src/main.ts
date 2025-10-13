@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core'
-import { Logger } from 'nestjs-pino'
 import { ArbitrageAppModule } from './arbitrage-app.module'
+import { pinoLogger } from './composition/logging/pino-logger'
 import { loadConfig } from './configuration/configuration'
 import { FinderAppModule } from './finder-app.module'
 
@@ -8,21 +8,19 @@ import { FinderAppModule } from './finder-app.module'
 
 async function main() {
 	const config = loadConfig()
-	const context = await NestFactory.createApplicationContext(
+
+	await NestFactory.createApplicationContext(
 		config.isDryRun ? FinderAppModule : ArbitrageAppModule,
+		{ logger: pinoLogger },
 	)
 
-	context.useLogger(context.get(Logger))
-
-	const logger = context.get(Logger)
-
 	process.on('uncaughtException', (error) => {
-		logger.fatal('Uncaught exception', error)
+		pinoLogger.fatal('Uncaught exception', error)
 		process.exit(0)
 	})
 
 	process.on('unhandledRejection', (error) => {
-		logger.fatal('Unhandled rejection', error)
+		pinoLogger.fatal('Unhandled rejection', error)
 		process.exit(0)
 	})
 }

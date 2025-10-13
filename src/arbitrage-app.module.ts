@@ -4,7 +4,6 @@ import { BalanceReporterModule } from './composition/balance-reporter/balance-re
 import { GraphBuilderModule } from './composition/builder/graph-builder.module'
 import { ArbitrageExecutorModule } from './composition/executor/arbitrage-executor.module'
 import { ArbitrageFinderModule } from './composition/finder/arbitrage-finder.module'
-import { pinoLogger } from './composition/logging/pino-logger'
 import { loadConfig } from './configuration/configuration'
 import { GRAPH_VISUALIZER_TOKEN } from './core/application/interfaces/graph-visualizer'
 import { ArbitrageOrchestrator } from './core/application/use-cases/orchestration/arbitrage-orchestrator/arbitrage-orchestrator'
@@ -15,7 +14,6 @@ import { ArbitrageScheduler } from './core/presentation/arbitrage-scheduler/arbi
 
 @Module({
 	imports: [
-		pinoLogger,
 		GraphBuilderModule,
 		ArbitrageFinderModule,
 		ArbitrageExecutorModule,
