@@ -156,11 +156,14 @@ export class LifiService {
 					.account.address,
 			)
 
-			this.logger.debug({
-				balanceTokenOutAfter,
-				balanceTokenOutAfterWaiting,
-				balanceTokenOutBefore,
-			})
+			this.logger.debug(
+				{
+					balanceTokenOutAfter,
+					balanceTokenOutAfterWaiting,
+					balanceTokenOutBefore,
+				},
+				'amounts after waiting',
+			)
 			return {
 				status,
 				receipt,
