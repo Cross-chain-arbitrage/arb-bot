@@ -53,7 +53,7 @@ export class LifiService {
 			},
 		})
 		const quote = QuoteSchema.parse(response.data)
-		this.logger.debug('lifi tool', { tool: quote.estimate.tool })
+		this.logger.debug({ tool: quote.estimate.tool }, 'lifi tool')
 
 		return {
 			rawQuote: quote,
@@ -74,7 +74,7 @@ export class LifiService {
 			amountIn,
 			slippage,
 		)
-		this.logger.debug('lifi tool', { tool: rawQuote.estimate.tool })
+		this.logger.debug({ tool: rawQuote.estimate.tool }, 'lifi tool')
 
 		const balanceTokenOutBefore = await tokenOut.balanceOf(
 			this.chainClientService.getWalletClient(tokenOut.chainId).account
@@ -139,11 +139,14 @@ export class LifiService {
 
 		const amountOut = balanceTokenOutAfter - balanceTokenOutBefore
 		if (amountOut === 0n) {
-			this.logger.debug('amountOut is zero', {
-				balanceTokenOutBefore,
-				balanceTokenOutAfter,
-				txHash,
-			})
+			this.logger.debug(
+				{
+					balanceTokenOutBefore,
+					balanceTokenOutAfter,
+					txHash,
+				},
+				'amountOut is zero',
+			)
 		}
 
 		return { status, receipt, amountOut }
