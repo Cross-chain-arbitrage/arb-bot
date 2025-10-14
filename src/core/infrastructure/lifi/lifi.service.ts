@@ -49,7 +49,7 @@ export class LifiService {
 				fromAddress: walletAddress,
 				fromAmount: amountIn,
 				slippage: Number(slippage) / Number(BASIS_POINTS),
-				denyExchange: 'odos', // odos returned fake amount out
+				denyExchanges: ['odos', '1inch'], // these services returns tx that can't be executed
 			},
 		})
 		const quote = QuoteSchema.parse(response.data)
