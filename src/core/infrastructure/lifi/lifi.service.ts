@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 import { fromHex, Hash } from 'viem'
+import { wait } from '../../../utils/common'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
 import { TokenBase } from '../evm/primitives/tokens/TokenBase'
 import { QuoteSchema } from './schemas/quote.schema'
@@ -145,8 +146,26 @@ export class LifiService {
 					balanceTokenOutAfter,
 					txHash,
 				},
-				'amountOut is zero',
+				'amountOut is zero, waiting 5 seconds',
 			)
+
+			await wait(5000)
+
+			const balanceTokenOutAfterWaiting = await tokenOut.balanceOf(
+				this.chainClientService.getWalletClient(tokenOut.chainId)
+					.account.address,
+			)
+
+			this.logger.debug({
+				balanceTokenOutAfter,
+				balanceTokenOutAfterWaiting,
+				balanceTokenOutBefore,
+			})
+			return {
+				status,
+				receipt,
+				amountOut: balanceTokenOutAfterWaiting - balanceTokenOutBefore,
+			}
 		}
 
 		return { status, receipt, amountOut }
