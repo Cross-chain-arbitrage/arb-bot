@@ -7,7 +7,6 @@ import {
 	EdgeExecutor,
 	EdgeExecutorRegistry,
 	Execution,
-	ExecutionCost,
 } from '../../../interfaces/edge-executor'
 import { backoffMs } from '../utils/backoff'
 import { StepExecutionTelemetry } from './step-execution-telemetry'
@@ -32,12 +31,9 @@ export class StepExecutor {
 
 		const confirmation = await this.confirmWithRetry(execution)
 
-		const executionCost = await this.getExecutionCostWithRetry(confirmation)
-
 		return {
 			execution,
 			confirmation,
-			executionCost,
 		}
 	}
 
@@ -58,16 +54,6 @@ export class StepExecutor {
 				maxAttempts: 3,
 			},
 			StepPhase.CONFIRM,
-		)
-	}
-
-	async getExecutionCostWithRetry(confirmation: Confirmation) {
-		return this.retryPhase<ExecutionCost>(
-			() => confirmation.getExecutionCost(),
-			{
-				maxAttempts: 3,
-			},
-			StepPhase.GET_COST,
 		)
 	}
 

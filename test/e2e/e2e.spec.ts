@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing'
-import { Logger } from 'nestjs-pino'
 import { ArbitrageAppModule } from '../../src/arbitrage-app.module'
+import { pinoLogger } from '../../src/composition/logging/pino-logger'
 import { PoolUtils } from '../../src/core/infrastructure/dex/pool-utils'
 import { ChainClientService } from '../../src/core/infrastructure/evm/chain-client/chain-client.service'
 import { wait } from '../../src/utils/common'
@@ -25,9 +25,8 @@ describe('E2E', () => {
 		})
 			.overrideProvider(ChainClientService)
 			.useValue(mockChainClientService)
+			.setLogger(pinoLogger)
 			.compile()
-
-		testAppModule.useLogger(testAppModule.get(Logger))
 
 		const poolUtils = testAppModule.get(PoolUtils)
 

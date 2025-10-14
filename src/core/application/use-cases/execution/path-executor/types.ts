@@ -1,4 +1,5 @@
 import { Path, Step } from '../../../../domain/services/bellman-ford'
+import { Confirmation, Execution } from '../../../interfaces/edge-executor'
 
 export interface PathExecutorParams {
 	path: Path
@@ -28,3 +29,10 @@ export type ValidateStep = (
 	step: Step,
 	amountIn: bigint,
 ) => Promise<{ isValid: true } | { isValid: false; reason: string }>
+
+export type StepProcessingResult = {
+	step: Step
+	confirmation: Confirmation
+	execution: Execution
+	attempt: number
+}
