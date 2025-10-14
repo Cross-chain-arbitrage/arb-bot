@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { withRetry } from 'viem'
 import { wait } from '../../../../../utils/common'
 import { Step } from '../../../../domain/services/bellman-ford'
 import { StepExecutor } from '../step-executor/step-executor'
@@ -27,11 +28,11 @@ export class PathExecutor {
 		let nextAmountIn = params.startAmount
 
 		for (const step of params.path) {
-			const validationResult = await validateStep?.(
-				params,
-				step,
-				nextAmountIn,
-			)
+			const validationResult = validateStep
+				? await withRetry(() =>
+						validateStep(params, step, nextAmountIn),
+					)
+				: undefined
 
 			if (validationResult?.isValid === false) {
 				return this.buildFailedResult(
