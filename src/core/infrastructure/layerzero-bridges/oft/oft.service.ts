@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { getContract, zeroAddress } from 'viem'
+import { getContract } from 'viem'
 import { createCustomError } from '../../../../utils/common'
 import { OFT_ABI } from '../../evm/abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../evm/abi/stargate/stargateBase'
@@ -66,10 +66,6 @@ export class OftService {
 			)
 		}
 
-		// if (tokenIn instanceof Token) {
-		// 	await this.validateAllowance(recipient, poolOrOFT, amount, tokenIn)
-		// }
-
 		const { quote, amountOut } = await this.quoteBridge(
 			tokenIn,
 			tokenOut,
@@ -133,21 +129,6 @@ export class OftService {
 		}
 	}
 
-	// private async validateAllowance(
-	// 	recipient: Address,
-	// 	poolOrOFT: Address,
-	// 	amount: bigint,
-	// 	token: Token,
-	// ): Promise<void> {
-	// 	const allowance = await token.allowance(recipient, poolOrOFT)
-
-	// 	if (allowance >= amount) return
-
-	// 	throw new OftError(
-	// 		`Insufficient allowance, needed ${amount}, has ${allowance}`,
-	// 	)
-	// }
-
 	private async quote(
 		tokenIn: Token | NativeCurrency,
 		tokenOut: Token | NativeCurrency,
@@ -158,6 +139,7 @@ export class OftService {
 		return this._quote(tokenIn, tokenOut, amount, wallet.account.address)
 	}
 
+	//TODO: implement approve
 	// async approveToBridge(tokenIn: Token | NativeCurrency, amount: bigint) {
 	// 	if (tokenIn instanceof NativeCurrency) return
 
@@ -187,7 +169,18 @@ export class OftService {
 			amount,
 			recipient,
 		)
-		if (tokenIn instanceof NativeCurrency) return { messagingFee }
+
+		const FEE_MULTIPLIER = 11000n
+		const BASIS_POINTS = 10000n
+
+		const messagingFeeWithExtra: MessagingFee = {
+			lzTokenFee:
+				(messagingFee.lzTokenFee * FEE_MULTIPLIER) / BASIS_POINTS,
+			nativeFee: (messagingFee.nativeFee * FEE_MULTIPLIER) / BASIS_POINTS,
+		}
+
+		if (tokenIn instanceof NativeCurrency)
+			return { messagingFee: messagingFeeWithExtra }
 
 		const [oftLimit, oftFeeDetails, oftReceipt] = await this.quoteOFT(
 			tokenIn,
@@ -196,20 +189,10 @@ export class OftService {
 			recipient,
 		)
 
-		if (oftLimit.minAmountLD > amount) {
-			throw new OftError(
-				`Bridging min amount is greater than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
-			)
-		}
-
-		if (oftLimit.maxAmountLD < amount) {
-			throw new OftError(
-				`Bridging max amount is less than the amount, has ${oftLimit.maxAmountLD}, needed ${amount}`,
-			)
-		}
+		this.validateBridgingAmount(oftLimit, amount)
 
 		const result: QuoteResult = {
-			messagingFee,
+			messagingFee: messagingFeeWithExtra,
 			oftLimit,
 			oftFeeDetails,
 			oftReceipt,
@@ -349,28 +332,16 @@ export class OftService {
 		return amountOutOnDst
 	}
 
-	private validateRecipient(chainId: number, recipient: Address) {
-		if (recipient === zeroAddress) {
-			throw new OftError('Recipient cannot be the zero address')
-		}
-
-		const wallet = this.chainClientService.getWalletClient(chainId)
-
-		if (wallet.account.address !== recipient) {
-			throw new OftError(
-				'Recipient is not the same as the wallet address',
-			)
-		}
-	}
-
 	private validateBridgingAmount(oftLimit: OFTLimit, amount: bigint) {
 		if (oftLimit.minAmountLD > amount) {
 			throw new OftError(
-				`Expected amount out is less than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
+				`Bridging min amount is greater than the amount, has ${oftLimit.minAmountLD}, needed ${amount}`,
 			)
-		} else if (oftLimit.maxAmountLD < amount) {
+		}
+
+		if (oftLimit.maxAmountLD < amount) {
 			throw new OftError(
-				`Expected amount out is greater than the amount, has ${oftLimit.maxAmountLD}, needed ${amount}`,
+				`Bridging max amount is less than the amount, has ${oftLimit.maxAmountLD}, needed ${amount}`,
 			)
 		}
 	}
