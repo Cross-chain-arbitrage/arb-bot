@@ -270,9 +270,17 @@ export class StargateService {
 				`Bridging max amount is less than the amount, has ${oftLimit.maxAmountLD}, needed ${amount}`,
 			)
 		}
+		const FEE_MULTIPLIER = 11000n
+		const BASIS_POINTS = 10000n
+
+		const messagingFeeWithExtra: MessagingFee = {
+			lzTokenFee:
+				(messagingFee.lzTokenFee * FEE_MULTIPLIER) / BASIS_POINTS,
+			nativeFee: (messagingFee.nativeFee * FEE_MULTIPLIER) / BASIS_POINTS,
+		}
 
 		const result: QuoteResult = {
-			messagingFee,
+			messagingFee: messagingFeeWithExtra,
 			oftLimit,
 			oftFeeDetails,
 			oftReceipt,
