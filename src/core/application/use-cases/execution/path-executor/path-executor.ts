@@ -40,6 +40,7 @@ export class PathExecutor {
 					nextAmountIn,
 					validationResult.reason,
 					await this.getTotalCostInUsd(stepResults),
+					'validation',
 				)
 			}
 
@@ -53,6 +54,7 @@ export class PathExecutor {
 					nextAmountIn,
 					result.reason,
 					await this.getTotalCostInUsd(stepResults),
+					'execution',
 				)
 			}
 
@@ -94,6 +96,7 @@ export class PathExecutor {
 		amountIn: bigint,
 		failureReason: string,
 		totalExecutionCostInUsd: number,
+		failureType: 'validation' | 'execution',
 	): FailedPathExecutionResult {
 		return {
 			totalExecutionCostInUsd,
@@ -101,6 +104,7 @@ export class PathExecutor {
 			reason: failureReason,
 			step,
 			stepAmountIn: amountIn,
+			failureType,
 		}
 	}
 
