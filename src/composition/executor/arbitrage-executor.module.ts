@@ -10,6 +10,8 @@ import { ArbitrageExecutor } from '../../core/application/use-cases/execution/ar
 import { ExecutionPreparer } from '../../core/application/use-cases/execution/execution-preparer/execution-preparer'
 import { PathExecutionTelemetry } from '../../core/application/use-cases/execution/path-executor/path-execution-telemetry'
 import { PathExecutor } from '../../core/application/use-cases/execution/path-executor/path-executor'
+import { PathRecovery } from '../../core/application/use-cases/execution/path-recovery/path-recovery'
+import { PathRecoveryTelemetry } from '../../core/application/use-cases/execution/path-recovery/path-recovery-telemetry'
 import { StepExecutionTelemetry } from '../../core/application/use-cases/execution/step-executor/step-execution-telemetry'
 import { StepExecutor } from '../../core/application/use-cases/execution/step-executor/step-executor'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
@@ -17,6 +19,7 @@ import { GRAPH_TOKEN } from '../../core/application/use-cases/graph-builder/grap
 import { TokenValuatorModule } from '../../core/application/use-cases/token-valuator/token-valuator.module'
 import { Graph } from '../../core/domain/entities/graph'
 import { TgArbitrageNotifierModule } from '../../core/infrastructure/tg-notifier/tg-arbitrage-notifier/tg-arbitrgage-notifier.module'
+import { BalanceOracleModule } from '../balance-oracle/balance-oracle.module'
 import { GraphBuilderModule } from '../builder/graph-builder.module'
 import { executorPluginModules, executorPlugins } from './executor-plugins'
 import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
@@ -26,6 +29,7 @@ import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 		TgArbitrageNotifierModule,
 		TokenValuatorModule,
 		GraphBuilderModule,
+		BalanceOracleModule,
 		...executorPluginModules,
 		...quoterPluginModules,
 	],
@@ -33,6 +37,8 @@ import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 		ArbitrageExecutor,
 		PathExecutor,
 		PathExecutionTelemetry,
+		PathRecovery,
+		PathRecoveryTelemetry,
 		StepExecutionTelemetry,
 		ArbitrageExecutionTelemetry,
 		StepExecutor,
