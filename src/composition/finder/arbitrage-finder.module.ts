@@ -37,6 +37,6 @@ import { snapshotPluginModules, snapshotPlugins } from './snapshot-plugins'
 			},
 		},
 	],
-	exports: [ArbitrageFinder],
+	exports: [ArbitrageFinder, GraphSnapshotBuilder],
 })
 export class ArbitrageFinderModule {}

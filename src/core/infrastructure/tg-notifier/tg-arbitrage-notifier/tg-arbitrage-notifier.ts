@@ -111,7 +111,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 			header: this.buildHeader(),
 			status,
 			opportunity: this.buildOpportunity(opportunity, startTokenPrice),
-			path: this.buildPath(opportunity, result),
+			path: this.buildPath(opportunity, result.pathExecutionResult),
 		}
 		await this.editOrSendMessage(opportunity, arbitrageMessage)
 	}
@@ -120,7 +120,8 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 		opportunity: GraphArbitrageOpportunity,
 		result: SuccessArbitrageResult,
 	) {
-		const { actualEndAmount, totalExecutionCostInUsd, profitInUsd } = result
+		const { pathExecutionResult, profitInUsd } = result
+		const { actualEndAmount, totalExecutionCostInUsd } = pathExecutionResult
 
 		const actualAmountOutFormatted = Number(
 			opportunity.quotedStepSequence[0].edge.from.formatUnits(
@@ -140,20 +141,27 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 	}
 
 	private buildFailedStatus(result: FailedArbitrageResult) {
-		const { reason } = result
+		const { recoveryResult, pathExecutionResult } = result
 
 		//tg allows to send up to ~4000 symbols
 		const MAX_REASON_LENGTH = 2000
 		const reasonToSend =
-			reason.length > MAX_REASON_LENGTH
-				? reason.slice(0, MAX_REASON_LENGTH) + '...'
-				: reason
+			pathExecutionResult.reason.length > MAX_REASON_LENGTH
+				? pathExecutionResult.reason.slice(0, MAX_REASON_LENGTH) + '...'
+				: pathExecutionResult.reason
 
 		let status = '❌ <b>Execution error</b>\n\n'
+
+		let cost = pathExecutionResult.totalExecutionCostInUsd
+		if (recoveryResult.status === 'success') {
+			status += 'Recovery successful\n\n'
+			cost = recoveryResult.pathExecutionResult.totalExecutionCostInUsd
+		} else status += 'Recovery failed\n\n'
+
 		if (this.errorInRow === MAX_ERROR_IN_ROW)
 			status += `⚠️ Max errors in a row reached (${MAX_ERROR_IN_ROW}), next messages will not be sent until successful execution \n\n`
 		status += `Reason: ${reasonToSend}\n\n`
-		status += `Cost: $${result.totalExecutionCostInUsd.toFixed(2)}\n`
+		status += `Cost: $${cost.toFixed(2)}\n`
 		status += `Execution Time: ${this.formatTime(result.executionTime)}`
 
 		return status

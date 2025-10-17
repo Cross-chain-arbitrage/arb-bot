@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { Graph } from '../../../../domain/entities/graph'
+import { Token } from '../../../../domain/entities/token'
 import { QuotedPath } from '../../../../domain/value-objects/path'
 import {
 	EDGE_EXECUTOR_REGISTRY_TOKEN,
@@ -14,19 +16,32 @@ import {
 	PriceOracle,
 } from '../../../interfaces/price-oracle'
 import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
+import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
 import { TokenValuator } from '../../token-valuator/token-valuator'
 import { PathExecutor } from '../path-executor/path-executor'
-import { PathExecutionResult, PathExecutorParams } from '../path-executor/types'
+import {
+	PathExecutorParams,
+	SuccessPathExecutionResult,
+} from '../path-executor/types'
+import { PathRecovery } from '../path-recovery/path-recovery'
 import { ArbitrageExecutionTelemetry } from './arbitrage-execution-telemetry'
 import { getStartStepIndex } from './helpers'
-import { ArbitrageExecutorConfig, ArbitrageResult } from './types'
+import {
+	ArbitrageExecutorConfig,
+	ArbitrageResult,
+	FailedArbitrageResult,
+	SuccessArbitrageResult,
+} from './types'
 
 export const ARBITRAGE_EXECUTOR_CONFIG_KEY = 'arbitrageExecutor'
 
 @Injectable()
 export class ArbitrageExecutor {
+	private readonly config: ArbitrageExecutorConfig
+
 	constructor(
 		private readonly pathExecutor: PathExecutor,
+		private readonly pathRecovery: PathRecovery,
 		private readonly telemetry: ArbitrageExecutionTelemetry,
 		private readonly configService: ConfigService,
 		private readonly tokenValuator: TokenValuator,
@@ -39,7 +54,20 @@ export class ArbitrageExecutor {
 
 		@Inject(PRICE_ORACLE_TOKEN)
 		private readonly priceOracle: PriceOracle,
-	) {}
+
+		@Inject(GRAPH_TOKEN)
+		private readonly graph: Graph<Token>,
+	) {
+		const config = this.configService.get<ArbitrageExecutorConfig>(
+			ARBITRAGE_EXECUTOR_CONFIG_KEY,
+		)
+
+		if (!config) throw new Error('Arbitrage executor config not found')
+
+		this.validateConfig(config)
+
+		this.config = config
+	}
 
 	async execute(
 		opportunity: GraphArbitrageOpportunity,
@@ -71,7 +99,27 @@ export class ArbitrageExecutor {
 				),
 		)
 
-		const arbitrageResult = await this.buildResult(
+		const executionTime = Date.now() - startTimestamp
+
+		if (pathResult.status === 'failed') {
+			const recoveryResult = await this.pathRecovery.attemptRecovery({
+				failedStepIndex: pathResult.stepIndex,
+				originalPath: opportunityToExecute,
+				minTokenThresholds: new Map(),
+			})
+			const arbitrageResult: FailedArbitrageResult = {
+				status: 'failed',
+				pathExecutionResult: pathResult,
+				recoveryResult,
+				executionTime,
+			}
+
+			this.telemetry.onArbitrageEnd(opportunityToExecute, arbitrageResult)
+
+			return arbitrageResult
+		}
+
+		const arbitrageResult = await this.buildSuccessResult(
 			opportunityToExecute,
 			pathResult,
 			startTimestamp,
@@ -85,11 +133,7 @@ export class ArbitrageExecutor {
 	private async getOpportunityToExecute(
 		opportunity: GraphArbitrageOpportunity,
 	): Promise<GraphArbitrageOpportunity> {
-		const config = this.configService.get<ArbitrageExecutorConfig>(
-			ARBITRAGE_EXECUTOR_CONFIG_KEY,
-		)
-
-		const startRules = config?.startRules
+		const startRules = this.config.startRules
 
 		if (!startRules) return opportunity
 
@@ -138,20 +182,14 @@ export class ArbitrageExecutor {
 		return newOpportunity
 	}
 
-	private async buildResult(
+	private async buildSuccessResult(
 		opportunity: GraphArbitrageOpportunity,
-		pathResult: PathExecutionResult,
+		pathExecutionResult: SuccessPathExecutionResult,
 		startTimestamp: number,
-	): Promise<ArbitrageResult> {
+	): Promise<SuccessArbitrageResult> {
 		const executionTime = Date.now() - startTimestamp
 
-		if (pathResult.status === 'failed')
-			return {
-				...pathResult,
-				executionTime,
-			}
-
-		const { actualEndAmount, totalExecutionCostInUsd } = pathResult
+		const { actualEndAmount, totalExecutionCostInUsd } = pathExecutionResult
 
 		const startToken = opportunity.quotedStepSequence[0].edge.from
 
@@ -165,7 +203,8 @@ export class ArbitrageExecutor {
 		const actualProfit = actualRevenue - totalExecutionCostInUsd
 
 		return {
-			...pathResult,
+			pathExecutionResult: pathExecutionResult,
+			status: 'success',
 			executionTime,
 			profitInUsd: actualProfit,
 			revenueInUsd: actualRevenue,
@@ -206,5 +245,40 @@ export class ArbitrageExecutor {
 			}
 
 		return { isValid: true }
+	}
+
+	validateConfig(config: ArbitrageExecutorConfig): void {
+		if (config.startRules) {
+			for (const startRule of config.startRules) {
+				const startToken = this.graph.getNode(startRule.startTokenId)
+				const directionToken = this.graph.getNode(
+					startRule.directionTokenId,
+				)
+
+				if (!startToken)
+					throw new Error(
+						`Start token not found for start rule ${startRule.startTokenId}`,
+					)
+
+				if (!directionToken)
+					throw new Error(
+						`Direction token not found for start rule ${startRule.directionTokenId}`,
+					)
+			}
+		}
+
+		if (config.pathRecoveryConfig.enabled) {
+			const iterableThresholds =
+				config.pathRecoveryConfig.minTokenThresholds || []
+
+			for (const { tokenId, threshold } of iterableThresholds) {
+				const token = this.graph.getNode(tokenId)
+
+				if (!token)
+					throw new Error(
+						`Token not found for min token threshold ${tokenId}`,
+					)
+			}
+		}
 	}
 }

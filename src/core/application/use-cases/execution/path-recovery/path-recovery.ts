@@ -8,8 +8,7 @@ import {
 } from '../../../interfaces/balance-oracle'
 import { PathFinder } from '../../finding/path-finder/path-finder'
 import { PathExecutor } from '../path-executor/path-executor'
-import { PathExecutionResult } from '../path-executor/types'
-import { PathRecoveryParams } from './types'
+import { PathRecoveryParams, PathRecoveryResult } from './types'
 
 @Injectable()
 export class PathRecovery {
@@ -20,35 +19,56 @@ export class PathRecovery {
 		private readonly pathFinder: PathFinder,
 	) {}
 
-	async attemptRecovery(params: PathRecoveryParams): Promise<{
-		pathExecutionResult: PathExecutionResult
-		path: QuotedPath<Token>
-	}> {
-		const stuckAmount = await this.getStuckAmount(
-			params.originalPath.quotedStepSequence[params.failedStepIndex].edge
-				.from,
-			params.minTokenThresholds,
-		)
+	async attemptRecovery(
+		params: PathRecoveryParams,
+	): Promise<PathRecoveryResult> {
+		try {
+			const stuckAmount = await this.getStuckAmount(
+				params.originalPath.quotedStepSequence[params.failedStepIndex]
+					.edge.from,
+				params.minTokenThresholds,
+			)
 
-		const recoveryPath = await this.getRecoveryPath(
-			params.originalPath.quotedStepSequence[params.failedStepIndex].edge
-				.from,
-			params.failedStepIndex,
-			params.originalPath,
-		)
+			const recoveryPath = await this.getRecoveryPath(
+				params.originalPath.quotedStepSequence[params.failedStepIndex]
+					.edge.from,
+				params.failedStepIndex,
+				params.originalPath,
+			)
 
-		const pathExecutionResult = await this.pathExecutor.executePath({
-			path: {
-				stepSequence: recoveryPath.quotedStepSequence.map((step) => ({
-					edge: step.edge,
-				})),
-				startAmount: stuckAmount,
-			},
-		})
+			const pathExecutionResult = await this.pathExecutor.executePath({
+				path: {
+					stepSequence: recoveryPath.quotedStepSequence.map(
+						(step) => ({
+							edge: step.edge,
+						}),
+					),
+					startAmount: stuckAmount,
+				},
+			})
 
-		return {
-			pathExecutionResult,
-			path: recoveryPath,
+			if (pathExecutionResult.status === 'failed') {
+				return {
+					status: 'failed',
+					reason: pathExecutionResult.reason,
+					failureType: 'execution',
+					pathExecutionResult,
+					path: recoveryPath,
+				}
+			}
+
+			return {
+				status: 'success',
+				pathExecutionResult,
+				path: recoveryPath,
+			}
+		} catch (error) {
+			return {
+				status: 'failed',
+				reason:
+					error instanceof Error ? error.message : 'Unknown error',
+				failureType: 'preparation',
+			}
 		}
 	}
 

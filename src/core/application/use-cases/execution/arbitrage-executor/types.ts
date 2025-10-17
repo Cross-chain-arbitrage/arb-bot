@@ -3,14 +3,20 @@ import {
 	FailedPathExecutionResult,
 	SuccessPathExecutionResult,
 } from '../path-executor/types'
+import { PathRecoveryResult } from '../path-recovery/types'
 
-export type SuccessArbitrageResult = SuccessPathExecutionResult & {
+export type SuccessArbitrageResult = {
+	status: 'success'
+	pathExecutionResult: SuccessPathExecutionResult
 	profitInUsd: number
 	revenueInUsd: number
 	executionTime: number
 }
 
-export type FailedArbitrageResult = FailedPathExecutionResult & {
+export type FailedArbitrageResult = {
+	status: 'failed'
+	pathExecutionResult: FailedPathExecutionResult
+	recoveryResult: PathRecoveryResult
 	executionTime: number
 }
 
@@ -22,9 +28,12 @@ export interface StartRule {
 }
 export interface PathRecoveryConfig {
 	enabled: boolean
-	minTokenThresholds?: Map<TokenId, number>
+	minTokenThresholds?: Array<{
+		tokenId: TokenId
+		threshold: number
+	}>
 }
 export interface ArbitrageExecutorConfig {
-	startRules: StartRule[]
+	startRules?: StartRule[]
 	pathRecoveryConfig: PathRecoveryConfig
 }

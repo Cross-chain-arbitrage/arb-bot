@@ -9,6 +9,10 @@ balanceReporterScheduler:
 arbitrageScheduler:
   prepareExecution: true
 
+arbitrageExecutor:
+  pathRecoveryConfig:
+    enabled: true
+
 arbitrageFinder:
   runInterval: 1000000
   opportunityFinding:

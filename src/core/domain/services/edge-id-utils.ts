@@ -23,6 +23,6 @@ export class EdgeIdUtils {
 		fromId: string,
 		toId: string,
 	): EdgeId {
-		return `${channelId}::${fromId}::${toId}`
+		return `${channelId}::${fromId}::${toId}`.toLowerCase() as EdgeId
 	}
 }

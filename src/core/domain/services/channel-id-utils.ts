@@ -13,6 +13,6 @@ export class ChannelIdUtils {
 	}
 
 	static generateId(protocol: string, instance: string): ChannelId {
-		return `${protocol}:${instance}`
+		return `${protocol}:${instance}`.toLowerCase() as ChannelId
 	}
 }

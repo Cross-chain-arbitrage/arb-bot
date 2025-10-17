@@ -171,7 +171,7 @@ export class GraphBuilder {
 	}
 
 	private addNodeIfNotExists(graph: Graph, node: Node) {
-		const existingNode = graph.nodes.get(node.id)
+		const existingNode = graph.getNode(node.id)
 
 		if (!existingNode) {
 			this.logger.log(`Adding node ${node.id}`)
@@ -185,7 +185,7 @@ export class GraphBuilder {
 	}
 
 	private addEdgeIfNotExists(graph: Graph, edge: Edge) {
-		const existingEdge = graph.edges.get(edge.id)
+		const existingEdge = graph.getEdge(edge.id)
 
 		if (!existingEdge) {
 			this.logger.log(`Adding edge ${edge.id}`)

@@ -11,7 +11,7 @@ export class EdgeHandler implements EdgeHandlerPlugin {
 		const { channelId } = EdgeIdUtils.parseId(edge.id)
 		const { protocol } = ChannelIdUtils.parseId(channelId)
 
-		return protocol === this.protocol
+		return protocol.toLowerCase() === this.protocol.toLowerCase()
 	}
 
 	createEdge(from: Node, to: Node): Edge {

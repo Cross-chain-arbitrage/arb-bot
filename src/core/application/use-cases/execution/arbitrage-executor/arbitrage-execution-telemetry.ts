@@ -4,7 +4,6 @@ import {
 	ArbitrageNotifier,
 } from '../../../interfaces/arbitrage-notifier'
 import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
-import { PathExecutionResult } from '../path-executor/types'
 import { ArbitrageResult } from './types'
 
 @Injectable()
@@ -37,7 +36,7 @@ export class ArbitrageExecutionTelemetry {
 		this.logger.log(log, `Arbitrage execution started`)
 	}
 
-	private logArbitrageEnd(result: PathExecutionResult) {
+	private logArbitrageEnd(result: ArbitrageResult) {
 		const log = {
 			result,
 		}

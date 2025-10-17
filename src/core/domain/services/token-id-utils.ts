@@ -14,6 +14,6 @@ export class TokenIdUtils {
 	}
 
 	static generateId(chainId: ChainId, address: string): TokenId {
-		return `${chainId}:${address}`
+		return `${chainId}:${address}`.toLowerCase() as TokenId
 	}
 }

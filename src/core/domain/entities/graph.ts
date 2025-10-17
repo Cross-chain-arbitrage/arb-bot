@@ -17,8 +17,8 @@ export class Graph<T extends object = object> {
 	constructor() {}
 
 	addEdge(edge: Edge) {
-		const from = this.nodes.get(edge.from.id)
-		const to = this.nodes.get(edge.to.id)
+		const from = this.getNode(edge.from.id)
+		const to = this.getNode(edge.to.id)
 
 		if (!from) {
 			throw new GraphError(`Node ${edge.from.id} does not exist`)
@@ -28,22 +28,34 @@ export class Graph<T extends object = object> {
 			throw new GraphError(`Node ${edge.to.id} does not exist`)
 		}
 
-		if (this.edges.has(edge.id)) {
+		if (this.isEdgeAdded(edge.id)) {
 			throw new GraphError(`Edge ${from.id} -> ${to.id} already exists`)
 		}
 
-		this.edges.set(edge.id, edge)
+		this.edges.set(edge.id.toLowerCase() as EdgeId, edge)
+	}
+
+	getEdge(edgeId: EdgeId): Edge | undefined {
+		return this.edges.get(edgeId.toLowerCase() as EdgeId)
+	}
+
+	getNode(nodeId: NodeId): Node<T> | undefined {
+		return this.nodes.get(nodeId.toLowerCase())
 	}
 
 	addNode(node: Node<T>) {
-		if (this.nodes.has(node.id)) {
+		if (this.isNodeAdded(node.id)) {
 			throw new GraphError(`Node ${node.id} already exists`)
 		}
 
-		this.nodes.set(node.id, node)
+		this.nodes.set(node.id.toLowerCase(), node)
 	}
 
 	isNodeAdded(nodeId: NodeId): boolean {
-		return this.nodes.has(nodeId)
+		return this.nodes.has(nodeId.toLowerCase())
+	}
+
+	isEdgeAdded(edgeId: EdgeId): boolean {
+		return this.edges.has(edgeId.toLowerCase() as EdgeId)
 	}
 }

@@ -22,7 +22,12 @@ export class DexPlugin implements EdgeHandlerPlugin {
 		const { channelId } = EdgeIdUtils.parseId(edge.id)
 		const { protocol } = ChannelIdUtils.parseId(channelId)
 
-		if (!Object.keys(DexRegistry).includes(protocol)) return false
+		if (
+			!Object.keys(DexRegistry)
+				.map((key) => key.toLowerCase())
+				.includes(protocol.toLowerCase())
+		)
+			return false
 
 		try {
 			await this.getPool(edge)
