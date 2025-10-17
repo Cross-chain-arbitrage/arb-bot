@@ -5,91 +5,105 @@ import { QuotedPath, QuotedStep } from '../value-objects/path'
 import { Quote } from '../value-objects/quote'
 import { GraphSnapshot } from '../value-objects/weighted-graph-snapshot'
 
-const GraphOpportunityFinderError = createCustomError(
-	'GraphOpportunityFinderError',
-)
+const BellmanFordError = createCustomError('BellmanFordError')
+
+type BellmanFordState = {
+	distances: Map<NodeId, number>
+	predecessors: Map<NodeId, Edge>
+	amounts: Map<NodeId, bigint>
+}
 
 export class BellmanFord {
-	/**
-	 * Finds an arbitrage path using the Bellman-Ford algorithm
-	 * @dev Tries to find negative sum cyclic path of graph traversal
-	 * @param startToken - The token to start the arbitrage from
-	 * @param startAmount - The amount of tokens to start with
-	 * @param graph - The graph containing all possible trading paths
-	 * @returns - {@link QuotedPath} or null, if no opportunity found
-	 */
 	static findNegativeSumCycle(
-		startToken: Node,
+		startNode: Node,
 		startAmount: bigint,
 		graphSnapshot: GraphSnapshot,
 	): QuotedPath | null {
-		const { graph } = graphSnapshot
+		const state = this.initializeState(startNode, startAmount)
 
+		const cycle = this.runBellmanFordForCycle(
+			startNode,
+			startAmount,
+			graphSnapshot,
+			state,
+		)
+
+		return cycle
+	}
+
+	static findPath(
+		startNode: Node,
+		endNode: Node,
+		startAmount: bigint,
+		graphSnapshot: GraphSnapshot,
+	): QuotedPath | null {
+		if (startNode.id === endNode.id) {
+			return {
+				quotedStepSequence: [],
+				startAmount,
+				endAmount: startAmount,
+			}
+		}
+
+		const state = this.initializeState(startNode, startAmount)
+
+		this.runBellmanFordRelaxation(graphSnapshot, state)
+
+		if (!state.distances.has(endNode.id)) {
+			return null
+		}
+
+		return this.reconstructPath(state, endNode, startAmount, graphSnapshot)
+	}
+
+	private static initializeState(
+		startNode: Node,
+		startAmount: bigint,
+	): BellmanFordState {
 		const distances = new Map<NodeId, number>()
 		const predecessors = new Map<NodeId, Edge>()
 		const amounts = new Map<NodeId, bigint>()
 
-		// Initialize
-		distances.set(startToken.id, 0)
-		amounts.set(startToken.id, startAmount)
+		distances.set(startNode.id, 0)
+		amounts.set(startNode.id, startAmount)
 
-		// Run Bellman-Ford
+		return { distances, predecessors, amounts }
+	}
+
+	private static runBellmanFordForCycle(
+		startNode: Node,
+		startAmount: bigint,
+		graphSnapshot: GraphSnapshot,
+		state: BellmanFordState,
+	): QuotedPath | null {
+		const { graph } = graphSnapshot
+		const { distances, predecessors, amounts } = state
+
 		for (let i = 0; i < graph.nodes.size; i++) {
-			const quotes: {
-				quote: Quote
-				edge: Edge
-			}[] = []
-
-			for (const [, edge] of graph.edges) {
-				const from = edge.from
-
-				const currentAmount = amounts.get(from.id)
-				const fromDistance = distances.get(from.id)
-
-				if (!currentAmount) continue
-				if (fromDistance === undefined) continue
-
-				const quote = graphSnapshot.getQuote(edge.id, currentAmount)
-
-				quotes.push({
-					quote,
-					edge,
-				})
-			}
+			const quotes = this.collectQuotes(graphSnapshot, state)
 
 			for (const { quote, edge } of quotes) {
-				const from = edge.from
-				const to = edge.to
-
-				const { negativeLogRate, amountOut } = quote
-
-				const fromDistance = distances.get(from.id)
+				const fromDistance = distances.get(edge.from.id)
 				if (fromDistance === undefined) continue
 
-				const newDist = fromDistance + negativeLogRate
-
-				const toDistance = distances.get(to.id) ?? Infinity
+				const newDist = fromDistance + quote.negativeLogRate
+				const toDistance = distances.get(edge.to.id) ?? Infinity
 
 				if (newDist < toDistance) {
-					distances.set(to.id, newDist)
+					distances.set(edge.to.id, newDist)
+					predecessors.set(edge.to.id, edge)
+					amounts.set(edge.to.id, quote.amountOut)
 
-					predecessors.set(to.id, edge)
-
-					amounts.set(to.id, amountOut)
-
-					// Check for negative cycle
-					const isCyclic = to.id === startToken.id // It means we've came back to the start token
-					const isNegative = newDist < 0 // It means we're in profit!
+					const isCyclic = edge.to.id === startNode.id
+					const isNegative = newDist < 0
 
 					if (isCyclic && isNegative) {
-						const arbitrageOpportunity = this.reconstructCycle(
+						return this.reconstructCycle(
 							predecessors,
-							startToken,
+							startNode,
 							startAmount,
 							graphSnapshot,
 						)
-
-						return arbitrageOpportunity
 					}
 				}
 			}
@@ -98,56 +112,157 @@ export class BellmanFord {
 		return null
 	}
 
-	/**
-	 * Reconstructs a profitable trading cycle from the predecessors map
-	 * @param predecessors - Map of token IDs to their predecessor edges
-	 * @param startToken - The token where the cycle starts and ends
-	 * @param startAmount - The initial amount of tokens
-	 * @returns The reconstructed arbitrage path with profit calculations
-	 */
+	private static runBellmanFordRelaxation(
+		graphSnapshot: GraphSnapshot,
+		state: BellmanFordState,
+	): void {
+		const { graph } = graphSnapshot
+		const { distances, predecessors, amounts } = state
+
+		for (let i = 0; i < graph.nodes.size - 1; i++) {
+			const quotes = this.collectQuotes(graphSnapshot, state)
+
+			for (const { quote, edge } of quotes) {
+				const fromDistance = distances.get(edge.from.id)
+				if (fromDistance === undefined) continue
+
+				const newDist = fromDistance + quote.negativeLogRate
+				const toDistance = distances.get(edge.to.id) ?? Infinity
+
+				if (newDist < toDistance) {
+					distances.set(edge.to.id, newDist)
+					predecessors.set(edge.to.id, edge)
+					amounts.set(edge.to.id, quote.amountOut)
+				}
+			}
+		}
+	}
+
+	private static collectQuotes(
+		graphSnapshot: GraphSnapshot,
+		state: BellmanFordState,
+	): { quote: Quote; edge: Edge }[] {
+		const { graph } = graphSnapshot
+		const { amounts, distances } = state
+		const quotes: { quote: Quote; edge: Edge }[] = []
+
+		for (const [, edge] of graph.edges) {
+			const currentAmount = amounts.get(edge.from.id)
+			const fromDistance = distances.get(edge.from.id)
+
+			if (!currentAmount || fromDistance === undefined) continue
+
+			const quote = graphSnapshot.getQuote(edge.id, currentAmount)
+			quotes.push({ quote, edge })
+		}
+
+		return quotes
+	}
+
 	private static reconstructCycle(
 		predecessors: Map<NodeId, Edge>,
-		startToken: Node,
+		startNode: Node,
 		startAmount: bigint,
 		graphSnapshot: GraphSnapshot,
 	): QuotedPath {
-		const edges: Edge[] = []
-		let currentToken: NodeId = startToken.id
+		const edges = this.collectCycleEdges(predecessors, startNode)
+		const quotedSteps = this.calculateQuotedSteps(
+			edges,
+			startAmount,
+			graphSnapshot,
+		)
 
-		// Reconstruct the cycle by following predecessors
+		const endAmount =
+			quotedSteps[quotedSteps.length - 1]?.quote.amountOut ?? startAmount
+
+		return {
+			quotedStepSequence: quotedSteps,
+			startAmount,
+			endAmount,
+		}
+	}
+
+	private static reconstructPath(
+		state: BellmanFordState,
+		endNode: Node,
+		startAmount: bigint,
+		graphSnapshot: GraphSnapshot,
+	): QuotedPath {
+		const edges = this.collectPathEdges(state.predecessors, endNode)
+		const quotedSteps = this.calculateQuotedSteps(
+			edges,
+			startAmount,
+			graphSnapshot,
+		)
+
+		const endAmount =
+			quotedSteps[quotedSteps.length - 1]?.quote.amountOut ?? startAmount
+
+		return {
+			quotedStepSequence: quotedSteps,
+			startAmount,
+			endAmount,
+		}
+	}
+
+	private static collectCycleEdges(
+		predecessors: Map<NodeId, Edge>,
+		startNode: Node,
+	): Edge[] {
+		const edges: Edge[] = []
+		let currentNodeId: NodeId = startNode.id
+
 		do {
-			const edge = predecessors.get(currentToken)
+			const edge = predecessors.get(currentNodeId)
 
 			if (!edge) {
-				throw new GraphOpportunityFinderError(
-					'Missing edge in predecessors map',
-				)
+				throw new BellmanFordError('Missing edge in predecessors map')
 			}
 
-			// console.log(edge.id)
 			edges.push(edge)
-			currentToken = edge.from.id
-		} while (currentToken !== startToken.id)
+			currentNodeId = edge.from.id
+		} while (currentNodeId !== startNode.id)
 
-		// Reverse the edges to get the correct order
 		edges.reverse()
+		return edges
+	}
 
-		// Calculate amounts and profit
+	private static collectPathEdges(
+		predecessors: Map<NodeId, Edge>,
+		endNode: Node,
+	): Edge[] {
+		const edges: Edge[] = []
+		let currentNodeId: NodeId = endNode.id
 
-		const quotedStepSequence: QuotedStep[] = []
+		while (predecessors.has(currentNodeId)) {
+			const edge = predecessors.get(currentNodeId)
 
+			if (!edge) {
+				throw new BellmanFordError('Missing edge in predecessors map')
+			}
+
+			edges.push(edge)
+			currentNodeId = edge.from.id
+		}
+
+		edges.reverse()
+		return edges
+	}
+
+	private static calculateQuotedSteps(
+		edges: Edge[],
+		startAmount: bigint,
+		graphSnapshot: GraphSnapshot,
+	): QuotedStep[] {
+		const steps: QuotedStep[] = []
 		let amount = startAmount
 
 		for (const edge of edges) {
 			const quote = graphSnapshot.getQuote(edge.id, amount)
 			amount = quote.amountOut
-			quotedStepSequence.push({ edge, quote })
+			steps.push({ edge, quote })
 		}
 
-		return {
-			quotedStepSequence,
-			startAmount: startAmount,
-			endAmount: amount,
-		}
+		return steps
 	}
 }
