@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { QuotedPath } from '../../../../domain/value-objects/arbitrage-cycle'
 import {
 	EDGE_EXECUTOR_REGISTRY_TOKEN,
 	EdgeExecutorRegistry,
@@ -15,11 +16,7 @@ import {
 import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
 import { TokenValuator } from '../../token-valuator/token-valuator'
 import { PathExecutor } from '../path-executor/path-executor'
-import {
-	PathExecutionResult,
-	PathExecutorParams,
-	ValidateStep,
-} from '../path-executor/types'
+import { PathExecutionResult, PathExecutorParams } from '../path-executor/types'
 import { ArbitrageExecutionTelemetry } from './arbitrage-execution-telemetry'
 import { getStartStepIndex } from './helpers'
 import { ArbitrageExecutorConfig, ArbitrageResult } from './types'
@@ -55,13 +52,19 @@ export class ArbitrageExecutor {
 		const startTimestamp = Date.now()
 
 		const pathExecutorParams: PathExecutorParams = {
-			path: opportunityToExecute.path,
+			path: opportunityToExecute.quotedPath.map((step) => step.edge),
 			startAmount: opportunityToExecute.startAmount,
 		}
 
 		const pathResult = await this.pathExecutor.executePath(
 			pathExecutorParams,
-			this.validateStep,
+			(params, stepIndex, amountIn) =>
+				this.validateStep(
+					opportunityToExecute.quotedPath,
+					params,
+					stepIndex,
+					amountIn,
+				),
 		)
 
 		const arbitrageResult = await this.buildSuccessResult(
@@ -86,17 +89,23 @@ export class ArbitrageExecutor {
 
 		if (!startRules) return opportunity
 
-		const startStepIndex = getStartStepIndex(opportunity.path, startRules)
+		const startStepIndex = getStartStepIndex(
+			opportunity.quotedPath,
+			startRules,
+		)
 
 		if (startStepIndex === undefined)
 			throw new Error("Couldn't obtain startStepIndex from startRules")
 
 		const newPath = [
-			...opportunity.path.slice(startStepIndex, opportunity.path.length),
-			...opportunity.path.slice(0, startStepIndex),
+			...opportunity.quotedPath.slice(
+				startStepIndex,
+				opportunity.quotedPath.length,
+			),
+			...opportunity.quotedPath.slice(0, startStepIndex),
 		]
 
-		const startToken = opportunity.path[0].edge.from
+		const startToken = opportunity.quotedPath[0].edge.from
 
 		const newStartToken = newPath[0].edge.from
 
@@ -117,7 +126,7 @@ export class ArbitrageExecutor {
 			endAmount: newEndAmount,
 			startAmount: newStartAmount,
 			id: opportunity.id,
-			path: newPath,
+			quotedPath: newPath,
 			revenueInUsd: opportunity.revenueInUsd,
 			profitInUsd: opportunity.profitInUsd,
 		}
@@ -140,7 +149,7 @@ export class ArbitrageExecutor {
 
 		const { actualEndAmount, totalExecutionCostInUsd } = pathResult
 
-		const startToken = opportunity.path[0].edge.from
+		const startToken = opportunity.quotedPath[0].edge.from
 
 		const startTokenPrice = await this.priceOracle.getPrice(startToken)
 		const actualRevenue =
@@ -159,25 +168,31 @@ export class ArbitrageExecutor {
 		}
 	}
 
-	validateStep: ValidateStep = async (params, step, amountIn) => {
-		const edgeExecutor = this.edgeExecutorRegistry.get(step.edge.id)
+	private async validateStep(
+		quotedPath: QuotedPath,
+		params: PathExecutorParams,
+		stepIndex: number,
+		amountIn: bigint,
+	): Promise<{ isValid: true } | { isValid: false; reason: string }> {
+		const step = params.path[stepIndex]
+		const edgeExecutor = this.edgeExecutorRegistry.get(step.id)
 
 		if (!edgeExecutor)
-			throw new Error(`Edge executor not found for edge ${step.edge.id}`)
+			throw new Error(`Edge executor not found for edge ${step.id}`)
 
 		if (edgeExecutor.kind === 'crosschain') return { isValid: true }
 
-		const quoter = this.quoterRegistry.get(step.edge.id)
+		const quoter = this.quoterRegistry.get(step.id)
 
-		if (!quoter)
-			throw new Error(`Quoter not found for edge ${step.edge.id}`)
+		if (!quoter) throw new Error(`Quoter not found for edge ${step.id}`)
 
 		const quote = await quoter.quote(amountIn)
 
-		const rateSum = params.path.reduce((acc, stepInPath) => {
-			if (stepInPath.edge.id === step.edge.id) return acc + quote.rate
+		const rateSum = quotedPath.reduce((acc, stepInPath) => {
+			if (stepInPath.edge.id === step.id)
+				return acc + quote.negativeLogRate
 
-			return acc + stepInPath.quote.rate
+			return acc + stepInPath.quote.negativeLogRate
 		}, 0)
 
 		if (rateSum > 0)

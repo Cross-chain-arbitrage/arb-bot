@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { withRetry } from 'viem'
 import { wait } from '../../../../../utils/common'
-import { Step } from '../../../../domain/services/bellman-ford'
+import { Edge } from '../../../../domain/entities/edge'
 import { StepExecutor } from '../step-executor/step-executor'
 import { backoffMs } from '../utils/backoff'
 import { PathExecutionTelemetry } from './path-execution-telemetry'
@@ -27,16 +27,16 @@ export class PathExecutor {
 		let stepResults: StepProcessingResult[] = []
 		let nextAmountIn = params.startAmount
 
-		for (const step of params.path) {
+		for (const [stepIndex, edge] of params.path.entries()) {
 			const validationResult = validateStep
 				? await withRetry(() =>
-						validateStep(params, step, nextAmountIn),
+						validateStep(params, stepIndex, nextAmountIn),
 					)
 				: undefined
 
 			if (validationResult?.isValid === false) {
 				return this.buildFailedResult(
-					step,
+					stepIndex,
 					nextAmountIn,
 					validationResult.reason,
 					await this.getTotalCostInUsd(stepResults),
@@ -44,13 +44,18 @@ export class PathExecutor {
 				)
 			}
 
-			const result = await this.processStepWithRetry(step, nextAmountIn, {
-				maxAttempts: 2,
-			})
+			const result = await this.processStepWithRetry(
+				edge,
+				stepIndex,
+				nextAmountIn,
+				{
+					maxAttempts: 2,
+				},
+			)
 
 			if (result.status === 'failed') {
 				return this.buildFailedResult(
-					step,
+					stepIndex,
 					nextAmountIn,
 					result.reason,
 					await this.getTotalCostInUsd(stepResults),
@@ -92,7 +97,7 @@ export class PathExecutor {
 	}
 
 	private buildFailedResult(
-		step: Step,
+		stepIndex: number,
 		amountIn: bigint,
 		failureReason: string,
 		totalExecutionCostInUsd: number,
@@ -102,14 +107,15 @@ export class PathExecutor {
 			totalExecutionCostInUsd,
 			status: 'failed',
 			reason: failureReason,
-			step,
+			stepIndex,
 			stepAmountIn: amountIn,
 			failureType,
 		}
 	}
 
 	async processStepWithRetry(
-		step: Step,
+		edge: Edge,
+		stepIndex: number,
 		amountIn: bigint,
 		policy: { maxAttempts: number; backoffMs?: (n: number) => number },
 	) {
@@ -119,7 +125,8 @@ export class PathExecutor {
 		try {
 			for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
 				const stepResult = await this.processStep(
-					step,
+					edge,
+					stepIndex,
 					amountIn,
 					attempt,
 				)
@@ -154,33 +161,30 @@ export class PathExecutor {
 	}
 
 	async processStep(
-		step: Step,
+		edge: Edge,
+		stepIndex: number,
 		amountIn: bigint,
 		attempt: number,
 	): Promise<StepProcessingResult> {
-		this.telemetry.onProcessStepStart(step.edge, amountIn, attempt)
+		this.telemetry.onProcessStepStart(edge, amountIn, attempt)
 
 		const { confirmation, execution } = await this.stepExecutor.executeStep(
-			step,
+			edge,
 			amountIn,
 		)
 
 		if (confirmation.status === 'success') {
 			this.telemetry.onProcessStepSuccess(
-				step.edge,
+				edge,
 				confirmation.amountOut,
 				attempt,
 			)
 
-			return { confirmation, execution, step, attempt }
+			return { confirmation, execution, edge, stepIndex, attempt }
 		}
 
-		this.telemetry.onProcessStepFailure(
-			step.edge,
-			confirmation.reason,
-			attempt,
-		)
+		this.telemetry.onProcessStepFailure(edge, confirmation.reason, attempt)
 
-		return { confirmation, execution, step, attempt }
+		return { confirmation, execution, edge, stepIndex, attempt }
 	}
 }

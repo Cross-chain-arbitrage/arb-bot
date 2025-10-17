@@ -19,7 +19,7 @@ export class OpportunityReporter {
 					revenueInUsd: opportunity.revenueInUsd,
 					costInUsd: opportunity.costInUsd,
 					profitInUsd: opportunity.profitInUsd,
-					path: opportunity.path.map((p) => {
+					path: opportunity.quotedPath.map((p) => {
 						return {
 							edge: p.edge.id,
 							quote: p.quote,

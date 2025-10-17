@@ -11,7 +11,7 @@ import {
 } from '../../src/core/application/use-cases/execution/arbitrage-executor/types'
 import { Token } from '../../src/core/domain/entities/token'
 import { EdgeIdUtils } from '../../src/core/domain/services/edge-id-utils'
-import { Quote } from '../../src/core/domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../src/core/domain/value-objects/quote'
 import { TgArbitrageNotifier } from '../../src/core/infrastructure/tg-notifier/tg-arbitrage-notifier/tg-arbitrage-notifier'
 import { TgNotifier } from '../../src/core/infrastructure/tg-notifier/tg-notifier'
 import { wait } from '../../src/utils/common'

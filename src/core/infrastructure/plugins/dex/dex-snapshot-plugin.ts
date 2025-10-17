@@ -7,7 +7,7 @@ import {
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { Pool } from '../../dex/base/pool'
 import { PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
@@ -77,9 +77,9 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 			const amountOut = edge.to.parseUnits(amountOutFormatted.toString())
 
 			return {
-				rate: calcRate(amountIn, amountOut),
+				negativeLogRate: calcRate(amountIn, amountOut),
 				amountOut,
-				executionCostInUsd: executionCostInUsd,
+				expectedCostInUsd: executionCostInUsd,
 			}
 		}
 	}

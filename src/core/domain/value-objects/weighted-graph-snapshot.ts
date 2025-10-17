@@ -1,11 +1,6 @@
 import { Graph } from '../entities/graph'
 import { EdgeId } from './edge-id'
-
-export type Quote = {
-	rate: number // negative log of exchange rate
-	amountOut: bigint
-	executionCostInUsd: number
-}
+import { Quote } from './quote'
 
 export interface GraphSnapshot {
 	graph: Graph

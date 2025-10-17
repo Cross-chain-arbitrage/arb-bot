@@ -4,7 +4,7 @@ import { QuoterPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
 import { TokenIdUtils } from '../../../domain/services/token-id-utils'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { RelayService } from '../../relay/relay-service'
@@ -48,9 +48,9 @@ export class RelayQuoterPlugin extends EdgeHandler implements QuoterPlugin {
 			)
 
 		return {
-			rate: calcRate(amountIn, quote.amountOut),
+			negativeLogRate: calcRate(amountIn, quote.amountOut),
 			amountOut: quote.amountOut,
-			executionCostInUsd: costInUsd,
+			expectedCostInUsd: costInUsd,
 		}
 	}
 }

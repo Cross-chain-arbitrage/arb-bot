@@ -10,7 +10,7 @@ import { TokenValuator } from '../../../application/use-cases/token-valuator/tok
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
 import { TokenIdUtils } from '../../../domain/services/token-id-utils'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { RelayService } from '../../relay/relay-service'
@@ -113,9 +113,12 @@ export class RelaySnapshotPlugin extends EdgeHandler implements SnapshotPlugin {
 			const amountOut = k * amountInTokenOutDecimals + b
 
 			return {
-				rate: calcRate(amountIn, BigInt(Math.floor(amountOut))),
+				negativeLogRate: calcRate(
+					amountIn,
+					BigInt(Math.floor(amountOut)),
+				),
 				amountOut: BigInt(Math.floor(amountOut)),
-				executionCostInUsd: costInUsd,
+				expectedCostInUsd: costInUsd,
 			}
 		}
 	}

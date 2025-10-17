@@ -37,7 +37,7 @@ export class PathExecutionTelemetry {
 
 	onStepCostSuccess(stepResult: StepProcessingResult, costInUsd: number) {
 		const log = {
-			edgeId: stepResult.step.edge.id,
+			edgeId: stepResult.edge.id,
 			costInUsd,
 			processingAttempt: stepResult.attempt,
 		}
@@ -45,7 +45,7 @@ export class PathExecutionTelemetry {
 	}
 	onStepCostFailure(stepResult: StepProcessingResult, error: Error) {
 		const log = {
-			edgeId: stepResult.step.edge.id,
+			edgeId: stepResult.edge.id,
 			processingAttempt: stepResult.attempt,
 		}
 		//TODO: I want to see log like object and don't want to print 2 logs

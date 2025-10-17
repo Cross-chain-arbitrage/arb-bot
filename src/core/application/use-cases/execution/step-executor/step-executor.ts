@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { wait } from '../../../../../utils/common'
-import { Step } from '../../../../domain/services/bellman-ford'
+import { Edge } from '../../../../domain/entities/edge'
 import {
 	Confirmation,
 	EDGE_EXECUTOR_REGISTRY_TOKEN,
@@ -20,11 +20,11 @@ export class StepExecutor {
 		private readonly telemetry: StepExecutionTelemetry,
 	) {}
 
-	async executeStep(step: Step, amountIn: bigint) {
-		const edgeExecutor = this.edgeExecutorRegistry.get(step.edge.id)
+	async executeStep(edge: Edge, amountIn: bigint) {
+		const edgeExecutor = this.edgeExecutorRegistry.get(edge.id)
 
 		if (!edgeExecutor) {
-			throw new Error(`Edge executor not found for edge ${step.edge.id}`)
+			throw new Error(`Edge executor not found for edge ${edge.id}`)
 		}
 
 		const execution = await this.executeWithRetry(edgeExecutor, amountIn)

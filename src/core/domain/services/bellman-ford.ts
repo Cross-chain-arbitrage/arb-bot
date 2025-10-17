@@ -1,20 +1,13 @@
 import { createCustomError } from '../../../utils/common'
 import { Edge } from '../entities/edge'
 import { Node, NodeId } from '../entities/node'
-import { GraphSnapshot, Quote } from '../value-objects/weighted-graph-snapshot'
+import { ArbitrageCycle } from '../value-objects/arbitrage-cycle'
+import { Quote } from '../value-objects/quote'
+import { GraphSnapshot } from '../value-objects/weighted-graph-snapshot'
 
 const GraphOpportunityFinderError = createCustomError(
 	'GraphOpportunityFinderError',
 )
-
-export type Step<NodeType = Node> = { edge: Edge<NodeType>; quote: Quote }
-export type Path<NodeType = Node> = Step<NodeType>[]
-
-export interface GraphArbitrageCycle<NodeType = Node> {
-	path: Path<NodeType>
-	startAmount: bigint
-	endAmount: bigint
-}
 
 export class BellmanFord {
 	/**
@@ -23,13 +16,13 @@ export class BellmanFord {
 	 * @param startToken - The token to start the arbitrage from
 	 * @param startAmount - The amount of tokens to start with
 	 * @param graph - The graph containing all possible trading paths
-	 * @returns - {@link GraphArbitrageCycle} or null, if no opportunity found
+	 * @returns - {@link ArbitrageCycle} or null, if no opportunity found
 	 */
 	static findNegativeSumCycle(
 		startToken: Node,
 		startAmount: bigint,
 		graphSnapshot: GraphSnapshot,
-	): GraphArbitrageCycle | null {
+	): ArbitrageCycle | null {
 		const { graph } = graphSnapshot
 
 		const distances = new Map<NodeId, number>()
@@ -68,12 +61,12 @@ export class BellmanFord {
 				const from = edge.from
 				const to = edge.to
 
-				const { rate, amountOut } = quote
+				const { negativeLogRate, amountOut } = quote
 
 				const fromDistance = distances.get(from.id)
 				if (fromDistance === undefined) continue
 
-				const newDist = fromDistance + rate
+				const newDist = fromDistance + negativeLogRate
 
 				const toDistance = distances.get(to.id) ?? Infinity
 
@@ -117,7 +110,7 @@ export class BellmanFord {
 		startToken: Node,
 		startAmount: bigint,
 		graphSnapshot: GraphSnapshot,
-	): GraphArbitrageCycle {
+	): ArbitrageCycle {
 		const edges: Edge[] = []
 		let currentToken: NodeId = startToken.id
 
@@ -152,7 +145,7 @@ export class BellmanFord {
 		}
 
 		return {
-			path,
+			quotedPath: path,
 			startAmount: startAmount,
 			endAmount: amount,
 		}

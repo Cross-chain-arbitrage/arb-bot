@@ -1,4 +1,4 @@
-import { Path } from '../../../../domain/services/bellman-ford'
+import { QuotedPath as Path } from '../../../../domain/value-objects/arbitrage-cycle'
 import { StartRule } from './types'
 
 export function getStartStepIndex(path: Path, startRules: StartRule[]) {

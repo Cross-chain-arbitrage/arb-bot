@@ -9,7 +9,9 @@ const tokenIdRegex = new RegExp(
 	`^${namespacePattern}:${referencePattern}:${accountPattern}$`,
 )
 
-export const tokenIdScheme = z.string().regex(tokenIdRegex)
+export const tokenIdScheme = z
+	.string()
+	.regex(tokenIdRegex) as z.ZodType<TokenId>
 
 type Account = string
 /**

@@ -3,7 +3,7 @@ import { EdgeQuoter } from '../../../application/interfaces/edge-quoter'
 import { QuoterPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { JupiterService } from '../../jupiter/jupiter.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
@@ -39,9 +39,9 @@ export class JupiterQuoterPlugin extends EdgeHandler implements QuoterPlugin {
 			)
 
 		return {
-			rate: calcRate(amountIn, quoteResult.amountOut),
+			negativeLogRate: calcRate(amountIn, quoteResult.amountOut),
 			amountOut: quoteResult.amountOut,
-			executionCostInUsd,
+			expectedCostInUsd: executionCostInUsd,
 		}
 	}
 }

@@ -6,7 +6,7 @@ import {
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { WrappedNative } from '../../evm/primitives/tokens/WrappedNative'
 import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
@@ -45,9 +45,9 @@ export class NativeWrapperSnapshotPlugin
 
 		return (amountIn: bigint): Quote => {
 			return {
-				rate: calcRate(amountIn, amountIn),
+				negativeLogRate: calcRate(amountIn, amountIn),
 				amountOut: amountIn,
-				executionCostInUsd: txCostInUsd,
+				expectedCostInUsd: txCostInUsd,
 			}
 		}
 	}

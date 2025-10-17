@@ -7,7 +7,7 @@ import {
 import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { TokenBase } from '../../evm/primitives/tokens/TokenBase'
 import { LifiService } from '../../lifi/lifi.service'
 import { InterpolationHelper } from '../shared-helpers/interpolation/interpolation-helper'
@@ -59,9 +59,9 @@ export class LifiSnapshotPlugin extends EdgeHandler implements SnapshotPlugin {
 			const amountOut = to.parseUnits(amountOutFormatted.toString())
 
 			return {
-				rate: calcRate(amountIn, amountOut),
+				negativeLogRate: calcRate(amountIn, amountOut),
 				amountOut,
-				executionCostInUsd: executionCostInUsd,
+				expectedCostInUsd: executionCostInUsd,
 			}
 		}
 	}

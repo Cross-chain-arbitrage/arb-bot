@@ -20,6 +20,11 @@ export interface StartRule {
 	startTokenId: TokenId
 	directionTokenId: TokenId
 }
+export interface PathRecoveryConfig {
+	enabled: boolean
+	minTokenThresholds?: Map<TokenId, number>
+}
 export interface ArbitrageExecutorConfig {
 	startRules: StartRule[]
+	pathRecoveryConfig: PathRecoveryConfig
 }

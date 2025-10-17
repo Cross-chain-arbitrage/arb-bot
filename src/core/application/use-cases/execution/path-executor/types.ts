@@ -1,8 +1,8 @@
-import { Path, Step } from '../../../../domain/services/bellman-ford'
+import { Edge } from '../../../../domain/entities/edge'
 import { Confirmation, Execution } from '../../../interfaces/edge-executor'
 
 export interface PathExecutorParams {
-	path: Path
+	path: Edge[]
 	startAmount: bigint
 }
 
@@ -15,9 +15,10 @@ export interface SuccessPathExecutionResult {
 export interface FailedPathExecutionResult {
 	status: 'failed'
 	totalExecutionCostInUsd: number
-	step: Step
+	stepIndex: number
 	stepAmountIn: bigint
 	reason: string
+	failureType: 'validation' | 'execution'
 }
 
 export type PathExecutionResult =
@@ -26,12 +27,13 @@ export type PathExecutionResult =
 
 export type ValidateStep = (
 	params: PathExecutorParams,
-	step: Step,
+	stepIndex: number,
 	amountIn: bigint,
 ) => Promise<{ isValid: true } | { isValid: false; reason: string }>
 
 export type StepProcessingResult = {
-	step: Step
+	edge: Edge
+	stepIndex: number
 	confirmation: Confirmation
 	execution: Execution
 	attempt: number

@@ -9,7 +9,7 @@ import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { TokenValuator } from '../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { JupiterService } from '../../jupiter/jupiter.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
 import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
@@ -70,9 +70,9 @@ export class JupiterSnapshotPlugin
 			const amountOut = to.parseUnits(amountOutFormatted.toString())
 
 			return {
-				rate: calcRate(amountIn, amountOut),
+				negativeLogRate: calcRate(amountIn, amountOut),
 				amountOut,
-				executionCostInUsd: executionCostInUsd,
+				expectedCostInUsd: executionCostInUsd,
 			}
 		}
 	}

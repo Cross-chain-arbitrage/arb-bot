@@ -10,7 +10,7 @@ export class OpportunityValidator {
 		opportunity: GraphArbitrageOpportunity | null,
 		params: OpportunityValidatorParams,
 	): ValidationResult {
-		if (!opportunity || !opportunity.path) {
+		if (!opportunity || !opportunity.quotedPath) {
 			return {
 				ok: false,
 				reason: 'NO_OPPORTUNITY',

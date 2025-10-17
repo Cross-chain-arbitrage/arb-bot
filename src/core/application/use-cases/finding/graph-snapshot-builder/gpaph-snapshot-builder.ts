@@ -1,10 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { Graph } from '../../../../domain/entities/graph'
 import { EdgeId } from '../../../../domain/value-objects/edge-id'
-import {
-	GraphSnapshot,
-	Quote,
-} from '../../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../../domain/value-objects/quote'
+import { GraphSnapshot } from '../../../../domain/value-objects/weighted-graph-snapshot'
 import {
 	EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN,
 	EdgeSnapshotBuilderRegistry,

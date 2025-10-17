@@ -4,7 +4,7 @@ import { EdgeQuoter } from '../../../application/interfaces/edge-quoter'
 import { QuoterPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
@@ -43,9 +43,9 @@ export class DexQuoterPlugin extends DexPlugin implements QuoterPlugin {
 			)
 
 		return {
-			rate: calcRate(amountIn, quote.amountOut),
+			negativeLogRate: calcRate(amountIn, quote.amountOut),
 			amountOut: quote.amountOut,
-			executionCostInUsd,
+			expectedCostInUsd: executionCostInUsd,
 		}
 	}
 }

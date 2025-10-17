@@ -7,7 +7,7 @@ import { SnapshotPlugin } from '../../../application/interfaces/graph-plugin'
 import { TokenValuator } from '../../../application/use-cases/token-valuator/token-valuator'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { FuseBridgeService } from '../../layerzero-bridges/fuse-bridge/fuse-bridge.service'
@@ -89,9 +89,9 @@ export class FuseBridgeSnapshotPlugin
 			const amountOut = BigInt(Math.floor(amountOutNumber))
 
 			return {
-				rate: calcRate(amountIn, amountOut),
+				negativeLogRate: calcRate(amountIn, amountOut),
 				amountOut,
-				executionCostInUsd: costInUsd,
+				expectedCostInUsd: costInUsd,
 			}
 		}
 	}

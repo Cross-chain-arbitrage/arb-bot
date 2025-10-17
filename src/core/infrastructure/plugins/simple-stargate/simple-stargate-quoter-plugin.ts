@@ -4,7 +4,7 @@ import { QuoterPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { calcRate } from '../../../domain/services/calc-rate'
 import { TokenIdUtils } from '../../../domain/services/token-id-utils'
-import { Quote } from '../../../domain/value-objects/weighted-graph-snapshot'
+import { Quote } from '../../../domain/value-objects/quote'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { SimpleStargateService } from '../../layerzero-bridges/stargate/simple-stargate.service'
@@ -58,9 +58,9 @@ export class SimpleStargateQuoterPlugin
 		const executionCostInUsd = bridgeFeeInUsd + txCostInUsd
 
 		return {
-			rate: calcRate(amountIn, amountOut),
+			negativeLogRate: calcRate(amountIn, amountOut),
 			amountOut,
-			executionCostInUsd,
+			expectedCostInUsd: executionCostInUsd,
 		}
 	}
 }
