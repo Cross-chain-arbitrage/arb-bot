@@ -71,7 +71,7 @@ export class ArbitrageExecutor {
 				),
 		)
 
-		const arbitrageResult = await this.buildSuccessResult(
+		const arbitrageResult = await this.buildResult(
 			opportunityToExecute,
 			pathResult,
 			startTimestamp,
@@ -138,7 +138,7 @@ export class ArbitrageExecutor {
 		return newOpportunity
 	}
 
-	private async buildSuccessResult(
+	private async buildResult(
 		opportunity: GraphArbitrageOpportunity,
 		pathResult: PathExecutionResult,
 		startTimestamp: number,
