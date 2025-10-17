@@ -6,27 +6,18 @@ import {
 	BALANCE_ORACLE_TOKEN,
 	BalanceOracle,
 } from '../../../interfaces/balance-oracle'
-import { PathQuoter } from '../../path-quoter/path-quoter'
-import { TokenValuator } from '../../token-valuator/token-valuator'
+import { PathFinder } from '../../finding/path-finder/path-finder'
 import { PathExecutor } from '../path-executor/path-executor'
 import { PathExecutionResult } from '../path-executor/types'
 import { PathRecoveryParams } from './types'
-
-interface RecoveryPathEvaluation {
-	path: QuotedPath
-	amountOut: bigint
-	totalCostUsd: number
-}
 
 @Injectable()
 export class PathRecovery {
 	constructor(
 		@Inject(BALANCE_ORACLE_TOKEN)
 		private readonly balanceOracle: BalanceOracle,
-
 		private readonly pathExecutor: PathExecutor,
-		private readonly tokenValuator: TokenValuator,
-		private readonly pathQuoter: PathQuoter,
+		private readonly pathFinder: PathFinder,
 	) {}
 
 	async attemptRecovery(params: PathRecoveryParams): Promise<{
@@ -81,11 +72,21 @@ export class PathRecovery {
 		return stuckAmount
 	}
 
-	private getRecoveryPath(
+	private async getRecoveryPath(
 		stuckToken: Token,
 		failedStepIndex: number,
 		originalPath: QuotedPath<Token>,
 	): Promise<QuotedPath<Token>> {
-		throw new Error('Not implemented')
+		const path = await this.pathFinder.findPath(
+			stuckToken,
+			originalPath.quotedStepSequence[failedStepIndex].edge.to,
+			originalPath.startAmount,
+		)
+
+		if (!path) {
+			throw new Error('Path not found')
+		}
+
+		return path
 	}
 }

@@ -17,7 +17,7 @@ export class PathFinder {
 		startToken: Token,
 		endToken: Token,
 		startAmount: bigint,
-	): Promise<QuotedPath | null> {
+	): Promise<QuotedPath<Token> | null> {
 		if (startToken.id === endToken.id) {
 			return {
 				quotedStepSequence: [],
@@ -37,6 +37,6 @@ export class PathFinder {
 			graphSnapshot,
 		)
 
-		return path
+		return path as QuotedPath<Token> | null
 	}
 }
