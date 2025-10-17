@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { Token } from '../../../../domain/entities/token'
-import { QuotedPath } from '../../../../domain/value-objects/arbitrage-cycle'
+import { QuotedPath } from '../../../../domain/value-objects/path'
 import { TokenId } from '../../../../domain/value-objects/token-id'
 import {
 	BALANCE_ORACLE_TOKEN,
@@ -31,22 +31,28 @@ export class PathRecovery {
 
 	async attemptRecovery(params: PathRecoveryParams): Promise<{
 		pathExecutionResult: PathExecutionResult
-		path: QuotedPath
+		path: QuotedPath<Token>
 	}> {
 		const stuckAmount = await this.getStuckAmount(
-			params.originalPath[params.failedStepIndex].edge.from,
+			params.originalPath.quotedStepSequence[params.failedStepIndex].edge
+				.from,
 			params.minTokenThresholds,
 		)
 
 		const recoveryPath = await this.getRecoveryPath(
-			params.originalPath[params.failedStepIndex].edge.from,
+			params.originalPath.quotedStepSequence[params.failedStepIndex].edge
+				.from,
 			params.failedStepIndex,
 			params.originalPath,
 		)
 
 		const pathExecutionResult = await this.pathExecutor.executePath({
-			path: recoveryPath.map((step) => step.edge),
-			startAmount: stuckAmount,
+			path: {
+				stepSequence: recoveryPath.quotedStepSequence.map((step) => ({
+					edge: step.edge,
+				})),
+				startAmount: stuckAmount,
+			},
 		})
 
 		return {
@@ -78,8 +84,8 @@ export class PathRecovery {
 	private getRecoveryPath(
 		stuckToken: Token,
 		failedStepIndex: number,
-		originalPath: QuotedPath,
-	): Promise<QuotedPath> {
+		originalPath: QuotedPath<Token>,
+	): Promise<QuotedPath<Token>> {
 		throw new Error('Not implemented')
 	}
 }

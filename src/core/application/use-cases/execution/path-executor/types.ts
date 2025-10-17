@@ -1,9 +1,10 @@
 import { Edge } from '../../../../domain/entities/edge'
+import { Token } from '../../../../domain/entities/token'
+import { Path } from '../../../../domain/value-objects/path'
 import { Confirmation, Execution } from '../../../interfaces/edge-executor'
 
-export interface PathExecutorParams {
-	path: Edge[]
-	startAmount: bigint
+export type PathExecutorParams = {
+	path: Path<Token>
 }
 
 export interface SuccessPathExecutionResult {

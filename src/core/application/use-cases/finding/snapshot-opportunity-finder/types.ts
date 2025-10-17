@@ -1,5 +1,5 @@
 import { Token } from '../../../../domain/entities/token'
-import { ArbitrageCycle } from '../../../../domain/value-objects/arbitrage-cycle'
+import { QuotedPath } from '../../../../domain/value-objects/path'
 
 export type SnapshotFindOpportunityParams = {
 	minStartValueUsd: number
@@ -8,7 +8,7 @@ export type SnapshotFindOpportunityParams = {
 	startToken: Token
 }
 
-export type GraphArbitrageOpportunity = ArbitrageCycle<Token> & {
+export type GraphArbitrageOpportunity = QuotedPath<Token> & {
 	id: string
 	profitInUsd: number
 	revenueInUsd: number

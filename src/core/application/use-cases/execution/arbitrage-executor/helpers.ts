@@ -1,17 +1,23 @@
-import { QuotedPath as Path } from '../../../../domain/value-objects/arbitrage-cycle'
+import { QuotedStep } from '../../../../domain/value-objects/path'
 import { StartRule } from './types'
 
-export function getStartStepIndex(path: Path, startRules: StartRule[]) {
-	const tokenIdToIndexInPath = new Map<string, number>(
-		path.map((step, index) => [step.edge.from.id.toLowerCase(), index]),
+export function getStartStepIndex(
+	quotedStepSequence: QuotedStep[],
+	startRules: StartRule[],
+) {
+	const tokenIdToIndexInSequence = new Map<string, number>(
+		quotedStepSequence.map((step, index) => [
+			step.edge.from.id.toLowerCase(),
+			index,
+		]),
 	)
 
 	const startRuleToApply = startRules.find(
 		({ startTokenId, directionTokenId }) => {
-			const startTokenIndex = tokenIdToIndexInPath.get(
+			const startTokenIndex = tokenIdToIndexInSequence.get(
 				startTokenId.toLowerCase(),
 			)
-			const directionTokenIndex = tokenIdToIndexInPath.get(
+			const directionTokenIndex = tokenIdToIndexInSequence.get(
 				directionTokenId.toLowerCase(),
 			)
 
@@ -24,13 +30,13 @@ export function getStartStepIndex(path: Path, startRules: StartRule[]) {
 			const startToDirectionDistance = findDistance(
 				startTokenIndex,
 				directionTokenIndex,
-				path.length,
+				quotedStepSequence.length,
 			)
 
 			const directionToStartDistance = findDistance(
 				directionTokenIndex,
 				startTokenIndex,
-				path.length,
+				quotedStepSequence.length,
 			)
 
 			if (startToDirectionDistance < directionToStartDistance) return true
@@ -40,7 +46,7 @@ export function getStartStepIndex(path: Path, startRules: StartRule[]) {
 	)
 	if (!startRuleToApply) return undefined
 
-	const startStepIndex = tokenIdToIndexInPath.get(
+	const startStepIndex = tokenIdToIndexInSequence.get(
 		startRuleToApply.startTokenId.toLowerCase(),
 	)
 

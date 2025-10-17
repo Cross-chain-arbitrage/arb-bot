@@ -32,7 +32,7 @@ const opportunity = {
 	costInUsd: 10,
 	endAmount: 10n,
 	id: 'id',
-	path: [step],
+	quotedStepSequence: [step],
 	profitInUsd: 10,
 	revenueInUsd: 20,
 	startAmount: 5n,
@@ -41,8 +41,9 @@ const failedResult: FailedArbitrageResult = {
 	executionTime: 100,
 	reason: 'whatever',
 	status: 'failed',
-	step: step,
+	stepIndex: 0,
 	stepAmountIn: 10n,
+	failureType: 'execution',
 	totalExecutionCostInUsd: 5,
 }
 const successResult: SuccessArbitrageResult = {

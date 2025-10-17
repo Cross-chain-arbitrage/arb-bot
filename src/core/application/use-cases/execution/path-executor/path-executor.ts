@@ -25,9 +25,9 @@ export class PathExecutor {
 		validateStep?: ValidateStep,
 	): Promise<PathExecutionResult> {
 		let stepResults: StepProcessingResult[] = []
-		let nextAmountIn = params.startAmount
+		let nextAmountIn = params.path.startAmount
 
-		for (const [stepIndex, edge] of params.path.entries()) {
+		for (const [stepIndex, step] of params.path.stepSequence.entries()) {
 			const validationResult = validateStep
 				? await withRetry(() =>
 						validateStep(params, stepIndex, nextAmountIn),
@@ -45,7 +45,7 @@ export class PathExecutor {
 			}
 
 			const result = await this.processStepWithRetry(
-				edge,
+				step.edge,
 				stepIndex,
 				nextAmountIn,
 				{

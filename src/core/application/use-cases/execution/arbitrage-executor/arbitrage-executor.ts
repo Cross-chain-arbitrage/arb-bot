@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { QuotedPath } from '../../../../domain/value-objects/arbitrage-cycle'
+import { QuotedPath } from '../../../../domain/value-objects/path'
 import {
 	EDGE_EXECUTOR_REGISTRY_TOKEN,
 	EdgeExecutorRegistry,
@@ -52,15 +52,19 @@ export class ArbitrageExecutor {
 		const startTimestamp = Date.now()
 
 		const pathExecutorParams: PathExecutorParams = {
-			path: opportunityToExecute.quotedPath.map((step) => step.edge),
-			startAmount: opportunityToExecute.startAmount,
+			path: {
+				stepSequence: opportunityToExecute.quotedStepSequence.map(
+					(step) => ({ edge: step.edge }),
+				),
+				startAmount: opportunityToExecute.startAmount,
+			},
 		}
 
 		const pathResult = await this.pathExecutor.executePath(
 			pathExecutorParams,
 			(params, stepIndex, amountIn) =>
 				this.validateStep(
-					opportunityToExecute.quotedPath,
+					opportunityToExecute.quotedStepSequence,
 					params,
 					stepIndex,
 					amountIn,
@@ -90,24 +94,24 @@ export class ArbitrageExecutor {
 		if (!startRules) return opportunity
 
 		const startStepIndex = getStartStepIndex(
-			opportunity.quotedPath,
+			opportunity.quotedStepSequence,
 			startRules,
 		)
 
 		if (startStepIndex === undefined)
 			throw new Error("Couldn't obtain startStepIndex from startRules")
 
-		const newPath = [
-			...opportunity.quotedPath.slice(
+		const newQuotedStepSequence = [
+			...opportunity.quotedStepSequence.slice(
 				startStepIndex,
-				opportunity.quotedPath.length,
+				opportunity.quotedStepSequence.length,
 			),
-			...opportunity.quotedPath.slice(0, startStepIndex),
+			...opportunity.quotedStepSequence.slice(0, startStepIndex),
 		]
 
-		const startToken = opportunity.quotedPath[0].edge.from
+		const startToken = opportunity.quotedStepSequence[0].edge.from
 
-		const newStartToken = newPath[0].edge.from
+		const newStartToken = newQuotedStepSequence[0].edge.from
 
 		const newStartAmount = await this.tokenValuator.convertTokenAmount(
 			startToken,
@@ -126,7 +130,7 @@ export class ArbitrageExecutor {
 			endAmount: newEndAmount,
 			startAmount: newStartAmount,
 			id: opportunity.id,
-			quotedPath: newPath,
+			quotedStepSequence: newQuotedStepSequence,
 			revenueInUsd: opportunity.revenueInUsd,
 			profitInUsd: opportunity.profitInUsd,
 		}
@@ -149,7 +153,7 @@ export class ArbitrageExecutor {
 
 		const { actualEndAmount, totalExecutionCostInUsd } = pathResult
 
-		const startToken = opportunity.quotedPath[0].edge.from
+		const startToken = opportunity.quotedStepSequence[0].edge.from
 
 		const startTokenPrice = await this.priceOracle.getPrice(startToken)
 		const actualRevenue =
@@ -169,12 +173,12 @@ export class ArbitrageExecutor {
 	}
 
 	private async validateStep(
-		quotedPath: QuotedPath,
+		quotedStepSequence: QuotedPath['quotedStepSequence'],
 		params: PathExecutorParams,
 		stepIndex: number,
 		amountIn: bigint,
 	): Promise<{ isValid: true } | { isValid: false; reason: string }> {
-		const step = params.path[stepIndex]
+		const step = params.path.stepSequence[stepIndex].edge
 		const edgeExecutor = this.edgeExecutorRegistry.get(step.id)
 
 		if (!edgeExecutor)
@@ -188,7 +192,7 @@ export class ArbitrageExecutor {
 
 		const quote = await quoter.quote(amountIn)
 
-		const rateSum = quotedPath.reduce((acc, stepInPath) => {
+		const rateSum = quotedStepSequence.reduce((acc, stepInPath) => {
 			if (stepInPath.edge.id === step.id)
 				return acc + quote.negativeLogRate
 

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
-import { ArbitrageCycle } from '../../../../domain/value-objects/arbitrage-cycle'
+import { QuotedPath } from '../../../../domain/value-objects/path'
 import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
@@ -46,7 +46,7 @@ export class OpportunityFinder {
 		const costInUsd = this.calculateCost(graphArbitrageCycle)
 
 		return {
-			...(graphArbitrageCycle as ArbitrageCycle<Token>),
+			...(graphArbitrageCycle as QuotedPath<Token>),
 			revenueInUsd,
 			costInUsd,
 			profitInUsd: revenueInUsd - costInUsd,
@@ -68,8 +68,8 @@ export class OpportunityFinder {
 		return (amountEndFormatted - amountStartFormatted) * startTokenPrice
 	}
 
-	private calculateCost(graphArbitrageCycle: ArbitrageCycle) {
-		return graphArbitrageCycle.quotedPath.reduce((acc, step) => {
+	private calculateCost(graphArbitrageCycle: QuotedPath) {
+		return graphArbitrageCycle.quotedStepSequence.reduce((acc, step) => {
 			return acc + step.quote.expectedCostInUsd
 		}, 0)
 	}

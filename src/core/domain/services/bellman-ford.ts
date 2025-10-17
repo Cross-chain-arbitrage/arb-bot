@@ -1,7 +1,7 @@
 import { createCustomError } from '../../../utils/common'
 import { Edge } from '../entities/edge'
 import { Node, NodeId } from '../entities/node'
-import { ArbitrageCycle } from '../value-objects/arbitrage-cycle'
+import { QuotedPath, QuotedStep } from '../value-objects/path'
 import { Quote } from '../value-objects/quote'
 import { GraphSnapshot } from '../value-objects/weighted-graph-snapshot'
 
@@ -16,13 +16,13 @@ export class BellmanFord {
 	 * @param startToken - The token to start the arbitrage from
 	 * @param startAmount - The amount of tokens to start with
 	 * @param graph - The graph containing all possible trading paths
-	 * @returns - {@link ArbitrageCycle} or null, if no opportunity found
+	 * @returns - {@link QuotedPath} or null, if no opportunity found
 	 */
 	static findNegativeSumCycle(
 		startToken: Node,
 		startAmount: bigint,
 		graphSnapshot: GraphSnapshot,
-	): ArbitrageCycle | null {
+	): QuotedPath | null {
 		const { graph } = graphSnapshot
 
 		const distances = new Map<NodeId, number>()
@@ -110,7 +110,7 @@ export class BellmanFord {
 		startToken: Node,
 		startAmount: bigint,
 		graphSnapshot: GraphSnapshot,
-	): ArbitrageCycle {
+	): QuotedPath {
 		const edges: Edge[] = []
 		let currentToken: NodeId = startToken.id
 
@@ -134,18 +134,18 @@ export class BellmanFord {
 
 		// Calculate amounts and profit
 
-		const path: { edge: Edge; quote: Quote }[] = []
+		const quotedStepSequence: QuotedStep[] = []
 
 		let amount = startAmount
 
 		for (const edge of edges) {
 			const quote = graphSnapshot.getQuote(edge.id, amount)
 			amount = quote.amountOut
-			path.push({ edge, quote })
+			quotedStepSequence.push({ edge, quote })
 		}
 
 		return {
-			quotedPath: path,
+			quotedStepSequence,
 			startAmount: startAmount,
 			endAmount: amount,
 		}

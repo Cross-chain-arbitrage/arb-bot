@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common'
 import { Edge } from '../../../domain/entities/edge'
-import { QuotedPath } from '../../../domain/value-objects/arbitrage-cycle'
+import { QuotedPath, QuotedStep } from '../../../domain/value-objects/path'
 import { EdgeQuoterRegistry } from '../../interfaces/edge-quoter'
 
 @Injectable()
 export class PathQuoter {
 	constructor(private readonly edgeQuoterRegistry: EdgeQuoterRegistry) {}
 
-	async quotePath(path: Edge[], amountIn: bigint): Promise<QuotedPath> {
-		const quotedPath: QuotedPath = []
+	async quotePath(edges: Edge[], amountIn: bigint): Promise<QuotedPath> {
+		const quotedStepSequence: QuotedStep[] = []
 		let nextAmountIn = amountIn
+		const startAmount = amountIn
 
-		for (const edge of path) {
+		for (const edge of edges) {
 			const edgeQuoter = this.edgeQuoterRegistry.get(edge.id)
 
 			if (!edgeQuoter) {
@@ -20,11 +21,15 @@ export class PathQuoter {
 
 			const quote = await edgeQuoter.quote(nextAmountIn)
 
-			quotedPath.push({ edge, quote })
+			quotedStepSequence.push({ edge, quote })
 
 			nextAmountIn = quote.amountOut
 		}
 
-		return quotedPath
+		return {
+			quotedStepSequence,
+			startAmount,
+			endAmount: nextAmountIn,
+		}
 	}
 }

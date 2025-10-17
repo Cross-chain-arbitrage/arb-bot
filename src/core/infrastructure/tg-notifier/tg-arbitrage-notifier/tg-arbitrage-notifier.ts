@@ -66,7 +66,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 		const status = '🔍 <b>Opportunity found, executing...</b>'
 
 		const startTokenPrice = await this.priceOracle.getPrice(
-			opportunity.quotedPath[0].edge.from,
+			opportunity.quotedStepSequence[0].edge.from,
 		)
 
 		const arbitrageMessage: ArbitrageMessage = {
@@ -104,7 +104,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 				: this.buildFailedStatus(result)
 
 		const startTokenPrice = await this.priceOracle.getPrice(
-			opportunity.quotedPath[0].edge.from,
+			opportunity.quotedStepSequence[0].edge.from,
 		)
 
 		const arbitrageMessage: ArbitrageMessage = {
@@ -123,10 +123,12 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 		const { actualEndAmount, totalExecutionCostInUsd, profitInUsd } = result
 
 		const actualAmountOutFormatted = Number(
-			opportunity.quotedPath[0].edge.from.formatUnits(actualEndAmount),
+			opportunity.quotedStepSequence[0].edge.from.formatUnits(
+				actualEndAmount,
+			),
 		)
 
-		const startToken = opportunity.quotedPath[0].edge.from
+		const startToken = opportunity.quotedStepSequence[0].edge.from
 
 		let statusPart = `✅ <b>Successfully executed!</b>\n\n`
 		statusPart += `Profit: $${profitInUsd.toFixed(2)}\n`
@@ -226,7 +228,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 	) {
 		const { costInUsd, revenueInUsd, startAmount, endAmount } = opportunity
 
-		const startToken = opportunity.quotedPath[0].edge.from
+		const startToken = opportunity.quotedStepSequence[0].edge.from
 
 		const startAmountFormatted = startToken.formatUnits(startAmount)
 		const endAmountFormatted = startToken.formatUnits(endAmount)
@@ -253,12 +255,12 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 		opportunity: GraphArbitrageOpportunity,
 		pathResult?: PathExecutionResult,
 	) {
-		const { quotedPath } = opportunity
+		const { quotedStepSequence } = opportunity
 
 		let result = `🛣️ <b>Path</b>\n\n`
 
-		for (let i = 0; i < quotedPath.length; i++) {
-			const step = quotedPath[i]
+		for (let i = 0; i < quotedStepSequence.length; i++) {
+			const step = quotedStepSequence[i]
 			const from = step.edge.from as Token
 			const { channelId } = EdgeIdUtils.parseId(step.edge.id)
 			const { protocol } = ChannelIdUtils.parseId(channelId)
@@ -275,7 +277,8 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 			result += `${from.toString()}\n    │${stepResult} ${protocol}\n`
 		}
 
-		const to = quotedPath[quotedPath.length - 1].edge.to as Token
+		const to = quotedStepSequence[quotedStepSequence.length - 1].edge
+			.to as Token
 		result += `${to.toString()}`
 
 		return result
