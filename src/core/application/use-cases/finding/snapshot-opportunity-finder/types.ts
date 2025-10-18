@@ -8,7 +8,7 @@ export type SnapshotFindOpportunityParams = {
 	startToken: Token
 }
 
-export type GraphArbitrageOpportunity = QuotedPath<Token> & {
+export type ArbitrageOpportunity = QuotedPath<Token> & {
 	id: string
 	profitInUsd: number
 	revenueInUsd: number

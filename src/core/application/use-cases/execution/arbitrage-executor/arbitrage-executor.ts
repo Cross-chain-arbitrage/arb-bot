@@ -15,7 +15,7 @@ import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
 } from '../../../interfaces/price-oracle'
-import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
+import { ArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
 import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
 import { TokenValuator } from '../../token-valuator/token-valuator'
 import { PathExecutor } from '../path-executor/path-executor'
@@ -69,9 +69,7 @@ export class ArbitrageExecutor {
 		this.config = config
 	}
 
-	async execute(
-		opportunity: GraphArbitrageOpportunity,
-	): Promise<ArbitrageResult> {
+	async execute(opportunity: ArbitrageOpportunity): Promise<ArbitrageResult> {
 		const opportunityToExecute =
 			await this.getOpportunityToExecute(opportunity)
 
@@ -131,8 +129,8 @@ export class ArbitrageExecutor {
 	}
 
 	private async getOpportunityToExecute(
-		opportunity: GraphArbitrageOpportunity,
-	): Promise<GraphArbitrageOpportunity> {
+		opportunity: ArbitrageOpportunity,
+	): Promise<ArbitrageOpportunity> {
 		const startRules = this.config.startRules
 
 		if (!startRules) return opportunity
@@ -169,7 +167,7 @@ export class ArbitrageExecutor {
 			opportunity.endAmount,
 		)
 
-		const newOpportunity: GraphArbitrageOpportunity = {
+		const newOpportunity: ArbitrageOpportunity = {
 			costInUsd: opportunity.costInUsd,
 			endAmount: newEndAmount,
 			startAmount: newStartAmount,
@@ -183,7 +181,7 @@ export class ArbitrageExecutor {
 	}
 
 	private async buildSuccessResult(
-		opportunity: GraphArbitrageOpportunity,
+		opportunity: ArbitrageOpportunity,
 		pathExecutionResult: SuccessPathExecutionResult,
 		startTimestamp: number,
 	): Promise<SuccessArbitrageResult> {

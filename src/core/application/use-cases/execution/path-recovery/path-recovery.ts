@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
+import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
 import { QuotedPath } from '../../../../domain/value-objects/path'
 import { TokenId } from '../../../../domain/value-objects/token-id'
@@ -6,7 +7,8 @@ import {
 	BALANCE_ORACLE_TOKEN,
 	BalanceOracle,
 } from '../../../interfaces/balance-oracle'
-import { PathFinder } from '../../finding/path-finder/path-finder'
+import { PATH_FINDER_TOKEN, PathFinder } from '../../../interfaces/path-finder'
+import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
 import { PathExecutor } from '../path-executor/path-executor'
 import { PathRecoveryParams, PathRecoveryResult } from './types'
 
@@ -16,7 +18,12 @@ export class PathRecovery {
 		@Inject(BALANCE_ORACLE_TOKEN)
 		private readonly balanceOracle: BalanceOracle,
 		private readonly pathExecutor: PathExecutor,
+
+		@Inject(PATH_FINDER_TOKEN)
 		private readonly pathFinder: PathFinder,
+
+		@Inject(GRAPH_TOKEN)
+		private readonly graph: Graph,
 	) {}
 
 	async attemptRecovery(
@@ -97,16 +104,19 @@ export class PathRecovery {
 		failedStepIndex: number,
 		originalPath: QuotedPath<Token>,
 	): Promise<QuotedPath<Token>> {
-		const path = await this.pathFinder.findPath(
-			stuckToken,
-			originalPath.quotedStepSequence[failedStepIndex].edge.to,
-			originalPath.startAmount,
-		)
+		const paths = await this.pathFinder.findPaths(this.graph, [
+			{
+				startToken: stuckToken,
+				endToken:
+					originalPath.quotedStepSequence[failedStepIndex].edge.to,
+				startAmount: originalPath.startAmount,
+			},
+		])
 
-		if (!path) {
+		if (paths === null) {
 			throw new Error('Path not found')
 		}
 
-		return path
+		return paths[0] as QuotedPath<Token>
 	}
 }

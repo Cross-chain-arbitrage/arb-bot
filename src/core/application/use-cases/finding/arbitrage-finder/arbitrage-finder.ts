@@ -6,14 +6,8 @@ import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
 import { OpportunityFinder } from '../opportunity-finder.ts/opportunity-finder'
 import { OpportunityReporter } from '../opportunity-reporter/opportunity-reporter'
 import { OpportunityValidator } from '../opportunity-validator/opportunity-validator'
-import {
-	OpportunityValidatorParams,
-	ValidationResult,
-} from '../opportunity-validator/types'
-import {
-	GraphArbitrageOpportunity,
-	SnapshotFindOpportunityParams,
-} from '../snapshot-opportunity-finder/types'
+import { OpportunityValidatorParams } from '../opportunity-validator/types'
+import { SnapshotFindOpportunityParams } from '../snapshot-opportunity-finder/types'
 import { ArbitrageFinderConfig } from './types'
 
 export const ARBITRAGE_FINDER_CONFIG_KEY = 'arbitrageFinder'
@@ -63,33 +57,24 @@ export class ArbitrageFinder implements OnModuleInit {
 	}
 
 	async findArbitrage() {
-		const opportunity = await this.opportunityFinder.findOpportunity(
+		const opportunities = await this.opportunityFinder.findOpportunity(
 			this.graph,
 			this.snapshotFindOpportunityParams,
 		)
 
-		const validationResult = this.opportunityValidator.validateOpportunity(
-			opportunity,
-			this.opportunityValidatorParams,
-		)
+		const validationResult =
+			this.opportunityValidator.validateOpportunities(
+				opportunities,
+				this.opportunityValidatorParams,
+			)
 
-		this.opportunityReporter.reportOpportunity(
-			opportunity,
+		this.opportunityReporter.reportOpportunities(
+			opportunities,
 			validationResult,
 		)
 
-		if (this.isValidOpportunity(validationResult, opportunity))
-			return opportunity
+		if (!validationResult.ok) return null
 
-		return null
-	}
-
-	isValidOpportunity(
-		validationResult: ValidationResult,
-		opportunity: GraphArbitrageOpportunity | null,
-	): opportunity is GraphArbitrageOpportunity {
-		if (!opportunity) return false
-
-		return validationResult.ok
+		return validationResult.opportunity
 	}
 }

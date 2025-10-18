@@ -12,7 +12,7 @@ import {
 	SuccessArbitrageResult,
 } from '../../../application/use-cases/execution/arbitrage-executor/types'
 import { PathExecutionResult } from '../../../application/use-cases/execution/path-executor/types'
-import { GraphArbitrageOpportunity } from '../../../application/use-cases/finding/snapshot-opportunity-finder/types'
+import { ArbitrageOpportunity } from '../../../application/use-cases/finding/snapshot-opportunity-finder/types'
 import { Token } from '../../../domain/entities/token'
 import { ChannelIdUtils } from '../../../domain/services/channel-id-utils'
 import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
@@ -43,14 +43,14 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 		private readonly tgNotifier: TgNotifier,
 	) {}
 
-	notifyArbitrageStart(opportunity: GraphArbitrageOpportunity) {
+	notifyArbitrageStart(opportunity: ArbitrageOpportunity) {
 		this.buildAndSendArbitrageStart(opportunity).catch((error) => {
 			this.logger.error(error, 'Error sending arbitrage start message')
 		})
 	}
 
 	notifyArbitrageEnd(
-		opportunity: GraphArbitrageOpportunity,
+		opportunity: ArbitrageOpportunity,
 		result: ArbitrageResult,
 	): void {
 		this.buildAndSendArbitrageEnd(opportunity, result).catch((error) => {
@@ -59,7 +59,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 	}
 
 	private async buildAndSendArbitrageStart(
-		opportunity: GraphArbitrageOpportunity,
+		opportunity: ArbitrageOpportunity,
 	) {
 		if (this.errorInRow > MAX_ERROR_IN_ROW - 1) return
 
@@ -89,7 +89,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 	}
 
 	private async buildAndSendArbitrageEnd(
-		opportunity: GraphArbitrageOpportunity,
+		opportunity: ArbitrageOpportunity,
 		result: ArbitrageResult,
 	) {
 		if (result.status === 'failed') this.errorInRow++
@@ -117,7 +117,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 	}
 
 	private buildSuccessStatus(
-		opportunity: GraphArbitrageOpportunity,
+		opportunity: ArbitrageOpportunity,
 		result: SuccessArbitrageResult,
 	) {
 		const { pathExecutionResult, profitInUsd } = result
@@ -168,7 +168,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 	}
 
 	async editOrSendMessage(
-		arbitrageOpportunity: GraphArbitrageOpportunity,
+		arbitrageOpportunity: ArbitrageOpportunity,
 		arbitrageMessage: ArbitrageMessage,
 	) {
 		const fullMessage = this.buildMessage(arbitrageMessage)
@@ -231,7 +231,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 	}
 
 	private buildOpportunity(
-		opportunity: GraphArbitrageOpportunity,
+		opportunity: ArbitrageOpportunity,
 		startTokenPriceUsd: number,
 	) {
 		const { costInUsd, revenueInUsd, startAmount, endAmount } = opportunity
@@ -260,7 +260,7 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 	}
 
 	private buildPath(
-		opportunity: GraphArbitrageOpportunity,
+		opportunity: ArbitrageOpportunity,
 		pathResult?: PathExecutionResult,
 	) {
 		const { quotedStepSequence } = opportunity

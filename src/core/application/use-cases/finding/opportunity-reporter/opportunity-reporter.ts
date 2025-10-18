@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ValidationResult } from '../opportunity-validator/types'
-import { GraphArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
+import { ArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
 
 @Injectable()
 export class OpportunityReporter {
@@ -8,26 +8,28 @@ export class OpportunityReporter {
 
 	constructor() {}
 
-	reportOpportunity(
-		opportunity: GraphArbitrageOpportunity | null,
+	reportOpportunities(
+		opportunities: ArbitrageOpportunity[] | null,
 		validationResult: ValidationResult,
 	) {
-		const opportunityLog = opportunity
-			? {
-					startAmount: opportunity.startAmount,
-					endAmount: opportunity.endAmount,
-					revenueInUsd: opportunity.revenueInUsd,
-					costInUsd: opportunity.costInUsd,
-					profitInUsd: opportunity.profitInUsd,
-					path: opportunity.quotedStepSequence.map((p) => {
-						return {
-							edge: p.edge.id,
-							quote: p.quote,
-						}
-					}),
-				}
+		const opportunitiesLog = opportunities
+			? opportunities.map((opportunity) => {
+					return {
+						startAmount: opportunity.startAmount,
+						endAmount: opportunity.endAmount,
+						revenueInUsd: opportunity.revenueInUsd,
+						costInUsd: opportunity.costInUsd,
+						profitInUsd: opportunity.profitInUsd,
+						path: opportunity.quotedStepSequence.map((p) => {
+							return {
+								edge: p.edge.id,
+								quote: p.quote,
+							}
+						}),
+					}
+				})
 			: null
 
-		this.logger.log({ validationResult, opportunity: opportunityLog })
+		this.logger.log({ validationResult, opportunities: opportunitiesLog })
 	}
 }

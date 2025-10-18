@@ -3,7 +3,7 @@ import {
 	ARBITRAGE_NOTIFIER_TOKEN,
 	ArbitrageNotifier,
 } from '../../../interfaces/arbitrage-notifier'
-import { GraphArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
+import { ArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
 import { ArbitrageResult } from './types'
 
 @Injectable()
@@ -15,20 +15,17 @@ export class ArbitrageExecutionTelemetry {
 		private readonly arbitrageNotifier: ArbitrageNotifier,
 	) {}
 
-	onArbitrageStart(opportunity: GraphArbitrageOpportunity) {
+	onArbitrageStart(opportunity: ArbitrageOpportunity) {
 		this.logArbitrageStart(opportunity)
 		this.arbitrageNotifier.notifyArbitrageStart(opportunity)
 	}
 
-	onArbitrageEnd(
-		opportunity: GraphArbitrageOpportunity,
-		result: ArbitrageResult,
-	) {
+	onArbitrageEnd(opportunity: ArbitrageOpportunity, result: ArbitrageResult) {
 		this.logArbitrageEnd(result)
 		this.arbitrageNotifier.notifyArbitrageEnd(opportunity, result)
 	}
 
-	private logArbitrageStart(opportunity: GraphArbitrageOpportunity) {
+	private logArbitrageStart(opportunity: ArbitrageOpportunity) {
 		const log = {
 			opportunity,
 		}
