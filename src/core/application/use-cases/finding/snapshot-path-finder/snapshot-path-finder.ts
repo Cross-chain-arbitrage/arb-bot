@@ -74,6 +74,11 @@ export class SnapshotPathFinder implements PathFinder {
 				cycles.push(cycle)
 			}
 		}
+
+		if (cycles.length === 0) {
+			return null
+		}
+
 		return cycles
 	}
 }

@@ -10,7 +10,7 @@ export class OpportunityValidator {
 		opportunities: ArbitrageOpportunity[] | null,
 		params: OpportunityValidatorParams,
 	): ValidationResult {
-		if (!opportunities) {
+		if (opportunities === null) {
 			return {
 				ok: false,
 				reason: 'NO_OPPORTUNITY',
