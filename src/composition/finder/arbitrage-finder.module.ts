@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common'
 import { EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN } from '../../core/application/interfaces/edge-snapshot-builder'
 import { SnapshotPlugin } from '../../core/application/interfaces/graph-plugin'
+import { PATH_FINDER_TOKEN } from '../../core/application/interfaces/path-finder'
 import { ArbitrageFinder } from '../../core/application/use-cases/finding/arbitrage-finder/arbitrage-finder'
 import { GraphSnapshotBuilder } from '../../core/application/use-cases/finding/graph-snapshot-builder/gpaph-snapshot-builder'
 import { OpportunityFinder } from '../../core/application/use-cases/finding/opportunity-finder.ts/opportunity-finder'
 import { OpportunityReporter } from '../../core/application/use-cases/finding/opportunity-reporter/opportunity-reporter'
 import { OpportunityValidator } from '../../core/application/use-cases/finding/opportunity-validator/opportunity-validator'
 import { SnapshotOpportunityFinder } from '../../core/application/use-cases/finding/snapshot-opportunity-finder/snapshot-opportunity-finder'
+import { SnapshotPathFinder } from '../../core/application/use-cases/finding/snapshot-path-finder/snapshot-path-finder'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
 import { GRAPH_TOKEN } from '../../core/application/use-cases/graph-builder/graph-token'
 import { Graph } from '../../core/domain/entities/graph'
@@ -36,7 +38,11 @@ import { snapshotPluginModules, snapshotPlugins } from './snapshot-plugins'
 				)
 			},
 		},
+		{
+			provide: PATH_FINDER_TOKEN,
+			useClass: SnapshotPathFinder,
+		},
 	],
-	exports: [ArbitrageFinder, GraphSnapshotBuilder],
+	exports: [ArbitrageFinder, GraphSnapshotBuilder, PATH_FINDER_TOKEN],
 })
 export class ArbitrageFinderModule {}

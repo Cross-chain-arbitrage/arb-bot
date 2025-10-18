@@ -5,7 +5,6 @@ import {
 	ExecutorPlugin,
 	QuoterPlugin,
 } from '../../core/application/interfaces/graph-plugin'
-import { PATH_FINDER_TOKEN } from '../../core/application/interfaces/path-finder'
 import { ArbitrageExecutionTelemetry } from '../../core/application/use-cases/execution/arbitrage-executor/arbitrage-execution-telemetry'
 import { ArbitrageExecutor } from '../../core/application/use-cases/execution/arbitrage-executor/arbitrage-executor'
 import { ExecutionPreparer } from '../../core/application/use-cases/execution/execution-preparer/execution-preparer'
@@ -14,7 +13,6 @@ import { PathExecutor } from '../../core/application/use-cases/execution/path-ex
 import { PathRecovery } from '../../core/application/use-cases/execution/path-recovery/path-recovery'
 import { StepExecutionTelemetry } from '../../core/application/use-cases/execution/step-executor/step-execution-telemetry'
 import { StepExecutor } from '../../core/application/use-cases/execution/step-executor/step-executor'
-import { SnapshotPathFinder } from '../../core/application/use-cases/finding/snapshot-path-finder/snapshot-path-finder'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
 import { GRAPH_TOKEN } from '../../core/application/use-cases/graph-builder/graph-token'
 import { TokenValuatorModule } from '../../core/application/use-cases/token-valuator/token-valuator.module'
@@ -38,10 +36,6 @@ import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 	],
 	providers: [
 		PathRecovery,
-		{
-			provide: PATH_FINDER_TOKEN,
-			useClass: SnapshotPathFinder,
-		},
 		ArbitrageExecutor,
 		PathExecutor,
 		PathExecutionTelemetry,
