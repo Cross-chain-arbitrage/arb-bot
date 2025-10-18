@@ -55,7 +55,7 @@ export class QuotePathFinder implements PathFinder {
 	async findNegativeSumCycles(
 		graph: Graph,
 		params: ParamsFindCycle[],
-	): Promise<QuotedPath[]> {
+	): Promise<QuotedPath[] | null> {
 		const routes: Edge[][] = []
 
 		for (const param of params) {
@@ -74,6 +74,18 @@ export class QuotePathFinder implements PathFinder {
 			}),
 		)
 
-		return quotedPathsForRoutes
+		if (quotedPathsForRoutes.length === 0) {
+			return null
+		}
+
+		const filteredQuotedPathsForRoutes = quotedPathsForRoutes.filter(
+			(path) => path.endAmount > path.startAmount,
+		)
+
+		if (filteredQuotedPathsForRoutes.length === 0) {
+			return null
+		}
+
+		return filteredQuotedPathsForRoutes
 	}
 }
