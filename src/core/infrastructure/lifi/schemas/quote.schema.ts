@@ -1,16 +1,12 @@
 import * as z from 'zod'
 
-export const AddressSchema = z.enum([
-	'0x0000000000000000000000000000000000000000',
-	'0x5A7a2bf9fFae199f088B25837DcD7E115CF8E1bb',
-	'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-])
+export const AddressSchema = z.string()
 export type Address = z.infer<typeof AddressSchema>
 
-export const CoinKeySchema = z.enum(['ETH', 'IMO', 'USDC'])
+export const CoinKeySchema = z.string()
 export type CoinKey = z.infer<typeof CoinKeySchema>
 
-export const NameSchema = z.enum(['ETH', 'IMO', 'USD Coin'])
+export const NameSchema = z.string()
 export type Name = z.infer<typeof NameSchema>
 
 export const TokenSchema = z.object({
