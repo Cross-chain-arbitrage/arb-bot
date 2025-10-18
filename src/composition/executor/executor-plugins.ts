@@ -6,6 +6,8 @@ import { JupiterExecutorPluginModule } from '../../core/infrastructure/plugins/j
 import { JupiterExecutorPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-executor-plugin'
 import { LifiExecutorPluginModule } from '../../core/infrastructure/plugins/lifi/composition/lifi-executor-plugin.module'
 import { LifiExecutorPlugin } from '../../core/infrastructure/plugins/lifi/lifi-executor-plugin'
+import { MockExecutorPluginModule } from '../../core/infrastructure/plugins/mock/composition/mock-executor-plugin.module'
+import { MockExecutorPlugin } from '../../core/infrastructure/plugins/mock/mock-executor-plugin'
 import { NativeWrapperExecutorPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-executor-plugin.module'
 import { NativeWrapperExecutorPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-executor-plugin'
 import { OftExecutorPluginModule } from '../../core/infrastructure/plugins/oft/composition/oft-executor-plugin.module'
@@ -30,6 +32,7 @@ export const executorPluginModules = [
 	JupiterExecutorPluginModule,
 	LifiExecutorPluginModule,
 	OftExecutorPluginModule,
+	MockExecutorPluginModule,
 ]
 
 export const executorPlugins = [
@@ -43,4 +46,5 @@ export const executorPlugins = [
 	JupiterExecutorPlugin,
 	LifiExecutorPlugin,
 	OftExecutorPlugin,
+	MockExecutorPlugin,
 ]

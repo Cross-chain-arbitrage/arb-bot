@@ -6,6 +6,8 @@ import { JupiterQuoterPluginModule } from '../../core/infrastructure/plugins/jup
 import { JupiterQuoterPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-quoter-plugin'
 import { LifiQuoterPluginModule } from '../../core/infrastructure/plugins/lifi/composition/lifi-quoter-plugin.module'
 import { LifiQuoterPlugin } from '../../core/infrastructure/plugins/lifi/lifi-quoter-plugin'
+import { MockQuoterPluginModule } from '../../core/infrastructure/plugins/mock/composition/mock-quoter-plugin.module'
+import { MockQuoterPlugin } from '../../core/infrastructure/plugins/mock/mock-quoter-plugin'
 import { NativeWrapperQuoterPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-quoter-plugin.module'
 import { NativeWrapperQuoterPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-quoter-plugin'
 import { OftQuoterPluginModule } from '../../core/infrastructure/plugins/oft/composition/oft-quoter-plugin.module'
@@ -30,6 +32,7 @@ export const quoterPluginModules = [
 	JupiterQuoterPluginModule,
 	LifiQuoterPluginModule,
 	OftQuoterPluginModule,
+	MockQuoterPluginModule,
 ]
 
 export const quoterPlugins = [
@@ -43,4 +46,5 @@ export const quoterPlugins = [
 	JupiterQuoterPlugin,
 	LifiQuoterPlugin,
 	OftQuoterPlugin,
+	MockQuoterPlugin,
 ]

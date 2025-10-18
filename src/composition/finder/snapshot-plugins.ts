@@ -6,6 +6,8 @@ import { JupiterSnapshotPluginModule } from '../../core/infrastructure/plugins/j
 import { JupiterSnapshotPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-snapshot-plugin'
 import { LifiSnapshotPluginModule } from '../../core/infrastructure/plugins/lifi/composition/lifi-snaphot-plugin.module'
 import { LifiSnapshotPlugin } from '../../core/infrastructure/plugins/lifi/lifi-snapshot-plugin'
+import { MockSnapshotPluginModule } from '../../core/infrastructure/plugins/mock/composition/mock-snapshot-plugin.module'
+import { MockSnapshotPlugin } from '../../core/infrastructure/plugins/mock/mock-snapshot-plugin'
 import { NativeWrapperSnapshotPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-snaphot-plugin.module'
 import { NativeWrapperSnapshotPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-snapshot-plugin'
 import { OftSnapshotPluginModule } from '../../core/infrastructure/plugins/oft/composition/oft-snaphot-plugin.module'
@@ -30,6 +32,7 @@ export const snapshotPluginModules = [
 	JupiterSnapshotPluginModule,
 	LifiSnapshotPluginModule,
 	OftSnapshotPluginModule,
+	MockSnapshotPluginModule,
 ]
 
 export const snapshotPlugins = [
@@ -43,4 +46,5 @@ export const snapshotPlugins = [
 	JupiterSnapshotPlugin,
 	LifiSnapshotPlugin,
 	OftSnapshotPlugin,
+	MockSnapshotPlugin,
 ]

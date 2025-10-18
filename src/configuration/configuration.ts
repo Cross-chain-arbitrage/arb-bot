@@ -20,6 +20,10 @@ import {
 	lifiConfigScheme,
 } from '../core/infrastructure/plugins/lifi/configuration/lifi-config'
 import {
+	MOCK_CONFIG_KEY,
+	mockConfigScheme,
+} from '../core/infrastructure/plugins/mock/configuration/mock-config'
+import {
 	NATIVE_WRAPPER_CONFIG_KEY,
 	nativeWrapperConfigScheme,
 } from '../core/infrastructure/plugins/native-wrapper/configuration/native-wrapper-config'
@@ -75,6 +79,7 @@ export const configScheme = z.object({
 	[JUPITER_CONFIG_KEY]: jupiterConfigScheme,
 	[LIFI_CONFIG_KEY]: lifiConfigScheme,
 	[OFT_CONFIG_KEY]: oftConfigScheme,
+	[MOCK_CONFIG_KEY]: mockConfigScheme,
 
 	/* ======== INFRASTRUCTURE ======== */
 

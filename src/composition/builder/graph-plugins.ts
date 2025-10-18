@@ -6,6 +6,8 @@ import { JupiterGraphPluginModule } from '../../core/infrastructure/plugins/jupi
 import { JupiterGraphPlugin } from '../../core/infrastructure/plugins/jupiter/jupiter-graph-plugin'
 import { LifiGraphPluginModule } from '../../core/infrastructure/plugins/lifi/composition/lifi-graph-plugin.module'
 import { LifiGraphPlugin } from '../../core/infrastructure/plugins/lifi/lifi-graph-plugin'
+import { MockGraphPluginModule } from '../../core/infrastructure/plugins/mock/composition/mock-graph-plugin.module'
+import { MockGraphPlugin } from '../../core/infrastructure/plugins/mock/mock-graph-plugin'
 import { NativeWrapperGraphPluginModule } from '../../core/infrastructure/plugins/native-wrapper/composition/native-wrapper-graph-plugin.module'
 import { NativeWrapperGraphPlugin } from '../../core/infrastructure/plugins/native-wrapper/native-wrapper-graph-plugin'
 import { OftGraphPluginModule } from '../../core/infrastructure/plugins/oft/composition/oft-graph-plugin.module'
@@ -30,6 +32,7 @@ export const graphPluginModules = [
 	JupiterGraphPluginModule,
 	LifiGraphPluginModule,
 	OftGraphPluginModule,
+	MockGraphPluginModule,
 ]
 
 export const graphPlugins = [
@@ -43,4 +46,5 @@ export const graphPlugins = [
 	JupiterGraphPlugin,
 	LifiGraphPlugin,
 	OftGraphPlugin,
+	MockGraphPlugin,
 ]
