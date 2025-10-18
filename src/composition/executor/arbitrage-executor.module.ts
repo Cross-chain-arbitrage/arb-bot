@@ -1,10 +1,6 @@
 import { Module } from '@nestjs/common'
 import { EDGE_EXECUTOR_REGISTRY_TOKEN } from '../../core/application/interfaces/edge-executor'
-import { EDGE_QUOTER_REGISTRY_TOKEN } from '../../core/application/interfaces/edge-quoter'
-import {
-	ExecutorPlugin,
-	QuoterPlugin,
-} from '../../core/application/interfaces/graph-plugin'
+import { ExecutorPlugin } from '../../core/application/interfaces/graph-plugin'
 import { ArbitrageExecutionTelemetry } from '../../core/application/use-cases/execution/arbitrage-executor/arbitrage-execution-telemetry'
 import { ArbitrageExecutor } from '../../core/application/use-cases/execution/arbitrage-executor/arbitrage-executor'
 import { ExecutionPreparer } from '../../core/application/use-cases/execution/execution-preparer/execution-preparer'
@@ -22,7 +18,6 @@ import { BalanceOracleModule } from '../balance-oracle/balance-oracle.module'
 import { GraphBuilderModule } from '../builder/graph-builder.module'
 import { ArbitrageFinderModule } from '../finder/arbitrage-finder.module'
 import { executorPluginModules, executorPlugins } from './executor-plugins'
-import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 
 @Module({
 	imports: [
@@ -32,7 +27,6 @@ import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 		ArbitrageFinderModule,
 		BalanceOracleModule,
 		...executorPluginModules,
-		...quoterPluginModules,
 	],
 	providers: [
 		PathRecovery,
@@ -55,17 +49,6 @@ import { quoterPluginModules, quoterPlugins } from './quoter-plugins'
 					graph,
 					executorPlugins,
 				)
-			},
-		},
-		{
-			provide: EDGE_QUOTER_REGISTRY_TOKEN,
-			inject: [GraphBuilder, GRAPH_TOKEN, ...quoterPlugins],
-			useFactory: (
-				graphBuilder: GraphBuilder,
-				graph: Graph,
-				...quoterPlugins: QuoterPlugin[]
-			) => {
-				return graphBuilder.buildQuoterRegistry(graph, quoterPlugins)
 			},
 		},
 	],

@@ -1,11 +1,17 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { Edge } from '../../../domain/entities/edge'
 import { QuotedPath, QuotedStep } from '../../../domain/value-objects/path'
-import { EdgeQuoterRegistry } from '../../interfaces/edge-quoter'
+import {
+	EDGE_QUOTER_REGISTRY_TOKEN,
+	EdgeQuoterRegistry,
+} from '../../interfaces/edge-quoter'
 
 @Injectable()
 export class PathQuoter {
-	constructor(private readonly edgeQuoterRegistry: EdgeQuoterRegistry) {}
+	constructor(
+		@Inject(EDGE_QUOTER_REGISTRY_TOKEN)
+		private readonly edgeQuoterRegistry: EdgeQuoterRegistry,
+	) {}
 
 	async quotePath(edges: Edge[], amountIn: bigint): Promise<QuotedPath> {
 		const quotedStepSequence: QuotedStep[] = []
