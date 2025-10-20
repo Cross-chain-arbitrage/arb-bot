@@ -13,4 +13,7 @@ export const arbitrageFinderConfigScheme: z.ZodType<ArbitrageFinderConfig> =
 		opportunityValidation: z.object({
 			minProfitUsd: z.number(),
 		}),
+		pathFinder: z.object({
+			type: z.enum(['quote', 'snapshot']),
+		}),
 	})

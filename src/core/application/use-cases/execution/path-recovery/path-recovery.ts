@@ -10,6 +10,7 @@ import {
 import { PATH_FINDER_TOKEN, PathFinder } from '../../../interfaces/path-finder'
 import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
 import { PathExecutor } from '../path-executor/path-executor'
+import { PathRecoveryTelemetry } from './path-recovery-telemetry'
 import { PathRecoveryParams, PathRecoveryResult } from './types'
 
 @Injectable()
@@ -24,11 +25,15 @@ export class PathRecovery {
 
 		@Inject(GRAPH_TOKEN)
 		private readonly graph: Graph,
+
+		private readonly telemetry: PathRecoveryTelemetry,
 	) {}
 
 	async attemptRecovery(
 		params: PathRecoveryParams,
 	): Promise<PathRecoveryResult> {
+		this.telemetry.onAttemptRecoveryStart(params)
+
 		try {
 			const stuckAmount = await this.getStuckAmount(
 				params.originalPath.quotedStepSequence[params.failedStepIndex]
@@ -55,6 +60,11 @@ export class PathRecovery {
 			})
 
 			if (pathExecutionResult.status === 'failed') {
+				this.telemetry.onAttemptRecoveryFailure(
+					recoveryPath,
+					pathExecutionResult,
+				)
+
 				return {
 					status: 'failed',
 					reason: pathExecutionResult.reason,
@@ -64,12 +74,18 @@ export class PathRecovery {
 				}
 			}
 
+			this.telemetry.onAttemptRecoverySuccess(
+				recoveryPath,
+				pathExecutionResult,
+			)
+
 			return {
 				status: 'success',
 				pathExecutionResult,
 				path: recoveryPath,
 			}
 		} catch (error) {
+			this.telemetry.onAttemptRecoveryError(error)
 			return {
 				status: 'failed',
 				reason:

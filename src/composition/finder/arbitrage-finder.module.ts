@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { loadConfig } from '../../configuration/configuration'
+import { ConfigService } from '@nestjs/config'
 import { EDGE_QUOTER_REGISTRY_TOKEN } from '../../core/application/interfaces/edge-quoter'
 import { EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN } from '../../core/application/interfaces/edge-snapshot-builder'
 import {
@@ -7,7 +7,11 @@ import {
 	SnapshotPlugin,
 } from '../../core/application/interfaces/graph-plugin'
 import { PATH_FINDER_TOKEN } from '../../core/application/interfaces/path-finder'
-import { ArbitrageFinder } from '../../core/application/use-cases/finding/arbitrage-finder/arbitrage-finder'
+import {
+	ARBITRAGE_FINDER_CONFIG_KEY,
+	ArbitrageFinder,
+} from '../../core/application/use-cases/finding/arbitrage-finder/arbitrage-finder'
+import { ArbitrageFinderConfig } from '../../core/application/use-cases/finding/arbitrage-finder/types'
 import { GraphSnapshotBuilder } from '../../core/application/use-cases/finding/graph-snapshot-builder/gpaph-snapshot-builder'
 import { OpportunityFinder } from '../../core/application/use-cases/finding/opportunity-finder.ts/opportunity-finder'
 import { OpportunityReporter } from '../../core/application/use-cases/finding/opportunity-reporter/opportunity-reporter'
@@ -22,8 +26,6 @@ import { Graph } from '../../core/domain/entities/graph'
 import { GraphBuilderModule } from '../builder/graph-builder.module'
 import { quoterPluginModules, quoterPlugins } from '../executor/quoter-plugins'
 import { snapshotPluginModules, snapshotPlugins } from './snapshot-plugins'
-
-const config = loadConfig()
 
 @Module({
 	imports: [
@@ -66,10 +68,28 @@ const config = loadConfig()
 		},
 		{
 			provide: PATH_FINDER_TOKEN,
-			useClass:
-				config.pathFinder.type === 'quote'
-					? QuotePathFinder
-					: SnapshotPathFinder,
+			inject: [ConfigService, PathQuoter, GraphSnapshotBuilder],
+			useFactory: (
+				configService: ConfigService,
+				pathQuoter: PathQuoter,
+				graphSnapshotBuilder: GraphSnapshotBuilder,
+			) => {
+				const config = configService.get<ArbitrageFinderConfig>(
+					ARBITRAGE_FINDER_CONFIG_KEY,
+				)
+
+				if (!config) {
+					throw new Error('Arbitrage finder config not found')
+				}
+
+				switch (config.pathFinder.type) {
+					case 'quote':
+						return new QuotePathFinder(pathQuoter)
+
+					case 'snapshot':
+						return new SnapshotPathFinder(graphSnapshotBuilder)
+				}
+			},
 		},
 	],
 	exports: [

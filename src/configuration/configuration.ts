@@ -58,9 +58,6 @@ import { balanceReporterSchedulerConfigScheme } from './balance-reporter-schedul
 export const configScheme = z.object({
 	botName: z.string(),
 	isDryRun: z.boolean(),
-	pathFinder: z.object({
-		type: z.enum(['quote', 'snapshot']),
-	}),
 
 	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigScheme,
 	[ARBITRAGE_EXECUTOR_CONFIG_KEY]: arbitrageExecutorConfigScheme,

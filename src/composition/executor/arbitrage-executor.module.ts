@@ -7,6 +7,7 @@ import { ExecutionPreparer } from '../../core/application/use-cases/execution/ex
 import { PathExecutionTelemetry } from '../../core/application/use-cases/execution/path-executor/path-execution-telemetry'
 import { PathExecutor } from '../../core/application/use-cases/execution/path-executor/path-executor'
 import { PathRecovery } from '../../core/application/use-cases/execution/path-recovery/path-recovery'
+import { PathRecoveryTelemetry } from '../../core/application/use-cases/execution/path-recovery/path-recovery-telemetry'
 import { StepExecutionTelemetry } from '../../core/application/use-cases/execution/step-executor/step-execution-telemetry'
 import { StepExecutor } from '../../core/application/use-cases/execution/step-executor/step-executor'
 import { GraphBuilder } from '../../core/application/use-cases/graph-builder/graph-builder'
@@ -30,6 +31,7 @@ import { executorPluginModules, executorPlugins } from './executor-plugins'
 	],
 	providers: [
 		PathRecovery,
+		PathRecoveryTelemetry,
 		ArbitrageExecutor,
 		PathExecutor,
 		PathExecutionTelemetry,

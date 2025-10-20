@@ -14,6 +14,8 @@ arbitrageExecutor:
     enabled: true
 
 arbitrageFinder:
+  pathFinder:
+    type: snapshot
   runInterval: 1000000
   opportunityFinding:
     minStartValueUsd: 100

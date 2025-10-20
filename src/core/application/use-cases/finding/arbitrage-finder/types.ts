@@ -12,4 +12,8 @@ export type ArbitrageFinderConfig = {
 	opportunityValidation: {
 		minProfitUsd: number
 	}
+
+	pathFinder: {
+		type: 'quote' | 'snapshot'
+	}
 }

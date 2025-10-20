@@ -42,12 +42,15 @@ export class OpportunityFinder {
 
 		let valueUSD = minStartValueUsd
 		const paramsFindCycles: ParamsFindCycle[] = []
+
 		for (let i = 0; i < runCount; i++) {
+			const startAmount = startToken.parseUnits(
+				(valueUSD / startTokenUSDPrice).toString(),
+			)
+
 			paramsFindCycles.push({
 				startToken,
-				startAmount: startToken.parseUnits(
-					(valueUSD / startTokenUSDPrice).toString(),
-				),
+				startAmount,
 			})
 
 			if (runCount === 1) continue
