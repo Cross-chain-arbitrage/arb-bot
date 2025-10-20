@@ -35,7 +35,7 @@ export class JupiterQuoterPlugin extends EdgeHandler implements QuoterPlugin {
 
 		const executionCostInUsd =
 			await this.solanaTxCostHelper.getExpectedTxCostInUsd(
-				quoteResult.amountOut,
+				BigInt(quoteResult.unitConsumption),
 			)
 
 		return {
