@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
 import { QuotedPath } from '../../../../domain/value-objects/path'
@@ -15,6 +15,8 @@ import { PathRecoveryParams, PathRecoveryResult } from './types'
 
 @Injectable()
 export class PathRecovery {
+	private readonly logger = new Logger(PathRecovery.name)
+
 	constructor(
 		@Inject(BALANCE_ORACLE_TOKEN)
 		private readonly balanceOracle: BalanceOracle,
@@ -40,6 +42,8 @@ export class PathRecovery {
 					.edge.from,
 				params.minTokenThresholds,
 			)
+
+			this.logger.log({ stuckAmount }, 'Stuck amount')
 
 			const recoveryPath = await this.getRecoveryPath(
 				params.originalPath.quotedStepSequence[params.failedStepIndex]
