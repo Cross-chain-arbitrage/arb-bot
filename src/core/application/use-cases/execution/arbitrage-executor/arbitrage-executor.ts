@@ -37,7 +37,7 @@ export const ARBITRAGE_EXECUTOR_CONFIG_KEY = 'arbitrageExecutor'
 
 @Injectable()
 export class ArbitrageExecutor {
-	private readonly config: ArbitrageExecutorConfig
+	private readonly config: ArbitrageExecutorConfig | undefined
 
 	constructor(
 		private readonly pathExecutor: PathExecutor,
@@ -61,8 +61,6 @@ export class ArbitrageExecutor {
 		const config = this.configService.get<ArbitrageExecutorConfig>(
 			ARBITRAGE_EXECUTOR_CONFIG_KEY,
 		)
-
-		if (!config) throw new Error('Arbitrage executor config not found')
 
 		this.validateConfig(config)
 
@@ -100,10 +98,26 @@ export class ArbitrageExecutor {
 		const executionTime = Date.now() - startTimestamp
 
 		if (pathResult.status === 'failed') {
+			if (pathResult.failureType === 'validation') {
+				const arbitrageResult: FailedArbitrageResult = {
+					status: 'failed',
+					pathExecutionResult: pathResult,
+					recoveryResult: undefined,
+					executionTime,
+				}
+
+				this.telemetry.onArbitrageEnd(
+					opportunityToExecute,
+					arbitrageResult,
+				)
+
+				return arbitrageResult
+			}
+
 			const recoveryResult = await this.pathRecovery.attemptRecovery({
+				stepAmountIn: pathResult.stepAmountIn,
 				failedStepIndex: pathResult.stepIndex,
 				originalPath: opportunityToExecute,
-				minTokenThresholds: new Map(),
 			})
 			const arbitrageResult: FailedArbitrageResult = {
 				status: 'failed',
@@ -131,7 +145,7 @@ export class ArbitrageExecutor {
 	private async getOpportunityToExecute(
 		opportunity: ArbitrageOpportunity,
 	): Promise<ArbitrageOpportunity> {
-		const startRules = this.config.startRules
+		const startRules = this.config?.startRules
 
 		if (!startRules) return opportunity
 
@@ -245,7 +259,9 @@ export class ArbitrageExecutor {
 		return { isValid: true }
 	}
 
-	validateConfig(config: ArbitrageExecutorConfig): void {
+	validateConfig(config: ArbitrageExecutorConfig | undefined): void {
+		if (!config) return
+
 		if (config.startRules) {
 			for (const startRule of config.startRules) {
 				const startToken = this.graph.getNode(startRule.startTokenId)
@@ -261,20 +277,6 @@ export class ArbitrageExecutor {
 				if (!directionToken)
 					throw new Error(
 						`Direction token not found for start rule ${startRule.directionTokenId}`,
-					)
-			}
-		}
-
-		if (config.pathRecoveryConfig.enabled) {
-			const iterableThresholds =
-				config.pathRecoveryConfig.minTokenThresholds || []
-
-			for (const { tokenId, threshold } of iterableThresholds) {
-				const token = this.graph.getNode(tokenId)
-
-				if (!token)
-					throw new Error(
-						`Token not found for min token threshold ${tokenId}`,
 					)
 			}
 		}

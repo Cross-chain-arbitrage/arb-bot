@@ -2,11 +2,6 @@ import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
 import { QuotedPath } from '../../../../domain/value-objects/path'
-import { TokenId } from '../../../../domain/value-objects/token-id'
-import {
-	BALANCE_ORACLE_TOKEN,
-	BalanceOracle,
-} from '../../../interfaces/balance-oracle'
 import { PATH_FINDER_TOKEN, PathFinder } from '../../../interfaces/path-finder'
 import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
 import { PathExecutor } from '../path-executor/path-executor'
@@ -18,8 +13,6 @@ export class PathRecovery {
 	private readonly logger = new Logger(PathRecovery.name)
 
 	constructor(
-		@Inject(BALANCE_ORACLE_TOKEN)
-		private readonly balanceOracle: BalanceOracle,
 		private readonly pathExecutor: PathExecutor,
 
 		@Inject(PATH_FINDER_TOKEN)
@@ -37,11 +30,7 @@ export class PathRecovery {
 		this.telemetry.onAttemptRecoveryStart(params)
 
 		try {
-			const stuckAmount = await this.getStuckAmount(
-				params.originalPath.quotedStepSequence[params.failedStepIndex]
-					.edge.from,
-				params.minTokenThresholds,
-			)
+			const stuckAmount = params.stepAmountIn
 
 			this.logger.log({ stuckAmount }, 'Stuck amount')
 
@@ -96,26 +85,6 @@ export class PathRecovery {
 				failureType: 'preparation',
 			}
 		}
-	}
-
-	private async getStuckAmount(
-		stuckToken: Token,
-		minTokenThresholds: Map<TokenId, number>,
-	): Promise<bigint> {
-		const [{ balance }] = await this.balanceOracle.getBalances([stuckToken])
-
-		const thresholdFormatted = minTokenThresholds.get(stuckToken.id) || 0
-		const threshold = stuckToken.parseUnits(thresholdFormatted.toString())
-
-		if (balance <= threshold) {
-			throw new Error(
-				`Stuck amount (${balance}) is less than or equal to threshold (${threshold}) for token ${stuckToken.id}`,
-			)
-		}
-
-		const stuckAmount = balance - threshold
-
-		return stuckAmount
 	}
 
 	private async getRecoveryPath(

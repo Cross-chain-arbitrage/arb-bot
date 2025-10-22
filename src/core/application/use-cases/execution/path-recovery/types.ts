@@ -1,6 +1,5 @@
 import { Token } from '../../../../domain/entities/token'
 import { QuotedPath } from '../../../../domain/value-objects/path'
-import { TokenId } from '../../../../domain/value-objects/token-id'
 import {
 	FailedPathExecutionResult,
 	SuccessPathExecutionResult,
@@ -8,8 +7,8 @@ import {
 
 export type PathRecoveryParams = {
 	failedStepIndex: number
+	stepAmountIn: bigint
 	originalPath: QuotedPath<Token>
-	minTokenThresholds: Map<TokenId, number>
 }
 
 export type PathRecoveryFailedResult = {

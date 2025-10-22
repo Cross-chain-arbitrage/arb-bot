@@ -153,10 +153,17 @@ export class TgArbitrageNotifier implements ArbitrageNotifier {
 		let status = '❌ <b>Execution error</b>\n\n'
 
 		let cost = pathExecutionResult.totalExecutionCostInUsd
-		if (recoveryResult.status === 'success') {
-			status += 'Recovery successful\n\n'
-			cost = recoveryResult.pathExecutionResult.totalExecutionCostInUsd
-		} else status += 'Recovery failed\n\n'
+
+		switch (recoveryResult?.status) {
+			case 'success':
+				status += 'Recovery successful\n\n'
+				cost =
+					recoveryResult.pathExecutionResult.totalExecutionCostInUsd
+				break
+			case 'failed':
+				status += 'Recovery failed\n\n'
+				break
+		}
 
 		if (this.errorInRow === MAX_ERROR_IN_ROW)
 			status += `⚠️ Max errors in a row reached (${MAX_ERROR_IN_ROW}), next messages will not be sent until successful execution \n\n`

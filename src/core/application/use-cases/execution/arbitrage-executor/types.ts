@@ -16,7 +16,7 @@ export type SuccessArbitrageResult = {
 export type FailedArbitrageResult = {
 	status: 'failed'
 	pathExecutionResult: FailedPathExecutionResult
-	recoveryResult: PathRecoveryResult
+	recoveryResult?: PathRecoveryResult
 	executionTime: number
 }
 
@@ -26,14 +26,6 @@ export interface StartRule {
 	startTokenId: TokenId
 	directionTokenId: TokenId
 }
-export interface PathRecoveryConfig {
-	enabled: boolean
-	minTokenThresholds?: Array<{
-		tokenId: TokenId
-		threshold: number
-	}>
-}
 export interface ArbitrageExecutorConfig {
 	startRules?: StartRule[]
-	pathRecoveryConfig: PathRecoveryConfig
 }
