@@ -28,4 +28,5 @@ export interface StartRule {
 }
 export interface ArbitrageExecutorConfig {
 	startRules?: StartRule[]
+	pathRecoveryEnabled: boolean
 }

@@ -2,10 +2,8 @@ import z from 'zod'
 import { ArbitrageExecutorConfig } from '../core/application/use-cases/execution/arbitrage-executor/types'
 import { tokenIdScheme } from '../core/domain/value-objects/token-id'
 
-export const arbitrageExecutorConfigScheme: z.ZodType<
-	ArbitrageExecutorConfig | undefined
-> = z
-	.object({
+export const arbitrageExecutorConfigScheme: z.ZodType<ArbitrageExecutorConfig> =
+	z.object({
 		startRules: z
 			.array(
 				z.object({
@@ -14,5 +12,5 @@ export const arbitrageExecutorConfigScheme: z.ZodType<
 				}),
 			)
 			.optional(),
+		pathRecoveryEnabled: z.boolean(),
 	})
-	.optional()

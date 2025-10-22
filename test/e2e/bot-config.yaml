@@ -9,6 +9,9 @@ balanceReporterScheduler:
 arbitrageScheduler:
   prepareExecution: true
 
+arbitrageExecutor:
+  pathRecoveryEnabled: true
+
 arbitrageFinder:
   pathFinder:
     type: snapshot

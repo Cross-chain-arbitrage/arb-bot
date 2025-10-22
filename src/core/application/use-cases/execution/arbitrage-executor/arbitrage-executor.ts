@@ -37,7 +37,7 @@ export const ARBITRAGE_EXECUTOR_CONFIG_KEY = 'arbitrageExecutor'
 
 @Injectable()
 export class ArbitrageExecutor {
-	private readonly config: ArbitrageExecutorConfig | undefined
+	private readonly config: ArbitrageExecutorConfig
 
 	constructor(
 		private readonly pathExecutor: PathExecutor,
@@ -61,6 +61,8 @@ export class ArbitrageExecutor {
 		const config = this.configService.get<ArbitrageExecutorConfig>(
 			ARBITRAGE_EXECUTOR_CONFIG_KEY,
 		)
+
+		if (!config) throw new Error('Arbitrage executor config not found')
 
 		this.validateConfig(config)
 
@@ -98,11 +100,19 @@ export class ArbitrageExecutor {
 		const executionTime = Date.now() - startTimestamp
 
 		if (pathResult.status === 'failed') {
-			if (pathResult.failureType === 'validation') {
+			if (
+				pathResult.failureType === 'validation' &&
+				this.config.pathRecoveryEnabled
+			) {
+				const recoveryResult = await this.pathRecovery.attemptRecovery({
+					stepAmountIn: pathResult.stepAmountIn,
+					failedStepIndex: pathResult.stepIndex,
+					originalPath: opportunityToExecute,
+				})
 				const arbitrageResult: FailedArbitrageResult = {
 					status: 'failed',
 					pathExecutionResult: pathResult,
-					recoveryResult: undefined,
+					recoveryResult,
 					executionTime,
 				}
 
@@ -114,15 +124,10 @@ export class ArbitrageExecutor {
 				return arbitrageResult
 			}
 
-			const recoveryResult = await this.pathRecovery.attemptRecovery({
-				stepAmountIn: pathResult.stepAmountIn,
-				failedStepIndex: pathResult.stepIndex,
-				originalPath: opportunityToExecute,
-			})
 			const arbitrageResult: FailedArbitrageResult = {
 				status: 'failed',
 				pathExecutionResult: pathResult,
-				recoveryResult,
+				recoveryResult: undefined,
 				executionTime,
 			}
 
@@ -262,9 +267,7 @@ export class ArbitrageExecutor {
 		return { isValid: true }
 	}
 
-	validateConfig(config: ArbitrageExecutorConfig | undefined): void {
-		if (!config) return
-
+	validateConfig(config: ArbitrageExecutorConfig): void {
 		if (config.startRules) {
 			for (const startRule of config.startRules) {
 				const startToken = this.graph.getNode(startRule.startTokenId)
