@@ -48,7 +48,6 @@ export class PathRecovery {
 			const recoveryPath = await this.getRecoveryPath(
 				params.originalPath.quotedStepSequence[params.failedStepIndex]
 					.edge.from,
-				params.failedStepIndex,
 				params.originalPath,
 			)
 
@@ -121,14 +120,12 @@ export class PathRecovery {
 
 	private async getRecoveryPath(
 		stuckToken: Token,
-		failedStepIndex: number,
 		originalPath: QuotedPath<Token>,
 	): Promise<QuotedPath<Token>> {
 		const paths = await this.pathFinder.findPaths(this.graph, [
 			{
 				startToken: stuckToken,
-				endToken:
-					originalPath.quotedStepSequence[failedStepIndex].edge.to,
+				endToken: originalPath.quotedStepSequence[0].edge.from,
 				startAmount: originalPath.startAmount,
 			},
 		])
