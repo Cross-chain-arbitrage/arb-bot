@@ -243,6 +243,9 @@ export class ArbitrageExecutor {
 
 		const quote = await quoter.quote(amountIn)
 
+		if (quote.amountOut >= quotedStepSequence[stepIndex].quote.amountOut)
+			return { isValid: true }
+
 		const rateSum = quotedStepSequence.reduce((acc, stepInPath) => {
 			if (stepInPath.edge.id === step.id)
 				return acc + quote.negativeLogRate
