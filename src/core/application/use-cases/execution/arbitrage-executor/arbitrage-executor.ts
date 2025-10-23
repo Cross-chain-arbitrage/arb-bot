@@ -162,6 +162,8 @@ export class ArbitrageExecutor {
 		if (startStepIndex === undefined)
 			throw new Error("Couldn't obtain startStepIndex from startRules")
 
+		if (startStepIndex === 0) return opportunity
+
 		const newQuotedStepSequence = [
 			...opportunity.quotedStepSequence.slice(
 				startStepIndex,
@@ -170,21 +172,17 @@ export class ArbitrageExecutor {
 			...opportunity.quotedStepSequence.slice(0, startStepIndex),
 		]
 
-		const startToken = opportunity.quotedStepSequence[0].edge.from
+		const newStartAmount =
+			opportunity.quotedStepSequence[startStepIndex - 1].quote.amountOut
 
-		const newStartToken = newQuotedStepSequence[0].edge.from
-
-		const newStartAmount = await this.tokenValuator.convertTokenAmount(
-			startToken,
-			newStartToken,
-			opportunity.startAmount,
-		)
-
-		const newEndAmount = await this.tokenValuator.convertTokenAmount(
-			startToken,
-			newStartToken,
-			opportunity.endAmount,
-		)
+		// It's not precise retrieval of the end amount, but I make an assumption that price impact will not be significant
+		// For example
+		// Initial opportunity: 400 USDT (A) -> 400 USDT (B) -> 0.1 WETH (B) -> 0.1 WETH (A) -> 405 USDT (A)
+		// New opportunity: 400 USDT (B) -> 0.1 WETH (B) -> 0.1 WETH (A) -> 405 USDT (A) -> 405 USDT (B)
+		// In this case we bridge more USDT from A to B, thus there can be more fee paid on this bridge and slightly less profit.
+		// In more complex cases it may be worse
+		const newEndAmount =
+			(newStartAmount * opportunity.endAmount) / opportunity.startAmount
 
 		const newOpportunity: ArbitrageOpportunity = {
 			costInUsd: opportunity.costInUsd,
