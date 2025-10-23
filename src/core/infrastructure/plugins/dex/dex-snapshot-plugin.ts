@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import {
 	EdgeSnapshotBuilder,
@@ -19,6 +19,8 @@ import { DexConfig } from './types'
 
 @Injectable()
 export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
+	logger = new Logger(DexSnapshotPlugin.name)
+
 	constructor(
 		configService: ConfigService,
 		private readonly interpolationHelper: InterpolationHelper,
@@ -74,6 +76,18 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 			const amountInFormatted = edge.from.formatUnits(amountIn)
 
 			const amountOutFormatted = interpolation(Number(amountInFormatted))
+
+			this.logger.debug(
+				{
+					amountIn,
+					amountInFormatted,
+					amountOutFormatted,
+					amountOutFormattedString: amountOutFormatted.toString(),
+					edgeId: edge.id,
+				},
+				'Dex snapshot plugin buildSnapshotFn',
+			)
+
 			const amountOut = edge.to.parseUnits(amountOutFormatted.toString())
 
 			return {
