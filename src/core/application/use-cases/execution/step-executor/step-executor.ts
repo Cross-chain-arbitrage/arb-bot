@@ -10,7 +10,7 @@ import {
 } from '../../../interfaces/edge-executor'
 import { backoffMs } from '../utils/backoff'
 import { StepExecutionTelemetry } from './step-execution-telemetry'
-import { StepPhase } from './types'
+import { StepExecutionResult, StepPhase } from './types'
 
 @Injectable()
 export class StepExecutor {
@@ -20,7 +20,10 @@ export class StepExecutor {
 		private readonly telemetry: StepExecutionTelemetry,
 	) {}
 
-	async executeStep(edge: Edge, amountIn: bigint) {
+	async executeStep(
+		edge: Edge,
+		amountIn: bigint,
+	): Promise<StepExecutionResult> {
 		const edgeExecutor = this.edgeExecutorRegistry.get(edge.id)
 
 		if (!edgeExecutor) {

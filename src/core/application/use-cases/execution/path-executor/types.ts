@@ -1,19 +1,30 @@
 import { Edge } from '../../../../domain/entities/edge'
 import { Token } from '../../../../domain/entities/token'
 import { Path } from '../../../../domain/value-objects/path'
-import { Confirmation, Execution } from '../../../interfaces/edge-executor'
+import { StepExecutionResult } from '../step-executor/types'
 
 export type PathExecutorParams = {
 	path: Path<Token>
 }
 
-export interface SuccessPathExecutionResult {
+export type ProcessedStep = {
+	edge: Edge
+	stepIndex: number
+	stepExecutionResults: StepExecutionResult[]
+} & (
+	| { status: 'success'; amountOut: bigint }
+	| { status: 'failed'; reason: string }
+)
+
+export type SuccessPathExecutionResult = {
+	processedSteps: ProcessedStep[]
 	actualEndAmount: bigint
 	status: 'success'
 	totalExecutionCostInUsd: number
 }
 
-export interface FailedPathExecutionResult {
+export type FailedPathExecutionResult = {
+	processedSteps: ProcessedStep[]
 	status: 'failed'
 	totalExecutionCostInUsd: number
 	stepIndex: number
@@ -31,11 +42,3 @@ export type ValidateStep = (
 	stepIndex: number,
 	amountIn: bigint,
 ) => Promise<{ isValid: true } | { isValid: false; reason: string }>
-
-export type StepProcessingResult = {
-	edge: Edge
-	stepIndex: number
-	confirmation: Confirmation
-	execution: Execution
-	attempt: number
-}

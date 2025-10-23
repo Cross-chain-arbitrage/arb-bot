@@ -3,13 +3,14 @@ import { withRetry } from 'viem'
 import { wait } from '../../../../../utils/common'
 import { Edge } from '../../../../domain/entities/edge'
 import { StepExecutor } from '../step-executor/step-executor'
+import { StepExecutionResult } from '../step-executor/types'
 import { backoffMs } from '../utils/backoff'
 import { PathExecutionTelemetry } from './path-execution-telemetry'
 import {
 	FailedPathExecutionResult,
 	PathExecutionResult,
 	PathExecutorParams,
-	StepProcessingResult,
+	ProcessedStep,
 	ValidateStep,
 } from './types'
 
@@ -24,7 +25,7 @@ export class PathExecutor {
 		params: PathExecutorParams,
 		validateStep?: ValidateStep,
 	): Promise<PathExecutionResult> {
-		let stepResults: StepProcessingResult[] = []
+		const processedSteps: ProcessedStep[] = []
 		let nextAmountIn = params.path.startAmount
 
 		for (const [stepIndex, step] of params.path.stepSequence.entries()) {
@@ -39,12 +40,13 @@ export class PathExecutor {
 					stepIndex,
 					nextAmountIn,
 					validationResult.reason,
-					await this.getTotalCostInUsd(stepResults),
+					await this.getTotalCostInUsd(processedSteps),
 					'validation',
+					processedSteps,
 				)
 			}
 
-			const result = await this.processStepWithRetry(
+			const processedStep = await this.processStep(
 				step.edge,
 				stepIndex,
 				nextAmountIn,
@@ -53,43 +55,59 @@ export class PathExecutor {
 				},
 			)
 
-			if (result.status === 'failed') {
+			processedSteps.push(processedStep)
+
+			if (processedStep.status === 'failed') {
 				return this.buildFailedResult(
 					stepIndex,
 					nextAmountIn,
-					result.reason,
-					await this.getTotalCostInUsd(stepResults),
+					processedStep.reason,
+					await this.getTotalCostInUsd(processedSteps),
 					'execution',
+					processedSteps,
 				)
 			}
 
-			nextAmountIn = result.amountOut
-			stepResults = [...stepResults, ...result.stepResults]
+			nextAmountIn = processedStep.amountOut
 		}
 
 		return {
 			actualEndAmount: nextAmountIn,
-			totalExecutionCostInUsd: await this.getTotalCostInUsd(stepResults),
+			totalExecutionCostInUsd:
+				await this.getTotalCostInUsd(processedSteps),
 			status: 'success',
+			processedSteps,
 		}
 	}
 
-	private async getTotalCostInUsd(stepResults: StepProcessingResult[]) {
+	private async getTotalCostInUsd(processedSteps: ProcessedStep[]) {
 		let totalCostInUsd = 0
 
-		for (const stepResult of stepResults) {
-			try {
-				const { costInUsd } =
-					await stepResult.confirmation.getExecutionCost()
+		for (const processedStep of processedSteps) {
+			for (const [
+				stepExecutionAttempt,
+				stepExecutionResult,
+			] of processedStep.stepExecutionResults.entries()) {
+				try {
+					const { costInUsd } =
+						await stepExecutionResult.confirmation.getExecutionCost()
 
-				totalCostInUsd += costInUsd
+					totalCostInUsd += costInUsd
 
-				this.telemetry.onStepCostSuccess(stepResult, costInUsd)
-			} catch (error) {
-				this.telemetry.onStepCostFailure(
-					stepResult,
-					error instanceof Error ? error : new Error('Unknown error'),
-				)
+					this.telemetry.onStepCostSuccess(
+						processedStep,
+						stepExecutionAttempt,
+						costInUsd,
+					)
+				} catch (error) {
+					this.telemetry.onStepCostFailure(
+						processedStep,
+						stepExecutionAttempt,
+						error instanceof Error
+							? error
+							: new Error('Unknown error'),
+					)
+				}
 			}
 		}
 
@@ -102,6 +120,7 @@ export class PathExecutor {
 		failureReason: string,
 		totalExecutionCostInUsd: number,
 		failureType: 'validation' | 'execution',
+		processedSteps: ProcessedStep[],
 	): FailedPathExecutionResult {
 		return {
 			totalExecutionCostInUsd,
@@ -110,37 +129,39 @@ export class PathExecutor {
 			stepIndex,
 			stepAmountIn: amountIn,
 			failureType,
+			processedSteps,
 		}
 	}
 
-	async processStepWithRetry(
+	async processStep(
 		edge: Edge,
 		stepIndex: number,
 		amountIn: bigint,
 		policy: { maxAttempts: number; backoffMs?: (n: number) => number },
-	) {
-		const stepResults: StepProcessingResult[] = []
+	): Promise<ProcessedStep> {
+		const stepExecutionResults: StepExecutionResult[] = []
 		let lastReason: string = 'last reason does not exist'
 
 		try {
 			for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
-				const stepResult = await this.processStep(
+				const stepExecutionResult = await this.executeStep(
 					edge,
-					stepIndex,
 					amountIn,
 					attempt,
 				)
 
-				stepResults.push(stepResult)
+				stepExecutionResults.push(stepExecutionResult)
 
-				if (stepResult.confirmation.status === 'success')
+				if (stepExecutionResult.confirmation.status === 'success')
 					return {
 						status: 'success',
-						amountOut: stepResult.confirmation.amountOut,
-						stepResults,
-					} as const
+						amountOut: stepExecutionResult.confirmation.amountOut,
+						stepExecutionResults,
+						edge,
+						stepIndex,
+					}
 
-				lastReason = stepResult.confirmation.reason
+				lastReason = stepExecutionResult.confirmation.reason
 
 				await wait(policy.backoffMs?.(attempt) ?? backoffMs(attempt))
 			}
@@ -149,42 +170,49 @@ export class PathExecutor {
 				status: 'failed',
 				reason:
 					error instanceof Error ? error.message : 'Unknown error',
-				stepResults,
-			} as const
+				stepExecutionResults,
+				edge,
+				stepIndex,
+			}
 		}
 
 		return {
 			status: 'failed',
 			reason: lastReason,
-			stepResults,
-		} as const
+			stepExecutionResults,
+			edge,
+			stepIndex,
+		}
 	}
 
-	async processStep(
+	async executeStep(
 		edge: Edge,
-		stepIndex: number,
 		amountIn: bigint,
 		attempt: number,
-	): Promise<StepProcessingResult> {
+	): Promise<StepExecutionResult> {
 		this.telemetry.onProcessStepStart(edge, amountIn, attempt)
 
-		const { confirmation, execution } = await this.stepExecutor.executeStep(
+		const stepExecutionResult = await this.stepExecutor.executeStep(
 			edge,
 			amountIn,
 		)
 
-		if (confirmation.status === 'success') {
+		if (stepExecutionResult.confirmation.status === 'success') {
 			this.telemetry.onProcessStepSuccess(
 				edge,
-				confirmation.amountOut,
+				stepExecutionResult.confirmation.amountOut,
 				attempt,
 			)
 
-			return { confirmation, execution, edge, stepIndex, attempt }
+			return stepExecutionResult
 		}
 
-		this.telemetry.onProcessStepFailure(edge, confirmation.reason, attempt)
+		this.telemetry.onProcessStepFailure(
+			edge,
+			stepExecutionResult.confirmation.reason,
+			attempt,
+		)
 
-		return { confirmation, execution, edge, stepIndex, attempt }
+		return stepExecutionResult
 	}
 }

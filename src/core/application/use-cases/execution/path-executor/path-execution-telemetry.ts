@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Edge } from '../../../../domain/entities/edge'
-import { StepProcessingResult } from './types'
+import { ProcessedStep } from './types'
 
 @Injectable()
 export class PathExecutionTelemetry {
@@ -35,18 +35,26 @@ export class PathExecutionTelemetry {
 		this.logger.error(log, `Process step failed`)
 	}
 
-	onStepCostSuccess(stepResult: StepProcessingResult, costInUsd: number) {
+	onStepCostSuccess(
+		processedStep: ProcessedStep,
+		stepExecutionAttempt: number,
+		costInUsd: number,
+	) {
 		const log = {
-			edgeId: stepResult.edge.id,
+			edgeId: processedStep.edge.id,
 			costInUsd,
-			processingAttempt: stepResult.attempt,
+			stepExecutionAttempt,
 		}
 		this.logger.log(log)
 	}
-	onStepCostFailure(stepResult: StepProcessingResult, error: Error) {
+	onStepCostFailure(
+		processedStep: ProcessedStep,
+		stepExecutionAttempt: number,
+		error: Error,
+	) {
 		const log = {
-			edgeId: stepResult.edge.id,
-			processingAttempt: stepResult.attempt,
+			edgeId: processedStep.edge.id,
+			stepExecutionAttempt,
 		}
 		//TODO: I want to see log like object and don't want to print 2 logs
 		this.logger.error(error, log)
