@@ -50,7 +50,7 @@ export class LifiService {
 				fromAddress: walletAddress,
 				fromAmount: amountIn,
 				slippage: Number(slippage) / Number(BASIS_POINTS),
-				denyExchanges: ['odos', '1inch'], // these services returns tx that can't be executed
+				denyExchanges: ['odos', '1inch', 'kyberswap'], // these services returns tx that can't be executed
 			},
 		})
 		const quote = QuoteSchema.parse(response.data)
