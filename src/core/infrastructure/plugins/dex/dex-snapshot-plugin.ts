@@ -77,17 +77,6 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 
 			const amountOutFormatted = interpolation(Number(amountInFormatted))
 
-			this.logger.debug(
-				{
-					amountIn,
-					amountInFormatted,
-					amountOutFormatted,
-					amountOutFormattedString: amountOutFormatted.toString(),
-					edgeId: edge.id,
-				},
-				'Dex snapshot plugin buildSnapshotFn',
-			)
-
 			const amountOut = edge.to.parseUnits(amountOutFormatted.toString())
 
 			return {
