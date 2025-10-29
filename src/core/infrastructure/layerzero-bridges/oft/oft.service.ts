@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { getContract } from 'viem'
 import { createCustomError } from '../../../../utils/common'
+import { TokenId } from '../../../domain/value-objects/token-id'
 import { OFT_ABI } from '../../evm/abi/stargate/oft'
 import { STARGATE_BASE_ABI } from '../../evm/abi/stargate/stargateBase'
 import { ChainClientService } from '../../evm/chain-client/chain-client.service'
@@ -13,7 +14,7 @@ import { WrappedNative } from '../../evm/primitives/tokens/WrappedNative'
 import { LZBridgeTx } from '../layerzero-bridge-tx'
 import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
 import { getChainEIdByNativeChainId } from '../layerzero.utils'
-import { chainIdToNativeOftAddress } from './chain-to-native-oft'
+import { tokenIdToContract } from './token-id-to-contract'
 
 const EXTRA_OPTIONS = '0x00030100110100000000000000000000000000030d40' as Hex //gas on dst, the value is from lz documentation
 export const OftError = createCustomError('OftError')
@@ -21,21 +22,14 @@ const BRIDGE_GAS_COST = 400_000n
 
 @Injectable()
 export class OftService {
+	cachedOft = new Map<TokenId, boolean>()
+
 	constructor(
 		private readonly chainClientService: ChainClientService,
 		private readonly tokenUtils: TokenUtils,
 		private readonly layerZeroScanService: LayerZeroScanService,
 	) {}
 
-	/**
-	 * Bridges `tokenIn` to `recipient` on `toChainId`
-	 * @param tokenIn - Token or NativeCurrency to bridge
-	 * @param toChainId - Destination chain ID
-	 * @param recipient - Recipient address
-	 * @param amount - Amount to bridge
-	 * @returns {bridgeTx: OftBridgeTx, expectedAmountOut: bigint}
-	 * @dev Bridging amount is affected by following factors: bridge fee, src vs dst token decimals diff, etc.
-	 */
 	async bridge(
 		tokenIn: Token | NativeCurrency | WrappedNative,
 		tokenOut: Token | NativeCurrency | WrappedNative,
@@ -47,14 +41,7 @@ export class OftService {
 	}> {
 		const toChainId = tokenOut.chainId
 
-		if (amount <= 0n) throw new OftError('Amount must be greater than 0')
-		if (!toChainId && toChainId >= 1)
-			throw new OftError('Destination chain ID is required')
-		if (tokenIn.chainId === toChainId) {
-			throw new OftError('Cannot send to the same chain')
-		}
-
-		const oftAddress = this.getOftAddress(tokenIn)
+		const { address: oftAddress } = await this.getOftAddress(tokenIn)
 
 		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 		const recipient = wallet.account.address
@@ -74,7 +61,7 @@ export class OftService {
 
 		const toChainEId = getChainEIdByNativeChainId(toChainId)
 		const recipientBytes32 = padAddressToBytes32(recipient)
-		const minAmountLD = this.calcDstAmountOut(
+		const minAmountLD = this.subtractDustAndConvertDecimals(
 			tokenIn.decimals,
 			tokenOut.decimals,
 			amount,
@@ -93,9 +80,10 @@ export class OftService {
 		const client = this.chainClientService.getClient(tokenIn.chainId)
 
 		const isNative = tokenIn instanceof NativeCurrency
-		//TODO: It takes amount out, because this value has to be with removed dust. Need to consider case with different decimals
+
 		const value =
-			quote.messagingFee.nativeFee + (isNative ? minAmountLD : 0n)
+			quote.messagingFee.nativeFee +
+			(isNative ? this.subtractDust(tokenIn.decimals, amount) : 0n)
 
 		const { request } = await client.simulateContract({
 			account: wallet.account,
@@ -139,23 +127,17 @@ export class OftService {
 		return this._quote(tokenIn, tokenOut, amount, wallet.account.address)
 	}
 
-	//TODO: implement approve
-	// async approveToBridge(tokenIn: Token | NativeCurrency, amount: bigint) {
-	// 	if (tokenIn instanceof NativeCurrency) return
+	//TODO: don't approve if token is oft and don't need approve
+	async approveInfinite(tokenIn: Token | NativeCurrency) {
+		if (tokenIn instanceof NativeCurrency) return
 
-	// 	const poolOrOFT = await this.getBridgeAddress(tokenIn)
+		const { address: oftAddress, isAdapter } =
+			await this.getOftAddress(tokenIn)
 
-	// 	const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
-	// 	const userAddr = wallet.account.address
+		const tx = await tokenIn.approveInfinite(oftAddress)
 
-	// 	const allowance = await tokenIn.allowance(userAddr, poolOrOFT)
-
-	// 	if (allowance >= amount) return
-
-	// 	const tx = await tokenIn.approve(poolOrOFT, amount)
-
-	// 	return tx
-	// }
+		return tx
+	}
 
 	private async _quote(
 		tokenIn: Token | NativeCurrency,
@@ -212,7 +194,7 @@ export class OftService {
 
 		const payInLZ = false
 
-		const minAmountLD = this.calcDstAmountOut(
+		const minAmountLD = this.subtractDustAndConvertDecimals(
 			tokenIn.decimals,
 			tokenOut.decimals,
 			amount,
@@ -229,7 +211,7 @@ export class OftService {
 
 		const client = this.chainClientService.getClient(tokenIn.chainId)
 
-		const oftAddress = this.getOftAddress(tokenIn)
+		const { address: oftAddress } = await this.getOftAddress(tokenIn)
 		const messagingFee = await client.readContract({
 			address: oftAddress,
 			abi: STARGATE_BASE_ABI,
@@ -251,7 +233,7 @@ export class OftService {
 
 		const wallet = this.chainClientService.getWalletClient(tokenIn.chainId)
 
-		const oftAddress = this.getOftAddress(tokenIn)
+		const { address: oftAddress } = await this.getOftAddress(tokenIn)
 		const contract = getContract({
 			address: oftAddress,
 			abi: OFT_ABI,
@@ -263,7 +245,7 @@ export class OftService {
 				dstEid: toChainEId,
 				to: recipientBytes32,
 				amountLD: amount,
-				minAmountLD: this.calcDstAmountOut(
+				minAmountLD: this.subtractDustAndConvertDecimals(
 					tokenIn.decimals,
 					tokenOut.decimals,
 					amount,
@@ -302,7 +284,7 @@ export class OftService {
 			quote.messagingFee.nativeFee,
 		)
 
-		const amountOutOnDst = this.calcDstAmountOut(
+		const amountOutOnDst = this.subtractDustAndConvertDecimals(
 			tokenIn.decimals,
 			tokenOut.decimals,
 			amountIn,
@@ -317,7 +299,15 @@ export class OftService {
 		}
 	}
 
-	private calcDstAmountOut(
+	private subtractDust(tokenDecimals: number, amount: bigint) {
+		return this.subtractDustAndConvertDecimals(
+			tokenDecimals,
+			tokenDecimals,
+			amount,
+		)
+	}
+
+	private subtractDustAndConvertDecimals(
 		tokenInDecimals: number,
 		tokenOutDecimals: number,
 		amountIn: bigint,
@@ -346,17 +336,40 @@ export class OftService {
 		}
 	}
 
-	getOftAddress(token: Token | NativeCurrency): Address {
-		if (token instanceof Token) return token.address
+	async getOftAddress(
+		token: Token | NativeCurrency,
+	): Promise<{ address: Address; isAdapter: boolean }> {
+		const tokenIdAndAdapter = Object.entries(tokenIdToContract).find(
+			([tokenId, adapterAddress]) =>
+				token.id.toLowerCase() === tokenId.toLowerCase(),
+		)
 
-		const chainId = token.chainId
-		const oftAddress = chainIdToNativeOftAddress[chainId]
+		if (tokenIdAndAdapter !== undefined)
+			return { address: tokenIdAndAdapter[1], isAdapter: true }
 
-		if (!oftAddress)
+		const isInCachedOft = this.cachedOft.get(
+			token.id.toLowerCase() as TokenId,
+		)
+
+		if (isInCachedOft !== undefined && isInCachedOft === true)
+			return { address: token.address, isAdapter: false }
+
+		try {
+			const chainClient = this.chainClientService.getClient(token.chainId)
+
+			await chainClient.readContract({
+				abi: OFT_ABI,
+				functionName: 'oftVersion',
+				address: token.address,
+			})
+
+			this.cachedOft.set(token.id.toLowerCase() as TokenId, true)
+
+			return { address: token.address, isAdapter: false }
+		} catch (error) {
 			throw new OftError(
-				`Native OFT address is not found for chainId ${chainId}`,
+				`Could not obtain oft address for tokenId ${token.id}, probably you need to define adapter for this token, error msg: ${error instanceof Error ? error.message : ''}`,
 			)
-
-		return oftAddress
+		}
 	}
 }

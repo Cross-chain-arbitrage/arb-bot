@@ -32,7 +32,16 @@ export class OftExecutorPlugin extends EdgeHandler implements ExecutorPlugin {
 			kind: 'crosschain',
 			edge,
 			execute: this.execute.bind(this, edge),
+			prepareExecution: () => this.prepareExecution(edge),
 		}
+	}
+
+	async prepareExecution(edge: Edge<Token | NativeCurrency>) {
+		const approveResult = await this.oftService.approveInfinite(edge.from)
+
+		if (approveResult === undefined) return { result: 'No approval needed' }
+
+		return { result: `Prepared approval: ${approveResult.transactionHash}` }
 	}
 
 	async execute(

@@ -1,6 +1,7 @@
 import { ChildProcess, exec } from 'child_process'
 import getPort from 'get-port'
 import {
+	Chain,
 	Client,
 	createPublicClient,
 	createWalletClient,
@@ -24,43 +25,46 @@ const testMnemonic =
 /**
  * Starts anvil in describe() and replace viem rpc url and private key
  */
-export function useAnvil(anvilConfig: AnvilConfig) {
-	let chain: chains.Chain | undefined
+export function useAnvil(paramsUseAnvil: ParamsUseAnvil | ParamsUseAnvil[]) {
+	const anvilAndChains: { anvil: Anvil; chain: Chain }[] = []
 
-	chain = Object.values(chains).find(
-		(chain) => chain.id === anvilConfig.chainId,
-	)
-
-	if (!chain) {
-		chain = createUnknownChain(anvilConfig)
+	if (paramsUseAnvil instanceof Array) {
+		paramsUseAnvil.forEach((params) =>
+			anvilAndChains.push(createAnvil(params)),
+		)
 	}
 
-	const defaultRpcUrl = chain.rpcUrls.default.http[0]
-
-	const anvil = new Anvil(anvilConfig)
-
 	beforeAll(async () => {
-		await anvil.start(defaultRpcUrl)
+		const anvilStartPromises = anvilAndChains.map((anvilAndChain) =>
+			anvilAndChain.anvil.start(),
+		)
+
+		await Promise.all(anvilStartPromises)
 	})
 
 	afterAll(() => {
-		anvil.stop()
+		anvilAndChains.forEach((anvilAndChain) => anvilAndChain.anvil.stop())
 	})
 
 	const mockChainClientService = {
 		getClient: (chainId: number) => {
-			if (chainId !== chain.id) {
+			const anvilAndChain = anvilAndChains.find(
+				(anvilAndChain) => anvilAndChain.chain.id === chainId,
+			)
+
+			if (anvilAndChain === undefined)
 				throw new Error(
-					`chainClientService from useAnvil support only forked chain, expected ${chain.id}, got ${chainId}`,
+					`Chain with chain id ${chainId} was not found, ensure that anvil has started with this chain id`,
 				)
-			}
 
 			const publicClient = createPublicClient({
 				chain: defineChain({
-					...chain,
+					...anvilAndChain.chain,
 					rpcUrls: {
 						default: {
-							http: [`http://localhost:${anvil.port}`],
+							http: [
+								`http://localhost:${anvilAndChain.anvil.port}`,
+							],
 						},
 					},
 				}),
@@ -70,18 +74,23 @@ export function useAnvil(anvilConfig: AnvilConfig) {
 			return publicClient as Client
 		},
 		getWalletClient: (chainId: number) => {
-			if (chainId !== chain.id) {
+			const anvilAndChain = anvilAndChains.find(
+				(anvilAndChain) => anvilAndChain.chain.id === chainId,
+			)
+
+			if (anvilAndChain === undefined)
 				throw new Error(
-					`chainClientService from useAnvil support only forked chain, expected ${chain.id}, got ${chainId}`,
+					`Chain with chain id ${chainId} was not found, ensure that anvil has started with this chain id`,
 				)
-			}
 
 			const walletClient = createWalletClient({
 				chain: defineChain({
-					...chain,
+					...anvilAndChain.chain,
 					rpcUrls: {
 						default: {
-							http: [`http://localhost:${anvil.port}`],
+							http: [
+								`http://localhost:${anvilAndChain.anvil.port}`,
+							],
 						},
 					},
 				}),
@@ -96,10 +105,34 @@ export function useAnvil(anvilConfig: AnvilConfig) {
 		},
 	} as ChainClientService
 
-	return { anvil, mockChainClientService }
+	return {
+		anvils: anvilAndChains.map((anvilAndChain) => anvilAndChain.anvil),
+		mockChainClientService,
+	}
 }
 
-function createUnknownChain(anvilConfig: AnvilConfig) {
+function createAnvil(paramsUseAnvil: ParamsUseAnvil) {
+	let chain: chains.Chain | undefined
+
+	chain = Object.values(chains).find(
+		(chain) => chain.id === paramsUseAnvil.chainId,
+	)
+
+	if (!chain) {
+		chain = createUnknownChain(paramsUseAnvil)
+	}
+
+	const defaultRpcUrl = chain.rpcUrls.default.http[0]
+
+	const anvil = new Anvil({
+		...paramsUseAnvil,
+		rpcUrl: paramsUseAnvil.rpcUrl ?? defaultRpcUrl,
+	})
+
+	return { anvil, chain }
+}
+
+function createUnknownChain(anvilConfig: ParamsUseAnvil) {
 	if (!anvilConfig.rpcUrl) {
 		throw new Error(
 			`Chain with id ${anvilConfig.chainId} not found in viem chains and no rpcUrl provided for creating unknown chain`,
@@ -121,7 +154,7 @@ function createUnknownChain(anvilConfig: AnvilConfig) {
 }
 
 class Anvil {
-	readonly config: AnvilConfig
+	readonly config: ParamsUseAnvil
 	private _port: number | undefined
 	private _process: ChildProcess | undefined
 	logs: string = ''
@@ -146,10 +179,10 @@ class Anvil {
 		this.config = config
 	}
 
-	public async start(fallbackRpcUrl: string) {
+	public async start() {
 		this._port = this.config.port ?? (await getPort())
 
-		const command = this.buildCommand(fallbackRpcUrl)
+		const command = this.buildCommand()
 
 		this._process = exec(command)
 
@@ -180,8 +213,8 @@ class Anvil {
 		}
 	}
 
-	private buildCommand(fallbackRpcUrl: string) {
-		const rpcUrlToUse = this.config.rpcUrl ?? fallbackRpcUrl
+	private buildCommand() {
+		const rpcUrlToUse = this.config.rpcUrl
 
 		let command = `anvil --fork-url "${rpcUrlToUse}" --port ${this.port} --mnemonic "${testMnemonic}"`
 
