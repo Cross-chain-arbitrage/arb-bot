@@ -5,7 +5,9 @@ const referencePattern = '[-_a-zA-Z0-9]{1,32}'
 
 const chainIdRegex = new RegExp(`^${namespacePattern}:${referencePattern}$`)
 
-export const chainIdScheme = z.string().regex(chainIdRegex)
+export const chainIdScheme = z
+	.string()
+	.regex(chainIdRegex) as z.ZodType<ChainId>
 
 type Namespace = string
 type Reference = string
