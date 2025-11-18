@@ -8,6 +8,7 @@ import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
 import { Injectable } from '@nestjs/common'
 import { getMint } from '@solana/spl-token'
 import { Connection, PublicKey } from '@solana/web3.js'
+import { isStringsEqual } from '../../../../utils/common'
 import { SolanaNative, solanaNativeAddress } from './solana-native'
 import { SolanaToken } from './solana-token'
 import {
@@ -43,7 +44,7 @@ export class SolanaTokenUtils {
 			return cachedToken as T
 		}
 
-		if (address === solanaNativeAddress) {
+		if (isStringsEqual(address, solanaNativeAddress)) {
 			const token = new SolanaNative()
 
 			this.tokenCache.set(cacheKey, token)
@@ -51,7 +52,7 @@ export class SolanaTokenUtils {
 			return token as T
 		}
 
-		if (address === wrappedSolanaNativeAddress) {
+		if (isStringsEqual(address, wrappedSolanaNativeAddress)) {
 			const token = new WrappedSolanaNative()
 
 			this.tokenCache.set(cacheKey, token)
