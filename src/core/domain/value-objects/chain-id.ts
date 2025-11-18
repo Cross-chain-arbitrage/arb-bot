@@ -1,6 +1,6 @@
 import z from 'zod'
 
-const namespacePattern = '[-a-z0-9]{3,8}'
+const namespacePattern = '[-a-z0-9]{3,32}'
 const referencePattern = '[-_a-zA-Z0-9]{1,32}'
 
 const chainIdRegex = new RegExp(`^${namespacePattern}:${referencePattern}$`)
