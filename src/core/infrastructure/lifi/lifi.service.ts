@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 import { fromHex, Hash } from 'viem'
+import { ZodError } from 'zod'
 import { wait } from '../../../utils/common'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
 import { TokenBase } from '../evm/primitives/tokens/TokenBase'
@@ -50,16 +51,23 @@ export class LifiService {
 				fromAddress: walletAddress,
 				fromAmount: amountIn,
 				slippage: Number(slippage) / Number(BASIS_POINTS),
-				denyExchanges: ['odos', '1inch', 'kyberswap'], // these services returns tx that can't be executed
+				// denyExchanges: ['odos', '1inch', 'kyberswap'], TODO: set via config
 			},
 		})
-		const quote = QuoteSchema.parse(response.data)
-		this.logger.debug({ tool: quote.estimate.tool }, 'lifi tool')
+		try {
+			const quote = QuoteSchema.parse(response.data)
 
-		return {
-			rawQuote: quote,
-			amountOut: BigInt(quote.estimate.toAmount),
-			txCostInUsd: Number(quote.estimate.gasCosts[0].amountUSD),
+			return {
+				rawQuote: quote,
+				amountOut: BigInt(quote.estimate.toAmount),
+				txCostInUsd: Number(quote.estimate.gasCosts[0].amountUSD),
+			}
+		} catch (error) {
+			if (error instanceof ZodError) {
+				this.logger.debug(response.data, 'Lifi quote response')
+			}
+
+			throw error
 		}
 	}
 
@@ -75,7 +83,6 @@ export class LifiService {
 			amountIn,
 			slippage,
 		)
-		this.logger.debug({ tool: rawQuote.estimate.tool }, 'lifi tool')
 
 		const balanceTokenOutBefore = await tokenOut.balanceOf(
 			this.chainClientService.getWalletClient(tokenOut.chainId).account
@@ -140,15 +147,6 @@ export class LifiService {
 
 		const amountOut = balanceTokenOutAfter - balanceTokenOutBefore
 		if (amountOut === 0n) {
-			this.logger.debug(
-				{
-					balanceTokenOutBefore,
-					balanceTokenOutAfter,
-					txHash,
-				},
-				'amountOut is zero, waiting 5 seconds',
-			)
-
 			await wait(5000)
 
 			const balanceTokenOutAfterWaiting = await tokenOut.balanceOf(
@@ -156,14 +154,6 @@ export class LifiService {
 					.account.address,
 			)
 
-			this.logger.debug(
-				{
-					balanceTokenOutAfter,
-					balanceTokenOutAfterWaiting,
-					balanceTokenOutBefore,
-				},
-				'amounts after waiting',
-			)
 			return {
 				status,
 				receipt,
