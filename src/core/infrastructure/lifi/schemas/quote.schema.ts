@@ -3,7 +3,7 @@ import * as z from 'zod'
 export const AddressSchema = z.string()
 export type Address = z.infer<typeof AddressSchema>
 
-export const CoinKeySchema = z.string()
+export const CoinKeySchema = z.string().optional()
 export type CoinKey = z.infer<typeof CoinKeySchema>
 
 export const NameSchema = z.string()
@@ -16,7 +16,7 @@ export const TokenSchema = z.object({
 	decimals: z.number(),
 	name: NameSchema,
 	coinKey: CoinKeySchema,
-	logoURI: z.string(),
+	logoURI: z.string().optional(),
 	priceUSD: z.string(),
 })
 export type Token = z.infer<typeof TokenSchema>
@@ -41,7 +41,7 @@ export type GasCost = z.infer<typeof GasCostSchema>
 export const ToolDetailsSchema = z.object({
 	key: z.string(),
 	name: z.string(),
-	logoURI: z.string(),
+	logoURI: z.string().optional(),
 })
 export type ToolDetails = z.infer<typeof ToolDetailsSchema>
 
