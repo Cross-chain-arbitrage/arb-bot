@@ -11,8 +11,6 @@ import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
 } from '../../../interfaces/price-oracle'
-import { GraphSnapshotBuilder } from '../graph-snapshot-builder/gpaph-snapshot-builder'
-import { SnapshotOpportunityFinder } from '../snapshot-opportunity-finder/snapshot-opportunity-finder'
 import {
 	ArbitrageOpportunity,
 	SnapshotFindOpportunityParams,
@@ -21,9 +19,6 @@ import {
 @Injectable()
 export class OpportunityFinder {
 	constructor(
-		private readonly snapshotOpportunityFinder: SnapshotOpportunityFinder,
-		private readonly graphSnapshotBuilder: GraphSnapshotBuilder,
-
 		@Inject(PRICE_ORACLE_TOKEN)
 		private readonly priceOracle: PriceOracle,
 
