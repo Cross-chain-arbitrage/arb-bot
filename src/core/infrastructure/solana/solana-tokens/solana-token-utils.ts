@@ -8,7 +8,7 @@ import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
 import { Injectable } from '@nestjs/common'
 import { getMint } from '@solana/spl-token'
 import { Connection, PublicKey } from '@solana/web3.js'
-import { isStringsEqual } from '../../../../utils/common'
+import { isStringsEqual, wait } from '../../../../utils/common'
 import { SolanaNative, solanaNativeAddress } from './solana-native'
 import { SolanaToken } from './solana-token'
 import {
@@ -61,6 +61,8 @@ export class SolanaTokenUtils {
 		}
 
 		const metadata = await this.getTokenMetadata(address)
+		//TODO: add cache and remove it
+		await wait(400)
 
 		const token = new SolanaToken(address, metadata)
 
