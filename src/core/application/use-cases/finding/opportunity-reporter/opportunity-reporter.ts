@@ -1,35 +1,35 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { ValidationResult } from '../opportunity-validator/types'
+import { Inject, Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { OnTypedEvent } from '../../../events/event-decorator'
+import {
+	OPPORTUNITY_NOTIFIER_TOKEN,
+	OpportunityNotifier,
+} from '../../../interfaces/opportunity-notifier'
 import { ArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
+import { OpportunityReporterConfig } from './types'
+
+export const OPPORTUNITY_REPORTER_CONFIG_KEY = 'opportunityReporter'
 
 @Injectable()
 export class OpportunityReporter {
-	private readonly logger: Logger = new Logger(OpportunityReporter.name)
+	minProfitToReport: number
 
-	constructor() {}
+	constructor(
+		@Inject(OPPORTUNITY_NOTIFIER_TOKEN)
+		private readonly opportunityNotifier: OpportunityNotifier,
 
-	reportOpportunities(
-		opportunities: ArbitrageOpportunity[] | null,
-		validationResult: ValidationResult,
+		configService: ConfigService,
 	) {
-		const opportunitiesLog = opportunities
-			? opportunities.map((opportunity) => {
-					return {
-						startAmount: opportunity.startAmount,
-						endAmount: opportunity.endAmount,
-						revenueInUsd: opportunity.revenueInUsd,
-						costInUsd: opportunity.costInUsd,
-						profitInUsd: opportunity.profitInUsd,
-						path: opportunity.quotedStepSequence.map((p) => {
-							return {
-								edge: p.edge.id,
-								quote: p.quote,
-							}
-						}),
-					}
-				})
-			: null
+		const config = configService.getOrThrow<OpportunityReporterConfig>(
+			OPPORTUNITY_REPORTER_CONFIG_KEY,
+		)
 
-		this.logger.log({ validationResult, opportunities: opportunitiesLog })
+		this.minProfitToReport = config.minProfitToReport
+	}
+
+	@OnTypedEvent('opportunityFound')
+	reportOpportunity(opportunity: ArbitrageOpportunity) {
+		if (opportunity.profitInUsd > this.minProfitToReport)
+			this.opportunityNotifier.notifyOpportunity(opportunity)
 	}
 }

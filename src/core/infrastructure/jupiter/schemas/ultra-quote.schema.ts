@@ -8,7 +8,7 @@ export const SwapInfoSchema = z.object({
 	inAmount: z.string(),
 	outAmount: z.string(),
 	feeAmount: z.string(),
-	feeMint: z.string(),
+	feeMint: z.string().optional(),
 })
 export type SwapInfo = z.infer<typeof SwapInfoSchema>
 
@@ -27,7 +27,7 @@ export const UltraQuoteSchema = z.object({
 	slippageBps: z.number(),
 	priceImpactPct: z.string(),
 	routePlan: z.array(RoutePlanSchema),
-	feeMint: z.string(),
+	feeMint: z.string().optional(),
 	feeBps: z.number(),
 	signatureFeeLamports: z.number(),
 	prioritizationFeeLamports: z.number(),

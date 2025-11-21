@@ -17,7 +17,6 @@ import {
 } from '../../../interfaces/price-oracle'
 import { ArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
 import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
-import { TokenValuator } from '../../token-valuator/token-valuator'
 import { PathExecutor } from '../path-executor/path-executor'
 import {
 	PathExecutorParams,
@@ -44,7 +43,6 @@ export class ArbitrageExecutor {
 		private readonly pathRecovery: PathRecovery,
 		private readonly telemetry: ArbitrageExecutionTelemetry,
 		private readonly configService: ConfigService,
-		private readonly tokenValuator: TokenValuator,
 
 		@Inject(EDGE_QUOTER_REGISTRY_TOKEN)
 		private readonly quoterRegistry: EdgeQuoterRegistry,

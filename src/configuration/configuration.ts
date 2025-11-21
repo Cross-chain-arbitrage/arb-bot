@@ -55,7 +55,7 @@ import { arbitrageFinderConfigScheme } from './arbitrage-finder-config'
 import { arbitrageSchedulerConfigScheme } from './arbitrage-scheduler-config'
 import { balanceReporterSchedulerConfigScheme } from './balance-reporter-scheduler-config'
 
-export const configScheme = z.object({
+export const arbitrageConfigSchema = z.object({
 	botName: z.string(),
 	isDryRun: z.boolean(),
 
@@ -98,7 +98,7 @@ export function loadConfig() {
 		)
 	}
 
-	const parsedConfig = parsePretty(configScheme, config)
+	const parsedConfig = parsePretty(arbitrageConfigSchema, config)
 
 	return parsedConfig
 }

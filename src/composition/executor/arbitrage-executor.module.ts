@@ -14,7 +14,7 @@ import { GraphBuilder } from '../../core/application/use-cases/graph-builder/gra
 import { GRAPH_TOKEN } from '../../core/application/use-cases/graph-builder/graph-token'
 import { TokenValuatorModule } from '../../core/application/use-cases/token-valuator/token-valuator.module'
 import { Graph } from '../../core/domain/entities/graph'
-import { TgArbitrageNotifierModule } from '../../core/infrastructure/tg-notifier/tg-arbitrage-notifier/tg-arbitrgage-notifier.module'
+import { TgArbitrageNotifierModule } from '../../core/infrastructure/tg-notifier/tg-arbitrage-notifier/tg-arbitrage-notifier.module'
 import { BalanceOracleModule } from '../balance-oracle/balance-oracle.module'
 import { GraphBuilderModule } from '../builder/graph-builder.module'
 import { ArbitrageFinderModule } from '../finder/arbitrage-finder.module'

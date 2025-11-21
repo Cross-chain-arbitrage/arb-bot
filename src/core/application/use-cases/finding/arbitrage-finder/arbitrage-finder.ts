@@ -4,10 +4,10 @@ import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
 import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
 import { OpportunityFinder } from '../opportunity-finder.ts/opportunity-finder'
-import { OpportunityReporter } from '../opportunity-reporter/opportunity-reporter'
 import { OpportunityValidator } from '../opportunity-validator/opportunity-validator'
 import { OpportunityValidatorParams } from '../opportunity-validator/types'
 import { SnapshotFindOpportunityParams } from '../snapshot-opportunity-finder/types'
+import { ArbitrageFinderTelemetry } from './arbitrage-finder-telemetry'
 import { ArbitrageFinderConfig } from './types'
 
 export const ARBITRAGE_FINDER_CONFIG_KEY = 'arbitrageFinder'
@@ -24,7 +24,7 @@ export class ArbitrageFinder implements OnModuleInit {
 		private readonly opportunityValidator: OpportunityValidator,
 		private readonly configService: ConfigService,
 		@Inject(GRAPH_TOKEN) readonly graph: Graph<Token>,
-		private readonly opportunityReporter: OpportunityReporter,
+		private readonly telemetry: ArbitrageFinderTelemetry,
 	) {}
 
 	onModuleInit() {
@@ -68,10 +68,7 @@ export class ArbitrageFinder implements OnModuleInit {
 				this.opportunityValidatorParams,
 			)
 
-		this.opportunityReporter.reportOpportunities(
-			opportunities,
-			validationResult,
-		)
+		this.telemetry.reportOpportunities(opportunities, validationResult)
 
 		if (!validationResult.ok) return null
 

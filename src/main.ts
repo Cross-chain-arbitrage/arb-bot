@@ -1,18 +1,30 @@
 import { NestFactory } from '@nestjs/core'
 import { ArbitrageAppModule } from './arbitrage-app.module'
 import { pinoLogger } from './composition/logging/pino-logger'
-import { loadConfig } from './configuration/configuration'
-import { FinderAppModule } from './finder-app.module'
+import { OpportunityAppModule } from './opportunity-app.module'
 
 /* ============ Strategy Config ============ */
 
 async function main() {
-	const config = loadConfig()
+	const appType = process.env.APP_TYPE as string
 
-	await NestFactory.createApplicationContext(
-		config.isDryRun ? FinderAppModule : ArbitrageAppModule,
-		{ logger: pinoLogger },
-	)
+	let appModule: any
+	switch (appType) {
+		case 'arbitrage':
+			appModule = ArbitrageAppModule
+			break
+
+		case 'opportunity':
+			appModule = OpportunityAppModule
+			break
+
+		default:
+			throw Error(`app type ${appType} not supported`)
+	}
+
+	await NestFactory.createApplicationContext(appModule, {
+		logger: pinoLogger,
+	})
 
 	process.on('uncaughtException', (error) => {
 		pinoLogger.fatal('Uncaught exception', error)
