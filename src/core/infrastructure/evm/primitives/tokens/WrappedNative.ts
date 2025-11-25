@@ -7,6 +7,7 @@ import {
 	gravity,
 	hemi,
 	lightlinkPhoenix,
+	monad,
 	story,
 	superposition,
 	swellchain,
@@ -31,6 +32,7 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[superposition.id]: '0x1fB719f10b56d7a85DCD32f27f897375fB21cfdd',
 	[bob.id]: '0x4200000000000000000000000000000000000006',
 	[1300]: '0x9a1691D500C54e1d79df2347D170987aa3E527aC',
+	[monad.id]: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
 }
 
 export class WrappedNative extends Token {

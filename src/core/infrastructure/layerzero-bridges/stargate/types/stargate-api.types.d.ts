@@ -83,7 +83,7 @@ interface StargateTokenMetadata {
 
 interface StargateChain {
 	chainKey: string
-	chainType: 'evm' | 'solana' | 'tron' | 'ton' | 'aptos' | 'hypercore'
+	chainType: 'evm' | 'solana' | 'tron' | 'ton' | 'aptos' | 'hypercore' | 'sui'
 	chainId: number
 	shortName: string
 	name: string

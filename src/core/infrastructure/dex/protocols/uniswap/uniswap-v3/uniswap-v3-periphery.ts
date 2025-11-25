@@ -6,6 +6,7 @@ import {
 	hemi,
 	iota,
 	lightlinkPhoenix,
+	monad,
 	rootstock,
 	story,
 } from 'viem/chains'
@@ -104,6 +105,13 @@ export const UNIV3_PERIPHERY_CONFIG: Record<
 			router: '0x219F3ef35307515c41eae6867AffB327033dD96b',
 			routerType: RouterType.UNIVERSAL,
 			permit2: '0xb615b6dcE9d01C7C512234387Cbb2249B07C193b',
+		},
+	},
+	[monad.id]: {
+		[getAddress('0x204faca1764b154221e35c0d20abb3c525710498')]: {
+			router: '0xfe31f71c1b106eac32f1a19239c9a9a72ddfb900',
+			routerType: RouterType.V2,
+			quoter: '0x661e93cca42afacb172121ef892830ca3b70f08d',
 		},
 	},
 }

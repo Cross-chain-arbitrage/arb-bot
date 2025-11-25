@@ -21,6 +21,7 @@ export const chainIdToGeckoChainId = {
 	'119': 'enuls',
 	'122': 'fuse',
 	'137': 'polygon_pos',
+	'143': 'monad',
 	'148': 'shimmerevm',
 	'169': 'manta-pacific',
 	'199': 'bttc',
@@ -321,14 +322,6 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		},
 	},
 	{
-		id: 'oasis',
-		type: 'network',
-		attributes: {
-			name: 'Oasis Emerald',
-			coingecko_asset_platform_id: 'oasis',
-		},
-	},
-	{
 		id: 'astr',
 		type: 'network',
 		attributes: {
@@ -342,14 +335,6 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		attributes: {
 			name: 'Elastos',
 			coingecko_asset_platform_id: 'elastos',
-		},
-	},
-	{
-		id: 'milkada',
-		type: 'network',
-		attributes: {
-			name: 'Milkomeda Cardano',
-			coingecko_asset_platform_id: 'milkomeda-cardano',
 		},
 	},
 	{
@@ -889,22 +874,6 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		},
 	},
 	{
-		id: 'hypra-network',
-		type: 'network',
-		attributes: {
-			name: 'Hypra Network',
-			coingecko_asset_platform_id: 'hypra-network',
-		},
-	},
-	{
-		id: 'combo-mainnet',
-		type: 'network',
-		attributes: {
-			name: 'Combo Mainnet',
-			coingecko_asset_platform_id: 'combo',
-		},
-	},
-	{
 		id: 'blast-sepolia-testnet',
 		type: 'network',
 		attributes: {
@@ -972,7 +941,7 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		id: 'areon-network',
 		type: 'network',
 		attributes: {
-			name: 'Areon Network',
+			name: 'Areum Network',
 			coingecko_asset_platform_id: 'areon-network',
 		},
 	},
@@ -1014,14 +983,6 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		attributes: {
 			name: 'inEVM',
 			coingecko_asset_platform_id: 'inevm',
-		},
-	},
-	{
-		id: 'mainnetz',
-		type: 'network',
-		attributes: {
-			name: 'MainnetZ',
-			coingecko_asset_platform_id: 'mainnetz',
 		},
 	},
 	{
@@ -1174,14 +1135,6 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		attributes: {
 			name: 'BounceBit',
 			coingecko_asset_platform_id: 'bouncebit',
-		},
-	},
-	{
-		id: 're-al',
-		type: 'network',
-		attributes: {
-			name: 're.al',
-			coingecko_asset_platform_id: 're-al',
 		},
 	},
 	{
@@ -1449,14 +1402,6 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		},
 	},
 	{
-		id: 'meld',
-		type: 'network',
-		attributes: {
-			name: 'Meld',
-			coingecko_asset_platform_id: 'meld',
-		},
-	},
-	{
 		id: 'morph-l2',
 		type: 'network',
 		attributes: {
@@ -1486,22 +1431,6 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		attributes: {
 			name: 'DefiVerse',
 			coingecko_asset_platform_id: 'defiverse',
-		},
-	},
-	{
-		id: 'laika',
-		type: 'network',
-		attributes: {
-			name: 'Laika',
-			coingecko_asset_platform_id: 'laikachain',
-		},
-	},
-	{
-		id: 'kroma',
-		type: 'network',
-		attributes: {
-			name: 'Kroma',
-			coingecko_asset_platform_id: 'kroma',
 		},
 	},
 	{
@@ -1565,7 +1494,7 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		type: 'network',
 		attributes: {
 			name: 'Units Network',
-			coingecko_asset_platform_id: null,
+			coingecko_asset_platform_id: 'units-network',
 		},
 	},
 	{
@@ -1761,14 +1690,6 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		},
 	},
 	{
-		id: 'monad-testnet',
-		type: 'network',
-		attributes: {
-			name: 'Monad Testnet',
-			coingecko_asset_platform_id: null,
-		},
-	},
-	{
 		id: 'corn',
 		type: 'network',
 		attributes: {
@@ -1845,7 +1766,7 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		type: 'network',
 		attributes: {
 			name: 'Goat',
-			coingecko_asset_platform_id: null,
+			coingecko_asset_platform_id: 'goat',
 		},
 	},
 	{
@@ -1956,7 +1877,7 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		id: 'wax',
 		type: 'network',
 		attributes: {
-			name: 'Wax',
+			name: 'WAX',
 			coingecko_asset_platform_id: 'wax',
 		},
 	},
@@ -2038,6 +1959,158 @@ export const geckoTerminalChains: GeckoTerminalChain[] = [
 		attributes: {
 			name: 'TAC',
 			coingecko_asset_platform_id: 'tac',
+		},
+	},
+	{
+		id: 'memecore',
+		type: 'network',
+		attributes: {
+			name: 'MemeCore',
+			coingecko_asset_platform_id: 'memecore',
+		},
+	},
+	{
+		id: 'mezo',
+		type: 'network',
+		attributes: {
+			name: 'Mezo',
+			coingecko_asset_platform_id: 'mezo',
+		},
+	},
+	{
+		id: 'hashkey',
+		type: 'network',
+		attributes: {
+			name: 'Hashkey',
+			coingecko_asset_platform_id: 'hashkey-chain',
+		},
+	},
+	{
+		id: 'peaq',
+		type: 'network',
+		attributes: {
+			name: 'Peaq',
+			coingecko_asset_platform_id: 'peaq',
+		},
+	},
+	{
+		id: 'camp-network',
+		type: 'network',
+		attributes: {
+			name: 'Camp Network',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'somnia',
+		type: 'network',
+		attributes: {
+			name: 'Somnia',
+			coingecko_asset_platform_id: 'somnia',
+		},
+	},
+	{
+		id: 'besc-hyperchain',
+		type: 'network',
+		attributes: {
+			name: 'BESC HyperChain',
+			coingecko_asset_platform_id: 'besc-hyperchain',
+		},
+	},
+	{
+		id: 'mitosis',
+		type: 'network',
+		attributes: {
+			name: 'Mitosis',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'nibiru',
+		type: 'network',
+		attributes: {
+			name: 'Nibiru',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'xone',
+		type: 'network',
+		attributes: {
+			name: 'Xone',
+			coingecko_asset_platform_id: 'xone',
+		},
+	},
+	{
+		id: 'plasma',
+		type: 'network',
+		attributes: {
+			name: 'Plasma',
+			coingecko_asset_platform_id: 'plasma',
+		},
+	},
+	{
+		id: '0g',
+		type: 'network',
+		attributes: {
+			name: '0G',
+			coingecko_asset_platform_id: '0g',
+		},
+	},
+	{
+		id: 'juchain',
+		type: 'network',
+		attributes: {
+			name: 'JuChain',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'gate-layer',
+		type: 'network',
+		attributes: {
+			name: 'Gate Layer',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'kasplex',
+		type: 'network',
+		attributes: {
+			name: 'Kasplex',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'chromia',
+		type: 'network',
+		attributes: {
+			name: 'Chromia',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'injective',
+		type: 'network',
+		attributes: {
+			name: 'Injective',
+			coingecko_asset_platform_id: 'injective',
+		},
+	},
+	{
+		id: 'mova',
+		type: 'network',
+		attributes: {
+			name: 'Mova',
+			coingecko_asset_platform_id: null,
+		},
+	},
+	{
+		id: 'monad',
+		type: 'network',
+		attributes: {
+			name: 'Monad',
+			coingecko_asset_platform_id: 'monad',
 		},
 	},
 ]
