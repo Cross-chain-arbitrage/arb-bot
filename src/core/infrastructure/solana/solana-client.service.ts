@@ -1,5 +1,5 @@
 import { base58 } from '@metaplex-foundation/umi/serializers'
-import { Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import {
 	Connection,
 	Keypair,
@@ -16,14 +16,12 @@ import { SolanaToken } from './solana-tokens/solana-token'
 const SolanaClientServiceError = createCustomError('SolanaClientServiceError')
 
 @Injectable()
-export class SolanaClientService implements OnModuleInit {
+export class SolanaClientService {
 	connection = new Connection('https://api.mainnet-beta.solana.com')
 	keypair!: Keypair
 	walletAddress!: string
 
-	constructor() {}
-
-	onModuleInit() {
+	constructor() {
 		const privateKey = getEnvSafe('SOLANA_PRIVATE_KEY')
 		const uint8Pk = this.getPrivateKeyUint8Array(privateKey)
 
