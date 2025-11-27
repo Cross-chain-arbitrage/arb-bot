@@ -32,6 +32,8 @@ export function useAnvil(paramsUseAnvil: ParamsUseAnvil | ParamsUseAnvil[]) {
 		paramsUseAnvil.forEach((params) =>
 			anvilAndChains.push(createAnvil(params)),
 		)
+	} else {
+		anvilAndChains.push(createAnvil(paramsUseAnvil))
 	}
 
 	beforeAll(async () => {
