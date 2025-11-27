@@ -69,7 +69,7 @@ export class RelayExecutorPlugin extends EdgeHandler implements ExecutorPlugin {
 		return {
 			status: 'success',
 			dstTxId: awaitedBridge.dstTxHash,
-			amountOut: bridgeResult.amountOut,
+			amountOut: awaitedBridge.amountOut,
 			getExecutionCost: async () => {
 				const costInUsd =
 					await this.solanaEvmTxCostHelper.getTxCostInUsd(
