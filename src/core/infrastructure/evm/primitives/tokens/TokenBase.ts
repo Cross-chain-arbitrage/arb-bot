@@ -4,7 +4,7 @@ import { ChainIdUtils } from '../../../../domain/services/chain-id-utils'
 import { TokenIdUtils } from '../../../../domain/services/token-id-utils'
 import { TokenId } from '../../../../domain/value-objects/token-id'
 import { ChainClientService } from '../../chain-client/chain-client.service'
-import { shortenAddress } from '../../helpers'
+import { shortenAddress } from '../../utils'
 import { BaseContract } from '../contracts/BaseContract'
 
 const NAMESPACE = 'eip155'

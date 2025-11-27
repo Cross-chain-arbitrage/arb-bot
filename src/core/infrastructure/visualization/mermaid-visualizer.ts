@@ -7,7 +7,7 @@ import { Graph } from '../../domain/entities/graph'
 import { ChannelIdUtils } from '../../domain/services/channel-id-utils'
 import { EdgeIdUtils } from '../../domain/services/edge-id-utils'
 import { TokenId } from '../../domain/value-objects/token-id'
-import { shortenAddress } from '../evm/helpers'
+import { shortenAddress } from '../evm/utils'
 import { SolanaToken } from '../solana/solana-tokens/solana-token'
 
 interface VisualizableNode {
