@@ -38,9 +38,10 @@ export class NativeCurrency extends TokenBase {
 		)
 	}
 
-	balanceOf(address: Address): Promise<bigint> {
+	balanceOf(address: Address, blockNumber?: bigint): Promise<bigint> {
 		return this.client.getBalance({
 			address,
+			blockNumber,
 		})
 	}
 }

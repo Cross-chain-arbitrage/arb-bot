@@ -61,12 +61,13 @@ export class Token extends TokenBase {
 		return allowance >= amount
 	}
 
-	async balanceOf(address: Address): Promise<bigint> {
+	async balanceOf(address: Address, blockNumber?: bigint): Promise<bigint> {
 		const balance = await this.client.readContract({
 			address: this.address,
 			abi: erc20Abi,
 			functionName: 'balanceOf',
 			args: [address],
+			blockNumber,
 		})
 		return balance
 	}

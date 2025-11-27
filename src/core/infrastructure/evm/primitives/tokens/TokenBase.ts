@@ -44,7 +44,7 @@ export abstract class TokenBase extends BaseContract implements Token {
 		)
 	}
 
-	abstract balanceOf(address: Address): Promise<bigint>
+	abstract balanceOf(address: Address, blockNumber?: bigint): Promise<bigint>
 
 	formatUnits(amount: bigint): string {
 		return formatUnits(amount, this.decimals)
