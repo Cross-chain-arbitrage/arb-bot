@@ -1,10 +1,13 @@
 import { TokenId } from '../../../domain/value-objects/token-id'
-import { InterpolationParams } from '../shared-helpers/interpolation/interpolation-helper'
+import { InterpolationParams } from '../shared/helpers/interpolation/interpolation-helper'
 
-export type LifiConfig = {
+export type LifiSnapshotConfig = {
+	interpolationParams: InterpolationParams
+}
+
+export type LifiGraphConfig = {
 	edges: {
 		from: TokenId
 		to: TokenId
 	}[]
-	interpolationParams: InterpolationParams
 }

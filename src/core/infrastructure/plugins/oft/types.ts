@@ -1,6 +1,6 @@
 import { TokenId } from '../../../domain/value-objects/token-id'
 
-export interface OftConfig {
+export interface OftGraphConfig {
 	edges: {
 		from: TokenId
 		to: TokenId

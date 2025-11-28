@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
-import { TokenIdUtils } from '../../../../../domain/services/token-id-utils'
-import { TokenId } from '../../../../../domain/value-objects/token-id'
-import { SolanaTokenUtils } from '../../../../solana/solana-tokens/solana-token-utils'
+import { TokenIdUtils } from '../../../../../../domain/services/token-id-utils'
+import { TokenId } from '../../../../../../domain/value-objects/token-id'
+import { SolanaTokenUtils } from '../../../../../solana/solana-tokens/solana-token-utils'
 import { GraphBuildingHelper } from '../../graph-building-helper'
 
 @Injectable()

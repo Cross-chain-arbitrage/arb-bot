@@ -3,10 +3,10 @@ import { ConfigService } from '@nestjs/config'
 import { GraphPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Node } from '../../../domain/entities/node'
-import { SolanaEvmGraphBuildingHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-graph-building-helper'
-import { MOCK_CONFIG_KEY } from './configuration/mock-config'
-import { MOCK_PROTOCOL } from './constants'
-import { MockConfig } from './types'
+import { SolanaEvmGraphBuildingHelper } from '../shared/helpers/chain-specific/solana-evm/solana-evm-graph-building-helper'
+import { pathToGraphConfig } from '../shared/utils/path-to-config'
+import { MOCK_CONFIG_KEY, MOCK_PROTOCOL } from './constants'
+import { MockGraphConfig } from './types'
 
 @Injectable()
 export class MockGraphPlugin implements GraphPlugin {
@@ -19,11 +19,13 @@ export class MockGraphPlugin implements GraphPlugin {
 		nodes: Node[]
 		edges: Edge[]
 	}> {
-		const mockConfig = this.configService.get<MockConfig>(MOCK_CONFIG_KEY)
+		const graphConfig = this.configService.get<MockGraphConfig>(
+			pathToGraphConfig(MOCK_CONFIG_KEY),
+		)
 
 		const { nodes, edges } =
 			await this.solanaEvmGraphBuildingHelper.getNodesAndEdgesFromConfig(
-				mockConfig?.edges,
+				graphConfig?.edges,
 				MOCK_PROTOCOL,
 			)
 

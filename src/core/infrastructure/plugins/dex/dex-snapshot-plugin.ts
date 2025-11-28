@@ -11,11 +11,12 @@ import { Quote } from '../../../domain/value-objects/quote'
 import { Pool } from '../../dex/base/pool'
 import { PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
-import { InterpolationHelper } from '../shared-helpers/interpolation/interpolation-helper'
-import { DEX_CONFIG_KEY } from './configuration/dex-config'
+import { EvmTxCostHelper } from '../shared/helpers/chain-specific/evm/evm-tx-cost-helper'
+import { InterpolationHelper } from '../shared/helpers/interpolation/interpolation-helper'
+import { pathToSnapshotConfig } from '../shared/utils/path-to-config'
+import { DEX_CONFIG_KEY } from './constants'
 import { DexPlugin } from './dex-plugin'
-import { DexConfig } from './types'
+import { DexSnapshotConfig } from './types'
 
 @Injectable()
 export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
@@ -47,16 +48,14 @@ export class DexSnapshotPlugin extends DexPlugin implements SnapshotPlugin {
 		edge: Edge<Token>,
 		pool: Pool,
 	): Promise<EdgeSnapshotFn> {
-		const config = this.configService.get<DexConfig>(DEX_CONFIG_KEY)
-
-		if (!config) {
-			throw new Error('DEX config not found')
-		}
+		const snapshotConfig = this.configService.getOrThrow<DexSnapshotConfig>(
+			pathToSnapshotConfig(DEX_CONFIG_KEY),
+		)
 
 		const { interpolation, results } =
 			await this.interpolationHelper.buildInterpolation(
 				edge,
-				config.interpolationParams,
+				snapshotConfig.interpolationParams,
 				(amountIn) => {
 					return pool.quoteSwap({
 						tokenIn: edge.from,

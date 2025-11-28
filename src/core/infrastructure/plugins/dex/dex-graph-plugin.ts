@@ -9,9 +9,10 @@ import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
 import { Pool } from '../../dex/base/pool'
 import { PoolType, PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { DEX_CONFIG_KEY } from './configuration/dex-config'
+import { pathToGraphConfig } from '../shared/utils/path-to-config'
+import { DEX_CONFIG_KEY } from './constants'
 import { DexPlugin } from './dex-plugin'
-import { DexConfig } from './types'
+import { DexGraphConfig } from './types'
 
 @Injectable()
 export class DexGraphPlugin extends DexPlugin implements GraphPlugin {
@@ -22,7 +23,9 @@ export class DexGraphPlugin extends DexPlugin implements GraphPlugin {
 	}
 
 	async findPossibleNodes(): Promise<Node[]> {
-		const config = this.configService.get<DexConfig>(DEX_CONFIG_KEY)
+		const config = this.configService.get<DexGraphConfig>(
+			pathToGraphConfig(DEX_CONFIG_KEY),
+		)
 
 		if (!config) return []
 
@@ -77,7 +80,9 @@ export class DexGraphPlugin extends DexPlugin implements GraphPlugin {
 	}
 
 	getPoolType(pool: Pool): PoolType {
-		const config = this.configService.get<DexConfig>(DEX_CONFIG_KEY)
+		const config = this.configService.get<DexGraphConfig>(
+			pathToGraphConfig(DEX_CONFIG_KEY),
+		)
 
 		if (!config) {
 			throw new Error('DEX config not found')

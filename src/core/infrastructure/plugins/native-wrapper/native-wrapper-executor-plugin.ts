@@ -10,8 +10,8 @@ import { Edge } from '../../../domain/entities/edge'
 import { ChainClientService } from '../../evm/chain-client/chain-client.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { WrappedNative } from '../../evm/primitives/tokens/WrappedNative'
-import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { EvmTxCostHelper } from '../shared/helpers/chain-specific/evm/evm-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { NATIVE_WRAPPER_PROTOCOL } from './constants'
 
 @Injectable()

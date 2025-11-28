@@ -8,9 +8,13 @@ import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { WrappedNative } from '../../evm/primitives/tokens/WrappedNative'
-import { NATIVE_WRAPPER_CONFIG_KEY } from './configuration/native-wrapper-config'
-import { Direction, NATIVE_WRAPPER_PROTOCOL } from './constants'
-import { NativeWrapperConfig } from './types'
+import { pathToGraphConfig } from '../shared/utils/path-to-config'
+import {
+	Direction,
+	NATIVE_WRAPPER_CONFIG_KEY,
+	NATIVE_WRAPPER_PROTOCOL,
+} from './constants'
+import { NativeWrapperGraphConfig } from './types'
 
 @Injectable()
 export class NativeWrapperGraphPlugin implements GraphPlugin {
@@ -20,8 +24,8 @@ export class NativeWrapperGraphPlugin implements GraphPlugin {
 	) {}
 
 	async findPossibleNodes(): Promise<Node[]> {
-		const config = this.configService.get<NativeWrapperConfig>(
-			NATIVE_WRAPPER_CONFIG_KEY,
+		const config = this.configService.get<NativeWrapperGraphConfig>(
+			pathToGraphConfig(NATIVE_WRAPPER_CONFIG_KEY),
 		)
 
 		if (!config) return []

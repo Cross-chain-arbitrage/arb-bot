@@ -8,8 +8,8 @@ import { Quote } from '../../../domain/value-objects/quote'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { OftService } from '../../layerzero-bridges/oft/oft.service'
-import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { EvmTxCostHelper } from '../shared/helpers/chain-specific/evm/evm-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { OFT_PROTOCOL } from './constants'
 
 @Injectable()

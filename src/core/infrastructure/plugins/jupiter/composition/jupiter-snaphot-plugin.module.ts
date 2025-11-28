@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common'
 import { TokenValuatorModule } from '../../../../application/use-cases/token-valuator/token-valuator.module'
 import { JupiterModule } from '../../../jupiter/jupiter.module'
 import { SolanaModule } from '../../../solana/solana.module'
-import { SolanaHelperModule } from '../../shared-helpers/chain-specific/solana/solana-helper.module'
-import { InterpolationModule } from '../../shared-helpers/interpolation/interpolation.module'
+import { SolanaHelperModule } from '../../shared/helpers/chain-specific/solana/solana-helper.module'
+import { InterpolationModule } from '../../shared/helpers/interpolation/interpolation.module'
 import { JupiterSnapshotPlugin } from '../jupiter-snapshot-plugin'
 
 @Module({

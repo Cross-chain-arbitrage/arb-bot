@@ -1,4 +1,4 @@
-export interface StargateConfig {
+export interface StargateGraphConfig {
 	connectSecondaryChains: boolean
 	baseChainId: number
 }

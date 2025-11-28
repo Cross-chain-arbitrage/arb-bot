@@ -12,8 +12,8 @@ import { Token } from '../../evm/primitives/tokens/Token'
 import { TokenBase } from '../../evm/primitives/tokens/TokenBase'
 import { LifiService } from '../../lifi/lifi.service'
 import { SwapResult } from '../../lifi/types'
-import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { EvmTxCostHelper } from '../shared/helpers/chain-specific/evm/evm-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { LIFI_PROTOCOL } from './constants'
 
 @Injectable()

@@ -1,8 +1,8 @@
-import { EdgeHandlerPlugin } from '../../../application/interfaces/graph-plugin'
-import { Edge } from '../../../domain/entities/edge'
-import { Node } from '../../../domain/entities/node'
-import { ChannelIdUtils } from '../../../domain/services/channel-id-utils'
-import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
+import { EdgeHandlerPlugin } from '../../../../application/interfaces/graph-plugin'
+import { Edge } from '../../../../domain/entities/edge'
+import { Node } from '../../../../domain/entities/node'
+import { ChannelIdUtils } from '../../../../domain/services/channel-id-utils'
+import { EdgeIdUtils } from '../../../../domain/services/edge-id-utils'
 
 export class EdgeHandler implements EdgeHandlerPlugin {
 	constructor(readonly protocol: string) {}

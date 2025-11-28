@@ -1,21 +1,21 @@
 import { z } from 'zod'
 import { tokenIdScheme } from '../../../../domain/value-objects/token-id'
-import { LifiConfig } from '../types'
+import { LifiGraphConfig, LifiSnapshotConfig } from '../types'
 
-export const LIFI_CONFIG_KEY = 'lifiConfig'
-
-export const lifiConfigScheme: z.ZodType<LifiConfig | undefined> = z
-	.object({
-		edges: z.array(
-			z.object({
-				from: tokenIdScheme,
-				to: tokenIdScheme,
-			}),
-		),
+export const LifiSnapshotConfigSchema: z.ZodType<LifiSnapshotConfig> =
+	z.object({
 		interpolationParams: z.object({
 			minStartValueUsd: z.number(),
 			maxStartValueUsd: z.number(),
 			runCount: z.number(),
 		}),
 	})
-	.optional()
+
+export const LifiGraphConfigSchema: z.ZodType<LifiGraphConfig> = z.object({
+	edges: z.array(
+		z.object({
+			from: tokenIdScheme,
+			to: tokenIdScheme,
+		}),
+	),
+})

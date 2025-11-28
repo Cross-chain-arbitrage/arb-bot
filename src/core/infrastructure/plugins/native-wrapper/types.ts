@@ -1,3 +1,3 @@
-export type NativeWrapperConfig = {
+export type NativeWrapperGraphConfig = {
 	chainIds: number[]
 }

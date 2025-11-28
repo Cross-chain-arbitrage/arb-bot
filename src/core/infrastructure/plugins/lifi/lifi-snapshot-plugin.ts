@@ -10,11 +10,11 @@ import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/quote'
 import { TokenBase } from '../../evm/primitives/tokens/TokenBase'
 import { LifiService } from '../../lifi/lifi.service'
-import { InterpolationHelper } from '../shared-helpers/interpolation/interpolation-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
-import { LIFI_CONFIG_KEY } from './configuration/lifi-config'
-import { LIFI_PROTOCOL } from './constants'
-import { LifiConfig } from './types'
+import { InterpolationHelper } from '../shared/helpers/interpolation/interpolation-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
+import { pathToSnapshotConfig } from '../shared/utils/path-to-config'
+import { LIFI_CONFIG_KEY, LIFI_PROTOCOL } from './constants'
+import { LifiSnapshotConfig } from './types'
 
 @Injectable()
 export class LifiSnapshotPlugin extends EdgeHandler implements SnapshotPlugin {
@@ -38,13 +38,14 @@ export class LifiSnapshotPlugin extends EdgeHandler implements SnapshotPlugin {
 	async buildSnapshotFn(edge: Edge<TokenBase>): Promise<EdgeSnapshotFn> {
 		const { from, to } = edge
 
-		const interpolationParams =
-			this.configService.get<LifiConfig>(LIFI_CONFIG_KEY)
+		const snapshotConfig = this.configService.getOrThrow<LifiSnapshotConfig>(
+			pathToSnapshotConfig(LIFI_CONFIG_KEY),
+		)
 
 		const { interpolation, results } =
 			await this.interpolationHelper.buildInterpolation(
 				edge,
-				interpolationParams!.interpolationParams,
+				snapshotConfig.interpolationParams,
 				(amountIn) => {
 					return this.lifiService.quote(from, to, amountIn)
 				},

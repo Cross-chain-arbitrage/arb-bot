@@ -6,8 +6,8 @@ import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/quote'
 import { JupiterService } from '../../jupiter/jupiter.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { SolanaTxCostHelper } from '../shared/helpers/chain-specific/solana/solana-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { JUPITER_PROTOCOL } from './constants'
 
 @Injectable()

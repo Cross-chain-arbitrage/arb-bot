@@ -1,16 +1,12 @@
 import z from 'zod'
 import { tokenIdScheme } from '../../../../domain/value-objects/token-id'
-import { RelayConfig } from '../types'
+import { RelayGraphConfig } from '../types'
 
-export const RELAY_CONFIG_KEY = 'relayConfig'
-
-export const relayConfigScheme: z.ZodType<RelayConfig | undefined> = z
-	.object({
-		edges: z.array(
-			z.object({
-				from: tokenIdScheme,
-				to: tokenIdScheme,
-			}),
-		),
-	})
-	.optional()
+export const RelayGraphConfigSchema: z.ZodType<RelayGraphConfig> = z.object({
+	edges: z.array(
+		z.object({
+			from: tokenIdScheme,
+			to: tokenIdScheme,
+		}),
+	),
+})

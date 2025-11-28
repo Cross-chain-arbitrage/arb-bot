@@ -6,7 +6,7 @@ import {
 import { ExecutorPlugin } from '../../../application/interfaces/graph-plugin'
 import { Edge } from '../../../domain/entities/edge'
 import { Token } from '../../../domain/entities/token'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { MOCK_PROTOCOL } from './constants'
 
 @Injectable()

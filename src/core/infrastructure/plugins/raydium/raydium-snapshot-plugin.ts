@@ -12,12 +12,12 @@ import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/quote'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
-import { InterpolationHelper } from '../shared-helpers/interpolation/interpolation-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
-import { RAYDIUM_CONFIG_KEY } from './configuration/raydium-config'
-import { RAYDIUM_PROTOCOL } from './constants'
-import { RaydiumConfig } from './types'
+import { SolanaTxCostHelper } from '../shared/helpers/chain-specific/solana/solana-tx-cost-helper'
+import { InterpolationHelper } from '../shared/helpers/interpolation/interpolation-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
+import { pathToSnapshotConfig } from '../shared/utils/path-to-config'
+import { RAYDIUM_CONFIG_KEY, RAYDIUM_PROTOCOL } from './constants'
+import { RaydiumSnapshotConfig } from './types'
 
 @Injectable()
 export class RaydiumSnapshotPlugin
@@ -46,13 +46,15 @@ export class RaydiumSnapshotPlugin
 	async buildSnapshotFn(edge: Edge<SolanaToken>): Promise<EdgeSnapshotFn> {
 		const { from, to } = edge
 
-		const interpolationParams =
-			this.configService.get<RaydiumConfig>(RAYDIUM_CONFIG_KEY)
+		const snapshotConfig =
+			this.configService.getOrThrow<RaydiumSnapshotConfig>(
+				pathToSnapshotConfig(RAYDIUM_CONFIG_KEY),
+			)
 
 		const { interpolation, results } =
 			await this.interpolationHelper.buildInterpolation(
 				edge,
-				interpolationParams!.interpolationParams,
+				snapshotConfig.interpolationParams,
 				(amountIn) => {
 					return this.raydiumService.quote({
 						tokenIn: from,

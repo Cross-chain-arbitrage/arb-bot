@@ -12,8 +12,8 @@ import { ChainClientService } from '../../evm/chain-client/chain-client.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { FuseBridgeService } from '../../layerzero-bridges/fuse-bridge/fuse-bridge.service'
-import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { EvmTxCostHelper } from '../shared/helpers/chain-specific/evm/evm-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { FUSE_BRIDGE_PROTOCOL } from './constants'
 
 @Injectable()

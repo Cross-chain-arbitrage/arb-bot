@@ -7,7 +7,7 @@ import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/quote'
 import { PoolUtils } from '../../dex/pool-utils'
 import { Token } from '../../evm/primitives/tokens/Token'
-import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
+import { EvmTxCostHelper } from '../shared/helpers/chain-specific/evm/evm-tx-cost-helper'
 import { DexPlugin } from './dex-plugin'
 
 @Injectable()

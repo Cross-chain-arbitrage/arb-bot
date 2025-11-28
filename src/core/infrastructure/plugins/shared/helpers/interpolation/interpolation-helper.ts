@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { ScaleLinear, scaleLinear } from 'd3-scale'
-import { TokenValuator } from '../../../../application/use-cases/token-valuator/token-valuator'
-import { Edge } from '../../../../domain/entities/edge'
-import { Token } from '../../../../domain/entities/token'
+import { TokenValuator } from '../../../../../application/use-cases/token-valuator/token-valuator'
+import { Edge } from '../../../../../domain/entities/edge'
+import { Token } from '../../../../../domain/entities/token'
 
 export type InterpolationParams = {
 	minStartValueUsd: number

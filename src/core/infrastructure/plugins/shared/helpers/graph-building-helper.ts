@@ -1,7 +1,7 @@
-import { Edge } from '../../../domain/entities/edge'
-import { Node } from '../../../domain/entities/node'
-import { ChannelIdUtils } from '../../../domain/services/channel-id-utils'
-import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
+import { Edge } from '../../../../domain/entities/edge'
+import { Node } from '../../../../domain/entities/node'
+import { ChannelIdUtils } from '../../../../domain/services/channel-id-utils'
+import { EdgeIdUtils } from '../../../../domain/services/edge-id-utils'
 
 type EdgeConstructor<EdgeConstructorNode> = {
 	from: EdgeConstructorNode

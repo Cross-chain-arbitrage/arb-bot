@@ -15,9 +15,9 @@ import { TokenBase } from '../../evm/primitives/tokens/TokenBase'
 import { SimpleStargateService } from '../../layerzero-bridges/stargate/simple-stargate.service'
 import { SolanaClientService } from '../../solana/solana-client.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaEvmHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-helper'
-import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { SolanaEvmHelper } from '../shared/helpers/chain-specific/solana-evm/solana-evm-helper'
+import { SolanaEvmTxCostHelper } from '../shared/helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { SIMPLE_STARGATE_PROTOCOL } from './constants'
 
 @Injectable()

@@ -15,8 +15,8 @@ import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { RelayService } from '../../relay/relay-service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { SolanaEvmTxCostHelper } from '../shared/helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { RELAY_PROTOCOL } from './constants'
 
 const QUOTE_USD_AMOUNT_IN = 500

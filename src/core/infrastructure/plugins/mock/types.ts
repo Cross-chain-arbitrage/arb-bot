@@ -1,5 +1,5 @@
 import { TokenId } from '../../../domain/value-objects/token-id'
 
-export type MockConfig = {
+export type MockGraphConfig = {
 	edges?: Array<{ from: TokenId; to: TokenId }>
 }

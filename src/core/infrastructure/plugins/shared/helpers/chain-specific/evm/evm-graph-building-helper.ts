@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
-import { ChainIdUtils } from '../../../../../domain/services/chain-id-utils'
-import { TokenIdUtils } from '../../../../../domain/services/token-id-utils'
-import { TokenId } from '../../../../../domain/value-objects/token-id'
-import { TokenUtils } from '../../../../evm/primitives/tokens/TokenUtils'
+import { ChainIdUtils } from '../../../../../../domain/services/chain-id-utils'
+import { TokenIdUtils } from '../../../../../../domain/services/token-id-utils'
+import { TokenId } from '../../../../../../domain/value-objects/token-id'
+import { TokenUtils } from '../../../../../evm/primitives/tokens/TokenUtils'
 import { GraphBuildingHelper } from '../../graph-building-helper'
 
 @Injectable()

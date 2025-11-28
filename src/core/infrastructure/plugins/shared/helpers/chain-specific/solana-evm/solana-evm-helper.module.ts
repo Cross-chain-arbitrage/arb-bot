@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
-import { EvmModule } from '../../../../evm/evm.module'
-import { SolanaModule } from '../../../../solana/solana.module'
+import { EvmModule } from '../../../../../evm/evm.module'
+import { SolanaModule } from '../../../../../solana/solana.module'
 import { EvmHelperModule } from '../evm/evm-helper.module'
 import { SolanaHelperModule } from '../solana/solana-helper.module'
 import { SolanaEvmGraphBuildingHelper } from './solana-evm-graph-building-helper'

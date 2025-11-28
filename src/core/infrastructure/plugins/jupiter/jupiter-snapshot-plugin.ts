@@ -12,12 +12,12 @@ import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/quote'
 import { JupiterService } from '../../jupiter/jupiter.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
-import { InterpolationHelper } from '../shared-helpers/interpolation/interpolation-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
-import { JUPITER_CONFIG_KEY } from './configuration/jupiter-config'
-import { JUPITER_PROTOCOL } from './constants'
-import { JupiterConfig } from './types'
+import { SolanaTxCostHelper } from '../shared/helpers/chain-specific/solana/solana-tx-cost-helper'
+import { InterpolationHelper } from '../shared/helpers/interpolation/interpolation-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
+import { pathToSnapshotConfig } from '../shared/utils/path-to-config'
+import { JUPITER_CONFIG_KEY, JUPITER_PROTOCOL } from './constants'
+import { JupiterSnapshotConfig } from './types'
 
 @Injectable()
 export class JupiterSnapshotPlugin
@@ -46,13 +46,15 @@ export class JupiterSnapshotPlugin
 	async buildSnapshotFn(edge: Edge<SolanaToken>): Promise<EdgeSnapshotFn> {
 		const { from, to } = edge
 
-		const interpolationParams =
-			this.configService.get<JupiterConfig>(JUPITER_CONFIG_KEY)
+		const snapshotConfig =
+			this.configService.getOrThrow<JupiterSnapshotConfig>(
+				pathToSnapshotConfig(JUPITER_CONFIG_KEY),
+			)
 
 		const { interpolation, results } =
 			await this.interpolationHelper.buildInterpolation(
 				edge,
-				interpolationParams!.interpolationParams,
+				snapshotConfig.interpolationParams,
 				(amountIn) => {
 					return this.jupiterService.quote(from, to, amountIn)
 				},

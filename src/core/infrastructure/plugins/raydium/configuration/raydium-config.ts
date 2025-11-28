@@ -1,21 +1,23 @@
 import { z } from 'zod'
 import { tokenIdScheme } from '../../../../domain/value-objects/token-id'
-import { RaydiumConfig } from '../types'
+import { RaydiumGraphConfig, RaydiumSnapshotConfig } from '../types'
 
-export const RAYDIUM_CONFIG_KEY = 'raydiumConfig'
-
-export const raydiumConfigScheme: z.ZodType<RaydiumConfig | undefined> = z
-	.object({
-		edges: z.array(
-			z.object({
-				from: tokenIdScheme,
-				to: tokenIdScheme,
-			}),
-		),
+export const RaydiumSnapshotConfigSchema: z.ZodType<RaydiumSnapshotConfig> =
+	z.object({
 		interpolationParams: z.object({
 			minStartValueUsd: z.number(),
 			maxStartValueUsd: z.number(),
 			runCount: z.number(),
 		}),
 	})
-	.optional()
+
+export const RaydiumGraphConfigSchema: z.ZodType<RaydiumGraphConfig> = z.object(
+	{
+		edges: z.array(
+			z.object({
+				from: tokenIdScheme,
+				to: tokenIdScheme,
+			}),
+		),
+	},
+)

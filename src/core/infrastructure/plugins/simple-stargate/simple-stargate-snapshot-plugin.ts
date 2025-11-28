@@ -13,8 +13,8 @@ import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
 import { SimpleStargateService } from '../../layerzero-bridges/stargate/simple-stargate.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaEvmTxCostHelper } from '../shared-helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { SolanaEvmTxCostHelper } from '../shared/helpers/chain-specific/solana-evm/solana-evm-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { SIMPLE_STARGATE_PROTOCOL } from './constants'
 
 const QUOTE_USD_AMOUNT_IN = 500

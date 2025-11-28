@@ -11,8 +11,8 @@ import { TokenValuator } from '../../../application/use-cases/token-valuator/tok
 import { Edge } from '../../../domain/entities/edge'
 import { RaydiumService } from '../../raydium/raydium.service'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
-import { SolanaTxCostHelper } from '../shared-helpers/chain-specific/solana/solana-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { SolanaTxCostHelper } from '../shared/helpers/chain-specific/solana/solana-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { RAYDIUM_PROTOCOL } from './constants'
 
 @Injectable()

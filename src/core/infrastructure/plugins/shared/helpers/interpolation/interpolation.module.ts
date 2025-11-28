@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { TokenValuatorModule } from '../../../../application/use-cases/token-valuator/token-valuator.module'
+import { TokenValuatorModule } from '../../../../../application/use-cases/token-valuator/token-valuator.module'
 import { InterpolationHelper } from './interpolation-helper'
 
 @Module({

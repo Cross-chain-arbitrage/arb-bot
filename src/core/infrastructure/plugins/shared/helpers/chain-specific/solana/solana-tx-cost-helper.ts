@@ -3,9 +3,9 @@ import { ParsedTransactionWithMeta } from '@solana/web3.js'
 import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
-} from '../../../../../application/interfaces/price-oracle'
-import { SolanaClientService } from '../../../../solana/solana-client.service'
-import { SolanaTokenUtils } from '../../../../solana/solana-tokens/solana-token-utils'
+} from '../../../../../../application/interfaces/price-oracle'
+import { SolanaClientService } from '../../../../../solana/solana-client.service'
+import { SolanaTokenUtils } from '../../../../../solana/solana-tokens/solana-token-utils'
 
 const MICRO_LAMPORTS_PER_LAMPORT = 10n ** 6n
 const LAMPORTS_FOR_SIGNING = 5000n

@@ -1,13 +1,9 @@
 import { z } from 'zod'
 import { tokenIdScheme } from '../../../../domain/value-objects/token-id'
-import { SimpleStargateConfig } from '../types'
+import { SimpleStargateGraphConfig } from '../types'
 
-export const SIMPLE_STARGATE_CONFIG_KEY = 'simpleStargate'
-
-export const simpleStargateConfigScheme: z.ZodType<
-	SimpleStargateConfig | undefined
-> = z
-	.object({
+export const SimpleStargateGraphConfigSchema: z.ZodType<SimpleStargateGraphConfig> =
+	z.object({
 		edges: z.array(
 			z.object({
 				from: tokenIdScheme,
@@ -15,4 +11,3 @@ export const simpleStargateConfigScheme: z.ZodType<
 			}),
 		),
 	})
-	.optional()

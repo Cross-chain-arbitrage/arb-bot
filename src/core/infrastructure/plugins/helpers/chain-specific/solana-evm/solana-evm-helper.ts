@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
-import { ChainIdUtils } from '../../../../../domain/services/chain-id-utils'
-import { ChainId } from '../../../../../domain/value-objects/chain-id'
-import { ChainClientService } from '../../../../evm/chain-client/chain-client.service'
-import { SolanaClientService } from '../../../../solana/solana-client.service'
+import { ChainIdUtils } from '../../../../../../domain/services/chain-id-utils'
+import { ChainId } from '../../../../../../domain/value-objects/chain-id'
+import { ChainClientService } from '../../../../../evm/chain-client/chain-client.service'
+import { SolanaClientService } from '../../../../../solana/solana-client.service'
 
 @Injectable()
 export class SolanaEvmHelper {

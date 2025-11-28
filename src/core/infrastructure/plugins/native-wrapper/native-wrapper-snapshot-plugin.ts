@@ -9,8 +9,8 @@ import { calcRate } from '../../../domain/services/calc-rate'
 import { Quote } from '../../../domain/value-objects/quote'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { WrappedNative } from '../../evm/primitives/tokens/WrappedNative'
-import { EvmTxCostHelper } from '../shared-helpers/chain-specific/evm/evm-tx-cost-helper'
-import { EdgeHandler } from '../shared-implementation/edge-handler'
+import { EvmTxCostHelper } from '../shared/helpers/chain-specific/evm/evm-tx-cost-helper'
+import { EdgeHandler } from '../shared/implementations/edge-handler'
 import { NATIVE_WRAPPER_GAS_PER_TX, NATIVE_WRAPPER_PROTOCOL } from './constants'
 
 @Injectable()
