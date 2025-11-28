@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { tokenIdScheme } from '../../../../domain/value-objects/token-id'
+import { tokenIdSchema } from '../../../../domain/value-objects/token-id'
 import { RaydiumGraphConfig, RaydiumSnapshotConfig } from '../types'
 
 export const RaydiumSnapshotConfigSchema: z.ZodType<RaydiumSnapshotConfig> =
@@ -15,8 +15,8 @@ export const RaydiumGraphConfigSchema: z.ZodType<RaydiumGraphConfig> = z.object(
 	{
 		edges: z.array(
 			z.object({
-				from: tokenIdScheme,
-				to: tokenIdScheme,
+				from: tokenIdSchema,
+				to: tokenIdSchema,
 			}),
 		),
 	},

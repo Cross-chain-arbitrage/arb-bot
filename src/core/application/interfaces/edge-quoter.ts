@@ -7,6 +7,6 @@ export interface EdgeQuoter {
 	quote: (amountIn: bigint) => Promise<Quote>
 }
 
-export type EdgeQuoterRegistry = Map<EdgeId, EdgeQuoter>
+export type QuotersRegistry = Map<EdgeId, EdgeQuoter>
 
-export const EDGE_QUOTER_REGISTRY_TOKEN = Symbol('EDGE_QUOTER_REGISTRY_TOKEN')
+export const QUOTERS_REGISTRY_TOKEN = Symbol('QUOTERS_REGISTRY_TOKEN')

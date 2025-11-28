@@ -1,20 +1,20 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
 import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
 import { OpportunityFinder } from '../opportunity-finder.ts/opportunity-finder'
+import { ParamsFindOpportunity } from '../opportunity-finder.ts/types'
 import { OpportunityValidator } from '../opportunity-validator/opportunity-validator'
 import { OpportunityValidatorParams } from '../opportunity-validator/types'
-import { SnapshotFindOpportunityParams } from '../snapshot-opportunity-finder/types'
 import { ArbitrageFinderTelemetry } from './arbitrage-finder-telemetry'
 import { ArbitrageFinderConfig } from './types'
 
 export const ARBITRAGE_FINDER_CONFIG_KEY = 'arbitrageFinder'
 
 @Injectable()
-export class ArbitrageFinder implements OnModuleInit {
-	private snapshotFindOpportunityParams!: SnapshotFindOpportunityParams
+export class ArbitrageFinder {
+	private paramsFindOpportunity!: ParamsFindOpportunity
 	private opportunityValidatorParams!: OpportunityValidatorParams
 
 	logger = new Logger(ArbitrageFinder.name)
@@ -25,9 +25,7 @@ export class ArbitrageFinder implements OnModuleInit {
 		private readonly configService: ConfigService,
 		@Inject(GRAPH_TOKEN) readonly graph: Graph<Token>,
 		private readonly telemetry: ArbitrageFinderTelemetry,
-	) {}
-
-	onModuleInit() {
+	) {
 		const config = this.configService.get<ArbitrageFinderConfig>(
 			ARBITRAGE_FINDER_CONFIG_KEY,
 		)
@@ -46,7 +44,7 @@ export class ArbitrageFinder implements OnModuleInit {
 			throw new Error('Start token not found')
 		}
 
-		this.snapshotFindOpportunityParams = {
+		this.paramsFindOpportunity = {
 			minStartValueUsd: config.opportunityFinding.minStartValueUsd,
 			maxStartValueUsd: config.opportunityFinding.maxStartValueUsd,
 			runCount: config.opportunityFinding.runCount,
@@ -59,7 +57,7 @@ export class ArbitrageFinder implements OnModuleInit {
 	async findArbitrage() {
 		const opportunities = await this.opportunityFinder.findOpportunity(
 			this.graph,
-			this.snapshotFindOpportunityParams,
+			this.paramsFindOpportunity,
 		)
 
 		const validationResult =

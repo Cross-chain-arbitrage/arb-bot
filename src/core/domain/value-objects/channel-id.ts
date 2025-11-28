@@ -10,7 +10,7 @@ const protocolPattern = '[^\\s]+'
  */
 const instancePattern = '[^\\s]+'
 
-export const channelScheme = z
+export const channelSchema = z
 	.string()
 	.regex(new RegExp(`^${protocolPattern}:${instancePattern}$`))
 

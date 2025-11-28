@@ -2,15 +2,15 @@ import { Inject, Injectable } from '@nestjs/common'
 import { Edge } from '../../../domain/entities/edge'
 import { QuotedPath, QuotedStep } from '../../../domain/value-objects/path'
 import {
-	EDGE_QUOTER_REGISTRY_TOKEN,
-	EdgeQuoterRegistry,
+	QUOTERS_REGISTRY_TOKEN,
+	QuotersRegistry,
 } from '../../interfaces/edge-quoter'
 
 @Injectable()
 export class PathQuoter {
 	constructor(
-		@Inject(EDGE_QUOTER_REGISTRY_TOKEN)
-		private readonly edgeQuoterRegistry: EdgeQuoterRegistry,
+		@Inject(QUOTERS_REGISTRY_TOKEN)
+		private readonly edgeQuoterRegistry: QuotersRegistry,
 	) {}
 
 	async quotePath(edges: Edge[], amountIn: bigint): Promise<QuotedPath> {

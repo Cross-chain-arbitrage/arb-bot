@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Edge } from '../../../domain/entities/edge'
 import { Graph } from '../../../domain/entities/graph'
 import { Node } from '../../../domain/entities/node'
-import { EdgeExecutorRegistry } from '../../interfaces/edge-executor'
-import { EdgeQuoterRegistry } from '../../interfaces/edge-quoter'
-import { EdgeSnapshotBuilderRegistry } from '../../interfaces/edge-snapshot-builder'
+import { ExecutorsRegistry } from '../../interfaces/edge-executor'
+import { QuotersRegistry } from '../../interfaces/edge-quoter'
+import { SnapshotBuildersRegistry } from '../../interfaces/edge-snapshot-builder'
 import {
 	EdgeHandlerPlugin,
 	ExecutorPlugin,
@@ -35,8 +35,8 @@ export class GraphBuilder {
 	async buildExecutorRegistry(
 		graph: Graph,
 		plugins: ExecutorPlugin[],
-	): Promise<EdgeExecutorRegistry> {
-		const edgeExecutorRegistry: EdgeExecutorRegistry = new Map()
+	): Promise<ExecutorsRegistry> {
+		const edgeExecutorRegistry: ExecutorsRegistry = new Map()
 
 		for (const edge of graph.edges.values()) {
 			const pluginCanHandle = await this.getPluginCanHandle(edge, plugins)
@@ -53,8 +53,8 @@ export class GraphBuilder {
 	async buildQuoterRegistry(
 		graph: Graph,
 		plugins: QuoterPlugin[],
-	): Promise<EdgeQuoterRegistry> {
-		const edgeQuoterRegistry: EdgeQuoterRegistry = new Map()
+	): Promise<QuotersRegistry> {
+		const edgeQuoterRegistry: QuotersRegistry = new Map()
 
 		for (const edge of graph.edges.values()) {
 			const pluginCanHandle = await this.getPluginCanHandle(edge, plugins)
@@ -97,9 +97,8 @@ export class GraphBuilder {
 	async buildSnapshotBuilderRegistry(
 		graph: Graph,
 		plugins: SnapshotPlugin[],
-	): Promise<EdgeSnapshotBuilderRegistry> {
-		const edgeSnapshotBuilderRegistry: EdgeSnapshotBuilderRegistry =
-			new Map()
+	): Promise<SnapshotBuildersRegistry> {
+		const edgeSnapshotBuilderRegistry: SnapshotBuildersRegistry = new Map()
 
 		for (const edge of graph.edges.values()) {
 			const pluginCanHandle = await this.getPluginCanHandle(edge, plugins)

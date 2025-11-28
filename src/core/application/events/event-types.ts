@@ -1,6 +1,6 @@
 import { Token } from '../../domain/entities/token'
+import { ArbitrageOpportunity } from '../../domain/value-objects/opportunity'
 import { QuotedPath } from '../../domain/value-objects/path'
-import { ArbitrageOpportunity } from '../use-cases/finding/snapshot-opportunity-finder/types'
 
 export interface AppEvents {
 	cycleQuoted: QuotedPath<Token>

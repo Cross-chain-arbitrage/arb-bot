@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { ArbitrageOpportunity } from '../../../../domain/value-objects/opportunity'
 import { OnTypedEvent } from '../../../events/event-decorator'
 import {
 	OPPORTUNITY_NOTIFIER_TOKEN,
 	OpportunityNotifier,
 } from '../../../interfaces/opportunity-notifier'
-import { ArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
 import { OpportunityReporterConfig } from './types'
 
 export const OPPORTUNITY_REPORTER_CONFIG_KEY = 'opportunityReporter'

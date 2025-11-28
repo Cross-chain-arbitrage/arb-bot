@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { ArbitrageOpportunity } from '../../../../domain/value-objects/opportunity'
 import { ValidationResult } from '../opportunity-validator/types'
-import { ArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
 
 @Injectable()
 export class ArbitrageFinderTelemetry {

@@ -3,10 +3,10 @@ import { wait } from '../../../../../utils/common'
 import { Edge } from '../../../../domain/entities/edge'
 import {
 	Confirmation,
-	EDGE_EXECUTOR_REGISTRY_TOKEN,
+	EXECUTORS_REGISTRY_TOKEN,
 	EdgeExecutor,
-	EdgeExecutorRegistry,
 	Execution,
+	ExecutorsRegistry,
 } from '../../../interfaces/edge-executor'
 import { backoffMs } from '../utils/backoff'
 import { StepExecutionTelemetry } from './step-execution-telemetry'
@@ -15,8 +15,8 @@ import { StepExecutionResult, StepPhase } from './types'
 @Injectable()
 export class StepExecutor {
 	constructor(
-		@Inject(EDGE_EXECUTOR_REGISTRY_TOKEN)
-		private readonly edgeExecutorRegistry: EdgeExecutorRegistry,
+		@Inject(EXECUTORS_REGISTRY_TOKEN)
+		private readonly edgeExecutorRegistry: ExecutorsRegistry,
 		private readonly telemetry: StepExecutionTelemetry,
 	) {}
 

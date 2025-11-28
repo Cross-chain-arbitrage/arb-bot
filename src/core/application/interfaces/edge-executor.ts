@@ -66,8 +66,6 @@ export type EdgeExecutor = InchainExecutor | CrosschainExecutor
 
 /* ======== REGISTRY ======== */
 
-export type EdgeExecutorRegistry = Map<EdgeId, EdgeExecutor>
+export type ExecutorsRegistry = Map<EdgeId, EdgeExecutor>
 
-export const EDGE_EXECUTOR_REGISTRY_TOKEN = Symbol(
-	'EDGE_EXECUTOR_REGISTRY_TOKEN',
-)
+export const EXECUTORS_REGISTRY_TOKEN = Symbol('EXECUTORS_REGISTRY_TOKEN')

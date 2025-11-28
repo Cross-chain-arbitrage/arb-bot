@@ -8,7 +8,7 @@ const channelIdPattern = anyStringPattern
 const fromNodeIdPattern = anyStringPattern
 const toNodeIdPattern = anyStringPattern
 
-export const edgeIdScheme = z
+export const edgeIdSchema = z
 	.string()
 	.regex(
 		new RegExp(

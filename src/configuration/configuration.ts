@@ -2,86 +2,77 @@ import { readFileSync } from 'fs'
 import * as yaml from 'js-yaml'
 import { z } from 'zod'
 import { ARBITRAGE_EXECUTOR_CONFIG_KEY } from '../core/application/use-cases/execution/arbitrage-executor/arbitrage-executor'
+import { ALL_CYCLES_QUOTER_CONFIG_KEY } from '../core/application/use-cases/finding/all-cycles-quoter/all-cycles-quoter'
+import { AllCyclesQuoterConfigSchema } from '../core/application/use-cases/finding/all-cycles-quoter/config-schema'
 import { ARBITRAGE_FINDER_CONFIG_KEY } from '../core/application/use-cases/finding/arbitrage-finder/arbitrage-finder'
+import { opportunityReporterConfigSchema } from '../core/application/use-cases/finding/opportunity-reporter/config-schema'
+import { OPPORTUNITY_REPORTER_CONFIG_KEY } from '../core/application/use-cases/finding/opportunity-reporter/opportunity-reporter'
 import {
 	CHAIN_CLIENT_CONFIG_KEY,
-	chainClientConfigScheme,
+	ChainClientConfigSchema,
 } from '../core/infrastructure/evm/chain-client/configuration/chain-client-config'
 import {
-	DEX_CONFIG_KEY,
-	dexConfigScheme,
-} from '../core/infrastructure/plugins/dex/configuration/dex-config'
-import {
-	JUPITER_CONFIG_KEY,
-	jupiterConfigScheme,
-} from '../core/infrastructure/plugins/jupiter/configuration/jupiter-config'
-import {
-	LIFI_CONFIG_KEY,
-	lifiConfigScheme,
-} from '../core/infrastructure/plugins/lifi/configuration/lifi-config'
-import {
-	MOCK_CONFIG_KEY,
-	mockConfigScheme,
-} from '../core/infrastructure/plugins/mock/configuration/mock-config'
-import {
-	NATIVE_WRAPPER_CONFIG_KEY,
-	nativeWrapperConfigScheme,
-} from '../core/infrastructure/plugins/native-wrapper/configuration/native-wrapper-config'
-import {
-	OFT_CONFIG_KEY,
-	oftConfigScheme,
-} from '../core/infrastructure/plugins/oft/configuration/oft-config'
-import {
-	RAYDIUM_CONFIG_KEY,
-	raydiumConfigScheme,
-} from '../core/infrastructure/plugins/raydium/configuration/raydium-config'
-import {
-	RELAY_CONFIG_KEY,
-	relayConfigScheme,
-} from '../core/infrastructure/plugins/relay/configuration/relay-config'
-import {
-	SIMPLE_STARGATE_CONFIG_KEY,
-	simpleStargateConfigScheme,
-} from '../core/infrastructure/plugins/simple-stargate/configuration/simple-stargate-config'
-import {
-	STARGATE_CONFIG_KEY,
-	stargateConfigScheme,
-} from '../core/infrastructure/plugins/stargate/configuration/stargate-config'
+	GRAPH_PLUGINS_KEY,
+	SNAPSHOT_PLUGINS_KEY,
+} from '../core/infrastructure/plugins/shared/constants'
 import { ARBITRAGE_SCHEDULER_CONFIG_KEY } from '../core/presentation/arbitrage-scheduler/arbitrage-scheduler'
 import { BALANCE_REPORTER_SCHEDULER_CONFIG_KEY } from '../core/presentation/balance-reporter-scheduler.ts/balance-reporter-scheduler'
 import { parsePretty } from '../utils/zod'
-import { arbitrageExecutorConfigScheme } from './arbitrage-executor-config'
-import { arbitrageFinderConfigScheme } from './arbitrage-finder-config'
-import { arbitrageSchedulerConfigScheme } from './arbitrage-scheduler-config'
-import { balanceReporterSchedulerConfigScheme } from './balance-reporter-scheduler-config'
+import { arbitrageExecutorConfigSchema } from './arbitrage-executor-config'
+import { arbitrageFinderConfigSchema } from './arbitrage-finder-config'
+import { arbitrageSchedulerConfigSchema } from './arbitrage-scheduler-config'
+import { balanceReporterSchedulerConfigSchema } from './balance-reporter-scheduler-config'
+import { GraphPluginsConfigSchema } from './graph-plugins'
+import { SnapshotPluginsConfigSchema } from './snapshot-plugins'
 
-export const arbitrageConfigSchema = z.object({
-	botName: z.string(),
-	isDryRun: z.boolean(),
+const APP_TYPE_CONFIG_KEY = 'appType'
+export enum AppType {
+	DRY_RUN = 'dryRun',
+	BOT = 'bot',
+	FINDER = 'finder',
+}
 
-	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigScheme,
-	[ARBITRAGE_EXECUTOR_CONFIG_KEY]: arbitrageExecutorConfigScheme,
-	[ARBITRAGE_SCHEDULER_CONFIG_KEY]: arbitrageSchedulerConfigScheme,
-	[BALANCE_REPORTER_SCHEDULER_CONFIG_KEY]:
-		balanceReporterSchedulerConfigScheme,
+export const sharedEntries = {
+	[CHAIN_CLIENT_CONFIG_KEY]: ChainClientConfigSchema,
+	[SNAPSHOT_PLUGINS_KEY]: SnapshotPluginsConfigSchema.optional(),
+	[GRAPH_PLUGINS_KEY]: GraphPluginsConfigSchema.optional(),
+}
 
-	/* ======== PLUGINS ======== */
+export const DryRunConfigSchema = z.object({
+	[APP_TYPE_CONFIG_KEY]: z.literal(AppType.DRY_RUN),
 
-	[NATIVE_WRAPPER_CONFIG_KEY]: nativeWrapperConfigScheme,
-	[STARGATE_CONFIG_KEY]: stargateConfigScheme,
-	[DEX_CONFIG_KEY]: dexConfigScheme,
-	[RELAY_CONFIG_KEY]: relayConfigScheme,
-	[SIMPLE_STARGATE_CONFIG_KEY]: simpleStargateConfigScheme,
-	[RAYDIUM_CONFIG_KEY]: raydiumConfigScheme,
-	[JUPITER_CONFIG_KEY]: jupiterConfigScheme,
-	[LIFI_CONFIG_KEY]: lifiConfigScheme,
-	[OFT_CONFIG_KEY]: oftConfigScheme,
-	[MOCK_CONFIG_KEY]: mockConfigScheme,
+	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigSchema,
 
-	/* ======== INFRASTRUCTURE ======== */
-
-	[CHAIN_CLIENT_CONFIG_KEY]: chainClientConfigScheme,
+	...sharedEntries,
 })
+
+export const BotConfigSchema = z.object({
+	[APP_TYPE_CONFIG_KEY]: z.literal(AppType.BOT),
+
+	botName: z.string(),
+	[ARBITRAGE_FINDER_CONFIG_KEY]: arbitrageFinderConfigSchema,
+	[ARBITRAGE_EXECUTOR_CONFIG_KEY]: arbitrageExecutorConfigSchema,
+	[ARBITRAGE_SCHEDULER_CONFIG_KEY]: arbitrageSchedulerConfigSchema,
+	[BALANCE_REPORTER_SCHEDULER_CONFIG_KEY]:
+		balanceReporterSchedulerConfigSchema,
+
+	...sharedEntries,
+})
+
+export const FinderConfigSchema = z.object({
+	[APP_TYPE_CONFIG_KEY]: z.literal(AppType.FINDER),
+
+	[ALL_CYCLES_QUOTER_CONFIG_KEY]: AllCyclesQuoterConfigSchema,
+	[OPPORTUNITY_REPORTER_CONFIG_KEY]: opportunityReporterConfigSchema,
+
+	...sharedEntries,
+})
+
+export const ConfigSchema = z.union([
+	FinderConfigSchema,
+	BotConfigSchema,
+	DryRunConfigSchema,
+])
 
 export function loadConfig() {
 	const YAML_CONFIG_FILENAME = process.env.BOT_CONFIG_PATH
@@ -98,7 +89,7 @@ export function loadConfig() {
 		)
 	}
 
-	const parsedConfig = parsePretty(arbitrageConfigSchema, config)
+	const parsedConfig = parsePretty(ConfigSchema, config)
 
 	return parsedConfig
 }

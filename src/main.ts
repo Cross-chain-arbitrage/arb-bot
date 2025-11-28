@@ -1,21 +1,27 @@
 import { NestFactory } from '@nestjs/core'
-import { ArbitrageAppModule } from './arbitrage-app.module'
+import { BotAppModule } from './bot-app.module'
 import { pinoLogger } from './composition/logging/pino-logger'
-import { OpportunityAppModule } from './opportunity-app.module'
+import { AppType, loadConfig } from './configuration/configuration'
+import { DryAppModule } from './dry-app.module'
+import { FinderAppModule } from './finder-app.module'
 
 /* ============ Strategy Config ============ */
 
 async function main() {
-	const appType = process.env.APP_TYPE as string
+	const appType = loadConfig().appType
 
 	let appModule: any
 	switch (appType) {
-		case 'arbitrage':
-			appModule = ArbitrageAppModule
+		case AppType.BOT:
+			appModule = BotAppModule
 			break
 
-		case 'opportunity':
-			appModule = OpportunityAppModule
+		case AppType.FINDER:
+			appModule = FinderAppModule
+			break
+
+		case AppType.DRY_RUN:
+			appModule = DryAppModule
 			break
 
 		default:

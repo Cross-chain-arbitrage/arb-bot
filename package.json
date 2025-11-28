@@ -17,7 +17,7 @@
 		"check-types": "npx tsc --noEmit",
 		"check-pool": "sh utils/check-pool/check-pool.sh",
 		"build": "nest build",
-		"gen-schema": "ts-node utils/generate-configuration-scheme.ts"
+		"gen-schema": "ts-node utils/generate-configuration-schema.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "9.26.0",

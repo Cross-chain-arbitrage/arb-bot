@@ -2,20 +2,20 @@ import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
+import { ArbitrageOpportunity } from '../../../../domain/value-objects/opportunity'
 import { QuotedPath } from '../../../../domain/value-objects/path'
 import {
-	EDGE_EXECUTOR_REGISTRY_TOKEN,
-	EdgeExecutorRegistry,
+	EXECUTORS_REGISTRY_TOKEN,
+	ExecutorsRegistry,
 } from '../../../interfaces/edge-executor'
 import {
-	EDGE_QUOTER_REGISTRY_TOKEN,
-	EdgeQuoterRegistry,
+	QUOTERS_REGISTRY_TOKEN,
+	QuotersRegistry,
 } from '../../../interfaces/edge-quoter'
 import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
 } from '../../../interfaces/price-oracle'
-import { ArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
 import { GRAPH_TOKEN } from '../../graph-builder/graph-token'
 import { PathExecutor } from '../path-executor/path-executor'
 import {
@@ -44,11 +44,11 @@ export class ArbitrageExecutor {
 		private readonly telemetry: ArbitrageExecutionTelemetry,
 		private readonly configService: ConfigService,
 
-		@Inject(EDGE_QUOTER_REGISTRY_TOKEN)
-		private readonly quoterRegistry: EdgeQuoterRegistry,
+		@Inject(QUOTERS_REGISTRY_TOKEN)
+		private readonly quoterRegistry: QuotersRegistry,
 
-		@Inject(EDGE_EXECUTOR_REGISTRY_TOKEN)
-		private readonly edgeExecutorRegistry: EdgeExecutorRegistry,
+		@Inject(EXECUTORS_REGISTRY_TOKEN)
+		private readonly edgeExecutorRegistry: ExecutorsRegistry,
 
 		@Inject(PRICE_ORACLE_TOKEN)
 		private readonly priceOracle: PriceOracle,
@@ -68,8 +68,7 @@ export class ArbitrageExecutor {
 	}
 
 	async execute(opportunity: ArbitrageOpportunity): Promise<ArbitrageResult> {
-		const opportunityToExecute =
-			await this.getOpportunityToExecute(opportunity)
+		const opportunityToExecute = this.getOpportunityToExecute(opportunity)
 
 		this.telemetry.onArbitrageStart(opportunityToExecute)
 
@@ -145,9 +144,9 @@ export class ArbitrageExecutor {
 		return arbitrageResult
 	}
 
-	private async getOpportunityToExecute(
+	private getOpportunityToExecute(
 		opportunity: ArbitrageOpportunity,
-	): Promise<ArbitrageOpportunity> {
+	): ArbitrageOpportunity {
 		const startRules = this.config?.startRules
 
 		if (!startRules) return opportunity

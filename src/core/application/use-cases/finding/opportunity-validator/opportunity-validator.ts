@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { ArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
+import { ArbitrageOpportunity } from '../../../../domain/value-objects/opportunity'
 import { OpportunityValidatorParams, ValidationResult } from './types'
 
 @Injectable()

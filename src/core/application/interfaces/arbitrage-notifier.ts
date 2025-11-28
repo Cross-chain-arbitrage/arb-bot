@@ -1,5 +1,5 @@
 import { ArbitrageResult } from '../use-cases/execution/arbitrage-executor/types'
-import { ArbitrageOpportunity } from '../use-cases/finding/snapshot-opportunity-finder/types'
+import { ArbitrageOpportunity } from '../../domain/value-objects/opportunity'
 
 export const ARBITRAGE_NOTIFIER_TOKEN = Symbol('ARBITRAGE_NOTIFIER_TOKEN')
 

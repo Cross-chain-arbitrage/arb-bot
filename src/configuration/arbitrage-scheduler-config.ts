@@ -1,7 +1,7 @@
 import z from 'zod'
 import { ArbitrageSchedulerConfig } from '../core/presentation/arbitrage-scheduler/types'
 
-export const arbitrageSchedulerConfigScheme: z.ZodType<
+export const arbitrageSchedulerConfigSchema: z.ZodType<
 	ArbitrageSchedulerConfig | undefined
 > = z
 	.object({

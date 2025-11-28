@@ -1,12 +1,12 @@
 import { ChainId } from '../value-objects/chain-id'
-import { TokenId, tokenIdScheme } from '../value-objects/token-id'
+import { TokenId, tokenIdSchema } from '../value-objects/token-id'
 
 export class TokenIdUtils {
 	static parseId(tokenId: TokenId): {
 		chainId: ChainId
 		address: string
 	} {
-		const tokenIdChecked = tokenIdScheme.parse(tokenId)
+		const tokenIdChecked = tokenIdSchema.parse(tokenId)
 
 		const [namespace, reference, address] = tokenIdChecked.split(':')
 

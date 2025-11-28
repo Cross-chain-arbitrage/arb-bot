@@ -1,11 +1,11 @@
-import { ChannelId, channelScheme } from '../value-objects/channel-id'
+import { ChannelId, channelSchema } from '../value-objects/channel-id'
 
 export class ChannelIdUtils {
 	static parseId(channelId: string): {
 		protocol: string
 		instance: string
 	} {
-		const channelIdChecked = channelScheme.parse(channelId)
+		const channelIdChecked = channelSchema.parse(channelId)
 
 		const [protocol, instance] = channelIdChecked.split(':')
 

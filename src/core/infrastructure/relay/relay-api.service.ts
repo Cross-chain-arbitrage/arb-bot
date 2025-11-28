@@ -4,7 +4,7 @@ import { SOLANA_RELAY_CHAIN_ID } from './constants'
 import {
 	ExecutionFullStatusSchema,
 	ExecutionStatusSchema,
-} from './schemas/relay-execution-status.scheme'
+} from './schemas/relay-execution-status.schema'
 import { QuoteEvmSrcSchema } from './schemas/relay-quite-evm-src.schema'
 import { QuoteSolanaSrcSchema } from './schemas/relay-quite-solana-src.schema'
 

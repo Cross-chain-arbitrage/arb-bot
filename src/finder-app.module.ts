@@ -1,28 +1,35 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { GraphBuilderModule } from './composition/builder/graph-builder.module'
-import { ArbitrageFinderModule } from './composition/finder/arbitrage-finder.module'
+import { ScheduleModule } from '@nestjs/schedule'
+import { GraphBuilderModule } from './composition/graph-builder/graph-builder.module'
+import { QuotersRegistryModule } from './composition/quoters-registry/quoters-registry.module'
 import { loadConfig } from './configuration/configuration'
-import { GRAPH_VISUALIZER_TOKEN } from './core/application/interfaces/graph-visualizer'
-import { BotOrchestrator } from './core/application/use-cases/orchestration/bot-orchestrator/bot-orchestrator'
+import { TypedEventEmitterModule } from './core/application/events/typed-event-emmiter2'
+import { AllCyclesQuoter } from './core/application/use-cases/finding/all-cycles-quoter/all-cycles-quoter'
+import { AllCyclesQuoterTelemetry } from './core/application/use-cases/finding/all-cycles-quoter/all-cycles-quoter-telemetry'
+import { OpportunityReporter } from './core/application/use-cases/finding/opportunity-reporter/opportunity-reporter'
+import { QuotedCycleAnalyzer } from './core/application/use-cases/finding/quoted-cycle-analyzer/quoted-cycle-analyzer'
+import { PathQuoter } from './core/application/use-cases/path-quoter/path-quoter'
 import { PriceOracleModule } from './core/infrastructure/price-oracle/price-oracle.module'
-import { MermaidVisualizer } from './core/infrastructure/visualization/mermaid-visualizer'
-import { FinderScheduler } from './core/presentation/finder-scheduler/finder-scheduler'
+import { TgOpportunityNotifierModule } from './core/infrastructure/tg-notifier/tg-opportunity-notifier/tg-opportunity-notifier.module'
 
 @Module({
 	imports: [
 		GraphBuilderModule,
-		ArbitrageFinderModule,
 		PriceOracleModule,
 		ConfigModule.forRoot({ isGlobal: true, load: [loadConfig] }),
+		TypedEventEmitterModule,
+		TgOpportunityNotifierModule,
+		ScheduleModule.forRoot(),
+		QuotersRegistryModule,
 	],
 	providers: [
-		FinderScheduler,
-		BotOrchestrator,
-		{
-			provide: GRAPH_VISUALIZER_TOKEN,
-			useClass: MermaidVisualizer,
-		},
+		AllCyclesQuoter,
+		AllCyclesQuoterTelemetry,
+
+		QuotedCycleAnalyzer,
+		OpportunityReporter,
+		PathQuoter,
 	],
 })
 export class FinderAppModule {}

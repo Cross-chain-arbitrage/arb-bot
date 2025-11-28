@@ -9,8 +9,8 @@ export interface EdgeSnapshotBuilder {
 	buildEdgeSnapshotFn: () => Promise<EdgeSnapshotFn>
 }
 
-export type EdgeSnapshotBuilderRegistry = Map<EdgeId, EdgeSnapshotBuilder>
+export type SnapshotBuildersRegistry = Map<EdgeId, EdgeSnapshotBuilder>
 
-export const EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN = Symbol(
-	'EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN',
+export const SNAPSHOT_BUILDERS_REGISTRY_TOKEN = Symbol(
+	'SNAPSHOT_BUILDERS_REGISTRY_TOKEN',
 )

@@ -1,4 +1,4 @@
-import { ArbitrageOpportunity } from '../use-cases/finding/snapshot-opportunity-finder/types'
+import { ArbitrageOpportunity } from '../../domain/value-objects/opportunity'
 
 export const OPPORTUNITY_NOTIFIER_TOKEN = Symbol('OPPORTUNITY_NOTIFIER_TOKEN')
 

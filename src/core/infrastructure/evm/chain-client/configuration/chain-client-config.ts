@@ -3,7 +3,7 @@ import { ChainClientConfig, CustomChain, RpcSettings, RpcUrl } from '../types'
 
 export const CHAIN_CLIENT_CONFIG_KEY = 'chainClientConfig'
 
-export const rpcSettingsScheme: z.ZodType<RpcSettings> = z.record(
+export const rpcSettingsSchema: z.ZodType<RpcSettings> = z.record(
 	z.string(),
 	z.object({
 		rpcUrls: z.array(
@@ -20,7 +20,7 @@ export const rpcSettingsScheme: z.ZodType<RpcSettings> = z.record(
 	}),
 )
 
-export const customChainsScheme: z.ZodType<CustomChain[]> = z.array(
+export const customChainsSchema: z.ZodType<CustomChain[]> = z.array(
 	z.object({
 		chainId: z.number(),
 		defaultRpcUrl: z.url(),
@@ -33,10 +33,10 @@ export const customChainsScheme: z.ZodType<CustomChain[]> = z.array(
 	}),
 )
 
-export const chainClientConfigScheme: z.ZodType<ChainClientConfig | undefined> =
+export const ChainClientConfigSchema: z.ZodType<ChainClientConfig | undefined> =
 	z
 		.object({
-			rpcSettings: rpcSettingsScheme.optional(),
-			customChains: customChainsScheme.optional(),
+			rpcSettings: rpcSettingsSchema.optional(),
+			customChains: customChainsSchema.optional(),
 		})
 		.optional()

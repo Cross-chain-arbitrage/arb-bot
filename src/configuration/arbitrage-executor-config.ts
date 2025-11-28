@@ -1,14 +1,14 @@
 import z from 'zod'
 import { ArbitrageExecutorConfig } from '../core/application/use-cases/execution/arbitrage-executor/types'
-import { tokenIdScheme } from '../core/domain/value-objects/token-id'
+import { tokenIdSchema } from '../core/domain/value-objects/token-id'
 
-export const arbitrageExecutorConfigScheme: z.ZodType<ArbitrageExecutorConfig> =
+export const arbitrageExecutorConfigSchema: z.ZodType<ArbitrageExecutorConfig> =
 	z.object({
 		startRules: z
 			.array(
 				z.object({
-					startTokenId: tokenIdScheme,
-					directionTokenId: tokenIdScheme,
+					startTokenId: tokenIdSchema,
+					directionTokenId: tokenIdSchema,
 				}),
 			)
 			.optional(),

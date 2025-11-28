@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { Graph } from '../../../../domain/entities/graph'
 import { Token } from '../../../../domain/entities/token'
+import { ArbitrageOpportunity } from '../../../../domain/value-objects/opportunity'
 import { QuotedPath } from '../../../../domain/value-objects/path'
 import {
 	ParamsFindCycle,
@@ -11,10 +12,7 @@ import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
 } from '../../../interfaces/price-oracle'
-import {
-	ArbitrageOpportunity,
-	SnapshotFindOpportunityParams,
-} from '../snapshot-opportunity-finder/types'
+import { ParamsFindOpportunity } from './types'
 
 @Injectable()
 export class OpportunityFinder {
@@ -28,7 +26,7 @@ export class OpportunityFinder {
 
 	async findOpportunity(
 		graph: Graph,
-		snapshotFindOpportunityParams: SnapshotFindOpportunityParams,
+		snapshotFindOpportunityParams: ParamsFindOpportunity,
 	): Promise<ArbitrageOpportunity[] | null> {
 		const { minStartValueUsd, maxStartValueUsd, runCount, startToken } =
 			snapshotFindOpportunityParams

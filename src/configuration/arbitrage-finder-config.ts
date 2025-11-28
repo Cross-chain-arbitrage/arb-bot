@@ -1,7 +1,7 @@
 import z from 'zod'
 import { ArbitrageFinderConfig } from '../core/application/use-cases/finding/arbitrage-finder/types'
 
-export const arbitrageFinderConfigScheme: z.ZodType<ArbitrageFinderConfig> =
+export const arbitrageFinderConfigSchema: z.ZodType<ArbitrageFinderConfig> =
 	z.object({
 		runInterval: z.number(),
 		opportunityFinding: z.object({

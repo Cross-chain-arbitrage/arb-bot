@@ -1,4 +1,4 @@
-import { ArbitrageOpportunity } from '../snapshot-opportunity-finder/types'
+import { ArbitrageOpportunity } from '../../../../domain/value-objects/opportunity'
 
 export interface OpportunityValidatorParams {
 	minProfitUsd: number

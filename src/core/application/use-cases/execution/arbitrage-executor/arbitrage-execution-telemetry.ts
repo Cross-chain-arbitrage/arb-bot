@@ -3,7 +3,7 @@ import {
 	ARBITRAGE_NOTIFIER_TOKEN,
 	ArbitrageNotifier,
 } from '../../../interfaces/arbitrage-notifier'
-import { ArbitrageOpportunity } from '../../finding/snapshot-opportunity-finder/types'
+import { ArbitrageOpportunity } from '../../../../domain/value-objects/opportunity'
 import { ArbitrageResult } from './types'
 
 @Injectable()

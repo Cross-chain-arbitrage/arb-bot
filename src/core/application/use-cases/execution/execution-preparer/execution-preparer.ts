@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Edge } from '../../../../domain/entities/edge'
 import {
-	EDGE_EXECUTOR_REGISTRY_TOKEN,
-	EdgeExecutorRegistry,
+	EXECUTORS_REGISTRY_TOKEN,
+	ExecutorsRegistry,
 } from '../../../interfaces/edge-executor'
 
 @Injectable()
@@ -10,8 +10,8 @@ export class ExecutionPreparer {
 	logger = new Logger(ExecutionPreparer.name)
 
 	constructor(
-		@Inject(EDGE_EXECUTOR_REGISTRY_TOKEN)
-		private readonly edgeExecutorRegistry: EdgeExecutorRegistry,
+		@Inject(EXECUTORS_REGISTRY_TOKEN)
+		private readonly edgeExecutorRegistry: ExecutorsRegistry,
 	) {}
 
 	async prepareExecution(edge: Edge) {

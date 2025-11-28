@@ -5,9 +5,9 @@ import { z, ZodError } from 'zod'
  * @param name parameter description
  * @returns return description
  */
-export function parsePretty<T>(scheme: z.ZodType<T>, raw: unknown) {
+export function parsePretty<T>(schema: z.ZodType<T>, raw: unknown) {
 	try {
-		return scheme.parse(raw)
+		return schema.parse(raw)
 	} catch (error) {
 		if (error instanceof ZodError) {
 			throw new Error(z.prettifyError(error))

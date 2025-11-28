@@ -4,8 +4,8 @@ import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
 } from '../../../application/interfaces/price-oracle'
-import { ArbitrageOpportunity } from '../../../application/use-cases/finding/snapshot-opportunity-finder/types'
 import { Token } from '../../../domain/entities/token'
+import { ArbitrageOpportunity } from '../../../domain/value-objects/opportunity'
 import { ChannelIdUtils } from '../../../domain/services/channel-id-utils'
 import { EdgeIdUtils } from '../../../domain/services/edge-id-utils'
 import { TgNotifier } from '../tg-notifier'

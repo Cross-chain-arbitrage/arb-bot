@@ -4,15 +4,15 @@ import { EdgeId } from '../../../../domain/value-objects/edge-id'
 import { Quote } from '../../../../domain/value-objects/quote'
 import { GraphSnapshot } from '../../../../domain/value-objects/weighted-graph-snapshot'
 import {
-	EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN,
-	EdgeSnapshotBuilderRegistry,
+	SNAPSHOT_BUILDERS_REGISTRY_TOKEN,
+	SnapshotBuildersRegistry,
 } from '../../../interfaces/edge-snapshot-builder'
 
 @Injectable()
 export class GraphSnapshotBuilder {
 	constructor(
-		@Inject(EDGE_SNAPSHOT_BUILDER_REGISTRY_TOKEN)
-		private readonly edgeSnapshotBuilderRegistry: EdgeSnapshotBuilderRegistry,
+		@Inject(SNAPSHOT_BUILDERS_REGISTRY_TOKEN)
+		private readonly edgeSnapshotBuilderRegistry: SnapshotBuildersRegistry,
 	) {}
 
 	async buildSnapshot(graph: Graph): Promise<GraphSnapshot> {

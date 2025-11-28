@@ -3,7 +3,7 @@ import { BALANCE_ORACLE_TOKEN } from '../../core/application/interfaces/balance-
 import { BalanceOracleService } from '../../core/infrastructure/balance-oracle/balance-oracle.service'
 import { EvmModule } from '../../core/infrastructure/evm/evm.module'
 import { SolanaModule } from '../../core/infrastructure/solana/solana.module'
-import { GraphBuilderModule } from '../builder/graph-builder.module'
+import { GraphBuilderModule } from '../graph-builder/graph-builder.module'
 
 @Module({
 	imports: [GraphBuilderModule, EvmModule, SolanaModule],

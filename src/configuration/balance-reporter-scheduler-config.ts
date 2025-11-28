@@ -1,5 +1,5 @@
 import { z } from 'zod'
 
-export const balanceReporterSchedulerConfigScheme = z.object({
+export const balanceReporterSchedulerConfigSchema = z.object({
 	runInterval: z.number(),
 })
