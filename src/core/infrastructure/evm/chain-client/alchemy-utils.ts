@@ -22,6 +22,7 @@ const chainIdToChainKey: Record<number, string | undefined> = {
 	747: 'flow-mainnet',
 	1088: 'metis-mainnet',
 	1101: 'polygonzkevm-mainnet',
+	1284: 'moonbeam-mainnet',
 	1301: 'unichain-sepolia',
 	1315: 'story-aeneid',
 	1328: 'sei-testnet',
