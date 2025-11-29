@@ -10,6 +10,7 @@ import { TokenMetadata } from '../../../../domain/entities/token'
 import { TokenId } from '../../../../domain/value-objects/token-id'
 import { ERC20_ABI } from '../../abi/erc20'
 import { ChainClientService } from '../../chain-client/chain-client.service'
+import { TokenApiService } from '../../token-api.ts/token-api.service'
 import { ETH_METADATA, NATIVE_CURRENCIES } from './nativeCurrencies'
 import {
 	NATIVE_ADDRESS,
@@ -23,7 +24,10 @@ type TokenCacheKey = `${number}:${Address}`
 
 @Injectable()
 export class TokenUtils {
-	constructor(private readonly chainClientService: ChainClientService) {}
+	constructor(
+		private readonly chainClientService: ChainClientService,
+		private readonly tokenApiService: TokenApiService,
+	) {}
 	/* ======== STATE ======== */
 
 	private tokenCache: Map<TokenCacheKey, Token | NativeCurrency> = new Map()
@@ -52,9 +56,6 @@ export class TokenUtils {
 			return cachedToken as T
 		}
 
-		const client = this.chainClientService.getClient(chainId)
-		const abi = ERC20_ABI
-
 		if (this.isNative(checksumAddress)) {
 			const token = this._createNative(chainId)
 
@@ -66,25 +67,9 @@ export class TokenUtils {
 			return token as T
 		}
 
-		const contract = getContract({
-			address: checksumAddress,
-			abi,
-			client,
-		})
-
-		const [decimals, name, symbol] = await Promise.all([
-			contract.read.decimals(),
-			contract.read.name(),
-			contract.read.symbol(),
-		])
+		const metadata = await this.getTokenMetadata(checksumAddress, chainId)
 
 		let token: T
-
-		const metadata: TokenMetadata = {
-			symbol,
-			name,
-			decimals,
-		}
 
 		if (this.isWrappedNative(checksumAddress, chainId)) {
 			token = new WrappedNative(
@@ -105,6 +90,69 @@ export class TokenUtils {
 		this.tokenCache.set(cacheKey, token)
 
 		return token
+	}
+
+	private async getTokenMetadata(
+		address: Address,
+		chainId: number,
+	): Promise<TokenMetadata> {
+		try {
+			const metadata = await this.getMetadataFromApi(address, chainId)
+
+			return metadata
+		} catch {
+			const metadata = await this.getMetadataFromBlockchain(
+				address,
+				chainId,
+			)
+
+			return metadata
+		}
+	}
+
+	private async getMetadataFromApi(
+		address: Address,
+		chainId: number,
+	): Promise<TokenMetadata> {
+		const client = this.chainClientService.getClient(chainId)
+
+		const rpcUrl = client.chain.rpcUrls.default.http[0]
+
+		const metadata = await this.tokenApiService.getTokenMetadata(
+			address,
+			chainId,
+			rpcUrl,
+		)
+
+		return metadata
+	}
+
+	private async getMetadataFromBlockchain(
+		address: Address,
+		chainId: number,
+	): Promise<TokenMetadata> {
+		const client = this.chainClientService.getClient(chainId)
+		const abi = ERC20_ABI
+
+		const contract = getContract({
+			address,
+			abi,
+			client,
+		})
+
+		const [decimals, name, symbol] = await Promise.all([
+			contract.read.decimals(),
+			contract.read.name(),
+			contract.read.symbol(),
+		])
+
+		const metadata: TokenMetadata = {
+			symbol,
+			name,
+			decimals,
+		}
+
+		return metadata
 	}
 
 	getNative(chainId: number): NativeCurrency {
