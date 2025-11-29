@@ -14,6 +14,7 @@ import {
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import * as chains from 'viem/chains'
+import { HttpRpcClientOptions } from 'viem/utils'
 import { createCustomError } from '../../../../utils/common'
 import { ChainClientConfigService } from './chain-client-config.service'
 
@@ -88,6 +89,26 @@ export class ChainClientService {
 		return client
 	}
 
+	/**
+	 * Removes retry-after header to prevent viem from using long retry delays
+	 */
+	private fetchFn: HttpRpcClientOptions['fetchFn'] = async (input, init) => {
+		const response = await fetch(input, init)
+
+		if (!response.headers.has('retry-after')) {
+			return response
+		}
+
+		const headers = new Headers(response.headers)
+		headers.delete('retry-after')
+
+		return new Response(response.body, {
+			status: response.status,
+			statusText: response.statusText,
+			headers,
+		})
+	}
+
 	getTransport(chainId: number): FallbackTransport {
 		const chain = this.findChainById(chainId)
 
@@ -96,8 +117,7 @@ export class ChainClientService {
 		const defaultTransportConfig: HttpTransportConfig = {
 			timeout: 6_000,
 			batch: true,
-			// onFetchRequest(request, init) {
-			// },
+			fetchFn: this.fetchFn,
 		}
 
 		/* ======== Insert Default Transport ======== */
