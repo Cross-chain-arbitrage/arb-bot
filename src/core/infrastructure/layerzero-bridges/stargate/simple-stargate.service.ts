@@ -2,11 +2,15 @@ import { Message } from '@layerzerolabs/scan-client'
 import { Injectable } from '@nestjs/common'
 import axios from 'axios'
 import { convertDecimals, createCustomError } from '../../../../utils/common'
+import { TokenAmount } from '../../../domain/value-objects/token-amount'
 import { ChainClientService } from '../../evm/chain-client/chain-client.service'
 import { NativeCurrency } from '../../evm/primitives/tokens/NativeCurrency'
 import { Token } from '../../evm/primitives/tokens/Token'
+import { TokenUtils } from '../../evm/primitives/tokens/TokenUtils'
 import { SolanaClientService } from '../../solana/solana-client.service'
+import { SolanaNative } from '../../solana/solana-tokens/solana-native'
 import { SolanaToken } from '../../solana/solana-tokens/solana-token'
+import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
 import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
 import { STARGATE_CHAINS } from './dumped/chains'
 import {
@@ -26,6 +30,8 @@ export class SimpleStargateService {
 		private readonly chainClientService: ChainClientService,
 		private readonly layerZeroScanService: LayerZeroScanService,
 		private readonly solanaClientService: SolanaClientService,
+		private readonly evmTokenUtils: TokenUtils,
+		private readonly solanaTokenUtils: SolanaTokenUtils,
 	) {}
 
 	baseUrl = 'https://stargate.finance/api/v1'
@@ -123,16 +129,19 @@ export class SimpleStargateService {
 		amountIn: bigint,
 	): Promise<{
 		amountOut: bigint
-		feeInNative: bigint
+		lzFee: TokenAmount
 		txHash: string
 		waitForBridge: () => Promise<Message>
 	}> {
 		const quoteResult = await this.requestQuote(tokenIn, tokenOut, amountIn)
 
 		let txHash: string
+		let token: NativeCurrency | SolanaNative
 
 		if (tokenIn instanceof SolanaToken) {
 			const quote = (quoteResult as QuoteSolanaSrc).quotes[0]
+
+			token = this.solanaTokenUtils.getNative()
 
 			txHash = await this.solanaClientService.sendTx(
 				quote.steps[0].transaction.data,
@@ -150,6 +159,8 @@ export class SimpleStargateService {
 				value: BigInt(quote.steps[0].transaction.value),
 			})
 
+			token = this.evmTokenUtils.getNative(tokenIn.chainId)
+
 			const receipt = await this.chainClientService
 				.getClient(tokenIn.chainId)
 				.waitForTransactionReceipt({
@@ -163,7 +174,10 @@ export class SimpleStargateService {
 
 		return {
 			amountOut: BigInt(quoteResult.quotes[0].dstAmount),
-			feeInNative: BigInt(quoteResult.quotes[0].fees[0].amount),
+			lzFee: {
+				token,
+				amount: BigInt(quoteResult.quotes[0].fees[0].amount),
+			},
 			waitForBridge: () =>
 				this.layerZeroScanService.waitForDeliveryStatus(txHash),
 			txHash,

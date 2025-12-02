@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common'
+import { ParsedTransactionWithMeta } from '@solana/web3.js'
+import { TransactionReceipt } from 'viem'
 import { poll } from '../../../../utils/polling'
 import {
 	CrosschainConfirmation,
@@ -45,7 +47,7 @@ export class SimpleStargateExecutorPlugin
 		}
 	}
 
-	async execute(
+	private async execute(
 		edge: Edge<Token | NativeCurrency | SolanaToken>,
 		amountIn: bigint,
 	): Promise<CrosschainExecution> {
@@ -76,7 +78,7 @@ export class SimpleStargateExecutorPlugin
 		return this.executeBridge(edge, amountIn)
 	}
 
-	async waitBalanceFinalization(token: SolanaToken, amount: bigint) {
+	private async waitBalanceFinalization(token: SolanaToken, amount: bigint) {
 		await poll(
 			() =>
 				token.balanceOf(
@@ -108,12 +110,20 @@ export class SimpleStargateExecutorPlugin
 		}
 	}
 
-	async confirm(
+	private async confirm(
 		edge: Edge<SolanaToken | Token | NativeCurrency>,
 		bridgeResult: Awaited<
 			ReturnType<typeof this.simpleStargateService.bridge>
 		>,
 	): Promise<CrosschainConfirmation> {
+		const chainId = TokenIdUtils.parseId(edge.from.id).chainId
+
+		const srcTxRes = await this.solanaEvmHelper.waitForTxResult(
+			chainId,
+			bridgeResult.txHash,
+		)
+		//TODO: handle failed tx
+
 		const awaitedBridge = await bridgeResult.waitForBridge()
 
 		const dstTxId = awaitedBridge.dstTxHash
@@ -122,28 +132,58 @@ export class SimpleStargateExecutorPlugin
 			throw new Error('Destination transaction not found')
 		}
 
-		const chainId = TokenIdUtils.parseId(edge.from.id).chainId
-
-		const parsedTx = await this.solanaEvmHelper.waitForTxResult(
-			chainId,
-			bridgeResult.txHash,
-		)
-
 		return {
 			status: 'success',
 			dstTxId,
 			amountOut: bridgeResult.amountOut,
 			getExecutionCost: async () => {
-				const costInUsd =
-					await this.solanaEvmTxCostHelper.getTxCostInUsd(
-						chainId,
-						parsedTx,
-					)
-
-				return {
-					costInUsd,
-				}
+				return await this.getSuccessExecutionCost(
+					edge,
+					srcTxRes,
+					bridgeResult,
+				)
 			},
+		}
+	}
+
+	async getFailedExecutionCost(
+		edge: Edge<Token | NativeCurrency | SolanaToken>,
+		txResult: TransactionReceipt | ParsedTransactionWithMeta,
+	) {
+		const chainId = TokenIdUtils.parseId(edge.from.id).chainId
+
+		const txCostInUsd = await this.solanaEvmTxCostHelper.getTxCostInUsd(
+			chainId,
+			txResult,
+		)
+
+		return {
+			costInUsd: txCostInUsd,
+		}
+	}
+
+	async getSuccessExecutionCost(
+		edge: Edge<Token | NativeCurrency | SolanaToken>,
+		srcTxReceipt: TransactionReceipt | ParsedTransactionWithMeta,
+		bridgeResult: Awaited<
+			ReturnType<typeof this.simpleStargateService.bridge>
+		>,
+	) {
+		const chainId = TokenIdUtils.parseId(edge.from.id).chainId
+
+		const txCostInUsd = await this.solanaEvmTxCostHelper.getTxCostInUsd(
+			chainId,
+			srcTxReceipt,
+		)
+
+		const bridgeFeeInUsd =
+			await this.tokenValuator.estimateUsdFromTokenAmount(
+				bridgeResult.lzFee.token,
+				bridgeResult.lzFee.amount,
+			)
+
+		return {
+			costInUsd: txCostInUsd + bridgeFeeInUsd,
 		}
 	}
 }
