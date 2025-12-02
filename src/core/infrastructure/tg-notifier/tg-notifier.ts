@@ -5,7 +5,7 @@ import { createCustomError, getEnvSafe } from '../../../utils/common'
 import { MessageResponse } from './types'
 
 const TgBaseNotifierError = createCustomError('TgBaseNotifierError')
-export const TG_MESSAGE_THREAD_ID_TOKEN = Symbol('TG_MESSAGE_THREAD_ID_TOKEN')
+export const THREAD_ID_ENV_NAME = Symbol('THREAD_ID_ENV_NAME')
 
 @Injectable()
 export class TgNotifier {
@@ -14,10 +14,10 @@ export class TgNotifier {
 	private TG_MESSAGE_THREAD_ID: string
 	private bot: TelegramBot
 
-	constructor(@Inject(TG_MESSAGE_THREAD_ID_TOKEN) messageThreadId: string) {
+	constructor(@Inject(THREAD_ID_ENV_NAME) threadIdEnvName: string) {
 		this.BOT_TOKEN = getEnvSafe('TG_BOT_TOKEN')
 		this.TG_CHAT_ID = getEnvSafe('TG_CHAT_ID')
-		this.TG_MESSAGE_THREAD_ID = messageThreadId
+		this.TG_MESSAGE_THREAD_ID = getEnvSafe(threadIdEnvName)
 
 		this.bot = new TelegramBot(this.BOT_TOKEN)
 	}
