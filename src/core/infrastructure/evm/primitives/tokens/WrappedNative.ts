@@ -3,6 +3,7 @@ import {
 	base,
 	bob,
 	bsc,
+	corn,
 	fuse,
 	gravity,
 	hemi,
@@ -33,6 +34,7 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[bob.id]: '0x4200000000000000000000000000000000000006',
 	[1300]: '0x9a1691D500C54e1d79df2347D170987aa3E527aC',
 	[monad.id]: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
+	[corn.id]: '0xda5ddd7270381a7c2717ad10d1c0ecb19e3cdfb2',
 }
 
 export class WrappedNative extends Token {

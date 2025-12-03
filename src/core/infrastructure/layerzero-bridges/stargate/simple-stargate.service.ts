@@ -153,10 +153,16 @@ export class SimpleStargateService {
 
 			const quote = (quoteResult as QuoteEvmSrc).quotes[0]
 
+			const bridgeStep = quote.steps.find(
+				(step) => step.type === 'bridge',
+			)
+
+			if (!bridgeStep) throw Error('bridge step not found')
+
 			txHash = await walletClient.sendTransaction({
-				to: quote.steps[0].transaction.to as `0x${string}`,
-				data: quote.steps[0].transaction.data as `0x${string}`,
-				value: BigInt(quote.steps[0].transaction.value),
+				to: bridgeStep.transaction.to as `0x${string}`,
+				data: bridgeStep.transaction.data as `0x${string}`,
+				value: BigInt(bridgeStep.transaction.value),
 			})
 
 			token = this.evmTokenUtils.getNative(tokenIn.chainId)

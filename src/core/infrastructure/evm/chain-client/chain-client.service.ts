@@ -116,7 +116,10 @@ export class ChainClientService {
 
 		const defaultTransportConfig: HttpTransportConfig = {
 			timeout: 6_000,
-			batch: true,
+			batch: {
+				//TODO: make it configurable
+				batchSize: 10,
+			},
 			fetchFn: this.fetchFn,
 		}
 
