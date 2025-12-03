@@ -61,6 +61,7 @@ export const chainIdToGeckoChainId = {
 	'2000': 'dogechain',
 	'2020': 'ronin',
 	'2222': 'kava',
+	'3338': 'peaq',
 	'4337': 'beam',
 	'4689': 'iotx',
 	'5000': 'mantle',
