@@ -84,6 +84,7 @@ export const chainIdToGeckoChainId = {
 	'59144': 'linea',
 	'71402': 'godwoken',
 	'534352': 'scroll',
+	'21000000': 'corn',
 	'1313161554': 'aurora',
 	'1666600000': 'one',
 	'60808': 'bob-network',
