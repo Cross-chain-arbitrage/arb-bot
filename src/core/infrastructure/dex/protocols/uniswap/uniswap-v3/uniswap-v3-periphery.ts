@@ -3,6 +3,7 @@ import {
 	arbitrum,
 	base,
 	bob,
+	corn,
 	hemi,
 	iota,
 	lightlinkPhoenix,
@@ -112,6 +113,13 @@ export const UNIV3_PERIPHERY_CONFIG: Record<
 			router: '0xfe31f71c1b106eac32f1a19239c9a9a72ddfb900',
 			routerType: RouterType.V2,
 			quoter: '0x661e93cca42afacb172121ef892830ca3b70f08d',
+		},
+	},
+	[corn.id]: {
+		[getAddress('0xcb2436774C3e191c85056d248EF4260ce5f27A9D')]: {
+			quoter: '0xaa52bB8110fE38D0d2d2AF0B85C3A3eE622CA455',
+			routerType: RouterType.V2,
+			router: '0x807F4E281B7A3B324825C64ca53c69F0b418dE40',
 		},
 	},
 }

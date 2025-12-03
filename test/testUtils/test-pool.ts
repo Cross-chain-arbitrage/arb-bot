@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
 import { Test } from '@nestjs/testing'
 import {
 	Client,
@@ -8,14 +8,15 @@ import {
 	WalletClient,
 } from 'viem'
 import { Pool } from '../../src/core/infrastructure/dex/base/pool'
-import { DexRegistry } from '../../src/core/infrastructure/dex/dex-registry'
-import { PoolType } from '../../src/core/infrastructure/dex/pool-utils'
+import { DexModule } from '../../src/core/infrastructure/dex/dex.module'
+import {
+	PoolType,
+	PoolUtils,
+} from '../../src/core/infrastructure/dex/pool-utils'
 import { ChainClientService } from '../../src/core/infrastructure/evm/chain-client/chain-client.service'
 import { Token } from '../../src/core/infrastructure/evm/primitives/tokens/Token'
-import { TokenUtils } from '../../src/core/infrastructure/evm/primitives/tokens/TokenUtils'
-import { GeckoTerminalService } from '../../src/core/infrastructure/price-oracle/gecko-terminal.service'
+import { PriceOracleModule } from '../../src/core/infrastructure/price-oracle/price-oracle.module'
 import { PriceOracleService } from '../../src/core/infrastructure/price-oracle/price-oracle.service'
-import { SolanaTokenUtils } from '../../src/core/infrastructure/solana/solana-tokens/solana-token-utils'
 import { setNativeBalance, setTokenBalance, useAnvil } from './anvil'
 
 export type PoolTestConfig = {
@@ -46,28 +47,23 @@ export function testPool(context: PoolTestConfig) {
 	let pool: Pool
 	let priceOracleService: PriceOracleService
 
-	const { mockChainClientService, anvil } = useAnvil({
+	const { mockChainClientService, anvils } = useAnvil({
 		chainId,
 		timeoutStartAnvil: 20000,
 		rpcUrl,
 	})
 
 	beforeAll(async () => {
-		const poolCreatorClass = DexRegistry[poolType]
 		const app = await Test.createTestingModule({
-			providers: [
-				{
-					provide: ChainClientService,
-					useValue: mockChainClientService,
-				},
-				TokenUtils,
-				SolanaTokenUtils,
-				poolCreatorClass,
-				PriceOracleService,
-				GeckoTerminalService,
-				Logger,
+			imports: [
+				DexModule,
+				ConfigModule.forRoot({ isGlobal: true }),
+				PriceOracleModule,
 			],
-		}).compile()
+		})
+			.overrideProvider(ChainClientService)
+			.useValue(mockChainClientService)
+			.compile()
 
 		walletClient = mockChainClientService.getWalletClient(chainId)
 		botAddress = walletClient.account!.address
@@ -75,9 +71,9 @@ export function testPool(context: PoolTestConfig) {
 
 		client = mockChainClientService.getClient(chainId)
 
-		const poolCreator = app.get(poolCreatorClass)
+		const poolUtils = app.get(PoolUtils)
 
-		pool = await poolCreator.create(poolAddress, chainId)
+		pool = await poolUtils.createPool(poolAddress, chainId, poolType)
 
 		await setNativeBalance(client, botAddress, 10n ** 36n)
 		await setTokenBalance(
@@ -213,11 +209,11 @@ export function testPool(context: PoolTestConfig) {
 				console.log('error', err)
 			}
 
-			const lastEthCallIdx = anvil.logs.lastIndexOf('eth_call')
+			const lastEthCallIdx = anvils[0].logs.lastIndexOf('eth_call')
 
 			if (lastEthCallIdx !== -1) {
 				console.log(
-					`last eth_call: ${anvil.logs.slice(lastEthCallIdx)}`,
+					`last eth_call: ${anvils[0].logs.slice(lastEthCallIdx)}`,
 				)
 			} else {
 				console.log('No eth_call found in logs')
