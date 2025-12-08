@@ -79,6 +79,7 @@ export const chainIdToGeckoChainId = {
 	'42766': 'zkfair',
 	'43111': 'hemi',
 	'43114': 'avax',
+	'52014': 'electroneum',
 	'53935': 'dfk',
 	'55244': 'superposition',
 	'59144': 'linea',
