@@ -66,11 +66,11 @@ export class SimpleStargateService {
 		}
 	}
 
-	async requestQuote<T extends QuoteSolanaSrc | QuoteEvmSrc>(
+	async requestQuote(
 		tokenIn: Token | NativeCurrency | SolanaToken,
 		tokenOut: Token | NativeCurrency | SolanaToken,
 		amountIn: bigint,
-	): Promise<T> {
+	): Promise<QuoteSolanaSrc | QuoteEvmSrc> {
 		const { chainKey: srcChainKey, walletAddress: srcAddress } =
 			this.resolveNetworkParams(tokenIn)
 		const { chainKey: dstChainKey, walletAddress: dstAddress } =
