@@ -45,9 +45,11 @@ export const QuoteSchema = z.object({
 	fees: z.array(FeeSchema),
 	steps: z.array(StepSchema),
 })
-export type Quote = z.infer<typeof QuoteSchema>
+export type QuoteSolanaSrc = z.infer<typeof QuoteSchema>
 
-export const QuoteSolanaSrcSchema = z.object({
+export const QuoteResponseSolanaSrcSchema = z.object({
 	quotes: z.array(QuoteSchema),
 })
-export type QuoteSolanaSrc = z.infer<typeof QuoteSolanaSrcSchema>
+export type QuoteResponseSolanaSrc = z.infer<
+	typeof QuoteResponseSolanaSrcSchema
+>

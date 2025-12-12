@@ -42,7 +42,10 @@ export const BridgeStepSchema = z.object({
 })
 export type BridgeStep = z.infer<typeof BridgeStepSchema>
 
-export const StepSchema = z.discriminatedUnion('type', [ApproveStepSchema, BridgeStepSchema])
+export const StepSchema = z.discriminatedUnion('type', [
+	ApproveStepSchema,
+	BridgeStepSchema,
+])
 export type Step = z.infer<typeof StepSchema>
 
 export const QuoteSchema = z.object({
@@ -63,9 +66,9 @@ export const QuoteSchema = z.object({
 	fees: z.array(FeeSchema),
 	steps: z.array(StepSchema),
 })
-export type Quote = z.infer<typeof QuoteSchema>
+export type QuoteEvmSrc = z.infer<typeof QuoteSchema>
 
-export const QuoteEvmSrcSchema = z.object({
+export const QuoteResponseEvmSrcSchema = z.object({
 	quotes: z.array(QuoteSchema),
 })
-export type QuoteEvmSrc = z.infer<typeof QuoteEvmSrcSchema>
+export type QuoteResponseEvmSrc = z.infer<typeof QuoteResponseEvmSrcSchema>
