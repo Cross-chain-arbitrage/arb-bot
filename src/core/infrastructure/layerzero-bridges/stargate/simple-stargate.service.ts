@@ -14,12 +14,15 @@ import { SolanaTokenUtils } from '../../solana/solana-tokens/solana-token-utils'
 import { LayerZeroScanService } from '../layerzero-scan/layerzero-scan.service'
 import { STARGATE_CHAINS } from './dumped/chains'
 import {
+	BridgeStep,
 	QuoteEvmSrc,
-	QuoteEvmSrcSchema,
+	QuoteResponseEvmSrc,
+	QuoteResponseEvmSrcSchema,
 } from './schemas/stargate-quite-evm-src.schema'
 import {
+	QuoteResponseSolanaSrc,
+	QuoteResponseSolanaSrcSchema,
 	QuoteSolanaSrc,
-	QuoteSolanaSrcSchema,
 } from './schemas/stargate-quite-solana-src.schema'
 
 const AVERAGE_BRIDGE_GAS_COST = 400_000n
@@ -61,16 +64,16 @@ export class SimpleStargateService {
 
 		return {
 			amountOut: BigInt(quote.dstAmount),
-			feeInNative: BigInt(quote.fees[0].amount),
+			feeInNative: this.getFeeAmount(tokenIn, quote),
 			gas: AVERAGE_BRIDGE_GAS_COST,
 		}
 	}
 
-	async requestQuote<T extends QuoteSolanaSrc | QuoteEvmSrc>(
+	async requestQuote(
 		tokenIn: Token | NativeCurrency | SolanaToken,
 		tokenOut: Token | NativeCurrency | SolanaToken,
 		amountIn: bigint,
-	): Promise<T> {
+	): Promise<QuoteResponseSolanaSrc | QuoteResponseEvmSrc> {
 		const { chainKey: srcChainKey, walletAddress: srcAddress } =
 			this.resolveNetworkParams(tokenIn)
 		const { chainKey: dstChainKey, walletAddress: dstAddress } =
@@ -101,9 +104,13 @@ export class SimpleStargateService {
 		})
 
 		if (tokenIn instanceof SolanaToken) {
-			return QuoteSolanaSrcSchema.parse(response.data) as T
+			return QuoteResponseSolanaSrcSchema.parse(response.data, {
+				reportInput: true,
+			})
 		} else {
-			return QuoteEvmSrcSchema.parse(response.data) as T
+			return QuoteResponseEvmSrcSchema.parse(response.data, {
+				reportInput: true,
+			})
 		}
 	}
 
@@ -139,7 +146,7 @@ export class SimpleStargateService {
 		let token: NativeCurrency | SolanaNative
 
 		if (tokenIn instanceof SolanaToken) {
-			const quote = (quoteResult as QuoteSolanaSrc).quotes[0]
+			const quote = (quoteResult as QuoteResponseSolanaSrc).quotes[0]
 
 			token = this.solanaTokenUtils.getNative()
 
@@ -151,12 +158,18 @@ export class SimpleStargateService {
 				tokenIn.chainId,
 			)
 
-			const quote = (quoteResult as QuoteEvmSrc).quotes[0]
+			const quote = (quoteResult as QuoteResponseEvmSrc).quotes[0]
+
+			const bridgeStep = quote.steps.find(
+				(step) => step.type === 'bridge',
+			)
+
+			if (!bridgeStep) throw Error('bridge step not found')
 
 			txHash = await walletClient.sendTransaction({
-				to: quote.steps[0].transaction.to as `0x${string}`,
-				data: quote.steps[0].transaction.data as `0x${string}`,
-				value: BigInt(quote.steps[0].transaction.value),
+				to: bridgeStep.transaction.to as `0x${string}`,
+				data: bridgeStep.transaction.data as `0x${string}`,
+				value: BigInt(bridgeStep.transaction.value),
 			})
 
 			token = this.evmTokenUtils.getNative(tokenIn.chainId)
@@ -176,7 +189,7 @@ export class SimpleStargateService {
 			amountOut: BigInt(quoteResult.quotes[0].dstAmount),
 			lzFee: {
 				token,
-				amount: BigInt(quoteResult.quotes[0].fees[0].amount),
+				amount: this.getFeeAmount(tokenIn, quoteResult.quotes[0]),
 			},
 			waitForBridge: () =>
 				this.layerZeroScanService.waitForDeliveryStatus(txHash),
@@ -193,51 +206,23 @@ export class SimpleStargateService {
 
 		return chain.chainKey
 	}
+
+	getFeeAmount(
+		tokenIn: Token | NativeCurrency | SolanaToken,
+		rawQuote: QuoteSolanaSrc | QuoteEvmSrc,
+	): bigint {
+		const fee = rawQuote.fees[0]
+
+		if (fee === undefined && tokenIn instanceof SolanaToken) return 0n
+
+		if (fee === undefined) {
+			const bridgeStep = rawQuote.steps.find(
+				(step) => step.type === 'bridge',
+			) as BridgeStep
+
+			return BigInt(bridgeStep.transaction.value)
+		}
+
+		return BigInt(fee.amount)
+	}
 }
-
-// @Module({
-// 	imports: [ChainClientModule.forRoot()],
-// 	providers: [
-// 		TokenUtils,
-// 		LayerZeroScanService,
-// 		SolanaClientService,
-// 		SolanaTokenUtils,
-// 		SimpleStargateService,
-// 	],
-// })
-// class AppModule {}
-
-// async function main() {
-// 	const app = await NestFactory.create(AppModule)
-// 	await app.init()
-
-// 	const simpleStargateService = app.get(SimpleStargateService)
-// 	const solanaTokenUtils = app.get(SolanaTokenUtils)
-// 	const tokenUtils = app.get(TokenUtils)
-// 	const layerZeroScanService = app.get(LayerZeroScanService)
-
-// 	const anonAddressOnSolana = '9McvH6w97oewLmPxqQEoHUAv3u5iYMyQ9AeZZhguYf1T'
-// 	const anonAddressOnArbitrum = '0x79bbF4508B1391af3A0F4B30bb5FC4aa9ab0E07C'
-
-// 	const anonOnSolana =
-// 		await solanaTokenUtils.fromAddress<SolanaToken>(anonAddressOnSolana)
-
-// 	const anonOnArbitrum = await tokenUtils.fromAddress(
-// 		anonAddressOnArbitrum,
-// 		arbitrum.id,
-// 	)
-
-// 	const bridgeRes = await simpleStargateService.bridge(
-// 		anonOnArbitrum,
-// 		anonOnSolana,
-// 		anonOnArbitrum.parseUnits('0.4'),
-// 	)
-
-// 	console.log(bridgeRes)
-
-// 	const tx = await bridgeRes.waitForTx()
-
-// 	console.log(tx)
-// }
-
-// void main()

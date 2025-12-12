@@ -4,6 +4,7 @@ import {
 	base,
 	bob,
 	corn,
+	electroneum,
 	hemi,
 	iota,
 	lightlinkPhoenix,
@@ -120,6 +121,14 @@ export const UNIV3_PERIPHERY_CONFIG: Record<
 			quoter: '0xaa52bB8110fE38D0d2d2AF0B85C3A3eE622CA455',
 			routerType: RouterType.V2,
 			router: '0x807F4E281B7A3B324825C64ca53c69F0b418dE40',
+		},
+	},
+	[electroneum.id]: {
+		[getAddress('0xbF6Bcbe2be545135391777F3B4698be92E2EB8cA')]: {
+			router: '0x2c12c8F15637b7A182DEc202816148A5E767DCEC',
+			routerType: RouterType.UNIVERSAL,
+			permit2: '0x012ff228Aa9Fec4dBEE6Cd704072749AF077b617',
+			quoter: '0xba3CAfCc197E71b9d114E515E75c037dA09A6312',
 		},
 	},
 }
