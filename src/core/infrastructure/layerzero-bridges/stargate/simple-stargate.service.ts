@@ -101,9 +101,13 @@ export class SimpleStargateService {
 		})
 
 		if (tokenIn instanceof SolanaToken) {
-			return QuoteSolanaSrcSchema.parse(response.data) as T
+			return QuoteSolanaSrcSchema.parse(response.data, {
+				reportInput: true,
+			}) as T
 		} else {
-			return QuoteEvmSrcSchema.parse(response.data) as T
+			return QuoteEvmSrcSchema.parse(response.data, {
+				reportInput: true,
+			}) as T
 		}
 	}
 
