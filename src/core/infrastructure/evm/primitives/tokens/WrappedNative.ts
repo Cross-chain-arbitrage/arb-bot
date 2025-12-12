@@ -1,4 +1,5 @@
 import {
+	apeChain,
 	arbitrum,
 	base,
 	bob,
@@ -35,6 +36,7 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[1300]: '0x9a1691D500C54e1d79df2347D170987aa3E527aC',
 	[monad.id]: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
 	[corn.id]: '0xda5ddd7270381a7c2717ad10d1c0ecb19e3cdfb2',
+	[apeChain.id]: '0x48b62137EdfA95a428D35C09E44256a739F6B557',
 }
 
 export class WrappedNative extends Token {

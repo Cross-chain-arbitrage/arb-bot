@@ -73,6 +73,7 @@ export const chainIdToGeckoChainId = {
 	'8822': 'iota-evm',
 	'9001': 'evmos',
 	'17777': 'eos-evm',
+	'33139': 'apechain',
 	'42161': 'arbitrum',
 	'42170': 'arbitrum_nova',
 	'42220': 'celo',

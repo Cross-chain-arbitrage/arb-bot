@@ -1,5 +1,5 @@
 import { getAddress } from 'viem'
-import { corn, gravity, superposition } from 'viem/chains'
+import { apeChain, corn, gravity, superposition } from 'viem/chains'
 
 export const ALGEBRA_V1_9_PERIPHERY: Record<
 	number,
@@ -26,6 +26,12 @@ export const ALGEBRA_V1_9_PERIPHERY: Record<
 		[getAddress('0xCf4062Ee235BbeB4C7c0336ada689ed1c17547b6')]: {
 			router: '0x30A4bD5b1a9e9C0D80e9a45ef486bc1f1bc8e230',
 			quoter: '0xc908fab181c513BaaE4c92cEe7EEC22bD4AcF059',
+		},
+	},
+	[apeChain.id]: {
+		[getAddress('0x10aA510d94E094Bd643677bd2964c3EE085Daffc')]: {
+			router: '0xC69Dc28924930583024E067b2B3d773018F4EB52',
+			quoter: '0x60A186019F81bFD04aFc16c9C01804a04E79e68B',
 		},
 	},
 }
