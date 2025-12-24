@@ -7,7 +7,7 @@ export const SwapInfoSchema = z.object({
 	outputMint: z.string(),
 	inAmount: z.string(),
 	outAmount: z.string(),
-	feeAmount: z.string(),
+	feeAmount: z.string().optional(),
 	feeMint: z.string().optional(),
 })
 export type SwapInfo = z.infer<typeof SwapInfoSchema>
