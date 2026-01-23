@@ -144,18 +144,18 @@ function createUnknownChain(anvilConfig: ParamsUseAnvil) {
 	return defineChain({
 		id: anvilConfig.chainId,
 		name: 'Unknown chain',
-		rpcUrls: {
-			default: { http: [anvilConfig.rpcUrl] },
-		},
 		nativeCurrency: {
 			name: 'Unknown currency',
 			symbol: 'UNKNOWN',
 			decimals: 18,
 		},
+		rpcUrls: {
+			default: { http: [anvilConfig.rpcUrl] },
+		},
 	})
 }
 
-class Anvil {
+export class Anvil {
 	readonly config: ParamsUseAnvil
 	private _port: number | undefined
 	private _process: ChildProcess | undefined
