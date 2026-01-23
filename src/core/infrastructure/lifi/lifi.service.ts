@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 import { fromHex, Hash } from 'viem'
-import { ZodError } from 'zod'
 import { wait } from '../../../utils/common'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
 import { TokenBase } from '../evm/primitives/tokens/TokenBase'
@@ -54,20 +53,13 @@ export class LifiService {
 				// denyExchanges: ['odos', '1inch', 'kyberswap'], TODO: set via config
 			},
 		})
-		try {
-			const quote = QuoteSchema.parse(response.data)
 
-			return {
-				rawQuote: quote,
-				amountOut: BigInt(quote.estimate.toAmount),
-				txCostInUsd: Number(quote.estimate.gasCosts[0].amountUSD),
-			}
-		} catch (error) {
-			if (error instanceof ZodError) {
-				this.logger.debug(response.data, 'Lifi quote response')
-			}
+		const quote = QuoteSchema.parse(response.data)
 
-			throw error
+		return {
+			rawQuote: quote,
+			amountOut: BigInt(quote.estimate.toAmount),
+			txCostInUsd: Number(quote.estimate.gasCosts[0].amountUSD),
 		}
 	}
 
