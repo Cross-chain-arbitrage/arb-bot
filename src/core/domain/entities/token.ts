@@ -6,7 +6,7 @@ export interface TokenMetadata {
 	decimals: number
 }
 
-export type Token = {
+export type Token<SpecificToken = object> = {
 	id: TokenId
 
 	address: string
@@ -14,4 +14,5 @@ export type Token = {
 	formatUnits(amount: bigint): string
 	parseUnits(amount: string | bigint): bigint
 	toString(): string
-} & TokenMetadata
+} & TokenMetadata &
+	SpecificToken
