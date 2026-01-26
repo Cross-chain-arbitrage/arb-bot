@@ -18,15 +18,21 @@ export class LifiQuoterPlugin extends EdgeHandler implements QuoterPlugin {
 	buildEdgeQuoter(edge: Edge<TokenBase>): EdgeQuoter | Promise<EdgeQuoter> {
 		return {
 			edge: edge,
-			quote: (amountIn: bigint) => this.quote(edge, amountIn),
+			quote: (amountIn: bigint, simulate?: boolean) =>
+				this.quote(edge, amountIn, simulate),
 		}
 	}
 
-	async quote(edge: Edge<TokenBase>, amountIn: bigint): Promise<Quote> {
+	async quote(
+		edge: Edge<TokenBase>,
+		amountIn: bigint,
+		simulate?: boolean,
+	): Promise<Quote> {
 		const quote = await this.lifiService.quote({
 			tokenIn: edge.from,
 			tokenOut: edge.to,
 			amountIn,
+			enableSimulation: simulate,
 		})
 
 		return {
