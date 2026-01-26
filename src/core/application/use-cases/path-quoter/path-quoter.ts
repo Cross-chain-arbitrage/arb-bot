@@ -13,7 +13,11 @@ export class PathQuoter {
 		private readonly edgeQuoterRegistry: QuotersRegistry,
 	) {}
 
-	async quotePath(edges: Edge[], amountIn: bigint): Promise<QuotedPath> {
+	async quotePath(
+		edges: Edge[],
+		amountIn: bigint,
+		simulate?: boolean,
+	): Promise<QuotedPath> {
 		const quotedStepSequence: QuotedStep[] = []
 		let nextAmountIn = amountIn
 		const startAmount = amountIn
@@ -25,7 +29,7 @@ export class PathQuoter {
 				throw new Error(`Edge quoter not found for edge ${edge.id}`)
 			}
 
-			const quote = await edgeQuoter.quote(nextAmountIn)
+			const quote = await edgeQuoter.quote(nextAmountIn, simulate)
 
 			quotedStepSequence.push({ edge, quote })
 

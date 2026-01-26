@@ -7,16 +7,57 @@ import {
 	PRICE_ORACLE_TOKEN,
 	PriceOracle,
 } from '../../../interfaces/price-oracle'
+import { PathQuoter } from '../../path-quoter/path-quoter'
 
 @Injectable()
 export class QuotedCycleAnalyzer {
 	constructor(
 		@Inject(PRICE_ORACLE_TOKEN) private readonly priceOracle: PriceOracle,
 		private readonly eventEmitter: EventEmitter,
+		private readonly pathQuoter: PathQuoter,
 	) {}
 
 	@OnTypedEvent('cycleQuoted')
 	async analyzeQuotedPath(quotedCycle: QuotedPath<Token>) {
+		const { revenueInUsd, costInUsd, profitInUsd } =
+			await this.calculateFinancialMetrics(quotedCycle)
+
+		if (profitInUsd > 0) {
+			const simulatedQuotedCycle =
+				await this.requoteWithSimulation(quotedCycle)
+
+			const { revenueInUsd, costInUsd, profitInUsd } =
+				await this.calculateFinancialMetrics(simulatedQuotedCycle)
+
+			if (profitInUsd > 0) {
+				const opportunityId = crypto.randomUUID()
+
+				this.eventEmitter.emit('opportunityFound', {
+					...quotedCycle,
+					revenueInUsd,
+					costInUsd,
+					profitInUsd: revenueInUsd - costInUsd,
+					id: opportunityId,
+				})
+			}
+
+			return { revenueInUsd, costInUsd, profitInUsd }
+		}
+
+		return { revenueInUsd, costInUsd, profitInUsd }
+	}
+
+	private async requoteWithSimulation(quotedCycle: QuotedPath<Token>) {
+		const quotedPath = (await this.pathQuoter.quotePath(
+			quotedCycle.quotedStepSequence.map((step) => step.edge),
+			quotedCycle.startAmount,
+			true,
+		)) as QuotedPath<Token>
+
+		return quotedPath
+	}
+
+	private async calculateFinancialMetrics(quotedCycle: QuotedPath<Token>) {
 		const revenueInUsd = await this.calculateRevenue(
 			quotedCycle.startAmount,
 			quotedCycle.endAmount,
@@ -27,19 +68,7 @@ export class QuotedCycleAnalyzer {
 
 		const profitInUsd = revenueInUsd - costInUsd
 
-		const opportunityId = crypto.randomUUID()
-
-		if (revenueInUsd > 0) {
-			this.eventEmitter.emit('opportunityFound', {
-				...quotedCycle,
-				revenueInUsd,
-				costInUsd,
-				profitInUsd: revenueInUsd - costInUsd,
-				id: opportunityId,
-			})
-		}
-
-		return { revenueInUsd, costInUsd, profitInUsd }
+		return { profitInUsd, revenueInUsd, costInUsd }
 	}
 
 	private async calculateRevenue(
