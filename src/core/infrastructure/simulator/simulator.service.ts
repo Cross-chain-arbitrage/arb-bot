@@ -3,7 +3,7 @@ import { Simulator } from '../../../../lib/simulator/dist/simulator.node'
 import { TokenAmount } from '../../domain/value-objects/token-amount'
 import { getAlchemyRpcUrl } from '../evm/chain-client/alchemy-utils'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
-import { Token } from '../evm/primitives/tokens/Token'
+import { TokenBase } from '../evm/primitives/tokens/TokenBase'
 
 @Injectable()
 export class SimulatorService {
@@ -12,7 +12,7 @@ export class SimulatorService {
 	constructor(private readonly chainClientService: ChainClientService) {}
 
 	async simulate(
-		tokenAmountToMint: TokenAmount<Token>,
+		tokenAmountToMint: TokenAmount<TokenBase>,
 		calldata: Hex,
 		to: Address,
 	) {

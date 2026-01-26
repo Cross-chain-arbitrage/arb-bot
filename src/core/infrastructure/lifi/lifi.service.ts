@@ -1,22 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 import { fromHex, Hash } from 'viem'
-import { wait } from '../../../utils/common'
+import { createCustomError, wait } from '../../../utils/common'
 import { ChainClientService } from '../evm/chain-client/chain-client.service'
 import { TokenBase } from '../evm/primitives/tokens/TokenBase'
+import { SimulatorService } from '../simulator/simulator.service'
 import { QuoteSchema } from './schemas/quote.schema'
-import { SwapResult } from './types'
+import { QuoteParams, SwapParams, SwapResult } from './types'
 
 const API_URL = 'https://li.quest'
 const BASIS_POINTS: bigint = 10000n
 const DEFAULT_SLIPPAGE: bigint = 50n
+const LifiError = createCustomError('LifiError')
 
 @Injectable()
 export class LifiService {
 	logger = new Logger(LifiService.name)
 	axiosClient: AxiosInstance
 
-	constructor(private readonly chainClientService: ChainClientService) {
+	constructor(
+		private readonly chainClientService: ChainClientService,
+		private readonly simulator: SimulatorService,
+	) {
 		const apiKey = process.env.LIFI_API_KEY
 
 		if (apiKey === undefined) {
@@ -31,12 +36,15 @@ export class LifiService {
 		}
 	}
 
-	async quote(
-		tokenIn: TokenBase,
-		tokenOut: TokenBase,
-		amountIn: bigint,
-		slippage = DEFAULT_SLIPPAGE,
-	) {
+	async quote(params: QuoteParams) {
+		const {
+			tokenIn,
+			tokenOut,
+			amountIn,
+			slippage = DEFAULT_SLIPPAGE,
+			enableSimulation = false,
+		} = params
+
 		const walletAddress = this.chainClientService.getWalletClient(
 			tokenIn.chainId,
 		).account.address
@@ -56,6 +64,18 @@ export class LifiService {
 
 		const quote = QuoteSchema.parse(response.data)
 
+		if (enableSimulation) {
+			const simulationRes = await this.simulator.simulate(
+				{ token: tokenIn, amount: amountIn },
+				quote.transactionRequest.data as Hex,
+				quote.transactionRequest.to as Address,
+			)
+
+			if (simulationRes.status !== 'simulation_success') {
+				throw new LifiError('Simulation failed', simulationRes)
+			}
+		}
+
 		return {
 			rawQuote: quote,
 			amountOut: BigInt(quote.estimate.toAmount),
@@ -63,18 +83,10 @@ export class LifiService {
 		}
 	}
 
-	async swap(
-		tokenIn: TokenBase,
-		tokenOut: TokenBase,
-		amountIn: bigint,
-		slippage = DEFAULT_SLIPPAGE,
-	) {
-		const { rawQuote } = await this.quote(
-			tokenIn,
-			tokenOut,
-			amountIn,
-			slippage,
-		)
+	async swap(params: SwapParams) {
+		const { tokenIn, tokenOut } = params
+
+		const { rawQuote } = await this.quote(params)
 
 		const balanceTokenOutBefore = await tokenOut.balanceOf(
 			this.chainClientService.getWalletClient(tokenOut.chainId).account

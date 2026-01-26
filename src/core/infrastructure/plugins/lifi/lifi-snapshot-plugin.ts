@@ -38,16 +38,21 @@ export class LifiSnapshotPlugin extends EdgeHandler implements SnapshotPlugin {
 	async buildSnapshotFn(edge: Edge<TokenBase>): Promise<EdgeSnapshotFn> {
 		const { from, to } = edge
 
-		const snapshotConfig = this.configService.getOrThrow<LifiSnapshotConfig>(
-			pathToSnapshotConfig(LIFI_CONFIG_KEY),
-		)
+		const snapshotConfig =
+			this.configService.getOrThrow<LifiSnapshotConfig>(
+				pathToSnapshotConfig(LIFI_CONFIG_KEY),
+			)
 
 		const { interpolation, results } =
 			await this.interpolationHelper.buildInterpolation(
 				edge,
 				snapshotConfig.interpolationParams,
 				(amountIn) => {
-					return this.lifiService.quote(from, to, amountIn)
+					return this.lifiService.quote({
+						tokenIn: from,
+						tokenOut: to,
+						amountIn,
+					})
 				},
 			)
 

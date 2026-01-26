@@ -23,7 +23,11 @@ export class LifiQuoterPlugin extends EdgeHandler implements QuoterPlugin {
 	}
 
 	async quote(edge: Edge<TokenBase>, amountIn: bigint): Promise<Quote> {
-		const quote = await this.lifiService.quote(edge.from, edge.to, amountIn)
+		const quote = await this.lifiService.quote({
+			tokenIn: edge.from,
+			tokenOut: edge.to,
+			amountIn,
+		})
 
 		return {
 			amountOut: quote.amountOut,

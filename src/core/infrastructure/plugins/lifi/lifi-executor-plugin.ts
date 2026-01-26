@@ -37,11 +37,11 @@ export class LifiExecutorPlugin extends EdgeHandler implements ExecutorPlugin {
 
 	async prepareExecution(edge: Edge<TokenBase>): Promise<{ result: string }> {
 		const from = edge.from
-		const { rawQuote } = await this.lifiService.quote(
-			from,
-			edge.to,
-			from.parseUnits('1'),
-		)
+		const { rawQuote } = await this.lifiService.quote({
+			tokenIn: from,
+			tokenOut: edge.to,
+			amountIn: from.parseUnits('1'),
+		})
 
 		if (from instanceof Token) {
 			const res = await from.approveInfinite(
@@ -63,7 +63,11 @@ export class LifiExecutorPlugin extends EdgeHandler implements ExecutorPlugin {
 		edge: Edge<TokenBase>,
 		amountIn: bigint,
 	): Promise<InchainExecution> {
-		const res = await this.lifiService.swap(edge.from, edge.to, amountIn)
+		const res = await this.lifiService.swap({
+			tokenIn: edge.from,
+			tokenOut: edge.to,
+			amountIn,
+		})
 
 		return {
 			txId: res.txHash,
