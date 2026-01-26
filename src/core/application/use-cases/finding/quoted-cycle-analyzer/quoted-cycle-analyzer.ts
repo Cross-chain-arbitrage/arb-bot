@@ -29,8 +29,7 @@ export class QuotedCycleAnalyzer {
 
 		const opportunityId = crypto.randomUUID()
 
-		// if (revenueInUsd > 0) {
-		if (revenueInUsd > -100) {
+		if (revenueInUsd > 0) {
 			this.eventEmitter.emit('opportunityFound', {
 				...quotedCycle,
 				revenueInUsd,
