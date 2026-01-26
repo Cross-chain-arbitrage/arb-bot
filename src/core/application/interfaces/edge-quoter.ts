@@ -4,7 +4,7 @@ import { Quote } from '../../domain/value-objects/quote'
 
 export interface EdgeQuoter {
 	edge: Edge
-	quote: (amountIn: bigint) => Promise<Quote>
+	quote: (amountIn: bigint, simulate?: boolean) => Promise<Quote>
 }
 
 export type QuotersRegistry = Map<EdgeId, EdgeQuoter>
