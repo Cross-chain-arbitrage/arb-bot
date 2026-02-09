@@ -14,13 +14,19 @@ export function getEnvSafe(key: string): string {
 	return value
 }
 
+export class ContextError extends Error {
+	constructor(
+		message: string,
+		public context?: unknown,
+	) {
+		super(message)
+	}
+}
+
 export function createCustomError(errorName: string) {
-	return class CustomError extends Error {
-		constructor(
-			message: string,
-			public context?: unknown,
-		) {
-			super(message)
+	return class CustomError extends ContextError {
+		constructor(message: string, context?: unknown) {
+			super(message, context)
 			Object.setPrototypeOf(this, new.target.prototype)
 			this.name = errorName
 		}
