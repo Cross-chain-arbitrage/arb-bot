@@ -3,6 +3,7 @@
 node_modules
 .vscode
 .cursorrules
+.cursorignore
 playground
 .VSCodeCounter
 **/.DS_Store
