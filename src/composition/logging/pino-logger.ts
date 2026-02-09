@@ -29,6 +29,7 @@ const errorSerializer = (err: unknown) => {
 		const serializedError = stdSerializers.err(err)
 
 		if (err.context) {
+			console.log('ContextError', err.context)
 			return { ...serializedError, context: err.context }
 		}
 
