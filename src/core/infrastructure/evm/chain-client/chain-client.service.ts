@@ -18,6 +18,8 @@ import { HttpRpcClientOptions } from 'viem/utils'
 import { createCustomError } from '../../../../utils/common'
 import { ChainClientConfigService } from './chain-client-config.service'
 
+const DEFAULT_BATCH_SIZE = 1_000
+
 @Injectable()
 export class ChainClientService {
 	constructor(private readonly config: ChainClientConfigService) {}
@@ -114,11 +116,13 @@ export class ChainClientService {
 
 		const transports: Transport[] = []
 
+		const batchSize =
+			this.config.rpcSettings?.[chainId]?.batchSize || DEFAULT_BATCH_SIZE
+
 		const defaultTransportConfig: HttpTransportConfig = {
 			timeout: 6_000,
 			batch: {
-				//TODO: make it configurable
-				batchSize: 10,
+				batchSize: batchSize,
 			},
 			fetchFn: this.fetchFn,
 		}

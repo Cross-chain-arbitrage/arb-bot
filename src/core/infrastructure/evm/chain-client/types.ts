@@ -2,6 +2,7 @@ export type RpcUrl = `http${string}`
 export type ChainRpcSettings = {
 	rpcUrls: (RpcUrl | 'alchemy')[]
 	disableDefaultRpcUrl: boolean
+	batchSize?: number
 }
 export type RpcSettings = Record<string, ChainRpcSettings>
 

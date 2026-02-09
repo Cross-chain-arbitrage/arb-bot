@@ -12,7 +12,12 @@ export class ChainClientConfigService {
 	privateKey!: Hex
 	rpcSettings?: Record<
 		number,
-		{ rpcUrls: RpcUrl[]; disableDefaultRpcUrl: boolean } | undefined
+		| {
+				rpcUrls: RpcUrl[]
+				disableDefaultRpcUrl: boolean
+				batchSize?: number
+		  }
+		| undefined
 	>
 	customChains?: Chain[]
 
