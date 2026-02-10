@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios'
 import { Logger, PinoLogger } from 'nestjs-pino'
 import { stdSerializers } from 'pino'
-import { ContextError, getEnvSafe } from '../../utils/common'
+import { getEnvSafe } from '../../utils/common'
 
 const isProd = getEnvSafe('NODE_ENV') === 'production'
 
@@ -23,17 +23,6 @@ const errorSerializer = (err: unknown) => {
 			status: err.status,
 			data: err.response?.data,
 		}
-	}
-
-	if (err instanceof ContextError) {
-		const serializedError = stdSerializers.err(err)
-
-		if (err.context) {
-			console.log('ContextError', err.context)
-			return { ...serializedError, context: err.context }
-		}
-
-		return serializedError
 	}
 
 	if (err instanceof Error) {

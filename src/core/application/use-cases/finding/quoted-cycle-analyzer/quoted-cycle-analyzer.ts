@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Token } from '../../../../domain/entities/token'
 import { QuotedPath } from '../../../../domain/value-objects/path'
 import { OnTypedEvent } from '../../../events/event-decorator'
@@ -11,6 +11,8 @@ import { PathQuoter } from '../../path-quoter/path-quoter'
 
 @Injectable()
 export class QuotedCycleAnalyzer {
+	logger = new Logger(QuotedCycleAnalyzer.name)
+
 	constructor(
 		@Inject(PRICE_ORACLE_TOKEN) private readonly priceOracle: PriceOracle,
 		private readonly eventEmitter: EventEmitter,
@@ -19,32 +21,36 @@ export class QuotedCycleAnalyzer {
 
 	@OnTypedEvent('cycleQuoted')
 	async analyzeQuotedPath(quotedCycle: QuotedPath<Token>) {
-		const { revenueInUsd, costInUsd, profitInUsd } =
-			await this.calculateFinancialMetrics(quotedCycle)
-
-		if (profitInUsd > 0) {
-			const simulatedQuotedCycle =
-				await this.requoteWithSimulation(quotedCycle)
-
+		try {
 			const { revenueInUsd, costInUsd, profitInUsd } =
-				await this.calculateFinancialMetrics(simulatedQuotedCycle)
+				await this.calculateFinancialMetrics(quotedCycle)
 
 			if (profitInUsd > 0) {
-				const opportunityId = crypto.randomUUID()
+				const simulatedQuotedCycle =
+					await this.requoteWithSimulation(quotedCycle)
 
-				this.eventEmitter.emit('opportunityFound', {
-					...quotedCycle,
-					revenueInUsd,
-					costInUsd,
-					profitInUsd: revenueInUsd - costInUsd,
-					id: opportunityId,
-				})
+				const { revenueInUsd, costInUsd, profitInUsd } =
+					await this.calculateFinancialMetrics(simulatedQuotedCycle)
+
+				if (profitInUsd > 0) {
+					const opportunityId = crypto.randomUUID()
+
+					this.eventEmitter.emit('opportunityFound', {
+						...quotedCycle,
+						revenueInUsd,
+						costInUsd,
+						profitInUsd: revenueInUsd - costInUsd,
+						id: opportunityId,
+					})
+				}
+
+				return { revenueInUsd, costInUsd, profitInUsd }
 			}
 
 			return { revenueInUsd, costInUsd, profitInUsd }
+		} catch (error) {
+			this.logger.error(error)
 		}
-
-		return { revenueInUsd, costInUsd, profitInUsd }
 	}
 
 	private async requoteWithSimulation(quotedCycle: QuotedPath<Token>) {
