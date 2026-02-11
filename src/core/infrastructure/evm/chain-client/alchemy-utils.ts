@@ -8,6 +8,7 @@ const chainIdToChainKey: Record<number, string | undefined> = {
 	100: 'gnosis-mainnet',
 	130: 'unichain-mainnet',
 	137: 'polygon-mainnet',
+	143: 'monad-mainnet',
 	146: 'sonic-mainnet',
 	204: 'opbnb-mainnet',
 	232: 'lens-mainnet',
