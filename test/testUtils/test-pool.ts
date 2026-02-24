@@ -122,8 +122,10 @@ export function testPool(context: PoolTestConfig) {
 
 	async function swapAndAssert(tokenIn: Token, tokenOut: Token) {
 		try {
-			const tokenInPrice = await priceOracleService.getPrice(tokenIn)
-			const tokenOutPrice = await priceOracleService.getPrice(tokenOut)
+			const { tokenInPrice, tokenOutPrice } = await getTokenPrices(
+				tokenIn,
+				tokenOut,
+			)
 
 			const amountIn = tokenIn.parseUnits(
 				(AMOUNT_IN_USD / tokenInPrice).toString(),
@@ -220,6 +222,29 @@ export function testPool(context: PoolTestConfig) {
 			}
 
 			throw err
+		}
+	}
+
+	async function getTokenPrices(tokenIn: Token, tokenOut: Token) {
+		const tokenStates = await priceOracleService.getPrices(
+			[tokenIn, tokenOut],
+			{ updateInterval: false, useCachedValues: true },
+		)
+
+		const tokenInState = tokenStates.find(
+			(tokenState) => tokenState.currency.address === tokenIn.address,
+		)
+
+		const tokenOutState = tokenStates.find(
+			(tokenState) => tokenState.currency.address === tokenOut.address,
+		)
+
+		if (tokenInState === undefined || tokenOutState === undefined)
+			throw new Error('should never throw')
+
+		return {
+			tokenInPrice: tokenInState.price,
+			tokenOutPrice: tokenOutState.price,
 		}
 	}
 }
