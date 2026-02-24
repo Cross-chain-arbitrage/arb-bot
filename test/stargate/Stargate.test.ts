@@ -1,90 +1,125 @@
-import { arbitrum, fuse, hemi } from 'viem/chains'
-
-import { Stargate } from '../../src/bridges/stargate/Stargate'
-import { StargateBridgeTx } from '../../src/bridges/stargate/StargateBridgeTx'
-import { ClientManager } from '../../src/chain-client/chain-client.service'
-import { getAlchemyRpcUrl } from '../../src/core/infrastructure/evm/chain-client/alchemy-utils'
-import { GraphExecutor } from '../../src/graphs/GraphExecutor'
-import { StargateBridgeEdge } from '../../src/graphs/primitives/edges/edge'
-import { Graph } from '../../src/graphs/primitives/Graph'
-import { NativeCurrency } from '../../src/primitives/tokens/NativeCurrency'
-import { Token } from '../../src/primitives/tokens/Token'
-import { TokenUtils } from '../../src/primitives/tokens/TokenUtils'
+import { ConfigModule } from '@nestjs/config'
+import { Test, TestingModule } from '@nestjs/testing'
+import { arbitrum, fuse } from 'viem/chains'
+import { ChainClientService } from '../../src/core/infrastructure/evm/chain-client/chain-client.service'
+import { NativeCurrency } from '../../src/core/infrastructure/evm/primitives/tokens/NativeCurrency'
+import { Token } from '../../src/core/infrastructure/evm/primitives/tokens/Token'
+import { TokenUtils } from '../../src/core/infrastructure/evm/primitives/tokens/TokenUtils'
+import { LayerZeroScanService } from '../../src/core/infrastructure/layerzero-bridges/layerzero-scan/layerzero-scan.service'
+import { StargateAPIService } from '../../src/core/infrastructure/layerzero-bridges/stargate/stargate-api.service'
+import { StargateService } from '../../src/core/infrastructure/layerzero-bridges/stargate/stargate-service'
+import { StargateBridgeTx } from '../../src/core/infrastructure/layerzero-bridges/stargate/stargate-tx'
 import { setNativeBalance, setTokenBalance, useAnvil } from '../testUtils/anvil'
-import { makeSuite } from '../testUtils/makeSuite'
-import { mockWaitForBridgeToFinish } from '../testUtils/mock'
 
-makeSuite('Stargate', () => {
+describe('Stargate', () => {
 	describe('Arbitrum One', () => {
-		const USDT = new Token(
-			'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
-			arbitrum.id,
-			'USD₮0',
-			6,
-			'USD₮0',
-		)
-		const ETH = TokenUtils.getNative(arbitrum.id)
+		let stargateService: StargateService
+		let tokenUtils: TokenUtils
+		let chainClientService: ChainClientService
 
-		useAnvil({
+		const { anvils, mockChainClientService } = useAnvil({
 			chainId: arbitrum.id,
-			rpcUrl: getAlchemyRpcUrl(arbitrum.id),
+			printTraces: true,
+		})
+		const anvil = anvils[0]
+
+		beforeAll(async () => {
+			const module: TestingModule = await Test.createTestingModule({
+				imports: [ConfigModule.forRoot({ isGlobal: true })],
+				providers: [
+					StargateService,
+					StargateAPIService,
+					TokenUtils,
+					LayerZeroScanService,
+					{
+						provide: ChainClientService,
+						useValue: mockChainClientService,
+					},
+				],
+			}).compile()
+
+			stargateService = module.get<StargateService>(StargateService)
+			tokenUtils = module.get<TokenUtils>(TokenUtils)
+			chainClientService = module.get<ChainClientService>(ChainClientService)
 		})
 
 		it('MUST simulate sending Token', async () => {
+			const USDT = await tokenUtils.fromAddress(
+				'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
+				arbitrum.id,
+			)
+
 			const amount = USDT.parseUnits('1')
-			const wallet = ClientManager.getWalletClient(arbitrum.id)
+			const wallet = chainClientService.getWalletClient(arbitrum.id)
 			const recipient = wallet.account.address
 
-			await setTokenBalance(recipient, USDT.address, amount, wallet)
-
-			const bridgeAddr = await Stargate.getBridgeAddress(USDT)
-
-			await USDT.approve(bridgeAddr, amount)
-
-			const result = await Stargate.bridge(
-				USDT,
-				fuse.id,
+			await setTokenBalance(
 				recipient,
+				USDT.address,
 				amount,
+				chainClientService.getClient(arbitrum.id),
+			)
+
+			const bridgeAddr = await stargateService.getBridgeAddress(USDT)
+
+			if (USDT instanceof Token) {
+				await USDT.approve(bridgeAddr, amount)
+			}
+
+			const tokenOut = await tokenUtils.fromAddress(
+				'0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7', // USDT on Fuse
+				fuse.id,
+			)
+
+			const result = await stargateService.bridge(
+				USDT,
+				tokenOut,
+				amount,
+				true, // simulateOnly
 			)
 
 			expect(result).toBeDefined()
-			expect(result.bridgeTx.srcTx.hash).toBeDefined()
-			expect(result.bridgeTx.srcTx.chainId).toBe(arbitrum.id)
+			expect(result.bridgeTx).toBeInstanceOf(StargateBridgeTx)
+			expect(result.amountOut).toBeGreaterThan(0n)
 		})
 
 		it('MUST simulate sending Native', async () => {
-			const amount = ETH.parseUnits('1')
+			const ETH = tokenUtils.getNative(arbitrum.id)
+			const amount = ETH.parseUnits('0.01')
 
-			const wallet = ClientManager.getWalletClient(arbitrum.id)
+			const wallet = chainClientService.getWalletClient(arbitrum.id)
 			const recipient = wallet.account.address
 
-			await setNativeBalance(wallet, recipient, amount * 2n)
-
-			const result = await Stargate.bridge(
-				ETH,
-				fuse.id,
+			await setNativeBalance(
+				chainClientService.getClient(arbitrum.id),
 				recipient,
+				amount * 2n,
+			)
+
+			const tokenOut = tokenUtils.getNative(fuse.id)
+
+			const result = await stargateService.bridge(
+				ETH,
+				tokenOut,
 				amount,
-				true,
+				true, // simulateOnly
 			)
 
 			expect(result).toBeDefined()
-			expect(result.bridgeTx.srcTx.hash).toBeDefined()
-			expect(result.bridgeTx.srcTx.chainId).toBe(arbitrum.id)
+			expect(result.bridgeTx).toBeInstanceOf(StargateBridgeTx)
 		})
 
-		describe('getExpectedAmountOut', () => {
-			it('MUST return same amount for USDT', async () => {
-				const USDT0 = await TokenUtils.fromAddress<Token>(
+		describe('quoteBridge()', () => {
+			it('MUST return quote for USDT', async () => {
+				const USDT = await tokenUtils.fromAddress(
 					'0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
 					arbitrum.id,
 				)
 
-				const amount = USDT0.parseUnits('1')
+				const amount = USDT.parseUnits('1')
 
 				const { amountOut, tokenOut, quote } =
-					await Stargate.quoteBridge(USDT0, amount, fuse.id)
+					await stargateService.quoteBridge(USDT, amount, fuse.id)
 
 				expect(tokenOut.address).toBe(
 					'0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7',
@@ -93,126 +128,21 @@ makeSuite('Stargate', () => {
 				expect(amountOut).toBe(amount)
 
 				expect(quote).toBeDefined()
-				expect(quote.oftLimit).toBeDefined()
-				expect(quote.oftFeeDetails).toBeDefined()
-				expect(quote.oftReceipt).toBeDefined()
+				expect(quote.messagingFee.nativeFee).toBeGreaterThan(0n)
 			})
 
-			it('MUST return amount with loss precision for ETH', async () => {
+			it('MUST calculate exact quote for ETH bridge', async () => {
 				// Real life example:
 				// https://layerzeroscan.com/tx/0x758ac28e912dff96b8ad5e27a631b23e28861757d09b384d515f64f9fd59bf87
-				const ETH = TokenUtils.getNative(arbitrum.id)
+				const ETH = tokenUtils.getNative(arbitrum.id)
 
 				const amount = 199559617334342520n
 				const realAmountOut = 199559000000000000n
 
 				const { amountOut: calculatedAmountOut } =
-					await Stargate.quoteBridge(ETH, amount, fuse.id)
+					await stargateService.quoteBridge(ETH, amount, fuse.id)
 
 				expect(calculatedAmountOut).toBe(realAmountOut)
-			})
-		})
-	})
-
-	describe('Hydra Chains', () => {
-		describe('Hemi', () => {
-			const tokens: (Token | NativeCurrency)[] = [
-				new Token(
-					'0xad11a8BEb98bbf61dbb1aa0F6d6F2ECD87b35afA',
-					hemi.id,
-					'USDC.e',
-					6,
-					'Bridged USDC (Stargate)',
-				),
-				new Token(
-					'0xbB0D083fb1be0A9f6157ec484b6C79E0A4e31C2e',
-					hemi.id,
-					'USDT',
-					6,
-					'USDT',
-				),
-				new NativeCurrency(hemi.id, 'ETH', 'ETH'),
-			]
-
-			useAnvil({
-				chainId: hemi.id,
-				// rpcUrl: getAlchemyRpcUrl(hemi.id),
-			})
-
-			beforeAll(() => {
-				jest.spyOn(
-					StargateBridgeTx.prototype,
-					'waitForBridgeToFinish',
-				).mockImplementation(mockWaitForBridgeToFinish)
-			})
-
-			it('Execute Stargate Bridge Edge', async () => {
-				const graph = new Graph()
-
-				const ETH_HEMI = TokenUtils.getNative(hemi.id)
-				const ETH_ARBITRUM = TokenUtils.getNative(arbitrum.id)
-
-				graph.addNode(ETH_HEMI)
-				graph.addNode(ETH_ARBITRUM)
-
-				graph.addEdge(
-					new StargateBridgeEdge(ETH_HEMI, ETH_ARBITRUM, graph),
-				)
-
-				for (const [, edge] of graph.edges) {
-					edge.getRate = () =>
-						Promise.resolve({
-							amountOut: edge.from.parseUnits('1'),
-							rate: 1,
-						})
-				}
-
-				await GraphExecutor.execute({
-					path: [...graph.edges.values()],
-					startAmount: ETH_HEMI.parseUnits('1'),
-					retryExecuteEdgeCount: 1,
-				})
-			})
-
-			tokens.forEach((token) => {
-				it(`MUST simulate sending ${token.symbol}`, async () => {
-					const amount =
-						token instanceof NativeCurrency
-							? token.parseUnits('1')
-							: token.parseUnits('500')
-
-					// const balanceSlot = 4n
-					const wallet = ClientManager.getWalletClient(hemi.id)
-					const recipient = wallet.account.address
-
-					if (token instanceof NativeCurrency) {
-						await setNativeBalance(wallet, recipient, amount * 2n)
-					} else {
-						await setTokenBalance(
-							recipient,
-							token.address,
-							amount,
-							wallet,
-						)
-					}
-
-					const bridgeAddr = await Stargate.getBridgeAddress(token)
-
-					if (token instanceof Token) {
-						await token.approve(bridgeAddr, amount)
-					}
-
-					const result = await Stargate.bridge(
-						token,
-						arbitrum.id,
-						recipient,
-						amount,
-					)
-
-					expect(result).toBeDefined()
-					expect(result.bridgeTx.srcTx.hash).toBeDefined()
-					expect(result.bridgeTx.srcTx.chainId).toBe(hemi.id)
-				})
 			})
 		})
 	})

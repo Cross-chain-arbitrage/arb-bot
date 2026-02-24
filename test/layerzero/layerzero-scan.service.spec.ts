@@ -1,6 +1,6 @@
 import { Message, MessageStatus } from '@layerzerolabs/scan-client'
 import { Hash, isHash, zeroHash } from 'viem'
-import { LayerZeroScanService } from '../../src/bridges/layerzero-bridges/layerzero-scan/layerzero-scan.service'
+import { LayerZeroScanService } from '../../src/core/infrastructure/layerzero-bridges/layerzero-scan/layerzero-scan.service'
 
 describe('layerZeroScanService', () => {
 	let layerZeroScanService: LayerZeroScanService
