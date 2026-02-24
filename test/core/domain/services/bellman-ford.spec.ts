@@ -229,7 +229,7 @@ function createSimpleArbitrageCycle() {
 
 	const graphSnapshot: GraphSnapshot = {
 		graph,
-		getQuote: (edgeId: EdgeId, amountIn: bigint): Quote => {
+		getQuote: (_edgeId: EdgeId, amountIn: bigint): Quote => {
 			const rate = 1.02
 			const amountOut = BigInt(Math.floor(Number(amountIn) * rate))
 
@@ -271,7 +271,7 @@ function createGraphWithoutArbitrage() {
 
 	const graphSnapshot: GraphSnapshot = {
 		graph,
-		getQuote: (edgeId: EdgeId, amountIn: bigint): Quote => {
+		getQuote: (_edgeId: EdgeId, amountIn: bigint): Quote => {
 			const rate = 0.99
 			const amountOut = BigInt(Math.floor(Number(amountIn) * rate))
 
@@ -319,7 +319,7 @@ function createUnprofitableCycle() {
 
 	const graphSnapshot: GraphSnapshot = {
 		graph,
-		getQuote: (edgeId: EdgeId, amountIn: bigint): Quote => {
+		getQuote: (_edgeId: EdgeId, amountIn: bigint): Quote => {
 			const rate = 0.95
 			const amountOut = BigInt(Math.floor(Number(amountIn) * rate))
 
@@ -381,7 +381,7 @@ function createComplexGraphWithArbitrage() {
 
 	const graphSnapshot: GraphSnapshot = {
 		graph,
-		getQuote: (edgeId: EdgeId, amountIn: bigint): Quote => {
+		getQuote: (_edgeId: EdgeId, amountIn: bigint): Quote => {
 			const rate = 1.015
 			const amountOut = BigInt(Math.floor(Number(amountIn) * rate))
 
@@ -423,7 +423,7 @@ function createLinearGraph() {
 
 	const graphSnapshot: GraphSnapshot = {
 		graph,
-		getQuote: (edgeId: EdgeId, amountIn: bigint): Quote => {
+		getQuote: (_edgeId: EdgeId, amountIn: bigint): Quote => {
 			const rate = 0.98
 			const amountOut = BigInt(Math.floor(Number(amountIn) * rate))
 
@@ -467,7 +467,7 @@ function createDisconnectedGraph() {
 
 	const graphSnapshot: GraphSnapshot = {
 		graph,
-		getQuote: (edgeId: EdgeId, amountIn: bigint): Quote => {
+		getQuote: (_edgeId: EdgeId, amountIn: bigint): Quote => {
 			const rate = 0.98
 			const amountOut = BigInt(Math.floor(Number(amountIn) * rate))
 
@@ -588,7 +588,7 @@ function createLongLinearGraph() {
 
 	const graphSnapshot: GraphSnapshot = {
 		graph,
-		getQuote: (edgeId: EdgeId, amountIn: bigint): Quote => {
+		getQuote: (_edgeId: EdgeId, amountIn: bigint): Quote => {
 			const rate = 0.98
 			const amountOut = BigInt(Math.floor(Number(amountIn) * rate))
 
