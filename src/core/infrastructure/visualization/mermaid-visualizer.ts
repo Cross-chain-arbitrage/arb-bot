@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import fs from 'fs'
 import { deflate } from 'pako'
 import { isAddress } from 'viem'
 import { GraphVisualizer } from '../../application/interfaces/graph-visualizer'
@@ -22,6 +23,12 @@ export class MermaidVisualizer implements GraphVisualizer {
 		const mermaidCode = this.graphToMermaid(graph)
 
 		return this.generateViewLink(mermaidCode)
+	}
+
+	saveGraph(graph: Graph<VisualizableNode>): void {
+		const mermaidCode = this.graphToMermaid(graph)
+
+		fs.writeFileSync('./graph.mmd', mermaidCode)
 	}
 
 	private generateViewLink(mermaidCode: string): string {
