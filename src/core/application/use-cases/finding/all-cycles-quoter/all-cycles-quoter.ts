@@ -57,6 +57,7 @@ export class AllCyclesQuoter {
 		this.delayBetweenPathsMs = config.delayBetweenPathsMs
 	}
 
+	//TODO: get from config
 	@Cron(CronExpression.EVERY_10_SECONDS, { waitForCompletion: true })
 	async callEveryPath() {
 		const routes = GraphUtils.getAllRoutes(
