@@ -1,4 +1,4 @@
-import { GeckoTerminalService } from '../../../src/modules/price-oracle/gecko-terminal.service'
+import { GeckoTerminalService } from '../../../src/core/infrastructure/price-oracle/gecko-terminal.service'
 
 const tokensOnEthereum: Address[] = [
 	'0xdac17f958d2ee523a2206206994597c13d831ec7',

@@ -13,10 +13,11 @@ const imoAddress = '0x5A7a2bf9fFae199f088B25837DcD7E115CF8E1bb'
 const usdcAddress = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
 
 describe('lifi', () => {
-	const { anvil, mockChainClientService } = useAnvil({
+	const { anvils, mockChainClientService } = useAnvil({
 		chainId: base.id,
 		printTraces: true,
 	})
+	const anvil = anvils[0]
 
 	it('should swap', async () => {
 		const testAppModule = await Test.createTestingModule({
@@ -36,11 +37,11 @@ describe('lifi', () => {
 		const tokenOut = imo
 		const amountIn = tokenIn.parseUnits('1')
 
-		const { rawQuote } = await lifiService.quote(
+		const { rawQuote } = await lifiService.quote({
 			tokenIn,
 			tokenOut,
 			amountIn,
-		)
+		})
 
 		await (tokenIn as Token).approve(
 			rawQuote.estimate.approvalAddress as Address,
@@ -62,11 +63,11 @@ describe('lifi', () => {
 		const tokenOutBalanceBefore = await tokenOut.balanceOf(botAddress)
 
 		try {
-			const { waitForResult } = await lifiService.swap(
+			const { waitForResult } = await lifiService.swap({
 				tokenIn,
 				tokenOut,
 				amountIn,
-			)
+			})
 			const swapRes = await waitForResult()
 
 			expect(swapRes.status).toBe('success')

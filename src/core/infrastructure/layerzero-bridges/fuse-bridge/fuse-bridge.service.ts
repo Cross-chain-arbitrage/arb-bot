@@ -87,6 +87,11 @@ const ADAPTER_PARAMS =
 
 const BRIDGE_GAS_COST = 400_000n
 
+type LayerZeroFeeQuote = {
+	nativeFee: bigint
+	zroFee: bigint
+}
+
 @Injectable()
 export class FuseBridgeService {
 	constructor(
@@ -148,7 +153,7 @@ export class FuseBridgeService {
 				lzFee: new TokenAmount(
 					this.chainClientService,
 					this.tokenUtils.getNative(tokenIn.chainId),
-					quote[0],
+					quote.nativeFee,
 				),
 			}
 		} else {
@@ -164,7 +169,7 @@ export class FuseBridgeService {
 				lzFee: new TokenAmount(
 					this.chainClientService,
 					this.tokenUtils.getNative(tokenIn.chainId),
-					quote[0],
+					quote.nativeFee,
 				),
 			}
 		}
@@ -174,7 +179,7 @@ export class FuseBridgeService {
 		tokenIn: Token | NativeCurrency,
 		bridgeAddress: Address,
 		amount: bigint,
-		quote: [bigint, bigint],
+		quote: LayerZeroFeeQuote,
 		args: HomeFuseBridgeFunctionArgs,
 		simulateOnly: boolean = false,
 	) {
@@ -186,7 +191,7 @@ export class FuseBridgeService {
 			abi: FUSE_BRIDGE_HOME_ABI,
 			functionName: 'bridgeNative',
 			account: wallet.account,
-			value: amount + quote[0],
+			value: amount + quote.nativeFee,
 			args: args,
 		})
 
@@ -209,7 +214,7 @@ export class FuseBridgeService {
 		abi:
 			| typeof FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN
 			| typeof FUSE_ERC20_BRIDGE_ABI_ON_FUSE,
-		quote: [bigint, bigint],
+		quote: LayerZeroFeeQuote,
 		args: FuseForeignBridgeFunctionArgs,
 		simulateOnly: boolean = false,
 	) {
@@ -221,7 +226,7 @@ export class FuseBridgeService {
 			abi,
 			functionName: 'bridge',
 			account: wallet.account,
-			value: quote[0],
+			value: quote.nativeFee,
 			args: args,
 		})
 
@@ -325,7 +330,7 @@ export class FuseBridgeService {
 		amountIn: bigint,
 		useZro: boolean = false,
 	): Promise<{
-		quote: [bigint, bigint]
+		quote: LayerZeroFeeQuote
 		amountOut: bigint
 		lzFee: TokenAmount
 		gas: bigint
@@ -341,16 +346,16 @@ export class FuseBridgeService {
 
 		const args = this.getEstimateArgs(tokenIn, tokenOut.chainId, useZro)
 
-		let feeQuote: [bigint, bigint]
+		let feeQuoteTuple: [bigint, bigint]
 		if (this.isFuse(tokenIn) && tokenIn.chainId === fuse.id) {
-			feeQuote = (await client.readContract({
+			feeQuoteTuple = (await client.readContract({
 				address,
 				abi: FUSE_BRIDGE_HOME_ABI,
 				functionName: 'estimateBridgeFee',
 				args: args as [boolean, Hex],
 			})) as [bigint, bigint]
 		} else {
-			feeQuote = (await client.readContract({
+			feeQuoteTuple = (await client.readContract({
 				address,
 				abi,
 				functionName: 'estimateBridgeFee',
@@ -358,10 +363,15 @@ export class FuseBridgeService {
 			})) as [bigint, bigint]
 		}
 
+		const feeQuote: LayerZeroFeeQuote = {
+			nativeFee: feeQuoteTuple[0],
+			zroFee: feeQuoteTuple[1],
+		}
+
 		const lzFee = new TokenAmount(
 			this.chainClientService,
 			this.tokenUtils.getNative(tokenIn.chainId),
-			feeQuote[0],
+			feeQuote.nativeFee,
 		)
 
 		return {

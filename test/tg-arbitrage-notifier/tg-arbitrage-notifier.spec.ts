@@ -39,20 +39,28 @@ const opportunity = {
 }
 const failedResult: FailedArbitrageResult = {
 	executionTime: 100,
-	reason: 'whatever',
 	status: 'failed',
-	stepIndex: 0,
-	stepAmountIn: 10n,
-	failureType: 'execution',
-	totalExecutionCostInUsd: 5,
+	pathExecutionResult: {
+		status: 'failed',
+		failureType: 'execution',
+		stepIndex: 0,
+		stepAmountIn: 10n,
+		totalExecutionCostInUsd: 5,
+		processedSteps: [],
+		reason: 'whatever',
+	},
 }
 const successResult: SuccessArbitrageResult = {
 	executionTime: 100,
-	actualEndAmount: 10n,
 	profitInUsd: 100,
 	revenueInUsd: 100,
 	status: 'success',
-	totalExecutionCostInUsd: 5,
+	pathExecutionResult: {
+		status: 'success',
+		actualEndAmount: 10n,
+		totalExecutionCostInUsd: 5,
+		processedSteps: [],
+	},
 }
 
 describe('TgArbitrageNotifier', () => {

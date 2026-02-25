@@ -1,18 +1,19 @@
 import { Logger } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { arbitrum, fuse } from 'viem/chains'
-import { ChainClientConfigService } from '../../../src/chain-client/chain-client-config.service'
-import { ChainClientService } from '../../../src/chain-client/chain-client.service'
-import { GeckoTerminalService } from '../../../src/modules/price-oracle/gecko-terminal.service'
-import { PriceOracleService } from '../../../src/modules/price-oracle/price-oracle.service'
-import { PriceOracleSettings } from '../../../src/modules/price-oracle/price-oracle.types'
-import { NativeCurrency } from '../../../src/primitives/tokens/NativeCurrency'
-import { Token } from '../../../src/primitives/tokens/Token'
-import { TokenUtils } from '../../../src/primitives/tokens/TokenUtils'
-import { SolanaNative } from '../../../src/solana/solana-native'
-import { SolanaToken } from '../../../src/solana/solana-token'
-import { SolanaTokenUtils } from '../../../src/solana/solana-token-utils'
-import { WrappedSolanaNative } from '../../../src/solana/wrapped-native'
+import { CurrencyState } from '../../../src/core/application/interfaces/price-oracle'
+import { ChainClientConfigService } from '../../../src/core/infrastructure/evm/chain-client/chain-client-config.service'
+import { ChainClientService } from '../../../src/core/infrastructure/evm/chain-client/chain-client.service'
+import { GeckoTerminalService } from '../../../src/core/infrastructure/price-oracle/gecko-terminal.service'
+import { PriceOracleService } from '../../../src/core/infrastructure/price-oracle/price-oracle.service'
+import { PriceOracleSettings } from '../../../src/core/infrastructure/price-oracle/price-oracle.types'
+import { NativeCurrency } from '../../../src/core/infrastructure/evm/primitives/tokens/NativeCurrency'
+import { Token } from '../../../src/core/infrastructure/evm/primitives/tokens/Token'
+import { TokenUtils } from '../../../src/core/infrastructure/evm/primitives/tokens/TokenUtils'
+import { SolanaNative } from '../../../src/core/infrastructure/solana/solana-tokens/solana-native'
+import { SolanaToken } from '../../../src/core/infrastructure/solana/solana-tokens/solana-token'
+import { SolanaTokenUtils } from '../../../src/core/infrastructure/solana/solana-tokens/solana-token-utils'
+import { WrappedSolanaNative } from '../../../src/core/infrastructure/solana/solana-tokens/wrapped-native'
 import { wait } from '../../../src/utils/common'
 
 const WETH_ARB_ADDRESS = '0x82af49447d8a07e3bd95bd0d56f35241523fbab1' // WETH on Arbitrum
@@ -183,14 +184,14 @@ describe('Price Oracle', () => {
 			expect(results).toHaveLength(8)
 
 			// Each result should have currency and price
-			results.forEach((result) => {
+			results.forEach((result: CurrencyState) => {
 				expect(result).toHaveProperty('currency')
 				expect(result.price).toBeGreaterThan(0)
 			})
 
 			// Verify we have the correct currencies
-			const returnedCurrencyIds = results.map((r) => r.currency.id)
-			const expectedCurrencyIds = allCurrencies.map((c) => c.id)
+			const returnedCurrencyIds = results.map((r: CurrencyState) => r.currency.id)
+			const expectedCurrencyIds = allCurrencies.map((c: any) => c.id)
 
 			expect(returnedCurrencyIds.sort()).toEqual(
 				expectedCurrencyIds.sort(),
@@ -198,17 +199,17 @@ describe('Price Oracle', () => {
 
 			// ETH prices (native and wrapped) should be the same
 			const ethNativeResult = results.find(
-				(r) => r.currency.id === ethNative.id,
+				(r: CurrencyState) => r.currency.id === ethNative.id,
 			)
 			const wethTokenResult = results.find(
-				(r) => r.currency.id === wethToken.id,
+				(r: CurrencyState) => r.currency.id === wethToken.id,
 			)
 
 			const solanaNativeResult = results.find(
-				(r) => r.currency.id === solanaNative.id,
+				(r: CurrencyState) => r.currency.id === solanaNative.id,
 			)
 			const solanaWrappedNativeResult = results.find(
-				(r) => r.currency.id === wrappedSolanaNative.id,
+				(r: CurrencyState) => r.currency.id === wrappedSolanaNative.id,
 			)
 
 			expect(ethNativeResult!.price).toBe(wethTokenResult!.price)
@@ -343,8 +344,7 @@ describe('Price Oracle', () => {
 			})
 
 			// Price updater should still be undefined (not started)
-			// @ts-expect-error - private property
-			expect(priceOracleService.priceUpdater).toBeUndefined()
+			expect((priceOracleService as any).priceUpdater).toBeUndefined()
 		})
 
 		it('getPrices: should not start price updating when updateInterval is false', async () => {
@@ -355,8 +355,7 @@ describe('Price Oracle', () => {
 			})
 
 			// Price updater should still be undefined (not started)
-			// @ts-expect-error - private property
-			expect(priceOracleService.priceUpdater).toBeUndefined()
+			expect((priceOracleService as any).priceUpdater).toBeUndefined()
 		})
 
 		it('getPrice: should start price updating with custom interval', async () => {
@@ -367,8 +366,7 @@ describe('Price Oracle', () => {
 			})
 
 			// Price updater should now be running
-			// @ts-expect-error - private property
-			expect(priceOracleService.priceUpdater).toBeDefined()
+			expect((priceOracleService as any).priceUpdater).toBeDefined()
 
 			await wait(100)
 
@@ -389,8 +387,7 @@ describe('Price Oracle', () => {
 			})
 
 			// Price updater should now be running
-			// @ts-expect-error - private property
-			expect(priceOracleService.priceUpdater).toBeDefined()
+			expect((priceOracleService as any).priceUpdater).toBeDefined()
 
 			await wait(100)
 

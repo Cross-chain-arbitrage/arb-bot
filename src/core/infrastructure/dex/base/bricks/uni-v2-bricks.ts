@@ -111,11 +111,10 @@ export function calcAmountOutFromReserves(
 	const reserveIn = isFromToken0 ? reserve0 : reserve1
 	const reserveOut = isFromToken0 ? reserve1 : reserve0
 
-	const amountInWithFee =
-		amountIn - (amountIn * BigInt(this.fee)) / this.BASIS_POINTS
+	const amountInWithFee = amountIn * (this.BASIS_POINTS - BigInt(this.fee))
 
 	const numerator = amountInWithFee * reserveOut
-	const denominator = reserveIn + amountInWithFee
+	const denominator = reserveIn * this.BASIS_POINTS + amountInWithFee
 
 	return numerator / denominator
 }

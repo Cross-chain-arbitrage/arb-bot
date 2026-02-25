@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { defineChain } from 'viem'
-import { ChainClientConfigService } from '../../src/chain-client/chain-client-config.service'
-import { ChainClientService } from '../../src/chain-client/chain-client.service'
+import { ChainClientConfigService } from '../../src/core/infrastructure/evm/chain-client/chain-client-config.service'
+import { ChainClientService } from '../../src/core/infrastructure/evm/chain-client/chain-client.service'
 
 describe('ChainClientService', () => {
 	let service: ChainClientService
@@ -55,13 +55,16 @@ describe('ChainClientService', () => {
 
 		it('should create client with transport with multiple rpc', () => {
 			mockConfigService.customChains = [glueChain]
-			mockConfigService.rpcUrls = {
-				1300: ['https://rpc2.glue.net', 'https://rpc3.glue.net'],
+			mockConfigService.rpcSettings = {
+				1300: {
+					rpcUrls: ['https://rpc2.glue.net', 'https://rpc3.glue.net'],
+					disableDefaultRpcUrl: true,
+				},
 			}
 
 			const client = service.getClient(1300)
 
-			expect(client.transport.transports.length).toBe(3)
+			expect(client.transport.transports.length).toBe(2)
 		})
 	})
 })
