@@ -17,7 +17,8 @@ import {
 } from './fuse-bridge.constants'
 import { FuseTx } from './fuse-tx'
 
-const ERC20_BRIDGE_ETH_CHAINS = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb' // Arb, OP, BSC
+const ERC20_BRIDGE_ARB_OP_BSC = '0x081dF5af5d022D4A4a4520D4D0D336B8432fDBBb'
+const ERC20_BRIDGE_MAINNET = '0x95f51f18212c6bCFfB819fDB2035E5757954B7B9'
 const ERC20_BRIDGE_FUSE = '0x353af4878d7452e974538706273887F7ED90Da47'
 
 const FUSE_TOKEN_BRIDGE_ADDRESSES: Record<number, Record<number, Address>> = {
@@ -264,6 +265,17 @@ export class FuseBridgeService {
 		return tx
 	}
 
+	async approveInfinite(
+		tokenIn: Token | NativeCurrency,
+		toChainId: number,
+	) {
+		if (tokenIn instanceof NativeCurrency) return
+
+		const { address } = this.getBridge(tokenIn, toChainId)
+
+		return tokenIn.approveInfinite(address)
+	}
+
 	private getBridgeArgs(
 		tokenIn: Token | NativeCurrency,
 		toChainId: number,
@@ -457,8 +469,13 @@ export class FuseBridgeService {
 			}
 		}
 
+		const address =
+			tokenIn.chainId === mainnet.id
+				? ERC20_BRIDGE_MAINNET
+				: ERC20_BRIDGE_ARB_OP_BSC
+
 		return {
-			address: ERC20_BRIDGE_ETH_CHAINS,
+			address,
 			abi: FUSE_ERC20_BRIDGE_ABI_ON_FOREIGN_CHAIN,
 		}
 	}

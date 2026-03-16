@@ -9,6 +9,7 @@ import {
 	gravity,
 	hemi,
 	lightlinkPhoenix,
+	mainnet,
 	monad,
 	story,
 	superposition,
@@ -37,6 +38,7 @@ export const wrappedTokens: Record<number, Address | undefined> = {
 	[monad.id]: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
 	[corn.id]: '0xda5ddd7270381a7c2717ad10d1c0ecb19e3cdfb2',
 	[apeChain.id]: '0x48b62137EdfA95a428D35C09E44256a739F6B557',
+	[mainnet.id]: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
 }
 
 export class WrappedNative extends Token {
