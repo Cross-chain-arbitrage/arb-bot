@@ -35,7 +35,20 @@ export class FuseBridgeExecutorPlugin
 			kind: 'crosschain',
 			edge,
 			execute: (amountIn: bigint) => this.execute(edge, amountIn),
+			prepareExecution: (edge: Edge<Token | NativeCurrency>) =>
+				this.prepareExecution(edge),
 		}
+	}
+
+	async prepareExecution(edge: Edge<Token | NativeCurrency>) {
+		const approveResult = await this.fuseBridgeService.approveInfinite(
+			edge.from,
+			edge.to.chainId,
+		)
+
+		if (approveResult === undefined) return { result: 'No approval needed' }
+
+		return { result: `Prepared approval: ${approveResult.transactionHash}` }
 	}
 
 	async execute(

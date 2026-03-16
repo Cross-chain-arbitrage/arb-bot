@@ -17,6 +17,26 @@ export const FUSE_BRIDGE_SUPPORTED_TOKENS = [
 		symbol: 'WBTC',
 	},
 	{
+		chainId: fuse.id,
+		address: '0x303CC3f27034C4E3933DaB8E601178eD3d2A1E3c',
+		symbol: 'MKR',
+	},
+	{
+		chainId: fuse.id,
+		address: '0x2502F488D481Df4F5054330C71b95d93D41625C2',
+		symbol: 'DAI',
+	},
+	{
+		chainId: mainnet.id,
+		address: '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2',
+		symbol: 'MKR',
+	},
+	{
+		chainId: mainnet.id,
+		address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+		symbol: 'DAI',
+	},
+	{
 		chainId: arbitrum.id,
 		address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
 		symbol: 'WBTC',

@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common'
 import {
 	Address,
+	decodeFunctionResult,
+	encodeFunctionData,
 	getAddress,
 	getContract,
 	isAddress,
 	isAddressEqual,
+	trim,
 } from 'viem'
 import { TokenMetadata } from '../../../../domain/entities/token'
 import { TokenId } from '../../../../domain/value-objects/token-id'
@@ -21,6 +24,10 @@ import { Token } from './Token'
 import { WrappedNative, wrappedTokens } from './WrappedNative'
 
 type TokenCacheKey = `${number}:${Address}`
+
+const TOKEN_METADATA_OVERRIDES: Record<Address, Partial<TokenMetadata>> = {
+	'0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2': { name: 'Maker', symbol: 'MKR' },
+}
 
 @Injectable()
 export class TokenUtils {
@@ -132,27 +139,52 @@ export class TokenUtils {
 		chainId: number,
 	): Promise<TokenMetadata> {
 		const client = this.chainClientService.getClient(chainId)
-		const abi = ERC20_ABI
+		const overrides = TOKEN_METADATA_OVERRIDES[address]
 
-		const contract = getContract({
-			address,
-			abi,
-			client,
-		})
+		const contract = getContract({ address, abi: ERC20_ABI, client })
 
 		const [decimals, name, symbol] = await Promise.all([
 			contract.read.decimals(),
-			contract.read.name(),
-			contract.read.symbol(),
+			overrides?.name ?? this.readStringOrBytes32(address, 'name', chainId),
+			overrides?.symbol ?? this.readStringOrBytes32(address, 'symbol', chainId),
 		])
 
-		const metadata: TokenMetadata = {
-			symbol,
-			name,
-			decimals,
-		}
+		return { symbol, name, decimals }
+	}
 
-		return metadata
+	private async readStringOrBytes32(
+		address: Address,
+		fn: 'name' | 'symbol',
+		chainId: number,
+	): Promise<string> {
+		const client = this.chainClientService.getClient(chainId)
+
+		try {
+			const contract = getContract({ address, abi: ERC20_ABI, client })
+
+			return await contract.read[fn]()
+		} catch {
+			const bytes32Abi = [
+				{
+					inputs: [],
+					name: fn,
+					outputs: [{ type: 'bytes32' }],
+					stateMutability: 'view',
+					type: 'function',
+				},
+			] as const
+
+			const data = encodeFunctionData({ abi: bytes32Abi, functionName: fn })
+			const raw = await client.call({ to: address, data })
+
+			const decoded = decodeFunctionResult({
+				abi: bytes32Abi,
+				functionName: fn,
+				data: raw.data!,
+			})
+
+			return trim(decoded as `0x${string}`, { dir: 'right' })
+		}
 	}
 
 	getNative(chainId: number): NativeCurrency {
