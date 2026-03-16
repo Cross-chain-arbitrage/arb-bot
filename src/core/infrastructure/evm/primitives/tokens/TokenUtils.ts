@@ -103,6 +103,19 @@ export class TokenUtils {
 		address: Address,
 		chainId: number,
 	): Promise<TokenMetadata> {
+		const overrides = TOKEN_METADATA_OVERRIDES[address]
+
+		if (overrides?.name && overrides?.symbol) {
+			const contract = getContract({
+				address,
+				abi: ERC20_ABI,
+				client: this.chainClientService.getClient(chainId),
+			})
+			const decimals = await contract.read.decimals()
+
+			return { name: overrides.name, symbol: overrides.symbol, decimals }
+		}
+
 		try {
 			const metadata = await this.getMetadataFromApi(address, chainId)
 
