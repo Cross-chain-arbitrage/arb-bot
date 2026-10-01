@@ -7,8 +7,8 @@ import { wait } from '../../src/utils/common'
 import { setTokenBalance, useAnvil } from '../testUtils/anvil'
 
 process.env.BOT_CONFIG_PATH = 'test/e2e/bot-config.yaml'
-process.env.TG_BOT_TOKEN = 'REDACTED_TG_BOT_TOKEN'
-process.env.TG_CHAT_ID = '-1000000000000'
+process.env.TG_BOT_TOKEN ??= 'test-bot-token'
+process.env.TG_CHAT_ID ??= '-1000000000000'
 process.env.TG_BOT_MESSAGE_THREAD_ID = '2'
 process.env.TG_BALANCE_REPORTER_THREAD_ID = '27'
 
